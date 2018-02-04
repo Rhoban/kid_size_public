@@ -1,0 +1,28 @@
+Feature detection
+=================
+
+The process is divided in three steps:
+
+1. Logs
+-------
+Avoid taking repetitives logs, it will grow the complexity uselessly. The logs have to be tagged. If you want an image not to be learned, tag it as "no ball".
+
+
+2. Learning
+-----------
+
+Move in Code/Vision/build (which contains compiled programs), and run:
+    $ ./BallFeatureExtractor <learning_file.yml> <log_directory_1> <log_directory_2 > ...
+
+This program takes several directories, and serializes a corresponding keypoints and features set.
+For each Log directory, it will extract the images containing the ball, computing their bouding boxes, and extract their features.
+
+3. Configuration
+----------------
+In the pipeline.xml, the featureFreak filter has to be configured.
+The tag <featurePath> must contain the path to the learning serialized file (.yml).
+
+The filter can be tuned with two paramInts:
+    - keypointSensibility: Adjust carefully! It represents the number of keypoints which will be detected. If the number is low, many keypoints will be detected, but the time complexity will grow quickly. Keep it between 50 and 80 for good perfs (70 is good).
+    - matchThreshold: It represents the number of matches wich validates a ROI. Keep it around 2 or 3 (1 will take false positives).
+    - distThreshold: min distance between a found feature and a learned feature for it to be a match.

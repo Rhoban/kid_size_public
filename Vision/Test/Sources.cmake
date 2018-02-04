@@ -1,0 +1,3 @@
+set (SOURCES
+  TestCameraState.cpp
+)

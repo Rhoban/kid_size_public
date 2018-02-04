@@ -1,0 +1,176 @@
+Internal Structure
+------------------
+
+# Application
+Base source code for creating 'Applications' with or without 'CameraStateProvider'.
+It mainly provides a class which has already convenient features to navigate
+inside videos, frame by frame.
+
+# Binding
+Contains interfaces between Vision/Localisation and the rest of the world
+
+# CameraState
+Contains various file related to estimation of the `CameraState` (height
+and orientation). It also contains various `CameraStateProvider` which allows
+to retrieve the `CameraState`at a given time using information provided by the
+robot or by logs.
+
+# Configurations
+Contains default XML files for some applications. TODO: check if it's not obsolete
+
+# Doc
+Contains global documentation (written in latex). Some of the information are
+probably outdated, but content might still be quite useful.
+
+# Examples
+Contains one example on how to use Application to create a simple Player. More
+examples would be needed.
+
+# Features
+Contains some code related to feature extraction, also contains its own documentation.
+
+# Field
+Contains all the dimension of the field as well as an interface to draw and tag the Field.
+Might be moved to Localisation.
+
+# Filters
+Contains all the available filters as well as the Pipeline notion
+
+# FrameSource
+Contains all the code concerning image acquisition (from camera or from logs).
+It also contains the conversion to yuv from yuyv (assembly code).
+   
+# Hough
+Contains various Hough Detectors for line detection or circle detection
+
+# Localisation
+Contains everything which is related to the localisation, Particle Filters,
+SpeedEstimators, Observations, Controllers.
+
+# Scripts
+Contains python tools to treat pipeline or to update logs.
+TODO: meaning of the logTransformer is unknown yet
+
+# Test
+Contains some 'unitary' tests (on CameraState for now)
+
+# Utils
+Contains a lot of tools for Vision.
+
+Monitoring
+----------
+
+Efficient debugging requires the possibility to monitor the different frames
+produced inside the pipeline. This is now available through the use of the
+`view` command in RhIO.
+
+Note: Due to the architecture, the view command will only be applied at the next
+frame update. Therefore, when used on logs, one has to update the pipeline to
+see the image or to change its scale.
+
+Every Vision Filter has its own node inside the `Vision` node. The name of the
+frame node is `out` and the requested size can be changed by updating the
+parameter `monitor_scale`. Small scales allow to reduce the quantity of data
+which have to be broadcasted through the network, it also reduces the
+computational burden on the embedded computer.
+
+Example: In order to view the source image, type following command in RhIO shell:
+```view Vision/source/out```
+
+Example: In order to divide by two the monitoring size of the source image, use
+the following command:
+```Vision/source/monitor_scale=0.5```
+
+*Special Images* can also be monitored, those images are produced only if there
+is a client requesting them. They are located at the `Vision` node and their
+monitoring size can also be adjusted:
+
+Example: In order to view the current state of the Field Particle filter:
+```view Vision/TopView```
+
+Example: In order to double the monitoring size of the `TopView`:
+```Vision/TopView_scale=2```
+
+
+
+TimeStamps in vision seem to be requested with :
+std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
+i.e in ms, time stamps in rhal are in seconds. I'll follow rhal's convention.
+
+
+
+PtGrey camera configuration
+===========================
+
+Packages
+--------
+It is required to install the *flycapture* packages, which can be found at:
+
+- https://eu.ptgrey.com/support/downloads
+
+Downloading package requires to be logged in and thus to create an account. Be
+careful to choose the appropriate software for your distribution. Camera currently
+used on sigmaban is `Blackfly` with model `BFLY-PGE-12A2C-CS`.
+
+When installing flycapture, make sure to start by installing dependencies (listed
+in README) before using the install script.
+
+
+First connection to camera
+--------------------------
+Out of the box cameras try to connect to the network using DHCP, if it fails,
+they use an address in `169.254.XXX.XXX`. You can connect it to a network
+equipped with DHCP or use a 'manual connection':
+```
+ip: 169.254.0.1
+mask: 255.255.0.0
+```
+Then use 'flycap' and eventually click the button *auto force ip* if the camera
+is not displayed
+
+Ip configuration
+-----------------------------
+Once you can see the camera on flycap, you can use: *configure selected* and
+choose the menu camera registers. Once inside the Camera Register Manipulation
+menu, select GigE Vision and apply the following changes
+- First: enable persistent ip:
+  - Set register 0x0014 to 00 00 00 07
+- Then: set ip configurations
+  - 0x064C: 0A 02 00 08 (10.2.0.8)
+  - 0x065C: FF FF FF 00 (255.255.255.0)
+  - 0x066C: 00 00 00 00 (0.0.0.0)
+- Note: when using 'Write Register Value', the cell Value 24-31 should be selected
+
+References:
+- 2.4.2 of Technical-Reference (page 26)
+- https://www.ptgrey.com/KB/10933
+
+Tuning Packet Size and Delay
+----------------------------
+Executing 'SourcePtGrey' will set PacketSize=9000 and PacketDelay=4000.
+
+WARNING: Do not forget to set MTU of your own computer to 9000.
+
+Cf 2.4.3 of Technical-Reference (page 27)
+
+
+TODO PtGrey
+-----------
+- Investigate on delay
+- Investigate on disordering of frames
+- Investigate on what happen when:
+  - Power to the camera is cut off
+  - Ethernet connection is shunted
+
+TODO Misc
+---------
+- add limits on the size of images to be monitored with rhio
+  - Reduces greatly bandwidth consumption while loss is not that high for human eye
+
+TODO Cleaning
+=============
+- Suppress / edit testCameraState
+- Remove scan
+- Rework particle filter for ball
+  - Need to enable NoBallObservation

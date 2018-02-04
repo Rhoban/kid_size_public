@@ -1,0 +1,6 @@
+For this depository to work, the following depositories need to be on the adequate branch :
+Math : Experimental
+Utils : Experimental
+Code : Master
+Environments : Master
+Common : Experimental

@@ -1,0 +1,71 @@
+Field
+=====
+
+Description
+-----------
+
+- [0,0,0]
+   -> Field center
+   -> Ground level
+- x axis -> toward opponent goal (from field center)
+- y axis -> to the left when facing the opponent goal
+- z axis -> perpendicular to the ground
+- Unit : cm
+
+Comments
+--------
+Basis changing after each half-time
+
+
+Robot
+=====
+
+Description
+-----------
+
+- [0,0,0]:
+  - the center of the segment between fLeft and fRight where fLeft and fRight
+    are the projection of the left and the right foot respectively;
+  - On ground
+- x axis -> In front of the robot, considering the orientation of the chest
+- y axis -> To the left of the robot
+- z axis -> perpendicular to the ground
+- Unit : cm
+
+Comments
+--------
+x axis and y axis are in the ground plane
+The pan/tilt of the robot doest not affect this basis
+
+Camera
+======
+
+Description
+-----------
+- [0,0,0]
+  - the center of the camera
+- x axis -> To the right of the camera
+- y axis -> To the bottom of the camera
+- z axis -> Direction of the camera
+- Unit : cm
+
+Comments
+--------
+All the points which are seen on the center of the camera are described as
+follows [0,0,x] with x positive
+
+Image
+=====
+
+Description
+-----------
+
+- [0,0]
+  -> top left corner
+- x axis -> column of the image
+- y axis -> row of the image
+- Unit : pixel
+
+Comments
+--------
+Weird basis in order to match opencv description of the image

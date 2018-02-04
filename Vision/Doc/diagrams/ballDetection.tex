@@ -1,0 +1,48 @@
+\makeatletter
+\def\getnodedistance{\tikz@node@distance}
+\makeatother
+
+\begin{tikzpicture}[scale=0.5,node distance=5mm, >=latex',
+  block/.style = {draw, rectangle, minimum height=10mm, minimum width=55mm,
+    align=center, ultra thick},
+  vecArrow/.style={
+    decoration={markings,mark=at position
+      1 with {\arrow[scale=1.5,thick]{angle 60}}},
+    preaction = {decorate},
+    postaction = {draw,line width=1.5pt, shorten >= 1.5pt}
+  },
+  font=\small]
+% Source
+\node[block] (source) {\filterDescription{source}{SourceV4l2}
+  {The image received by the webcam}};
+% ClippingSrc
+\node[block] (ballSrc) [right=of source]
+     {\filterDescription{ballSrc}{Rescale}
+       {Resizing the image in order to reduce the computation time}};
+\draw[vecArrow] (source) -- (ballSrc);
+% BallColor
+\node[block] (ballColor) [below=of ballSrc]
+     {\filterDescription{ballColor}{BallColor}
+       {Extracting a mask of the ball based on color}};
+\draw[vecArrow] (ballSrc) -- (ballColor);
+% BallColor2
+\node[block] (ballColor2) [below=of ballColor]
+     {\filterDescription{ballColor2}{Dilate}
+       {Using a margin outside of the pixels in range}};
+\draw[vecArrow] (ballColor) -- (ballColor2);
+% BallMask
+\node[block] (ballMask) [below=of ballColor2]
+     {\filterDescription{ballMask}{Mask}
+       {Using only pixels inside of clipping}};
+\draw[vecArrow] (ballColor2) -- (ballMask);
+\node[block] (clippingLines) [right=of ballMask]
+     {\filterDescription{clippingLines}{External}
+       {Result of the clipping process}};
+\draw[vecArrow] (clippingLines) -- (ballMask);
+% BallByROI
+\node[block] (ballByROI) [below=of ballMask]
+     {\filterDescription{ballByROI}{BallByROI}
+       {Using circle clusters inside of each region of interest}};
+\draw[vecArrow] (ballMask) -- (ballByROI);
+\draw[vecArrow] (source) |- (ballByROI);
+\end{tikzpicture}

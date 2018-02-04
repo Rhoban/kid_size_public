@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<BallHistogram>
+  <pipeline>
+    <filter>
+      <className>SourceLogs2</className>
+      <name>source</name>
+      <debugLevel>
+        <graphics>false</graphics>
+      </debugLevel>
+      <dependencies />
+      <paramInts />
+      <paramFloats />
+      <paramPairInt />
+      <imagesFile>Resources/Logs/2015_06_29_IUT/Log1/images.csv</imagesFile>
+      <startIndex>1</startIndex>
+    </filter>
+  </pipeline>
+</BallHistogram>

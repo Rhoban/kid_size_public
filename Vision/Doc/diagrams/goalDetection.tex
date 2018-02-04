@@ -1,0 +1,57 @@
+\makeatletter
+\def\getnodedistance{\tikz@node@distance}
+\makeatother
+
+\begin{tikzpicture}[scale=0.5,node distance=5mm, >=latex',
+  block/.style = {draw, rectangle, minimum height=20mm, minimum width=55mm,
+    align=center, ultra thick},
+  vecArrow/.style={
+    decoration={markings,mark=at position
+      1 with {\arrow[scale=1.5,thick]{angle 60}}},
+    preaction = {decorate},
+    postaction = {draw,line width=1.5pt, shorten >= 1.5pt}
+  },
+  font=\small]
+% Source
+\node[block] (source) {\filterDescription{source}{SourceV4l2}
+  {The image received by the webcam}};
+% goalSrc
+\node[block] (goalSrc) [right=of source]
+     {\filterDescription{goalSrc}{Rescale}
+       {Resizing the image in order to reduce the computation time}};
+\draw[vecArrow] (source) -- (goalSrc);
+% GoalColor
+\node[block] (goalColor) [below=of goalSrc]
+     {\filterDescription{goalColor}{GoalColor}
+       {Extracting a mask of the goal based on color}};
+\draw[vecArrow] (goalSrc) -- (goalColor);
+% GoalMask
+\node[block] (goalMask) [below=of goalColor]
+     {\filterDescription{goalMask}{Mask}
+       {Using only pixels inside of clipping}};
+\draw[vecArrow] (goalColor) -- (goalMask);
+% Clipping part
+\node[block] (clippingLines) [right=of goalSrc]
+     {\filterDescription{clippingLines}{External}
+       {Result of the clipping process}};
+\node[block] (clippingBorders) [below=of clippingLines]
+     {\filterDescription{clippingBorders}{BinaryEdges}
+       {Using only the borders of the clipping}};
+\draw[vecArrow] (clippingLines) -- (clippingBorders);
+\node[block] (clippingBorders2) [below=of clippingBorders]
+     {\filterDescription{clippingBorders2}{Dilate}
+       {Using a zone of a given thickness at the field border}};
+\draw[vecArrow] (clippingBorders) -- (clippingBorders2);
+\draw[vecArrow] (clippingBorders2) -- (goalMask);
+% GoalMask2
+\node[block] (goalMask2) [below=of goalMask]
+     {\filterDescription{goalMask2}{Dilate}
+       {Using a wider zone}};
+\draw[vecArrow] (goalMask) -- (goalMask2);
+% GoalByROI
+\node[block] (goalByROI) [below=of goalMask2]
+     {\filterDescription{goalByROI}{GoalByROI}
+       {Detecting the goal posts from the region of interest}};
+\draw[vecArrow] (goalMask2) -- (goalByROI);
+\draw[vecArrow] (source) |- (goalByROI);
+\end{tikzpicture}

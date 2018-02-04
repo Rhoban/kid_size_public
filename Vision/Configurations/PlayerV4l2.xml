@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<Player>
+  <playing>true</playing>
+  <pipeline>
+    <filter>
+      <className>SourceV4l2</className>
+      <name>source</name>
+      <device>/dev/video0</device>
+      <debugLevel>
+        <graphics>true</graphics>
+      </debugLevel>
+      <dependencies />
+      <paramInts />
+      <paramFloats />
+      <paramPairInt />
+    </filter>
+  </pipeline>
+</Player>

@@ -1,0 +1,74 @@
+#pragma once
+
+#include "Localisation/Field/SerializableFieldObservation.hpp"
+#include "CameraState/CameraState.hpp"
+#include <string>
+
+namespace Vision {
+namespace Localisation {
+
+class TagsObservation : public SerializableFieldObservation {
+public:
+
+  //Id of the marker
+  int id;
+
+  //Position of the marker observation
+  cv::Point3f seenPos;
+
+  //Position of the marker observation
+  cv::Point3f stdDev;
+
+  /// Robot height at the given time [cm]
+  double robotHeight;
+
+  // Weight of the observation
+  double weight;
+
+  // Required for numerical reasons
+  static double pError;
+  // Until which angle (in deg) the angleScore is 1
+  static double angleFlatTol;
+  // After which angle (in deg) the angleScore is pError
+  static double angleMaxErr;
+  // Until which distance error (in m) the normScore is still 1
+  static double normFlatTol;
+  // After which distance error (in m) the normScore is pError
+  static double normMaxErr;
+  // After which position error (in m) the distanceScore reaches 0.5
+  static double distFactor;
+  /// true -> score = angleScore * normScore
+  /// false-> score = distanceScore
+  static bool angleMode;
+
+
+public:
+  TagsObservation();
+
+
+  TagsObservation(const int& id_,const cv::Point3f & seenPos_,
+                  const cv::Point3f & seenDev_,
+                  double robotHeight_,  double weight);
+
+  cv::Point3f getTagPosInParticleSelf(int tagId, const FieldPosition & p) const;
+
+  // Get direction vector from camera to target point in robot basis
+  cv::Point3f getSeenVec(const cv::Point3f & posInSelf) const;
+
+  virtual double potential(const FieldPosition &p) const override;
+
+  static void bindWithRhIO();
+  static void importFromRhIO();
+
+  // static double maxTiltAllowed;
+
+  std::string getClassName() const override;
+  void fromJson(const Json::Value & v, const std::string & dir_name);
+  Json::Value toJson() const;
+
+  double getMinScore() const override;
+
+  virtual std::string toStr() const override;
+};
+}
+}

@@ -1,0 +1,53 @@
+\makeatletter
+\def\getnodedistance{\tikz@node@distance}
+\makeatother
+
+\begin{tikzpicture}[scale=0.5,node distance=5mm, >=latex',
+  block/.style = {draw, rectangle, minimum height=10mm, minimum width=55mm,
+    align=center, ultra thick},
+  vecArrow/.style={
+    decoration={markings,mark=at position
+      1 with {\arrow[scale=1.5,thick]{angle 60}}},
+    preaction = {decorate},
+    postaction = {draw,line width=1.5pt, shorten >= 1.5pt}
+  },
+  font=\small]
+% Source
+\node[block] (source) {\filterDescription{source}{SourceV4l2}
+  {The image received by the webcam}};
+% ClippingSrc
+\node[block] (clippingSrc) [below=of source]
+     {\filterDescription{clippingSrc}{Rescale}
+       {Resizing the image in order to reduce the computation time}};
+\draw[vecArrow] (source) -- (clippingSrc);
+% FieldColor
+\node[block] (colorClipping) [below=of clippingSrc]
+     {\filterDescription{colorClipping}{FieldColor}
+       {Extracting a mask of the field based on color}};
+\draw[vecArrow] (clippingSrc) -- (colorClipping);
+% opening (to rename)
+\node[block] (opening) [below=of colorClipping]
+     {\filterDescription{opening}{Opening}
+       {Removing noise}};
+\draw[vecArrow] (colorClipping) -- (opening);
+% closure (to rename)
+\node[block] (closure) [below=of opening]
+     {\filterDescription{closure}{Closure}
+       {Joining different components together}};
+\draw[vecArrow] (opening) -- (closure);
+% clipping
+\node[block] (clipping) [below=of closure]
+     {\filterDescription{clipping}{ClippingRules}
+       {Applying some rules specific to clipping}};
+\draw[vecArrow] (closure) -- (clipping);
+% clippingEdges
+\node[block] (clippingEdges) [below=of clipping]
+     {\filterDescription{clippingEdges}{BinaryEdges}
+       {Extracting edges of the clipping}};
+\draw[vecArrow] (clipping) -- (clippingEdges);
+% clipping
+\node[block] (clippingLines) [below=of clippingEdges]
+     {\filterDescription{clippingLines}{ClippingRHT}
+       {Using randomized hough transform to compute clipping}};
+\draw[vecArrow] (clippingEdges) -- (clippingLines);
+\end{tikzpicture}

@@ -1,0 +1,76 @@
+# TESTS
+
+## No referee mode
+
+- When referee is not received, the robot should be playing state
+- If it fall, it should standup
+
+## Initial phase
+
+- When referee is on and the game did not begin, it should be in INITIAL phase
+and the robot should not move
+
+## Placing phase
+
+- When referee is in READY mode, the robot should walk to its place
+- If it fall, it should continue walking
+- If the place is not reached until the time, the robot should stop moving
+
+## Freeze phase
+
+- When referee is in SET mode, the robot should not move, waiting for the begining
+of the game
+- If it falls, it should standup
+
+## Robot handling
+
+- If the robot is handled during the INITIAL phase, it should not change anything
+- If the robot is handled during the READY or SET phase, it should note it and reset
+its filter on the goal line when the game starts
+
+## Penalized
+
+- If penalized, the robot should stop playing
+- It still stands up (XXX ?)
+
+## Unpenalized
+
+- If the robot is unpenalized, it should start playing again
+
+## Game start
+
+- During the first seconds of the game (or after being unpenalized), the robot walks
+  to the center of the field if it doesn't see the ball
+
+## Drop ball
+
+- If a goal is scored, the robot goes back to its placing
+- In case of dropped ball, the same behavior applies
+
+## End of half
+
+- At the end of the half, the robot should go back to the INITIAL state and wait
+
+## Kick off respect
+
+- If we don't have the kick off, our robot should not enter the center circle during
+  the 10 first seconds of game
+
+## Letting play
+
+- If another player, more near or with greatest priority handles the ball, the robot
+  should let it play (and remain within its team radius)
+
+## Searching for the ball
+
+- If the robot doesn't know were is the ball, it looks around it
+- If it doesn't see the ball, it will then go to patrol
+- If another player sees the ball and share it, the player should walk to the shared ball
+
+## Still undefined behaviour or things to fix
+
+- When we know where is the ball but don't know where we are
+- When we go for a shared ball, arrive, but still doesn't see the ball
+- We should not kick the ball to the center of the goal when it it already in the goal
+- When we are letting the other players handle the ball, we should do something more clever
+

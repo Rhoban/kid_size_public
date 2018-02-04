@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<Player>
+  <pipeline>
+    <filter>
+      <className>SourceLogs</className>
+      <name>source</name>
+      <debugLevel>
+        <graphics>true</graphics>
+      </debugLevel>
+      <dependencies />
+      <paramInts />
+      <paramFloats />
+      <paramPairInt />
+      <imagesFile>Resources/Logs/Robocup2014/images1.csv</imagesFile>
+      <startIndex>190</startIndex>
+    </filter>
+    <filter>
+      <className>RGB2YUV</className>
+      <name>test</name>
+      <debugLevel>
+        <graphics>true</graphics>
+      </debugLevel>
+      <dependencies>
+        <dependency>source</dependency>
+      </dependencies>
+      <paramInts />
+      <paramFloats />
+      <paramPairInt />
+    </filter>
+  </pipeline>
+</Player>

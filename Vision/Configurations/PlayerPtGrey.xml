@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<Player>
+  <playing>true</playing>
+  <pipeline>
+    <filter>
+      <className>Recorder</className>
+      <name>recorder</name>
+      <dependencies>
+        <dependency>human</dependency>
+      </dependencies>
+      <paramInts />
+      <paramFloats/>
+      <paramPairInt />
+    </filter>
+    <filter>
+      <className>ColorConverter</className>
+      <name>human</name>
+      <conversion>YUV2BGR</conversion>
+      <debugLevel>
+        <graphics>true</graphics>
+      </debugLevel>
+      <dependencies>
+        <dependency>source</dependency>
+      </dependencies>
+      <paramInts />
+      <paramFloats/>
+      <paramPairInt />
+    </filter>
+    <filter>
+      <className>Rescale</className>
+      <name>downscaled</name>
+      <debugLevel>
+        <graphics>true</graphics>
+      </debugLevel>
+      <dependencies>
+        <dependency>source</dependency>
+      </dependencies>
+      <paramInts />
+      <paramFloats>
+        <paramFloat>
+          <name>ratio</name>
+          <value>4</value>
+        </paramFloat>
+      </paramFloats>
+      <paramPairInt />
+    </filter>
+    <filter>
+      <className>SourcePtGrey</className>
+      <name>source</name>
+      <debugLevel>
+        <graphics>true</graphics>
+      </debugLevel>
+      <wished_properties>
+        <Shutter>
+          <autoManualMode>false</autoManualMode>
+          <absValue>5</absValue>
+        </Shutter>
+        <Gain>
+          <autoManualMode>false</autoManualMode>
+          <absValue>10</absValue>
+        </Gain>
+        <FrameRate>
+          <autoManualMode>false</autoManualMode>
+          <absValue>25</absValue>
+        </FrameRate>
+      </wished_properties>
+      <dependencies />
+      <paramInts />
+      <paramFloats />
+      <paramPairInt />
+    </filter>
+  </pipeline>
+</Player>

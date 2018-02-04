@@ -1,0 +1,243 @@
+#include <math.h>
+#include "GoalKeeper.h"
+
+#include <services/LocalisationService.h>
+#include <services/TeamPlayService.h>
+#include "Walk.h"
+#include "Approach.h"
+#include "Placer.h"
+
+#include <Constants.h>
+
+#include "logging/Logger.h"
+#include "Head.h"
+
+static Rhoban::Logger logger("GoalKeeper");
+
+#define STATE_CLEAR            "clear"
+#define STATE_PLACE            "place"
+#define STATE_STOPPED          "stopped"
+
+using RhobanReferee::Constants;
+
+/*
+
+------------------------------------------------------------------
+                                                                
+   |----|-----O--------------------------O-----|----|           
+   |    |                  R                   |    |           
+   |    |                                      |    |           
+   |    |                                      |    |
+   |    |--------------------------------------|    |
+   |                                                |
+   |                                                |
+   |                       x                        |
+   |                                                |
+   |                                                |
+   |                                                |
+   |                                                |
+   |                                                |
+   |                                                |
+   |                                                |
+   |                                                |
+   |------------------------------------------------|
+   |                                                |
+   |                                                |
+   |                                                |
+   |                                                |
+   |                                                |
+   |                                                |
+   |                                                |
+   |                       x                        |
+   |                                                |
+   |                                                |
+   |                                                |
+   |    |--------------------------------------|    |
+   |    |                                      |    |
+   |    |                                      |    |
+   |    |                                      |    |
+   |----|-----O--------------------------O-----|----|         -
+
+
+ */
+
+
+GoalKeeper::GoalKeeper(Walk *walk, Approach *approach, Placer *placer)
+    : walk(walk), approach(approach), placer(placer)
+{
+    initializeBinding();
+
+    bind->bindNew("xMargin", xMargin, RhIO::Bind::PullOnly)
+        ->comment("Ball X margin")->defaultValue(0)->persisted(true);
+    bind->bindNew("yMargin", yMargin, RhIO::Bind::PullOnly)
+        ->comment("Ball Y margin")->defaultValue(0)->persisted(true);
+    
+    bind->bindNew("xStop", xStop, RhIO::Bind::PullOnly)
+        ->comment("Ball X margin")->defaultValue(20)->persisted(true);
+    bind->bindNew("yStop", yStop, RhIO::Bind::PullOnly)
+        ->comment("Ball Y margin")->defaultValue(15)->persisted(true);
+
+    bind->bindNew("waitX", waitX, RhIO::Bind::PullOnly)
+        ->comment("Distance to goal line in cm")->defaultValue(30)->persisted(true);
+
+    bind->bindNew("isPlacing", isPlacing, RhIO::Bind::PushOnly)
+        ->comment("Is the robot performing an accurate placement")
+        ->defaultValue(false)->persisted(true);
+
+    bind->bindNew("placeMinX", placeMinX, RhIO::Bind::PullOnly)
+        ->comment("The minimal distance from ball to goal line to adjust goalie position")
+        ->defaultValue(250)->persisted(true);
+    bind->bindNew("placeMaxX", placeMaxX, RhIO::Bind::PullOnly)
+        ->comment("The maximal distance from ball to goal line to adjust goalie position")
+        ->defaultValue(350)->persisted(true);
+
+    bind->bindNew("targetX", targetX, RhIO::Bind::PushOnly)
+        ->comment("Target X");
+    bind->bindNew("targetY", targetY, RhIO::Bind::PushOnly)
+        ->comment("Target Y");
+    bind->bindNew("targetSmoothing", targetSmoothing, RhIO::Bind::PullOnly)
+        ->comment("Target smoothing")->defaultValue(0.95)->persisted(true);
+
+    bind->bindNew("t", t, RhIO::Bind::PushOnly)
+        ->comment("Duration of the current state");
+}
+
+std::string GoalKeeper::getName()
+{
+    return "goal_keeper";
+}
+
+void GoalKeeper::onStart()
+{
+    setState(STATE_PLACE);
+    isPlacing = false;
+    // Making the head move by default
+    Head* head = (Head*)getMoves()->getMove("head");
+    head->setDisabled(false);
+    lateralStep = (LateralStep*)getMoves()->getMove("lateralStep");
+}
+
+void GoalKeeper::onStop()
+{
+  // TODO stop the placer too
+    auto loc = getServices()->localisation;
+    loc->enableFieldFilter(true);
+    setState(STATE_STOPPED);
+    approach->clearing = false;
+}
+
+void GoalKeeper::setTeamPlayPriority(TeamPlayPriority priority)
+{
+    getServices()->teamPlay->selfInfo().priority = priority;
+}
+
+TeamPlayState GoalKeeper::teamState()
+{
+    return getServices()->teamPlay->selfInfo().state;
+}
+
+bool GoalKeeper::ballInZone(float xd, float yd)
+{
+    auto loc = getServices()->localisation;
+    auto ball = loc->getBallPosField() * 100;
+    float lineX = -Constants::fieldLength/2 + Constants::goalAreaLength + xd;
+    float lineY = Constants::goalAreaWidth/2 + yd;
+
+//    logger.log("Current ball: %f %f", ball.x, ball.y);
+//    logger.log("Limits: %f %f", lineX, lineY);
+
+    return loc->ballQ > 0.6 &&
+        ball.x < lineX &&
+        fabs(ball.y) < lineY;
+}
+
+void GoalKeeper::getFieldTarget(Point & wishedPos, Angle & wishedAzimuth)
+{
+    // Retrieving informations
+    auto loc = getServices()->localisation;
+    Point ballInField = loc->getBallPosField() * 100; // in cm
+
+    // Activate placing if ballQ is high enough and ball is close enough
+    if (loc->ballQ > 0.6 &&
+        ballInField.x < - Constants::fieldLength / 2  + placeMinX) {
+        isPlacing = true;
+    }
+    // Back to home position if ball is lost or far enough from goal line
+    if (loc->ballQ < 0.2 || ballInField.x > - Constants::fieldLength / 2 + placeMaxX) {
+        isPlacing = false;
+    }
+
+    // Adapt position
+    if (isPlacing) {
+        double maxY = Constants::goalWidth/2;
+        double wishedY = std::min(maxY, std::max(-maxY, ballInField.y));
+        wishedPos = Point(-Constants::fieldLength / 2 + waitX, wishedY);
+        wishedAzimuth = (ballInField - wishedPos).getTheta();
+    }
+    // If ball is far from goal line or lost, stay centered
+    else {
+        wishedPos = Point(-Constants::fieldLength / 2 + waitX, 0);
+        wishedAzimuth = Angle(0);
+    }
+}
+
+void GoalKeeper::step(float elapsed)
+{
+    bind->pull();
+    t += elapsed;
+
+    if (state == STATE_PLACE) {
+        if (ballInZone(xMargin, yMargin)) {
+            logger.log("I think that ball is inside my clearing zone, going to clear state");
+            setState(STATE_CLEAR);
+        }
+        else {
+            Point wishedPos;
+            Angle wishedAzimuth;
+            getFieldTarget(wishedPos, wishedAzimuth);
+            targetX = targetSmoothing*targetX + (1-targetSmoothing)*wishedPos.x;
+            targetY = targetSmoothing*targetY + (1-targetSmoothing)*wishedPos.y;
+            placer->goTo(targetX, targetY, wishedAzimuth.getSignedValue());
+        }
+    }
+    else if (state == STATE_CLEAR) {
+        // If ball is out of control zone, then 
+        if (!ballInZone(xStop, yStop)) {
+            logger.log("I cleared the ball, going back to usual location");
+            setState(STATE_PLACE);
+        }
+    }
+
+    bind->push();
+}
+
+void GoalKeeper::enterState(std::string state)
+{
+    setTeamPlayPriority(NormalPriority);
+    t = 0.0;
+    // This seems to break the whole localisation system. Maybe since the separation loc/vision? TODO: check this
+    //auto loc = getServices()->localisation;
+    //loc->enableFieldFilter(state != STATE_PLACE && placer->arrived);
+        
+    if (state == STATE_CLEAR) {
+        startMove("approach");
+        approach->clearing = true;
+    } else if (state == STATE_PLACE) {
+        startMove("placer", 0.0);
+        Point wishedPos;
+        Angle wishedAzimuth;
+        getFieldTarget(wishedPos, wishedAzimuth);
+        targetX = wishedPos.x;
+        targetY = wishedPos.y;
+    }
+}
+
+void GoalKeeper::exitState(std::string state)
+{
+    if (state == STATE_CLEAR) {
+        stopMove("approach", 0.0);
+    }
+    else if (state == STATE_PLACE) {
+        //stopMove("placer", 0.0);
+    }
+}
