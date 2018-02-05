@@ -196,7 +196,7 @@ public:
   /* JSON STUFF */
   virtual Json::Value toJson() const override;
   virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
-  virtual std::string getClassName() const override { return "LocalisationTest"; }
+  virtual std::string getClassName() const override { return "vision_config"; }
 
   //TODO : move this into radar refactoring
   std::vector<cv::Point2f> keepFrontRobots(std::vector<cv::Point2f> & robots);
