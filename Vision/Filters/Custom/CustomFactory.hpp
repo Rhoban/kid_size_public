@@ -1,6 +1,10 @@
 #pragma once
 namespace Vision {
 namespace Filters {
-void registerCustomFilters();
+
+class FilterFactory;
+
+void registerCustomFilters(FilterFactory * ff);
+
 }
 }

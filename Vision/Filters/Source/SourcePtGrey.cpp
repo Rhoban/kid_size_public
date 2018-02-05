@@ -79,6 +79,9 @@ void SourcePtGrey::fromJson(const Json::Value & v, const std::string & dir_name)
   Json::Value wp_val = v["wished_properties"];
   // If wished properties are found, use them
   if (!wp_val.isNull()) {
+    if (!wp_val.isObject()) {
+      throw rhoban_utils::JsonParsingError("SourcePtGrey::fromJson: 'wished_properties' is not an object");
+    }
     for (const auto &entry : names_to_types) {
       const std::string &prop_name = entry.first;
       FlyCapture2::PropertyType prop_type = entry.second;

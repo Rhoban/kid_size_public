@@ -8,11 +8,11 @@
 
 namespace Vision {
 namespace Filters {
-void registerFeaturesFilters()
+void registerFeaturesFilters(FilterFactory * ff)
 {
-    FilterFactory::registerClass<FREAK>("FREAK");
-    FilterFactory::registerClass<VisualCompass>("VisualCompass");
-    FilterFactory::registerClass<TagsDetector>("TagsDetector");
+  ff->registerBuilder("FREAK"        , [](){return std::unique_ptr<Filter>(new FREAK        );});
+  ff->registerBuilder("VisualCompass", [](){return std::unique_ptr<Filter>(new VisualCompass);});
+  ff->registerBuilder("TagsDetector" , [](){return std::unique_ptr<Filter>(new TagsDetector );});
 }
 
 }

@@ -574,23 +574,29 @@ Json::Value Filter::toJson() const {
 void Filter::fromJson(const Json::Value & v, const std::string & dir_name) {
   // First set parameters
   setParameters();
-  // Then update content from json data
-  rhoban_utils::tryRead(v,"name",&name);
-  debugLevel.tryRead(v, "debugLevel");
-  // Read dependencies
-  rhoban_utils::tryReadVector(v, "dependencies", &_dependencies);
-  // Checking dependencies size
-  if (_dependencies.size() != (size_t)expectedDependencies()) {
+  try {
+    // Then update content from json data
+    rhoban_utils::tryRead(v,"name",&name);
+    debugLevel.tryRead(v, "debugLevel");
+    // Read dependencies
+    rhoban_utils::tryReadVector(v, "dependencies", &_dependencies);
+    // Checking dependencies size
+    if (_dependencies.size() != (size_t)expectedDependencies()) {
+      std::ostringstream oss;
+      oss << "Filter::fromJson: '" << getName() << "' of class '"
+          << getClassName() << "': invalid number of dependencies ("
+          << _dependencies.size() << " received, " << expectedDependencies()
+          << " expected)";
+      throw rhoban_utils::JsonParsingError(oss.str());
+    }
+    // Read Parameters
+    tryParametersUpdate<int  >(v, "paramInts");
+    tryParametersUpdate<float>(v, "paramFloats");
+  } catch (const rhoban_utils::JsonParsingError & err) {
     std::ostringstream oss;
-    oss << "Failed fromJson on filter: '" << getName() << "' of class '"
-        << getClassName() << "': invalid number of dependencies ("
-        << _dependencies.size() << " received, " << expectedDependencies()
-        << " expected)";
+    oss << err.what() << " in filter with name '" << name << "' of class '" << getClassName() << "'";
     throw rhoban_utils::JsonParsingError(oss.str());
   }
-  // Read Parameters
-  tryParametersUpdate<int  >(v, "paramInts");
-  tryParametersUpdate<float>(v, "paramFloats");
   // setDebugLevel creates Trackbar with parameters if activated
   setDebugLevel(debugLevel);
   // Publish parameters to RhIO

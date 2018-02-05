@@ -7,9 +7,11 @@
 
 namespace Vision {
 namespace Filters {
-void registerBallFilters() {
-  FilterFactory::registerClass<BallByDNN>("BallByDNN");
-  FilterFactory::registerClass<BallByII>("BallByII");
+
+void registerBallFilters(FilterFactory * ff) {
+  ff->registerBuilder("BallByDNN", [](){return std::unique_ptr<Filter>(new BallByDNN());});
+  ff->registerBuilder("BallByII" , [](){return std::unique_ptr<Filter>(new BallByII()) ;});
 }
+
 }
 }

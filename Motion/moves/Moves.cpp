@@ -27,7 +27,6 @@
 // #include "KickCalibration.hpp"
 #include "GoalKick.hpp"
 
-#ifdef CSA_MDP_EXPERIMENTS
 #include "MDPKickController.h"
 #include "QKickController.h"
 #include "ClearingKickController.h"
@@ -36,7 +35,6 @@
 #include "policies/expert_approach.h"
 #include "problems/extended_problem_factory.h"
 #include "rosban_csa_mdp/core/policy_factory.h"
-#endif
 
 Moves::Moves(MoveScheduler* scheduler) :
         _scheduler(scheduler)
@@ -87,7 +85,6 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(new GoalKick());
     
     // Requires additionnal dependencies
-#ifdef CSA_MDP_EXPERIMENTS
     csa_mdp::PolicyFactory::registerExtraBuilder("expert_approach",
                                                  []() {return std::unique_ptr<csa_mdp::Policy>(new csa_mdp::ExpertApproach);});
 
@@ -98,7 +95,6 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(penaltyController);
     add(new LearnedApproach(walk));
     add(new Penalty(penaltyController));
-#endif
 }
 
 Moves::~Moves()

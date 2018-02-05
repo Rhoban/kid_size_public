@@ -337,8 +337,9 @@ Json::Value Pipeline::toJson() const {
   return v;
 }
 void Pipeline::fromJson(const Json::Value & v, const std::string & dir_name) {
+  Filters::FilterFactory ff;
   for (Json::ArrayIndex idx = 0; idx < v.size(); idx++) {
-    add(Filters::FilterFactory::filterFromJson(v[idx], dir_name));
+    add(ff.build(v[idx], dir_name).release());
   }
   std::cout << "There is now " << _filters.size() << " filters." << std::endl;
 }

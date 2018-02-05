@@ -7,9 +7,11 @@
 
 namespace Vision {
 namespace Filters {
-void registerSourceFilters() {
-  FilterFactory::registerClass<SourceLogs>("SourceLogs");
-  FilterFactory::registerClass<SourcePtGrey>("SourcePtGrey");
+
+void registerSourceFilters(FilterFactory * ff) {
+  ff->registerBuilder("SourceLogs"  , [](){return std::unique_ptr<Filter>(new SourceLogs  );});
+  ff->registerBuilder("SourcePtGrey", [](){return std::unique_ptr<Filter>(new SourcePtGrey);});
 }
+
 }
 }
