@@ -5,6 +5,7 @@
 #include <rhoban_utils/logging/logger.h>
 #include <Utils/Euler.h>
 #include <rhoban_utils/util.h>
+#include <rhoban_utils/serialization/json_serializable.h>
 #include "LateralStep.hpp"
 
 static rhoban_utils::Logger logger("lateral");
@@ -64,7 +65,12 @@ LateralStep::LateralStep()
 
 std::map<std::string, Function> LateralStep::loadCompiledLateralStep(std::string filename)
 {
-    auto splines = Function::fromFile(filename);
+    std::map<std::string, Function> splines;
+    try {
+        splines = Function::fromFile(filename);
+    } catch (const rhoban_utils::JsonParsingError & exc) {
+        logger.error("%s", exc.what());
+    }
 
     tMax = 0;
     for (auto &entry :splines) {
@@ -92,7 +98,12 @@ void LateralStep::loadLateralStep(std::string filename)
     logger.log("Generating lateral step");
 
     // Loading spline
-    auto kickSplines = Function::fromFile(filename);
+    std::map<std::string, Function> kickSplines;
+    try {
+        kickSplines = Function::fromFile(filename);
+    } catch (const rhoban_utils::JsonParsingError & exc) {
+        logger.log("%s", exc.what());
+    }
     for (auto &entry : kickSplines) {
         double duration = entry.second.getXMax();
         if (duration > xMax) {

@@ -1,6 +1,12 @@
 #include "StandUp.h"
 
+#include <rhoban_utils/logging/logger.h>
+#include <rhoban_utils/serialization/json_serializable.h>
+
 using rhoban_utils::Function;
+
+
+static rhoban_utils::Logger logger("StandUp");
 
 StandUp::StandUp()
 {
@@ -80,14 +86,18 @@ void StandUp::step(float elapsed)
     if (waiting) {
         time += elapsed;
         if (useManualT || time > delayBefore) {
-            if (layDown) {
-                splines = Function::fromFile("lay_down.json");
-            } else {
-                if (getPitch() < 0) {
-                    splines = Function::fromFile("standup_back.json");
+            try { 
+                if (layDown) {
+                    splines = Function::fromFile("lay_down.json");
                 } else {
-                    splines = Function::fromFile("standup_front.json");
+                    if (getPitch() < 0) {
+                        splines = Function::fromFile("standup_back.json");
+                    } else {
+                        splines = Function::fromFile("standup_front.json");
+                    }
                 }
+            } catch (const rhoban_utils::JsonParsingError & exc) {
+                logger.error("%s", exc.what());
             }
 
             waiting = false;

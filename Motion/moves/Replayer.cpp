@@ -1,6 +1,11 @@
 #include "Replayer.hpp"
 
+#include "rhoban_utils/logging/logger.h"
+#include "rhoban_utils/serialization/json_serializable.h"
+
 using namespace rhoban_utils;
+
+Logger logger("Replayer");
 
 //TODO : put dof groups shortcuts in a helper
 std::vector<std::string> _dofNames = {
@@ -49,7 +54,11 @@ void Replayer::onStart() {
     time = 0.0;
     over = false;
 
-    splines = Function::fromFile("staticPositions.json");
+    try {
+      splines = Function::fromFile("staticPositions.json");
+    } catch (const rhoban_utils::JsonParsingError & exc) {
+      logger.error("%s", exc.what());
+    }
 }
 
 void Replayer::step(float elapsed) {

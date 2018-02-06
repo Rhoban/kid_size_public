@@ -81,7 +81,13 @@ void Kick::set(bool left, const std::string & newKickName)
 
 std::map<std::string, Function> Kick::loadCompiledKick(std::string filename)
 {
-    auto splines = Function::fromFile(filename);
+    std::map<std::string, Function> splines;
+    try { 
+      splines = Function::fromFile(filename);
+    } catch (const rhoban_utils::JsonParsingError & exc) {
+      logger.error("%s", exc.what());
+      return splines;
+    }
 
     tMax = 0;
     for (auto &entry :splines) {
@@ -121,7 +127,12 @@ void Kick::loadKick(std::string filename)
     logger.log("Generating kick");
 
     // Loading spline
-    auto kickSplines = Function::fromFile(filename);
+    std::map<std::string, Function> kickSplines;
+    try {
+      kickSplines = Function::fromFile(filename);
+    } catch (const rhoban_utils::JsonParsingError & exc) {
+      logger.error("%s", exc.what());
+    }
     for (auto &entry : kickSplines) {
         double duration = entry.second.getXMax();
         if (duration > xMax) {
