@@ -34,7 +34,7 @@
 #include "LearnedApproach.h"
 #include "policies/expert_approach.h"
 #include "problems/extended_problem_factory.h"
-#include "rosban_csa_mdp/core/policy_factory.h"
+#include "rhoban_csa_mdp/core/policy_factory.h"
 
 Moves::Moves(MoveScheduler* scheduler) :
         _scheduler(scheduler)

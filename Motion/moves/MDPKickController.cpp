@@ -9,11 +9,11 @@
 #include <fstream>
 #include <stdexcept>
 
-#include "rosban_csa_mdp/core/policy_factory.h"
+#include "rhoban_csa_mdp/core/policy_factory.h"
 
 #include "policies/expert_approach.h"
 #include "policies/ok_seed.h"
-#include "rosban_csa_mdp/core/policy_factory.h"
+#include "rhoban_csa_mdp/core/policy_factory.h"
 
 
 #include "robocup_referee/constants.h"

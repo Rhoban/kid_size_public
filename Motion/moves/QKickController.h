@@ -4,7 +4,7 @@
 #include <rhoban_utils/control/control.h>
 #include <services/TeamPlayService.h>
 
-#include "rosban_csa_mdp/core/policy.h"
+#include "rhoban_csa_mdp/core/policy.h"
 #include "rhoban_utils/angle.h"
 #include <strategy/KickStrategy.hpp>
 

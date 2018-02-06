@@ -10,7 +10,7 @@
 #include <fstream>
 #include <stdexcept>
 
-#include "rosban_csa_mdp/core/policy_factory.h"
+#include "rhoban_csa_mdp/core/policy_factory.h"
 #include "problems/extended_problem_factory.h"
 
 #include "policies/expert_approach.h"

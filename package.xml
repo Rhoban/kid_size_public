@@ -25,17 +25,17 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>RhAL</build_depend> <!-- rhoban/rhal -->
-  <build_depend>model</build_depend> <!-- rhobanproject/model -->
+  <build_depend>model</build_depend> <!-- rhoban/model -->
   <build_depend>robocup_referee</build_depend> <!-- rhoban/robocupreferee -->
-  <build_depend>rhoban_graphs</build_depend> <!-- rhobanproject/rhoban_graphs -->
-  <build_depend>rhoban_unsorted</build_depend> <!-- rhobanproject/rhoban_unsorted -->
+  <build_depend>rhoban_graphs</build_depend> <!-- rhoban/graphs -->
+  <build_depend>rhoban_unsorted</build_depend> <!-- rhoban/unsorted -->
   <build_depend>rhoban_random</build_depend> <!-- rhoban/rhoban_random -->
   <build_depend>rhoban_team_play</build_depend> <!-- rhoban/teamplay -->
   <build_depend>csa_mdp_experiments</build_depend> <!-- rhoban/csa_mdp_experiments.git -->
   <build_depend>tiny-dnn</build_depend> <!-- rhobandeps/tiny-dnn.git -->
   <build_depend>aruco</build_depend> <!-- rhobandeps/aruco.git -->
   <build_depend>tclap</build_depend> <!-- rhobandeps/tclap -->
-  <!-- <build_depend>env</build_depend> --> <!-- rhobanproject/environments -->
+  <!-- <build_depend>env</build_depend> --> <!-- rhoban/environments -->
 
   <run_depend>RhAL</run_depend>
   <run_depend>model</run_depend>
