@@ -3,6 +3,7 @@
 #include <rhoban_utils/util.h>
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/timing/time_stamp.h>
+#include <rhoban_utils/serialization/json_serializable.h>
 
 using namespace rhoban_utils;
 
@@ -22,21 +23,21 @@ void MaintenanceService::loadFile()
     tasks.clear();
 
     Json::Value json;
-    Json::Reader reader;
-    auto data = file_get_contents("maintenance.json");
+    try {
+      json = rhoban_utils::file2Json("maintenance.json");
+    } catch (const rhoban_utils::JsonParsingError & exc) {
+      logger.log("MaintenanceService::loadFile: %s", exc.what());
+      return;
+    }
 
-    if (data != "" && reader.parse(data, json)) {
-        for (auto name : json.getMemberNames()) {
-            auto entry = json[name];
-
-            Task task;
-            task.name = name;
-            task.description = entry["description"].asString();
-            task.last = entry["last"].asInt();
-            tasks.push_back(task);
-        }
-    } else {
-        logger.log("No maintenance.json file found");
+    for (auto name : json.getMemberNames()) {
+      auto entry = json[name];
+      
+      Task task;
+      task.name = name;
+      task.description = entry["description"].asString();
+      task.last = entry["last"].asInt();
+      tasks.push_back(task);
     }
 }
 

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <robocup_referee/constants.h>
 #include <rhoban_utils/util.h>
+#include <rhoban_utils/serialization/json_serializable.h>
 
 #include "KickStrategy.hpp"
 
@@ -51,31 +52,27 @@ void KickStrategy::setAction(double x, double y, Action action)
 bool KickStrategy::fromJson(std::string filename)
 {
     actions.clear();
-    auto data = rhoban_utils::file_get_contents(filename);
-
-    if (data != "") {
-        Json::Reader reader;
-        Json::Value json;
-
-        if (reader.parse(data, json)) {
-            accuracy = json["accuracy"].asDouble();
-            for (Json::ArrayIndex k=0; k<json["actions"].size(); k++) {
-                auto entry = json["actions"][k];
-                int x = entry[0].asInt();
-                int y = entry[1].asInt();
-                Action action;
-                action.kick = entry[2].asString();
-                action.orientation = entry[3].asDouble();
-                action.tolerance = entry[4].asDouble();
-                action.score = entry[5].asDouble();
-                actions[x][y] = action;
-            }
-
-            return true;
-        }
+    Json::Value json;
+    try { 
+        json = rhoban_utils::file2Json(filename);
+    } catch (const rhoban_utils::JsonParsingError & exc) {
+        std::cerr << "KickStrategy::fromJson: " << exc.what() << std::endl;
+        return false;
+    }
+    accuracy = json["accuracy"].asDouble();
+    for (Json::ArrayIndex k=0; k<json["actions"].size(); k++) {
+        auto entry = json["actions"][k];
+        int x = entry[0].asInt();
+        int y = entry[1].asInt();
+        Action action;
+        action.kick = entry[2].asString();
+        action.orientation = entry[3].asDouble();
+        action.tolerance = entry[4].asDouble();
+        action.score = entry[5].asDouble();
+        actions[x][y] = action;
     }
 
-    return false;
+    return true;
 }
 
 Json::Value KickStrategy::toJson()
