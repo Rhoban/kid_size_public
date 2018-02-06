@@ -77,9 +77,9 @@ LearnedApproach::LearnedApproach(Walk * walk_)
   }
  
 
-  PolicyFactory::registerExtraBuilder("expert_approach",
+  PolicyFactory::registerExtraBuilder("ExpertApproach",
                                       []() {return std::unique_ptr<Policy>(new ExpertApproach);});
-  PolicyFactory::registerExtraBuilder("mixed_approach",
+  PolicyFactory::registerExtraBuilder("MixedApproach",
                                       []() {return std::unique_ptr<Policy>(new MixedApproach);});
 
   bind->pull();
@@ -319,7 +319,7 @@ void LearnedApproach::updatePolicies()
       //displayProblemLimits();
     }
     catch (const std::runtime_error & exc) {
-      std::cerr << exc.what() << std::endl;
+      logger.warning("%s", exc.what());
     }
   }
 }
@@ -343,7 +343,7 @@ void LearnedApproach::updateProblems()
       //displayProblemLimits();
     }
     catch (const std::runtime_error & exc) {
-      std::cerr << exc.what() << std::endl;
+      logger.warning("%s", exc.what());
     }
   }
 }

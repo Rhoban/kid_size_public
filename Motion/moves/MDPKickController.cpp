@@ -166,7 +166,7 @@ void MDPKickController::updatePolicy()
     //displayProblemLimits();
   }
   catch (const std::runtime_error & exc) {
-    std::cerr << exc.what() << std::endl;
+    logger.warning("%s",exc.what());
   }
 }
 
@@ -187,7 +187,7 @@ void MDPKickController::updateProblem()
     //displayProblemLimits();
   }
   catch (const std::runtime_error & exc) {
-    std::cerr << exc.what() << std::endl;
+    logger.warning("%s", exc.what());
   }
 }
 

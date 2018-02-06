@@ -85,7 +85,7 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(new GoalKick());
     
     // Requires additionnal dependencies
-    csa_mdp::PolicyFactory::registerExtraBuilder("expert_approach",
+    csa_mdp::PolicyFactory::registerExtraBuilder("ExpertApproach",
                                                  []() {return std::unique_ptr<csa_mdp::Policy>(new csa_mdp::ExpertApproach);});
 
     add(new MDPKickController());
