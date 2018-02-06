@@ -29,7 +29,7 @@
   <build_depend>robocup_referee</build_depend> <!-- rhoban/robocupreferee -->
   <build_depend>rhoban_graphs</build_depend> <!-- rhoban/graphs -->
   <build_depend>rhoban_unsorted</build_depend> <!-- rhoban/unsorted -->
-  <build_depend>rhoban_random</build_depend> <!-- rhoban/rhoban_random -->
+  <build_depend>rhoban_random</build_depend> <!-- rhoban/random -->
   <build_depend>rhoban_team_play</build_depend> <!-- rhoban/teamplay -->
   <build_depend>csa_mdp_experiments</build_depend> <!-- rhoban/csa_mdp_experiments.git -->
   <build_depend>tiny-dnn</build_depend> <!-- rhobandeps/tiny-dnn.git -->
