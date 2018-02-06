@@ -94,19 +94,17 @@ void Application::launch() {
       playNext = false;
     }
     int key(-1);
-    logger.log("embedded = %d", embedded);
     if (!embedded) {
       if (!playing) {
         key = cv::waitKey();
       } else {
-        // TODO : are this magic numbers important?
-        int timeToWait = (int)(33 - elapsedTime);
+        // TODO : Implement FPS limit as a parameter
+        int timeToWait = (int)(33 - elapsedTime);// 30Hz max display
         int minWait = 5;
         if (timeToWait < minWait)
           timeToWait = minWait;
         logger.log("waitKey called in Application for %d (ms) : ", timeToWait);
         key = cv::waitKey(timeToWait);
-        // key = cv::waitKey(0);
       }
     }
 

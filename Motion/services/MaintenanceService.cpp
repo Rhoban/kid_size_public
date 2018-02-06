@@ -26,7 +26,7 @@ void MaintenanceService::loadFile()
     try {
       json = rhoban_utils::file2Json("maintenance.json");
     } catch (const rhoban_utils::JsonParsingError & exc) {
-      logger.log("MaintenanceService::loadFile: %s", exc.what());
+      logger.error("%s", exc.what());
       return;
     }
 
