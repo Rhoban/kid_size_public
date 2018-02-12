@@ -1,0 +1,90 @@
+* Définitions
+** Job
+- Une tâche élémentaire (perçage des trous, découpe contour)
+** Pièce
+- L'ensemble de plusieurs jobs 
+
+* Initialiser la machine
+1) Brancher la pompe à eau
+2) Allumer PC sur windows 7 (mdp: pass)
+3) Allumer la machine (VFD et POWER)
+4) Lancer Mach3000 et connecter la machine
+* Commandes machines:
+** Connexion machine
+- Quand le bouton E-STOP clignote, la machine n'est pas connecté
+   - Cliquer sur E-STOP pour la connecter
+- Quand autour du bouton c'est vert -> connecté
+** Commandes machine
+- PageUp/PageDown -> monter, descendre
+- flèches directionnelles -> bouger la tête
+
+* Faire une pièce
+1) Changement de plaque (si nécessaire)
+2) Mettre les fichiers sur l'ordinateur
+3) Faire le zero
+4) Tester que la pièce rentre bien en déplaçant l'outil avec les flèches
+   - Charger le job de découpe externe pour bien visualiser la découpe
+
+* Faire un job
+1) Aspirer la poussière d'alu
+2) Changer d'outil si besoin
+3) Close G-code
+4) Load G-code
+5) Mettre de l'huile de de coupe sur l'outil
+6) Appuyez sur start
+
+* Changement de plaque
+** Attention les bords peuvent être coupants
+** Fixation des cales:
+- Longue devant, courte au fond
+- Prendre de la marge pour éviter le contact machine
+- Visser fort, mais pas trop
+  - La plaque ne doit pas bouger (en z non plus)
+  - Ne pas péter le filetage
+
+* Changement d'outil
+1) Idéalement, on fait dépasser le moins possible (fin partie cylindrique)
+2) Serrer fort, mais sans abuser (ne pas s'appuyer dessus quoi)
+
+* Faire le zéro
+- X,Y:
+  - Proche à gauche de la pièce
+  - Mettre proche de la plaque et déplacer avec les flèches
+  - Prendre de la marge parce que la fraise va usiner à l'extérieure de la pièce
+  - Cliquer sur zeroX et zeroY
+- Z:
+  - Nettoyer la plaque
+  - Mettre l'auto-tool en dessous de l'outil
+  - Brancher la sonde sur l'outil
+  - Cliquer sur auto tool zero
+     
+
+* Vrac
+** Matériel de rechange
+- Armoire blanche
+  - Le plus fréquent:
+    - Changement de fraise (environ 1 fraise par plaque)
+      - Soit quand cassé, soit au bruit
+
+* Structure fichier usinage
+- <numero_etape>_<type_etape>_<taille_outil>.tap
+- Exemple:
+  - 01_holes
+
+* Outils
+** Liste
+- Fraise 2mm
+- Forêt 2.5mm
+- Fraise 3mm
+  - La machine à tout faire
+- Fraise 6mm
+  - Enlever beaucoup de matière
+** Remarques
+- Fraises -> 2 dents
+- Forêts -> 3 dents
+
+
+* Astuces
+** Éteindre la machine pendant le travail d'une pièce
+  - Si besoin d'éteindre la machine: cliquer sur goToZero
+  - Éteindre la machine
