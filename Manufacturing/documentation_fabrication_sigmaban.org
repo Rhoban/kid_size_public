@@ -28,9 +28,10 @@
 * Faire un job
 1) Aspirer la poussière d'alu
 2) Changer d'outil si besoin
+  - Auquel cas, refaire le zero
 3) Close G-code
 4) Load G-code
-5) Mettre de l'huile de de coupe sur l'outil
+5) Mettre de l'huile de coupe sur l'outil
 6) Appuyez sur start
 
 * Changement de plaque
