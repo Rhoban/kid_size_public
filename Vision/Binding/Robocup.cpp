@@ -269,7 +269,7 @@ void Robocup::init() {
 
 void Robocup::initImageHandlers() {
   imageHandlers.push_back(
-      SpecialImageHandler("TaggedImg", 320, 240, [this](int width, int height) {
+      SpecialImageHandler("TaggedImg", 640, 480, [this](int width, int height) {
         return this->getTaggedImg(width, height);
       }));
   imageHandlers.push_back(
@@ -949,8 +949,8 @@ cv::Mat Robocup::getTaggedImg() {
 /// - Horizon
 /// Cyan:
 /// - Position of the ball inside the stack
-/// ???:
-/// - Minimal and maximal radius of the ball
+/// Magenta:
+/// - Detected robots
 cv::Mat Robocup::getTaggedImg(int width, int height) {
   if (cs == NULL)
     throw std::runtime_error("TaggedImg not ready");
