@@ -1,0 +1,34 @@
+* Prérequis
+** Installer Autodesk Inventor Professional 2018 (Licence éducation gratuite)
+** Installer Inventor HSM Premium 2018 (Licence éducation gratuite)
+- https://www.autodesk.com/education/free-software/inventor-hsm-ultimate
+* Remarques préalables
+- Attention, toutes les manipulations à effectuer dans Autodesk requiert de bien
+  appuyer sur OK pour les valider (Changer d'outil annule l'opération)
+* Préparer la zone de travail
+** Ouvrir la pièce à imprimer dans autodesk
+** Choisir l'onglet CAM (Alt,C)
+** Définir le réferentiel (Outil Setup)
+*** L'espace de travail doit être positif en x et y, négatif en z
+*** (0,0,0) correspond à un des coins de l'espace de travail (set stock point)
+** Retirer les marges (2ème onglet de l'outil setup)
+*** Sélectionner "no additional stock"
+* Préparer un job
+** Choisir le template associé
+- Clic-droit dans l'onglet CAM
+- 'Create from template'
+- Choisir le template adapté (ils sont dans le dossier 'machining_template')
+** Si le job est le contour de la pièces, ajouter quelques pads
+- Forme triangulaire
+- Hauteur 1.5 mm
+- Largeur 0.75mm
+* Exporter un job
+** Sélectionner le job associer
+** Choisir post-process
+- en haut, à droite de simulate
+** À faire la première fois, à vérifier par la suite
+*** Dans Post configuration, choisir Mach3Mill
+*** Mettre le flag ... G28 à False
+** Choisir le dossier de sortie
+** Nommer le fichier avec la convention suivante: tacheId_name_outil.tap
+
