@@ -28,17 +28,19 @@
 * Faire un job
 1) Aspirer la poussière d'alu
 2) Changer d'outil si besoin
+  - Auquel cas, refaire le zero
 3) Close G-code
 4) Load G-code
-5) Mettre de l'huile de de coupe sur l'outil
+5) Mettre de l'huile de coupe sur l'outil
 6) Appuyez sur start
 
 * Changement de plaque
 ** Attention les bords peuvent être coupants
 ** Fixation des cales:
-- Longue devant, courte au fond
+- Centrer les cales pour que la CNC passe sur les cotes
 - Prendre de la marge pour éviter le contact machine
 - Visser fort, mais pas trop
+  - D'abord la vis la plus proche de la cale
   - La plaque ne doit pas bouger (en z non plus)
   - Ne pas péter le filetage
 
