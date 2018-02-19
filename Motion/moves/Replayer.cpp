@@ -5,7 +5,7 @@
 
 using namespace rhoban_utils;
 
-Logger logger("Replayer");
+static Logger logger("Replayer");
 
 //TODO : put dof groups shortcuts in a helper
 std::vector<std::string> _dofNames = {

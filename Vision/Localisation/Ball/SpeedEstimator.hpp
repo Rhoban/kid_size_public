@@ -3,13 +3,14 @@
 #include <cstdlib>
 #include <list>
 
+#include "rhoban_utils/timing/time_stamp.h"
 #include "rhoban_geometry/point.h"
 
 namespace Vision {
 namespace Localisation {
 class SpeedEstimator {
 private:
-  typedef std::pair<double, rhoban_geometry::Point> TimedPosition;
+  typedef std::pair<rhoban_utils::TimeStamp, rhoban_geometry::Point> TimedPosition;
   // MEMORY
   /// Positions are stored in world referential
   std::list<TimedPosition> positions;
@@ -28,7 +29,8 @@ public:
   SpeedEstimator();
 
   // Insert the value if it is not equivalent to the last on
-  void update(double ts, const rhoban_geometry::Point &p, double quality = 1);
+  void update(const rhoban_utils::TimeStamp & ts,
+              const rhoban_geometry::Point &p, double quality = 1);
 
   rhoban_geometry::Point getSpeed(); // in m/s, in world referential
   double getQuality();

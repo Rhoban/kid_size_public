@@ -1,5 +1,6 @@
 #include "SpeedEstimator.hpp"
 #include "rhoban_utils/timing/time_stamp.h"
+#include "rhoban_utils/logging/logger.h"
 
 #include <cmath>
 
@@ -8,13 +9,18 @@ using namespace rhoban_geometry;
 using ::rhoban_utils::TimeStamp;
 using namespace std;
 
+static rhoban_utils::Logger logger("SpeedEstimator");
+
 namespace Vision {
 namespace Localisation {
 
 SpeedEstimator::SpeedEstimator()
   : memorySize(5), disc(0.9),speed(0, 0), qSpeed(0, 0) {}
 
-void SpeedEstimator::update(double ts, const Point &p, double quality) {
+void SpeedEstimator::update(const rhoban_utils::TimeStamp & ts,
+                            const Point &p, double quality) {
+  logger.log("update: pos:  %f, %f, time: %f [s], quality: %f",
+             p.x, p.y, ts.getTimeSec(), quality);
   // Insert entry
   positions.push_front(TimedPosition(ts, p));
   qualities.push_front(quality);
@@ -34,9 +40,14 @@ void SpeedEstimator::update(double ts, const Point &p, double quality) {
   auto oldP = positions.begin();
   oldP++;
   while (oldP != positions.end()) {
-    Point diff = newP->second - oldP->second;
-    double dt = (newP->first - oldP->first) / 1000.0;
+    const Point & src = oldP->second;
+    const Point & dst = newP->second;
+    Point diff = dst - src;
+    double dt = diffSec(oldP->first, newP->first);
     if (dt != 0) { // Not calculating speeds based on no dt
+      logger.log("oldPos: (%f,%f), newPos: (%f,%f), diff: (%f,%f), dt: %f",
+                 src.x, src.y, dst.x, dst.y, diff.x, diff.y, dt);
+                 
       speeds.push_back(diff / dt);
     }
     oldP++;
@@ -83,7 +94,7 @@ void SpeedEstimator::update(double ts, const Point &p, double quality) {
     // - Coherency of received values
     // - Qualities of positions seen
     Point coherenceScore;
-    double flatTol = 35.0;
+    double flatTol = 0.25;
     coherenceScore.x = (1 - avgDev.getX() / (fabs(avgSpeed.getX() + flatTol)));
     coherenceScore.y = (1 - avgDev.getY() / (fabs(avgSpeed.getY() + flatTol)));
     if (coherenceScore.x < 0)

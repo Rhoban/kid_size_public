@@ -136,6 +136,8 @@ Head::Head()
     ->comment("Distance at which tracking becomes longer")->defaultValue(0.7)->persisted(true);
   bind->bindNew("forceTrackDist", force_track_dist, RhIO::Bind::PullOnly)
     ->comment("Distance to force watching the ball")->defaultValue(0.35)->persisted(true);
+  bind->bindNew("forceTrack", force_track, RhIO::Bind::PullOnly)
+    ->comment("Is tracking forced ?")->defaultValue(false);
 
   // Targets monitored
   bind->bindNew("pan", pan_deg, RhIO::Bind::PushOnly)
@@ -316,7 +318,10 @@ bool Head::shouldTrackBall()
   double ball_dist = loc->getBallPosSelf().getLength();
   // Never track ball if quality is too low
   if (loc->ballQ < 0.1) return false;
+  // If tracking is forced or forced by dist, track
+  if (force_track) return true;
   if (ball_dist < force_track_dist) return true;
+  // If robot is tracking currently, stop tracking if period has ended
   if (is_tracking) {
     if (ball_dist < near_track_dist) {
       return tracking_time < near_tracking_period;
@@ -324,6 +329,7 @@ bool Head::shouldTrackBall()
       return tracking_time < tracking_period;
     }
   }
+  // Otherwise, start tracking if scan_period is finished
   return scanning_time > scan_period + scan_extra_period;
 }
 
@@ -365,7 +371,7 @@ Eigen::Vector3d Head::getBallTarget(Leph::HumanoidModel * model,
   double robotHeight = model->frameInSelf("camera", Eigen::Vector3d::Zero())(2);//[m]
 
   LocalisationService * loc = getServices()->localisation;
-  auto point = loc->getBallPosSelf();
+  auto point = loc->getPredictedBallSelf();
 
   // Getting limits angle
   double max_tilt_value = max_tilt_track;

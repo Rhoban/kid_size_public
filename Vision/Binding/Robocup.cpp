@@ -861,7 +861,7 @@ void Robocup::updateBallInformations() {
       cv::Point2f ballPix(ballsX[k], ballsY[k]);
       Eigen::Vector3d ball_in_world = cs->ballInfoFromPixel(ballPix, 1, 1);
       positions.push_back(ball_in_world);
-      ballSpeedEstimator->update(cs->getTimeStamp().getTimeMS() / 1000,
+      ballSpeedEstimator->update(cs->getTimeStamp(),
                                  Point(ball_in_world(0), ball_in_world(1)));
     } catch (const std::runtime_error &exc) {
       // Ignore the candidate
@@ -989,6 +989,23 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
         ss << (candidates.size() - k);
         cv::putText(img, ss.str(), pos, cv::FONT_HERSHEY_SIMPLEX, 0.3,
                     cv::Scalar(0, 0, 0), 1);
+
+        // # Futur position of ball
+        // Elapsed time
+        double tag_ball_anticipation = 0.2;// [s] (TODO: set as rhio parameters?)
+        double elapsed = tag_ball_anticipation;
+        if (!_scheduler->getServices()->model->isFakeMode()) {// Fake mode here
+          elapsed += diffSec(cs->getTimeStamp(), TimeStamp::now());
+        }
+        // Compute futur position
+        Point ball_usable_speed = ballSpeedEstimator->getUsableSpeed();
+        Eigen::Vector3d ball_speed(ball_usable_speed.x, ball_usable_speed.y, 0);
+        auto next_cpos = cpos +  ball_speed * elapsed;
+        auto futur_pos = cs->imgXYFromRobotPosition(cv::Point2f(next_cpos.x(), next_cpos.y()),
+                                                    img.cols, img.rows, false);
+        // Avoid drawing line if out of image
+        if (futur_pos.x < 0 && futur_pos.y < 0) continue;
+        cv::line(img, pos, futur_pos, cv::Scalar(255, 255, 0), 2);
       }
   }
   
