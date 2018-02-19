@@ -1,25 +1,24 @@
-Pièces à faire
+Pièces pour 1 robot et 2 upgrades (une upgrade a déjà été faite).
 
-5x  plaque pied
-10x UMX106 plaquettes
-5x  UMX106 base
-10x tibia
-10x U long plaquettes
-5x  U long base
-2x  torse mid
-2x  torse top
-3x  nuc fix
-5x  handler
-12x  U cou plaquettes
-6x  U cou base
-
-Pièces faites :
-
-2x  U cou base
-4x  torse mid (A vÃ©rifier !)
-4x  torse top
-3x  nuc fix
-1x  handler
-
-2x U cou plaquettes
-2x Gabarit perçage base cou
+| Todo | Done | Pièce            | Nom autodesk                   |
+|------+------+------------------+--------------------------------+
+|   3  |   0  | Torse bas        | SigmaBan_torsebas64            |
+|   3  |   3  | Torse milieu     | new_torso_middleplate_nuc      |
+|   3  |   3  | Torse haut       | new_torso_topplate_nuc         |
+|   3  |   2  | Poignée          | folded_handle_nuc              |
+|   3  |   4  | Fixation NUC     | nuc_fix                        |
+|   2  |   0  | Plaque pied      | foot_jauges_acier              |
+|   4  |   0  | Tibia            | Sigma106_tibiaplate_design     |
+|   1  |   0  | Séparation torse | fitPlate                       |
+|   8  |   0  | Côté U64         | new_side_u64                   |
+|   4  |   0  | Côté U64 (Face)  | new_side_u64_head              |
+|   3  |   3  | Base U64 Cou     | new_base_u64_neck              |
+|   6  |   0  | Côté U28 to U64  | new_U28_to_64_side_neck        |
+|   2  |   0  | Base U64 Long    | new_base_u64_long              |
+|   4  |   0  | Base U64         | new_base_u64                   |
+|   2  |   0  | Base U106 long   | new_base_u106_long             |
+|   4  |   0  | Côté U106 long   | new_side_u106_long_design      |
+|   2  |   0  | Protection tête  | ptgrey_protect2_base_eye_hair1 |
+|   1  |   0  | Fixation Caméra  | ptgrey_fix2                    |
+|   2  |   0  | Bras             | NA                             |
+|   2  |   0  | Avant-Bras       | NA                             |
