@@ -8,6 +8,7 @@ using namespace rhoban_utils;
 
 ReactiveKicker::ReactiveKicker(Walk * walk) : ApproachMove(walk)
 {
+  Move::initializeBinding();
   ApproachMove::initBindings();
   bind->bindNew("anticipation", anticipation, RhIO::Bind::PullOnly)
     ->defaultValue(1)->minimum(0)->maximum(2)
@@ -28,6 +29,8 @@ void ReactiveKicker::onStart()
 {
   // Simply use only classic currently
   expectedKick = "classic";
+  is_kicking = false;
+  kick_score = 0;
 }
 
 void ReactiveKicker::step(float elapsed) {

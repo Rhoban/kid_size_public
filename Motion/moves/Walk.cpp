@@ -543,6 +543,7 @@ void Walk::control(bool enable, double step, double lateral, double turn)
 
 void Walk::kick(bool rightFoot, const std::string & kickName)
 {
+    walkLogger.log("Kick requested");
     if (rightFoot) {
         shouldKickRight = true;
     } else {

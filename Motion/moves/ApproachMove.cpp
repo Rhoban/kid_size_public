@@ -126,17 +126,23 @@ void ApproachMove::updateKickScore(double elapsed)
 
 void ApproachMove::updateKickScore(double elapsed, const Point & ball_pos)
 {
-  double kick_dir_rad = deg2rad(getKickCap().getSignedValue());
-  Eigen::Vector3d state(ball_pos.x, ball_pos.y, kick_dir_rad);
   // Updating kick score
   const KickZone & kick_zone = kmc.getKickModel(expectedKick).getKickZone();
-  if (kick_zone.canKick(kickRight, state))
-  {
+  Eigen::Vector3d state(ball_pos.x, ball_pos.y, 0);
+  // Debug
+  std::ostringstream oss;
+  oss << "Ball state: (" << state.transpose() << ") -> ";
+  Eigen::Vector3d wished_pos = kick_zone.getWishedPos(kickRight); 
+  oss << " (wished_pos: " << wished_pos.transpose() << ")";
+  if (kick_zone.canKick(kickRight, state)) {
     kick_score += elapsed * kick_gain;
+    logger.log("%s", oss.str().c_str());
   }
-  else
-  {
+  else {
     kick_score -= elapsed * no_kick_gain;
+    if (kick_zone.canKick(!kickRight, state)) {
+      oss << " -> but can kick with other foot";
+    }
   }
   // Bounding kick_score values
   kick_score = std::max(0.0, std::min(1.0, kick_score));

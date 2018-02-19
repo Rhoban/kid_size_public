@@ -19,8 +19,9 @@ SpeedEstimator::SpeedEstimator()
 
 void SpeedEstimator::update(const rhoban_utils::TimeStamp & ts,
                             const Point &p, double quality) {
-  logger.log("update: pos:  %f, %f, time: %f [s], quality: %f",
-             p.x, p.y, ts.getTimeSec(), quality);
+  // Debug message (TODO: make it an option)
+  //logger.log("update: pos:  %f, %f, time: %f [s], quality: %f",
+  //           p.x, p.y, ts.getTimeSec(), quality);
   // Insert entry
   positions.push_front(TimedPosition(ts, p));
   qualities.push_front(quality);
@@ -45,9 +46,6 @@ void SpeedEstimator::update(const rhoban_utils::TimeStamp & ts,
     Point diff = dst - src;
     double dt = diffSec(oldP->first, newP->first);
     if (dt != 0) { // Not calculating speeds based on no dt
-      logger.log("oldPos: (%f,%f), newPos: (%f,%f), diff: (%f,%f), dt: %f",
-                 src.x, src.y, dst.x, dst.y, diff.x, diff.y, dt);
-                 
       speeds.push_back(diff / dt);
     }
     oldP++;
