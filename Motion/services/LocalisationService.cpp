@@ -191,22 +191,7 @@ Point LocalisationService::getBallSpeedSelf()
 
 Point LocalisationService::getPredictedBallSelf()
 {
-  mutex.lock();
-  
-  double elapsed = diffSec(ballTS, TimeStamp::now());
-  Leph::HumanoidModel *model = NULL;
-  if (Helpers::isFakeMode()) {
-    model = &(getServices()->model->goalModel().get());
-  } else {
-    model = &(getServices()->model->correctedModel().get());
-  }
-  // Predicting position in world and then transforming into self
-  Eigen::Vector3d speedVec(ballSpeed.x, ballSpeed.y, 0);
-  Eigen::Vector3d predictedInWorld = ballPosWorld + speedVec*elapsed;
-  Eigen::Vector3d predictedInSelf = model->frameInSelf("origin", predictedInWorld);
-  mutex.unlock();
-  return Point(predictedInSelf(0), predictedInSelf(1));
-  
+  return getPredictedBallSelf(TimeStamp::now());
 }
 
 Point LocalisationService::getPredictedBallSelf(rhoban_utils::TimeStamp t)

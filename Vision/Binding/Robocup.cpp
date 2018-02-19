@@ -76,7 +76,6 @@ Robocup::Robocup(MoveScheduler *scheduler)
       logging(false),
       logPrefix("Logs"),
       _scheduler(scheduler),
-      showTopView(false), showTaggedImg(false), showRadarImg(false),
       benchmark(false), benchmarkDetail(0),
       cs(new CameraState(scheduler)), //TODO: maybe put the name of the param file elsewhere
       activeSource(false),
@@ -115,7 +114,6 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
     :  imageDelay(0),
        logging(false),
        logPrefix("Logs"),
-       showTopView(false), showTaggedImg(false), showRadarImg(false),
        benchmark(false), benchmarkDetail(0),
        _runThread(NULL),
        cs(new CameraState(scheduler)),
@@ -213,8 +211,6 @@ cv::Mat Robocup::getImg(const std::string &name, int wishedWidth,
   cv::Mat original, scaled, final;
   if (name == "Tagged") {
     original = getTaggedImg();
-  } else if (name == "Calibration") {
-    original = getCalibrationImg(wishedWidth, wishedHeight);
   } else {
     try {
       original = pipeline.get(name).getImg()->clone();
@@ -234,9 +230,6 @@ cv::Mat Robocup::getImg(const std::string &name, int wishedWidth,
 Json::Value Robocup::toJson() const {
   // Writing stream
   Json::Value v = Application::toJson();
-  v["showTopView"] = showTopView;
-  v["showTaggedImg"] = showTaggedImg;
-  v["showRadarImg"] = showRadarImg;
   v["benchmark"] = benchmark;
   v["benchmarkDetail"] = benchmarkDetail;
   v["imageDelay"] = imageDelay;
@@ -252,9 +245,6 @@ Json::Value Robocup::toJson() const {
 
 void Robocup::fromJson(const Json::Value & v, const std::string & dir_name) {
   Application::fromJson(v, dir_name);
-  rhoban_utils::tryRead(v,"showTopView",&showTopView);
-  rhoban_utils::tryRead(v,"showTaggedImg",&showTaggedImg);
-  rhoban_utils::tryRead(v,"showRadarImg",&showRadarImg);
   rhoban_utils::tryRead(v,"benchmark",&benchmark);
   rhoban_utils::tryRead(v,"benchmarkDetail",&benchmarkDetail);
   rhoban_utils::tryRead(v,"imageDelay",&imageDelay);
@@ -272,13 +262,6 @@ void Robocup::init() {
   timeSinceLastFrame = 0;
   lastTS = ::rhoban_utils::TimeStamp::fromMS(0);
 
-  if (showTaggedImg)
-    cv::namedWindow("Tagged Image", CV_WINDOW_NORMAL);
-  if (showTopView)
-    cv::namedWindow("Top View", CV_WINDOW_NORMAL);
-  if (showRadarImg)
-    cv::namedWindow("Radar Image", CV_WINDOW_NORMAL);
-
   initRhIO();
   // update the Legacy robotbasis
   RobotBasis::robotHeight = cs->getHeight(); // NOTE: important to init this
@@ -286,16 +269,12 @@ void Robocup::init() {
 
 void Robocup::initImageHandlers() {
   imageHandlers.push_back(
-      SpecialImageHandler("TaggedImg", 320, 240, [this](int width, int height) {
+      SpecialImageHandler("TaggedImg", 640, 480, [this](int width, int height) {
         return this->getTaggedImg(width, height);
       }));
   imageHandlers.push_back(
       SpecialImageHandler("RadarImg", 640, 480, [this](int width, int height) {
         return this->getRadarImg(width, height);
-      }));
-  imageHandlers.push_back(SpecialImageHandler(
-      "CalibrationImg", 640, 480, [this](int width, int height) {
-        return this->getCalibrationImg(width, height);
       }));
 }
 
@@ -308,21 +287,6 @@ void Robocup::initRhIO() {
   RhIO::Root.newFloat("/Vision/lastUpdate")
       ->defaultValue(-1)
       ->comment("Time since last update [ms]");
-  RhIO::Root.newBool("/Vision/showCalibrationGrid")
-      ->defaultValue(false)
-      ->comment("Display the calibration grid");
-  RhIO::Root.newFloat("/Vision/Calibration/targetX")
-      ->defaultValue(2.0)
-      ->comment("Camera calibration target X");
-  RhIO::Root.newFloat("/Vision/Calibration/targetY")
-      ->defaultValue(2.0)
-      ->comment("Camera calibration target Y");
-  RhIO::Root.newFloat("/Vision/Calibration/estimateX")
-      ->defaultValue(2.0)
-      ->comment("Camera calibration estimation X");
-  RhIO::Root.newFloat("/Vision/Calibration/estimateY")
-      ->defaultValue(2.0)
-      ->comment("Camera calibration estimation Y");
   if (RhIO::Root.commandExist("Localisation/resetFilters")) {
     return;
   }
@@ -418,8 +382,6 @@ void Robocup::initObservationTypes() {
 }
 
 void Robocup::finish() {
-  if (showTaggedImg || showTopView || showRadarImg)
-    cv::destroyAllWindows();
 }
 
 void Robocup::step() {
@@ -580,8 +542,6 @@ void Robocup::importFromRhIO() {
   imageDelay = RhIO::Root.getValueInt("/Vision/imageDelay").value;
   angularPitchTolerance =
       RhIO::Root.getValueFloat("/Vision/angularPitchTolerance").value;
-  calibrationGrid =
-      RhIO::Root.getValueBool("/Vision/showCalibrationGrid").value;
   // Import size update for images
   for (SpecialImageHandler &sih : imageHandlers) {
     std::string prefix = "Vision/" + sih.name;
@@ -901,7 +861,7 @@ void Robocup::updateBallInformations() {
       cv::Point2f ballPix(ballsX[k], ballsY[k]);
       Eigen::Vector3d ball_in_world = cs->ballInfoFromPixel(ballPix, 1, 1);
       positions.push_back(ball_in_world);
-      ballSpeedEstimator->update(cs->getTimeStamp().getTimeMS() / 1000,
+      ballSpeedEstimator->update(cs->getTimeStamp(),
                                  Point(ball_in_world(0), ball_in_world(1)));
     } catch (const std::runtime_error &exc) {
       // Ignore the candidate
@@ -989,10 +949,8 @@ cv::Mat Robocup::getTaggedImg() {
 /// - Horizon
 /// Cyan:
 /// - Position of the ball inside the stack
-/// Light green:
-/// - Calibration grid (currently disabled)
-/// ???:
-/// - Minimal and maximal radius of the ball
+/// Magenta:
+/// - Detected robots
 cv::Mat Robocup::getTaggedImg(int width, int height) {
   if (cs == NULL)
     throw std::runtime_error("TaggedImg not ready");
@@ -1031,6 +989,23 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
         ss << (candidates.size() - k);
         cv::putText(img, ss.str(), pos, cv::FONT_HERSHEY_SIMPLEX, 0.3,
                     cv::Scalar(0, 0, 0), 1);
+
+        // # Futur position of ball
+        // Elapsed time
+        double tag_ball_anticipation = 0.2;// [s] (TODO: set as rhio parameters?)
+        double elapsed = tag_ball_anticipation;
+        if (!_scheduler->getServices()->model->isFakeMode()) {// Fake mode here
+          elapsed += diffSec(cs->getTimeStamp(), TimeStamp::now());
+        }
+        // Compute futur position
+        Point ball_usable_speed = ballSpeedEstimator->getUsableSpeed();
+        Eigen::Vector3d ball_speed(ball_usable_speed.x, ball_usable_speed.y, 0);
+        auto next_cpos = cpos +  ball_speed * elapsed;
+        auto futur_pos = cs->imgXYFromRobotPosition(cv::Point2f(next_cpos.x(), next_cpos.y()),
+                                                    img.cols, img.rows, false);
+        // Avoid drawing line if out of image
+        if (futur_pos.x < 0 && futur_pos.y < 0) continue;
+        cv::line(img, pos, futur_pos, cv::Scalar(255, 255, 0), 2);
       }
   }
   
@@ -1086,24 +1061,6 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
   // Color in BGR
   cv::line(img, horizon1, horizon2, cv::Scalar(255, 0, 0), 2);
 
-  // Draw reference line at 0.7
-  if (calibrationGrid) {
-    int cx = img.cols / 2;
-    int cy = img.rows / 2;
-    cv::Scalar gridColor(0, 150, 0);
-    cv::line(img, cv::Point(cx, 0), cv::Point(cx, img.rows - 1),
-             cv::Scalar(0, 255, 0), 0);
-    cv::line(img, cv::Point(cx + 0.7 * cx, 0),
-             cv::Point(cx + 0.7 * cx, img.rows - 1), gridColor, 0);
-    cv::line(img, cv::Point(cx - 0.7 * cx, 0),
-             cv::Point(cx - 0.7 * cx, img.rows - 1), gridColor, 0);
-    cv::line(img, cv::Point(0, cy), cv::Point(img.cols - 1, cy),
-             cv::Scalar(0, 255, 0), 0);
-    cv::line(img, cv::Point(0, cy + 0.7 * cy),
-             cv::Point(img.cols - 1, cy + 0.7 * cy), gridColor, 0);
-    cv::line(img, cv::Point(0, cy - 0.7 * cy),
-             cv::Point(img.cols - 1, cy - 0.7 * cy), gridColor, 0);
-  }
   globalMutex.unlock();
 
   return img;
@@ -1418,52 +1375,6 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         }
       }
     }
-  }
-  globalMutex.unlock();
-
-  return img;
-}
-
-cv::Mat Robocup::getCalibrationImg(int width, int height) {
-  globalMutex.lock();
-
-  cv::Mat tmp = pipeline.get("source").getImg()->clone();
-  cv::Mat img, tmp_small;
-  cv::resize(tmp, tmp_small, cv::Size(width, height));
-  cv::cvtColor(tmp_small, img, CV_YUV2BGR);
-
-  // Draw calibration target
-  double targetX =
-      RhIO::Root.getValueFloat("/Vision/Calibration/targetX").value;
-  double targetY =
-      RhIO::Root.getValueFloat("/Vision/Calibration/targetY").value;
-  if (targetX < 1.0 && targetX > -1.0 && targetY < 1.0 && targetY > -1.0) {
-    int sizeX = img.cols / 2;
-    int sizeY = img.rows / 2;
-    int posX = targetX * sizeX + sizeX;
-    int posY = targetY * sizeY + sizeY;
-    cv::Scalar lineColor(0, 0, 200);
-    cv::line(img, cv::Point(posX, 0), cv::Point(posX, img.rows - 1), lineColor,
-             2);
-    cv::line(img, cv::Point(0, posY), cv::Point(img.cols - 1, posY), lineColor,
-             2);
-  }
-  // Draw point estimated position
-  double estimateX =
-      RhIO::Root.getValueFloat("/Vision/Calibration/estimateX").value;
-  double estimateY =
-      RhIO::Root.getValueFloat("/Vision/Calibration/estimateY").value;
-  if (estimateX < 1.0 && estimateX > -1.0 && estimateY < 1.0 &&
-      estimateY > -1.0) {
-    int sizeX = img.cols / 2;
-    int sizeY = img.rows / 2;
-    int posX = estimateX * sizeX + sizeX;
-    int posY = estimateY * sizeY + sizeY;
-    cv::Scalar lineColor(150, 0, 0);
-    cv::line(img, cv::Point(posX, 0), cv::Point(posX, img.rows - 1), lineColor,
-             1);
-    cv::line(img, cv::Point(0, posY), cv::Point(img.cols - 1, posY), lineColor,
-             1);
   }
   globalMutex.unlock();
 

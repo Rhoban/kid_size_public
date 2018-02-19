@@ -157,6 +157,9 @@ private:
   /// Do not loose ball when it's really close
   double force_track_dist;
 
+  /// For tracking experiments, we always want to track the ball
+  bool force_track;
+
   /// Avoid sudden changes
   double smoothing;
 

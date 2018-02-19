@@ -83,12 +83,6 @@ private:
   MoveScheduler *_scheduler;
 
 public:
-  // Display options
-  bool showTopView, showRobotView, showTaggedImg, showRadarImg;
-
-  /// enable or disable the calibration grid
-  bool calibrationGrid;
-
   // Properties for monitoring images
   std::vector<SpecialImageHandler> imageHandlers;
 
@@ -185,7 +179,6 @@ public:
   cv::Mat getRobotView(int width = 600, int height = 600);
   cv::Mat getTaggedImg();
   cv::Mat getTaggedImg(int width, int height);
-  cv::Mat getCalibrationImg(int width, int height);
   cv::Mat getRadarImg(int width, int height);
 
   cv::Mat getImg(const std::string &name, int wishedWidth, int wishedHeight,
