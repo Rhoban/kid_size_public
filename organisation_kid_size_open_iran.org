@@ -1,0 +1,118 @@
+* Calendrier Optimiste
+** ASAP
+- Pré-enregistrement sur le site
+  - Antoine, Adrien, Patxi, Ludo
+** 2 au 9 février: Inventaire + test 
+** 9 au 23 février: Commande et réception des pièces + Formation usinage
+** 23 février au 2 mars: Usinage des pièces
+** 2 au 16 mars: Cartes électroniques + Assemblage robots
+** 16 au 23 mars: Tests réels (fin construction robots)
+** 23 au 30 mars: Améliorations
+** 3-7 Avril: Compétition (départ le 2 avril)
+* Tâches à faire (IranOpen)
+** Indispensable
+*** Inventaire
+- Lister matériel disponible/requis
+  - Alu (3mm, 6mm)
+  - Moteurs
+    - MX-64 et MX-106
+    - Spare restant:
+      - 10 MX-64AR (RS485)
+  - Câblage
+  - NUC RAM + SSD
+  - Cartes + composants éléctroniques
+  - Jauges de contrainte
+  - Visserie
+  - Autres
+*** Finir le refactoring
+- Ludo
+*** Construction robots
+- Combien de robots???
+  - À voir avec Olivier
+- Inventaire + commande matériel
+  - Patxi délégué officiel!!!
+  - NUC
+  - Moteurs
+  - Autres?
+    - Composants cartes éléc'
+- Usinage des pièces CNC
+  - À voir avec Steve + Antoine
+- Cartes éléctroniques
+  - Tests à faire
+  - À voir avec Grégoire
+- Assemblage robots
+  - Câblages
+    - À voir avec Steve/Loïc/Olivier
+- En simultané
+  - Formation à la maintenance
+  - Création documentation
+*** Prise en main soft
+- Installation du code
+- Utilisation des robots
+  - Lancement pour les matchs
+  - Procédure de test
+  - Prises de logs
+    - Apprentissage vision
+    - Visual Compass
+  - Utilisation des différents viewers
+    - BehaviorViewer
+    - Monitoring UDP
+- Fichiers de configuration principaux
+  - Calibration des robots
+    - Moteurs
+    - Erreurs d'angle sur la tête
+*** Tests réels
+- Préparer le terrain
+  - Demi-terrain ou terrain complet?
+  - Nouveau terrain?
+- Faire de vrais matchs d'entraînement
+- Familiarisation avec les règles
+  - Arbitrage etc...
+- Formations LiPo
+*** Préparation matérial pour départ
+- À voir avec tout le monde
+** Important
+*** Débug+Tuning
+- Tuning de la marche
+- Tuning approche
+- Tuning du tir
+- Procédure d'entraînement Vision
+  - Balle
+  - Goal
+  - ArenaBorders/Corners
+  - Robots adverses
+    - À prendre en main/retravailler si possible
+*** Contributions
+- Apprendre à créer un mouvement/comportement
+*** Améliorations
+- Prédiction de position de balle
+  - Améliorer/remplacer le système existant
+  - Brancher les prises d'informations sur la position prédites
+- Améliorer tracking
+  - Forcer le tracking lors des shoots
+  - Reprise du tracking en dynamique
+** Si possible (non prioritaire)
+*** Apprentissage de modèles (logLikelihood)
+  - Modèle prédictif de déplacement (marche)
+  - Modèle de l'herbe (déplacement de la balle)
+  - Améliorer la calib Tête
+*** Approche dynamique
+- Tirer depuis balle en mouvement
+  - Requiert amélioration tracking et modèle prédictif de déplacement
+
+
+** Principe apprentissage modèle
+- Input : i \in I
+- Output: o \in O
+- But: optimiser p \in P <- P espace de paramètres
+- On définit un modèle M: P x I -> Distrib(O)
+  - M(p,i) est une distribution sur O
+- Selon quel critère on optimise?
+  - On a accès à un training set X,Y:
+    - X un ensemble d'éléments de I
+    - Y l'ensemble des éléments de O associés
+    - x_i \in X est associé à y_i \in Y
+  - Critère pour maximiser p \in P
+    - prod_{X,Y} marginalLikelihood(M(p,x_i),y_i)
+    - sum_{X,Y} logMarginalLikelihood(M(p,x_i),y_i)
+
