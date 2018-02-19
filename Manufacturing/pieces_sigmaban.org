@@ -1,0 +1,66 @@
+* Pièces CNC
+| Qty | Pièce            | Nom autodesk                   | Commentaires                                    |
+|-----+------------------+--------------------------------+-------------------------------------------------|
+|   1 | Torse bas        | SigmaBan_torsebas64            |                                                 |
+|   1 | Torse milieu     | new_torso_middleplate_nuc      | Usinage à refaire                               |
+|   1 | Torse haut       | new_torso_topplate_nuc         |                                                 |
+|   1 | Poignée          | folded_handle_nuc              | (À plier?)                                      |
+|   1 | Fixation NUC     | nuc_fix                        |                                                 |
+|   2 | Plaque pied      | foot_jauges_acier              |                                                 |
+|   4 | Tibia            | Sigma106_tibiaplate_design     |                                                 |
+|   1 | Séparation torse | fitPlate                       | Pièce pliée?                                    |
+|   8 | Côté U64         | new_side_u64                   | Épaule(2*2) + Hanches(2) + Chevilles(2)         |
+|   4 | Côté U64 (Face)  | new_side_u64_head              | WARNING: À checker!!! Hanches(2) + Chevilles(2) |
+|   1 | Base U64 Cou     | new_base_u64_neck              |                                                 |
+|   2 | Côté U28 to U64  | new_U28_to_64_side_neck        |                                                 |
+|   2 | Base U64 Long    | new_base_u64_long              | Épaule(2)                                       |
+|   4 | Base U64         | new_base_u64                   | Hanche(2) +                                     |
+|   2 | Base U106 long   | new_base_u106_long             | Fémur(2)                                        |
+|   4 | Côté U106 long   | new_side_u106_long_design      | Fémur(2*2)                                      |
+|   2 | Protection tête  | ptgrey_protect2_base_eye_hair1 | Pas sûr CNC                                     |
+|   1 | Fixation Caméra  | ptgrey_fix2                    |                                                 |
+|   2 | Bras             | NA                             | À voir avec Loïc                                                |
+|   2 | Avant-Bras       | NA                             | À voir avec Loïc                                                |
+
+* Misc
+| Qty | Pièce           | Nom autodesk     | Commentaires            |
+|-----+-----------------+------------------+-------------------------|
+|   4 | Pilier torse    | pillar_tube      | Cylindre alu vide coupé |
+|   1 | Capôt torse sup | torso_bent_piece |                         |
+|   8 | Jauges pression | NA               | AliExpress              |
+|   8 | Crampons        | NA               | Cleat.ipt dans Sigmaban |
+
+* Informatique
+| Qty | Pièce     | Commentaires    |
+|-----+-----------+-----------------|
+|   1 | NUC7I5BNK | Commande amazon |
+|   1 | SSD       | Commande amazon |
+|   1 | DDR       | Commande amazon |
+
+* Vision
+| Qty | Pièce    | Nom autodesk      | Commentaires |
+|-----+----------+-------------------+--------------|
+|   1 | Caméra   | PtGreyCamera_full |              |
+|   1 | Objectif | obj               |              |
+  
+* Robotis
+| Qty | Pièce      | Nom autodesk                  | Prix | Commentaires                                |
+|-----+------------+-------------------------------+------+---------------------------------------------|
+|   7 | FR08-B101K | original_plaque_fixatiox_rx64 |      | Hanche(2)+Cou(1)+Bloc106(4)                 |
+|  12 | FR05-S101  | FR05-S101                     |      | Épaules(2) + Genoux(2) + blocs moteurs(2*4) |
+|   7 | MX-64AR    |                               |      | Épaules(2*2) + Coudes(2) + Cou(1)           |
+|   2 | MX-64AT    |                               |      | Hanches(2)                                  |
+|  10 | MX-106T    |                               |      |                                             |
+|  10 | HN05-T1    | 64_106_fake_bearing           |      | T1 ou T101 avec rondelle usinée             |
+|  10 | HN05-I101  |                               |      | blocs moteurs(4) + genoux(2) + bras(4)      |
+|   1 | HN07-I101  |                               |      | head_pitch                                  |
+|   4 | FR05-F101K |                               |      | blocs moteurs                               |
+|   4 | FR05-S1    | NA                            |      | Épaules(2) + Coudes(2)                      |
+|   2 | FR05-H101K | NA                            |      | Coudes(2)                                   |
+  
+* Électronique
+| Qty | Nom           |
+|-----+---------------|
+|   1 | Backboard     |
+|   1 | HotSwap board |
+|   2 | Board pied    |
