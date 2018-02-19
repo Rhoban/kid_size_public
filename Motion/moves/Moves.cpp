@@ -27,6 +27,8 @@
 // #include "KickCalibration.hpp"
 #include "GoalKick.hpp"
 
+#include "ReactiveKicker.h"
+
 #include "MDPKickController.h"
 #include "QKickController.h"
 #include "ClearingKickController.h"
@@ -95,6 +97,8 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(penaltyController);
     add(new LearnedApproach(walk));
     add(new Penalty(penaltyController));
+
+    add(new ReactiveKicker(walk));
 }
 
 Moves::~Moves()

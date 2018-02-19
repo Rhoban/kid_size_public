@@ -121,6 +121,11 @@ void ApproachMove::updateKickScore(double elapsed)
 {
   LocalisationService * loc = getScheduler()->getServices()->localisation;
   Point ball_pos = loc->getBallPosSelf();
+  updateKickScore(elapsed, ball_pos);
+}
+
+void ApproachMove::updateKickScore(double elapsed, const Point & ball_pos)
+{
   double kick_dir_rad = deg2rad(getKickCap().getSignedValue());
   Eigen::Vector3d state(ball_pos.x, ball_pos.y, kick_dir_rad);
   // Updating kick score

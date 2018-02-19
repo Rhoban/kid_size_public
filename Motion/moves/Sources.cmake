@@ -30,6 +30,8 @@ set (SOURCES
     KickPhilipp.cpp
 
     GoalKick.cpp
+
+    ReactiveKicker.cpp
 )
 
 if (csa_mdp_experiments_FOUND)

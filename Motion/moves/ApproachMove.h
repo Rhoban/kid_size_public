@@ -4,6 +4,7 @@
 
 #include "kick_model/kick_model_collection.h"
 
+#include <rhoban_geometry/point.h>
 #include <rhoban_utils/angle.h>
 
 class Walk;
@@ -48,6 +49,10 @@ protected:
   /// Warning: expectedKick and kickRight have to be set properly before
   ///          calling this function
   void updateKickScore(double elapsed);
+
+  /// @see updateKickScore
+  /// ball_pos is provided in self referential
+  void updateKickScore(double elapsed, const rhoban_geometry::Point & ball_pos);
 
   /// Gets the current kick controler
   const KickController * getKickController() const;
