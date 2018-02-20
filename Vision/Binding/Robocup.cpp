@@ -1000,6 +1000,8 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
         // Compute futur position
         Point ball_usable_speed = ballSpeedEstimator->getUsableSpeed();
         Eigen::Vector3d ball_speed(ball_usable_speed.x, ball_usable_speed.y, 0);
+
+        out.log("Ball usable speed: (%f,%f)", ball_usable_speed.x, ball_usable_speed.y);
         auto next_cpos = cpos +  ball_speed * elapsed;
         auto futur_pos = cs->imgXYFromRobotPosition(cv::Point2f(next_cpos.x(), next_cpos.y()),
                                                     img.cols, img.rows, false);
