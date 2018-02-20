@@ -65,6 +65,7 @@ void ReactiveKicker::step(float elapsed) {
   // Only use classic
   if (kick_score >= 1.0) {
     requestKick();
+    is_kicking = true;
     time = 0;
   }
 

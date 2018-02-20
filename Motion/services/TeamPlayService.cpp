@@ -253,7 +253,8 @@ void TeamPlayService::messageSend()
         auto decision = getServices()->decision;
         auto loc = getServices()->localisation;
         //Setting message hour
-        rhoban_utils::Logger::getTime(_selfInfo.hour, _selfInfo.min, _selfInfo.sec);
+        uint16_t ms_unused;
+        rhoban_utils::Logger::getTime(_selfInfo.hour, _selfInfo.min, _selfInfo.sec, ms_unused);
         //Ball position in self
         Point ballPos = loc->getBallPosSelf();
         _selfInfo.ballX = ballPos.x;
