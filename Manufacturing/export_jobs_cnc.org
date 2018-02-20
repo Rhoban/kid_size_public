@@ -1,34 +1,47 @@
 * Prérequis
 ** Installer Autodesk Inventor Professional 2018 (Licence éducation gratuite)
+- https://www.autodesk.com/education/free-software/inventor-professional
 ** Installer Inventor HSM Premium 2018 (Licence éducation gratuite)
 - https://www.autodesk.com/education/free-software/inventor-hsm-ultimate
+Noter le /serial number/ et le /product key/, il est nécessaire pour activer
+le produit.
+* Une version installée sur le disque dur Grégoire.  id : edt, pass : edt
+* Types de fichiers
+- .ipt : pièces unique
+- .iam : assemblage
 * Remarques préalables
 - Attention, toutes les manipulations à effectuer dans Autodesk requiert de bien
   appuyer sur OK pour les valider (Changer d'outil annule l'opération)
+* Choisir une pièce sur le robot
+- ouvrir le fichier du robot complet : Full_SigmaBan_106AT_nuc.iam
+- click droit sur la pièce + open
 * Préparer la zone de travail
 ** Ouvrir la pièce à imprimer dans autodesk
 ** Choisir l'onglet CAM (Alt,C)
-** Définir le réferentiel (Outil Setup)
-*** L'espace de travail doit être positif en x et y, négatif en z
-*** (0,0,0) correspond à un des coins de l'espace de travail (set stock point)
 ** Retirer les marges (2ème onglet de l'outil setup)
 *** Sélectionner "no additional stock"
+** Définir le réferentiel (Outil Setup)
+*** L'espace de travail doit être positif en x et y, négatif en z (la pièce doit avoir un z négatif)
+*** (0,0,0) correspond à un des coins de l'espace de travail (set stock point)
+*** Sur la machine y est vers le fond et x vers la droite.
 * Préparer un job
-** Choisir le template associé
+** Choisir le template associé (à faire la première fois qu'on utilise Inventor)
 - Clic-droit dans l'onglet CAM
 - 'Create from template'
 - Choisir le template adapté (ils sont dans le dossier 'machining_template')
-** Si le job est le contour de la pièces, ajouter quelques pads
+- Pour vérifier la taille des trous Inspect>Measure
+** Si le job est le contour de la pièces, ajouter quelques pads sur les coté qui ne s'assemble pas
 - Forme triangulaire
 - Hauteur 1.5 mm
-- Largeur 0.75mm
+- Largeur 1.25mm (avant 0,75 mais problèmes de pièces qui bouge à la fin)
 * Exporter un job
 ** Sélectionner le job associer
 ** Choisir post-process
 - en haut, à droite de simulate
 ** À faire la première fois, à vérifier par la suite
 *** Dans Post configuration, choisir Mach3Mill
-*** Mettre le flag ... G28 à False
+*** Mettre le flag ... G28 Safe retracts à False
 ** Choisir le dossier de sortie
-** Nommer le fichier avec la convention suivante: tacheId_name_outil.tap
-
+** Nommer le fichier (/Progam name or number/) avec la convention suivante: tacheId_name_outil_time.tap
+- Conventions pour /name/: holes, interior, exterior, surfacing
+- Pour trouver le temps click droit puis Simultate (Shift+S) puis onglet statistics
