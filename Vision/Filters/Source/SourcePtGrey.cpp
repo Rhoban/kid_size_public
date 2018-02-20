@@ -273,16 +273,20 @@ void SourcePtGrey::endCamera() {
 
 void SourcePtGrey::reconnectCamera() {
   FlyCapture2::Error error;
+  logger.log("reconnectCamera:IsConnected()");
   // If connected, disconnect
   if (camera.IsConnected()) {
+    logger.log("reconnectCamera::Disconnect()");
     camera.Disconnect();
   }
   // Connect to camera
+  logger.log("reconnectCamera::Connect()");
   error = camera.Connect(0); // TODO: replace by &camera_id when implemented
   if (error != FlyCapture2::PGRERROR_OK) {
     throw PtGreyConnectionException(
         "SourcePtGrey::StartCamera: Failed to connect to camera");
   }
+  logger.log("reconnectCamera::OK()");
 }
 
 void SourcePtGrey::updateProperties() {
