@@ -906,7 +906,7 @@ void Walk::step(float elapsed)
 
         if (!securityBlock && !shootingRight && !shootingLeft) {
             // Right kick phase
-            if (phasePassed(prevPhase, phase, shootPhase)) {
+            if (!isEnabled || phasePassed(prevPhase, phase, shootPhase)) {
                 if (shouldKickRight) {
                     updateShoot(false, walkKickName);
                     isWarmingUp = true;
@@ -918,7 +918,7 @@ void Walk::step(float elapsed)
             }
 
             // Left kick phase
-            if (phasePassed(prevPhase, phase, 0.5+shootPhase)) {
+            if (!isEnabled || phasePassed(prevPhase, phase, 0.5+shootPhase)) {
                 if (shouldKickLeft) {
                     updateShoot(true, walkKickName);
                     isWarmingUp = true;
