@@ -36,14 +36,10 @@ void SpeedEstimator::update(const rhoban_utils::TimeStamp & ts,
 
   cleanOldEntries();
 
-  logger.log("After cleaning: %d entries", positions.size());
-
   // Each pair of position gives a speed difference
   std::vector<WeightedSpeed> weightedSpeeds = getWeightedSpeeds();
   int nb_entries = weightedSpeeds.size();
   double max_weight = (1 - pow(disc,nb_entries)) / (1 - disc);
-
-  logger.log("WeightedSpeeds.size(): %d ", weightedSpeeds.size());
 
   // Compute mean using weights
   Point totSpeeds(0, 0);
@@ -145,8 +141,6 @@ std::vector<SpeedEstimator::WeightedSpeed> SpeedEstimator::getWeightedSpeeds() c
   double age_weight = 1.0;
   while (true) {
     double dt = diffSec(oldP->first, newP->first);
-    logger.log("dt: %f", dt);
-    logger.log("min_dt: %f", min_dt);
 
     if (dt >= min_dt) {
       const Point & src = oldP->second;
@@ -159,7 +153,6 @@ std::vector<SpeedEstimator::WeightedSpeed> SpeedEstimator::getWeightedSpeeds() c
       age_weight *= disc;
       speeds.push_back(WeightedSpeed(speed, weight));
       // Reduce dt by taking an older entry as 'new'
-      logger.log("new++", dt);
       newP++;
       newQ++;
     } else {
@@ -167,7 +160,6 @@ std::vector<SpeedEstimator::WeightedSpeed> SpeedEstimator::getWeightedSpeeds() c
       if (oldP == positions.cend()) {
         break;// Exit loop if we reach the last entry
       } else {
-        logger.log("old++", dt);
         oldP++;
         oldQ++;
       }
