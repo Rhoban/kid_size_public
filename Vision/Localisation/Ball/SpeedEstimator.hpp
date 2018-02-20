@@ -54,6 +54,9 @@ private:
   // Stored results
   rhoban_geometry::Point speed, qSpeed;
 
+  /// Verbosity of debug output (0 -> no output)
+  int debug_level;
+
   void initBinding();
 
   /// Remove old entries based on max_dt and memory_size

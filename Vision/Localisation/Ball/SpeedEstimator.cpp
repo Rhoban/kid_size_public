@@ -50,6 +50,17 @@ void SpeedEstimator::update(const rhoban_utils::TimeStamp & ts,
     totSpeeds = totSpeeds + speed * weight;
     totWeight += weight;
   }
+
+  if (debug_level > 1) {
+    for (unsigned int i = 0; i < weightedSpeeds.size(); i++) {
+      const Point & speed = weightedSpeeds[i].first;
+      double weight = weightedSpeeds[i].second;
+      logger.log("weightedSpeeds[%d] : {speed: (%f,%f), weight: %f }",
+                 i, speed.x, speed.y, weight);
+    }
+  }
+
+
   if (totWeight > 0) {
     Point avgSpeed = totSpeeds / totWeight;
 
@@ -76,6 +87,11 @@ void SpeedEstimator::update(const rhoban_utils::TimeStamp & ts,
     if (coherenceScore.y < 0)
       coherenceScore.y = 0;
     double qualityScore = totWeight / max_weight;
+
+    if (debug_level > 0) {
+      logger.log("Speed    : (%f,%f) ", avgSpeed.x, avgSpeed.y);
+      logger.log("Coherence: (%f,%f) ", coherenceScore.x, coherenceScore.y);
+    }
 
     qSpeed = coherenceScore * qualityScore;
     speed = avgSpeed;
@@ -105,16 +121,19 @@ void SpeedEstimator::initBinding() {
     ->defaultValue(15)->minimum(2)->maximum(50)->persisted(true);
   bind->bindNew("min_dt", min_dt, RhIO::Bind::PullOnly)
     ->comment("Minimal time difference between to entries to compute their speed [s]")
-    ->defaultValue(0.05)->minimum(0.01)->maximum(1)->persisted(true);
+    ->defaultValue(0.15)->minimum(0.01)->maximum(0.5)->persisted(true);
   bind->bindNew("max_dt", max_dt, RhIO::Bind::PullOnly)
     ->comment("Maximal time difference between first and last entry [s]")
-    ->defaultValue(1)->minimum(0.5)->maximum(10)->persisted(true);
+    ->defaultValue(0.25)->minimum(0.1)->maximum(1)->persisted(true);
   bind->bindNew("disc", disc, RhIO::Bind::PullOnly)
     ->comment("Discount gain used for speeds")
     ->defaultValue(0.9)->minimum(0)->maximum(1);
   bind->bindNew("flat_tol", flat_tol, RhIO::Bind::PullOnly)
     ->comment("Speed tolerance for coherency evaluation [m/s]")
     ->defaultValue(0.25)->minimum(0)->maximum(2);
+  bind->bindNew("debug_level", debug_level, RhIO::Bind::PullOnly)
+    ->comment("Verbosity of output")
+    ->defaultValue(0)->minimum(0)->maximum(2);
   // TODO: eventually output speeds and qSpeed to RhIO
 }
 
