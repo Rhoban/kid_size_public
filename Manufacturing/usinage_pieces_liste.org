@@ -2,7 +2,7 @@ Pièces pour 1 robot et 2 upgrades (une upgrade a déjà été faite).
 
 | Quantity | Done | Pièce            | Nom autodesk                   | Surfaçage | Vérification |
 |----------+------+------------------+--------------------------------+-----------+--------------|
-|        1 |    0 | Torse bas        | SigmaBan_torsebas64            | Non       |              |
+|        1 |    1 | Torse bas        | SigmaBan_torsebas64            | Non       |              |
 |        3 |    3 | Torse milieu     | new_torso_middleplate_nuc      | Oui       |              |
 |        3 |    3 | Torse haut       | new_torso_topplate_nuc         | Oui       |              |
 |        3 |    2 | Poignée          | folded_handle_nuc              | Non       |              |
