@@ -4,10 +4,7 @@ RhobanServer
 mandatory packages
 ------------------
 
-- libeigen3-dev
-- libtinyxml-dev
-- liburdfdom-headers-dev
-- libconsole-bridge-dev
+- libtinyxml-dev (because of urdfdom)
 - libboost1.58-dev (because of urdfdom-headers)
 - libboost-thread1.58-dev (because of urdfdom-headers)
 - libboost-system1.58-dev (because of urdfdom-headers)
