@@ -246,9 +246,6 @@ private:
   /// Controls access to the clipping
   mutable std::mutex clippingMutex;
 
-  /// Are aruca tags used?
-  bool useTags;
-
   //do we use the visualcompass?
   bool useVisualCompass;
 
