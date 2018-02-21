@@ -7,7 +7,7 @@ Pièces pour 1 robot et 2 upgrades (une upgrade a déjà été faite).
 |        3 |    3 | Torse haut       | new_torso_topplate_nuc         | Oui       |              |
 |        3 |    2 | Poignée          | folded_handle_nuc              | Non       |              |
 |        3 |    4 | Fixation NUC     | nuc_fix                        | Non       |              |
-|        2 |    0 | Plaque pied      | foot_jauges_acier              | Non       |              |
+|        2 |    2 | Plaque pied      | foot_jauges_acier              | Non       |              |
 |        4 |    4 | Tibia            | Sigma106_tibiaplate_design     | Non       |              |
 |        1 |    0 | Séparation torse | fitPlate                       | Non       | @Steve       |
 |        8 |    0 | Côté U64         | new_side_u64                   | Oui       |              |
