@@ -244,6 +244,7 @@ void SourcePtGrey::startCamera() {
     // dumpProperties(std::cout);
     // dumpPropertiesInformation(std::cout);
     bindProperties();
+    logger.log("bindProperties OK");
 
     // TODO: extract code somewhere else
     FlyCapture2::EmbeddedImageInfo embeddedInfo;
@@ -252,6 +253,7 @@ void SourcePtGrey::startCamera() {
     if (error != FlyCapture2::PGRERROR_OK) {
       throw PtGreyException("failed to set 'embedded ImageInfo'");
     }
+    logger.log("setEmbeddedImageInfo OK");
   } catch (const PtGreyException & exc) {
     logger.error("Got a PtGreyException while preparing camera: '%s'",
                  exc.what());
