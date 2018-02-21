@@ -226,12 +226,16 @@ void SourcePtGrey::startCamera() {
         break;
       }
     }
+    logger.log("Capturing OK");
     is_capturing = true;
     // Update internal properties
     updateProperties();
+    logger.log("Update properties OK");
     updatePropertiesInformation();
+    logger.log("Update properties information OK");
     // Apply wished properties
     applyWishedProperties();
+    logger.log("ApplyWishedProperties OK");
     // Once properties have been read and applied, initialize them
     // TODO: instead, wished_properties should be filled with entries which have
     // not been presented yet
