@@ -28,7 +28,7 @@ ArucoCalibration::ArucoCalibration()
   bind->bindNew("nbFramesInLog", _nbFramesInLog, RhIO::Bind::PullOnly)
       ->comment("Number of frames that will be taken in the log")
       ->persisted(true)
-      ->defaultValue(150)
+      ->defaultValue(500)
       ->minimum(1)
       ->maximum(1000);
   bind->bindNew("currentNbFrames", _nbFramesRead, RhIO::Bind::PushOnly)
@@ -59,13 +59,6 @@ ArucoCalibration::ArucoCalibration()
       ->minimum(0.0)
       ->maximum(300.0);
  
-    /*bind->bindNew("elbowOffset", _elbowOffset, RhIO::Bind::PullOnly)
-      ->comment("Sets an offset to the elbow (negative values only, 0 is "
-                "straight, actually changes the walk variable)")
-      ->persisted(true)
-      ->minimum(-180.0)
-      ->maximum(0.0)
-      ->defaultValue(-20.0);*/
   bind->bindNew("handTuned", _handTuned, RhIO::Bind::PullOnly)
       ->comment("If true, the head will be handled by hand, throught pan and tilt")
       ->persisted(true)
@@ -92,29 +85,13 @@ ArucoCalibration::ArucoCalibration()
       ->minimum(0)
       ->maximum(40)
       ->defaultValue(12);
-    /*
-  bind->bindNew("trunkXAmplitude", _trunkXAmplitude, RhIO::Bind::PullOnly)
-      ->comment("Sets the amplitude of a sinus addedto trunkXAmplitude")
-      ->minimum(0)
-      ->maximum(0.1)
-      ->defaultValue(0.04);
-  bind->bindNew("trunkYAmplitude", _trunkYAmplitude, RhIO::Bind::PullOnly)
-      ->comment("Sets the amplitude of a sinus addedto trunkYAmplitude")
-      ->minimum(0)
-      ->maximum(0.1)
-      ->defaultValue(0.04);
-  bind->bindNew("trunkZAmplitude", _trunkZAmplitude, RhIO::Bind::PullOnly)
-      ->comment("Sets the amplitude of a sinus addedto trunkZAmplitude")
-      ->minimum(0)
-      ->maximum(0.1)
-      ->defaultValue(0.02);
-    */
 
   bind->bindNew("maxFramesPerTag", _maxFramesPerTag, RhIO::Bind::PullOnly)
     ->comment("Sets the maximum recorded lines for a given tag")
     ->minimum(1)
-    ->maximum(100)
-    ->defaultValue(20);
+    ->maximum(500)
+    ->peristed(true)
+    ->defaultValue(100);
 }
 
 std::string ArucoCalibration::getName() { return "arucoCalibration"; }
@@ -142,20 +119,20 @@ void ArucoCalibration::onStart() {
   //[1]-[2]-[4][7][9]
   //         |
   //        [5][8]
-  //1
+  //1: ids{0,1}
   _mapOfTagPositions[0] = std::vector<double>{x0, y0, z0};
   _mapOfTagPositions[1] = std::vector<double>{x0, -y0, z0};
-  //2
+  //2: ids{2,3}
   _mapOfTagPositions[2] = std::vector<double>{x0 + deltaX, y0, z0};
   _mapOfTagPositions[3] = std::vector<double>{x0 + deltaX, -y0, z0};
-
-  //6
+  //3,4,5: Removed because they were hard to see
+  //6: ids{29}
   _mapOfTagPositions[29] = std::vector<double>{absoluteBigX, deltaY, bigDeltaZ};
-  //7
+  //7: ids{62}
   _mapOfTagPositions[62] = std::vector<double>{absoluteBigX, 0.0, bigDeltaZ};
-  //8
+  //8: ids{141}
   _mapOfTagPositions[141] = std::vector<double>{absoluteBigX, -deltaY, bigDeltaZ};
-  //9
+  //9: ids{173}
   _mapOfTagPositions[173] = std::vector<double>{absoluteBigX + superBigDeltaX, 0.0, superBigDeltaZ};
 
   _container.clear();
@@ -164,50 +141,6 @@ void ArucoCalibration::onStart() {
     int index = pair.first;
     _container[index] = (std::vector<std::vector<double> >());
   }
-  
-  /*
-  float leftFootX = 0.0544;
-  float leftFootY = 0.075;
-  float x0 = 0.22 - leftFootX;
-  float y0Right = -0.17 - leftFootY;
-  float y0Left = 0.17 - leftFootY;
-  float z0 = 0.003;
-  float deltaX = 0.46;
-  float deltaY = 0.67;
-  float absoluteBigX = 1.256;//0.07425;
-  //float bigDeltaX = 0.338; // This works too, confirms 2*deltaX+bigDeltaX = absoluteBigX
-  float bigDeltaZ = 0.1485;
-
-  //        [3][6]
-  //         |
-  //[1]-[2]-[4][7]
-  //         |
-  //        [5][8]
-  //1
-  _mapOfTagPositions[0] = std::vector<double>{x0, y0Left, z0};
-  _mapOfTagPositions[1] = std::vector<double>{x0, y0Right, z0};
-  //2
-  _mapOfTagPositions[2] = std::vector<double>{x0 + deltaX, y0Left, z0};
-  _mapOfTagPositions[3] = std::vector<double>{x0 + deltaX, y0Right, z0};
-
-  //3
-  _mapOfTagPositions[4] = std::vector<double>{x0 + 2*deltaX, y0Left + deltaY, z0};
-  _mapOfTagPositions[5] = std::vector<double>{x0 + 2*deltaX, y0Right + deltaY, z0};
-  //4
-  _mapOfTagPositions[6] = std::vector<double>{x0 + 2*deltaX, y0Left, z0};
-  _mapOfTagPositions[7] = std::vector<double>{x0 + 2*deltaX, y0Right, z0};
-  //5
-  _mapOfTagPositions[8] = std::vector<double>{x0 + 2*deltaX, y0Left - deltaY, z0};
-  _mapOfTagPositions[9] = std::vector<double>{x0 + 2*deltaX, y0Right - deltaY, z0};
-
-  //6
-  _mapOfTagPositions[29] = std::vector<double>{absoluteBigX - leftFootX, deltaY - leftFootY, bigDeltaZ}; // 0.338 + 2*deltax , deltaY, bigDeltaZ};
-  //7
-  _mapOfTagPositions[62] = std::vector<double>{absoluteBigX - leftFootX, - leftFootY, bigDeltaZ}; // // 0.338 + 2*deltax, deltaY, bigDeltaZ}
-  //8
-  _mapOfTagPositions[141] = std::vector<double>{absoluteBigX - leftFootX, -deltaY - leftFootY, bigDeltaZ}; // 0.338 + 2*deltax, , bigDeltaZ}
-  */
-
 }
 
 // Fetching the low level info for the given timestamp and adding an entry for
@@ -381,15 +314,7 @@ void ArucoCalibration::step(float elapsed) {
 }
 
 
-// Special Steve dédicace
 void ArucoCalibration::dance(float freq, float time) {
-  /*
-  RhIO::Root.setBool("/moves/walk/walkEnable", 1);
-  RhIO::Root.setFloat("/moves/walk/trunkXOffset_backward", _trunkXAmplitude*sin(2*M_PI*freq*time)); // 0.04
-  RhIO::Root.setFloat("/moves/walk/trunkXOffset_forward", _trunkXAmplitude*sin(2*M_PI*freq*time)); // 0.04
-  RhIO::Root.setFloat("/moves/walk/trunkYOffset", -_trunkYAmplitude*cos(2*M_PI*freq*time));
-  RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.04 + _trunkZAmplitude*sin(2*M_PI*freq*time));
-  */
 
   setAngle("left_hip_roll", _losangeAmplitude*sin(2*M_PI*freq*time));
   setAngle("right_hip_roll", _losangeAmplitude*sin(2*M_PI*freq*time));

@@ -79,7 +79,6 @@ Robocup::Robocup(MoveScheduler *scheduler)
       benchmark(false), benchmarkDetail(0),
       cs(new CameraState(scheduler)), //TODO: maybe put the name of the param file elsewhere
       activeSource(false),
-      useTags(false),
       wasHandled(false),
       wasFallen(false)
 {
@@ -89,7 +88,9 @@ Robocup::Robocup(MoveScheduler *scheduler)
   featureProviders["arena"] = std::vector<std::string>();
   featureProviders["goal"] = std::vector<std::string>();
   featureProviders["ball"] = std::vector<std::string>();
+  featureProviders["tags"] = std::vector<std::string>();
   featureProviders["compass"] = std::vector<std::string>();
+  featureProviders["fieldBorder"] = std::vector<std::string>();
   initObservationTypes();
 
   for (std::string obs : observationTypes) {
@@ -128,6 +129,7 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
   featureProviders["arena"] = std::vector<std::string>();
   featureProviders["goal"] = std::vector<std::string>();
   featureProviders["ball"] = std::vector<std::string>();
+  featureProviders["tags"] = std::vector<std::string>();
   featureProviders["compass"] = std::vector<std::string>();
   featureProviders["fieldBorder"] = std::vector<std::string>();
   initObservationTypes();
@@ -233,7 +235,6 @@ Json::Value Robocup::toJson() const {
   v["benchmark"] = benchmark;
   v["benchmarkDetail"] = benchmarkDetail;
   v["imageDelay"] = imageDelay;
-  v["useTags"] = useTags;
 
   for (const auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
@@ -248,12 +249,11 @@ void Robocup::fromJson(const Json::Value & v, const std::string & dir_name) {
   rhoban_utils::tryRead(v,"benchmark",&benchmark);
   rhoban_utils::tryRead(v,"benchmarkDetail",&benchmarkDetail);
   rhoban_utils::tryRead(v,"imageDelay",&imageDelay);
-  rhoban_utils::tryRead(v,"useTags",&useTags);
   for (auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
 
     std::string nodeName = featureName + "Providers";
-    entry.second = rhoban_utils::readVector<std::string>(v, nodeName);
+    rhoban_utils::tryReadVector<std::string>(v, nodeName, &entry.second);
   }
 }
 
@@ -360,9 +360,6 @@ void Robocup::initRhIO() {
       ->maximum(20.0)
       ->minimum(0.0)
       ->comment("Tolerance in pitch (degrees)");
-  RhIO::Root.newBool("/Vision/useTags")
-      ->defaultValue(useTags)
-      ->comment("Are tags valid?");
 
   // Monitoring special images
   for (const SpecialImageHandler &sih : imageHandlers) {
@@ -547,7 +544,6 @@ void Robocup::importFromRhIO() {
     std::string prefix = "Vision/" + sih.name;
     sih.scale = RhIO::Root.getValueFloat(prefix + "_scale").value;
   }
-  useTags = RhIO::Root.getValueBool("/Vision/useTags").value;
 }
 
 void Robocup::publishToRhIO() {
@@ -571,6 +567,7 @@ void Robocup::readPipeline() {
   std::vector<std::string> arenaProviders = featureProviders["arena"];
   std::vector<std::string> goalProviders = featureProviders["goal"];
   std::vector<std::string> ballProviders = featureProviders["ball"];
+  std::vector<std::string> tagProviders = featureProviders["tags"];
   std::vector<std::string> fieldBorderProviders = featureProviders["fieldBorder"];
   std::vector<std::string> compassProviders = featureProviders["compass"];
 
@@ -668,10 +665,10 @@ void Robocup::readPipeline() {
     }
   }
 
-  // Tags  TODO take off the useTags bool and use pipeline.isFilterPresent instead
-  if (useTags) {
-    Vision::Filter &tagFilter = pipeline.get("tagsDetector");
-    cv::Size size = pipeline.get("tagsDetector").getImg()->size();
+  // Tags
+  for (const std::string & tagProviderName : tagProviders) {
+    Vision::Filter &tagFilter = pipeline.get(tagProviderName);
+    cv::Size size = pipeline.get(tagProviderName).getImg()->size();
     tagsMutex.lock();
     detectedTimestamp = pipeline.getTimestamp().getTimeMS() / 1000.0;
     try {
