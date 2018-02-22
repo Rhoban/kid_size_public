@@ -197,7 +197,17 @@ class Piece:
         t = turtle.Turtle( origin, geometry.Vec2d(1,0) )
         path = [origin]
 
-    def new_base(self, origin):
+        t.left()
+        self.piece_width(t, path, bottom_to_top=True, accroche=True)
+        t.left()
+        path.append( t.forward(3) )
+        t.left()
+        path.append( t.forward(width_piece) )
+        t.left()
+        path.append( t.forward(3) )
+
+        return path[:-1]
+    def base(self, origin):
         t = turtle.Turtle( origin, geometry.Vec2d(1,0) )
         path = [origin]
 
@@ -274,13 +284,21 @@ p = Piece(
 )
 
 " Choose piece "
-outputs=["four_base_pieces","new_base"]
+outputs=["four_base_pieces","base","accroche"]
 
-output = outputs[1]
-if output == "new_base":
+output = outputs[2]
+if output == "accroche":
     d.add(
         geometry.Closed_path(
-            path=p.new_base(geometry.Vec2d(0,0)), offset=-offset,
+            path=p.accroche(geometry.Vec2d(0,0)), offset=-offset,
+            stroke_width=1, color="red", ref_color=debug
+        )
+    )
+
+elif output == "base":
+    d.add(
+        geometry.Closed_path(
+            path=p.base(geometry.Vec2d(0,0)), offset=-offset,
             stroke_width=1, color="red", ref_color=debug
         )
     )

@@ -87,7 +87,7 @@ ArucoCalibration::ArucoCalibration()
     ->comment("Sets the maximum recorded lines for a given tag")
     ->minimum(1)
     ->maximum(500)
-    ->peristed(true)
+    ->persisted(true)
     ->defaultValue(100);
 }
 
@@ -110,32 +110,38 @@ void ArucoCalibration::onStart() {
   float bigDeltaZ = 0.1485;
   float superBigDeltaZ = 0.43;
   float superBigDeltaX = 0.025;
+  float maxDeltaY = 0.92;
+  float minDeltaX = 0.045;
 
-  //        [3][6]
-  //         |
-  //[1]-[2]-[4][7][9]
-  //         |
-  //        [5][8]
+  //  [*]-[*]-[3]
+  //   |   |   |
+  //  [1]-[2]-[4]
+  //   |   |   |
+  //  [7]-[6] [5]
   //1: ids{0,1}
   _mapOfTagPositions[0] = std::vector<double>{x0, y0, z0};
   _mapOfTagPositions[1] = std::vector<double>{x0, -y0, z0};
   //2: ids{2,3}
   _mapOfTagPositions[2] = std::vector<double>{x0 + deltaX, y0, z0};
   _mapOfTagPositions[3] = std::vector<double>{x0 + deltaX, -y0, z0};
-  //3,4,5: Removed because they were hard to see
-  //6: ids{29}
+  //3: ids{29}
   _mapOfTagPositions[29] = std::vector<double>{absoluteBigX, deltaY, bigDeltaZ};
-  //7: ids{62}
+  //4: ids{62}
   _mapOfTagPositions[62] = std::vector<double>{absoluteBigX, 0.0, bigDeltaZ};
-  //8: ids{141}
+  //5: ids{141}
   _mapOfTagPositions[141] = std::vector<double>{absoluteBigX, -deltaY, bigDeltaZ};
-  //9: ids{173}
-  _mapOfTagPositions[173] = std::vector<double>{absoluteBigX + superBigDeltaX, 0.0, superBigDeltaZ};
+  //6: ids{132}
+  _mapOfTagPositions[132] = std::vector<double>{minDeltaX, maxDeltaY, superBigDeltaZ};
+  //7: ids{55}
+  _mapOfTagPositions[55] = std::vector<double>{minDeltaX+deltaX, maxDeltaY, superBigDeltaZ};
 
   _container.clear();
   // Creating an entry for each known id tag
-  for (const auto & pair : _mapOfTagPositions) {
+  // TODO : dimensions a verifier
+  double offsety=0.075;
+  for (auto & pair : _mapOfTagPositions) {
     int index = pair.first;
+    pair.second[1]-=offsety;
     _container[index] = (std::vector<std::vector<double> >());
   }
 }
