@@ -13,9 +13,6 @@
 
 static rhoban_utils::Logger logger("ArucoCalibration");
 
-// Visual verification
-void showTagArray();
-
 // All of the above should be done in the vision world.
 // This move should only handle the motion inteligence and set a flag in
 // LocalisationService when the positions are reached?
@@ -198,7 +195,7 @@ void ArucoCalibration::writeFile() {
   file.open(_fileName, std::ios_base::trunc);
   // Adding the header
   std::vector<std::string> data;
-  file << "# ";
+  file << "# 'tag_id' ";
   for (const std::string name : Leph::NamesDOF) {
     file << "'" << name << "' ";
   }
@@ -212,8 +209,10 @@ void ArucoCalibration::writeFile() {
 
   // Adding the content
   for (auto & pair : _container) {
+    int tag_id = pair.first;
     // Adding all the lines for tag of index pair.first
     for (auto & line : pair.second) {
+      file << tag_id << " ";
       for (auto & word : line) {
         file << word << " ";
       }
@@ -291,9 +290,9 @@ void ArucoCalibration::step(float elapsed) {
     _disabled = true;
     _nbFramesRead = 0;
     //Printing how often the tags where seen
-    for(auto const &paire : _container) {
-      int index = paire.first;
-      int nbPresent = paire.second.size();
+    for(auto const &pair : _container) {
+      int index = pair.first;
+      int nbPresent = pair.second.size();
       logger.log("The key %d was present %d times", index, nbPresent);
     }
 
@@ -301,9 +300,9 @@ void ArucoCalibration::step(float elapsed) {
     std::cout << "Equalizing..." << std::endl;
     equalizeTags();
     std::cout << "Tags equalized : " << std::endl;
-    for(auto const &paire : _container) {
-      int index = paire.first;
-      int nbPresent = paire.second.size();
+    for(auto const &pair : _container) {
+      int index = pair.first;
+      int nbPresent = pair.second.size();
       logger.log("The key %d was present %d times", index, nbPresent);
     }
     // Our job here is done, saving the file
@@ -354,22 +353,22 @@ void ArucoCalibration::equalizeTags() {
     return;
   }
   unsigned int max = 0;
-  for(auto const &paire : _container) {
-    if (paire.second.size() > max) {
-      // paire.second.size() is the number of lines for paire.first id
-      max = paire.second.size();
+  for(auto const &pair : _container) {
+    if (pair.second.size() > max) {
+      // pair.second.size() is the number of lines for pair.first id
+      max = pair.second.size();
     }
   }
   
   // Convention : every tag will have 'max' appearences
-  for(auto const &paire : _container) {
-    int index = paire.first;
-    std::cout << "index " << index << " nb : " << paire.second.size() << std::endl; 
-    if (paire.second.size() >= max || paire.second.size() == 0) {
+  for(auto const &pair : _container) {
+    int index = pair.first;
+    std::cout << "index " << index << " nb : " << pair.second.size() << std::endl; 
+    if (pair.second.size() >= max || pair.second.size() == 0) {
       // We either have enough lines or we don't have any and there is no point in trying
       continue;
     }
-    int nbToBeAdded = max - paire.second.size(); 
+    int nbToBeAdded = max - pair.second.size(); 
     int nbAdded = 0;
     std::vector<std::vector<double>> extra;
     while(nbAdded < nbToBeAdded) {
