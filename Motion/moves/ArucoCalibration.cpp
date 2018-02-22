@@ -131,9 +131,9 @@ void ArucoCalibration::onStart() {
   //5: ids{141}
   _mapOfTagPositions[141] = std::vector<double>{absoluteBigX, -deltaY, bigDeltaZ};
   //6: ids{132}
-  _mapOfTagPositions[132] = std::vector<double>{minDeltaX, maxDeltaY, superBigDeltaZ};
+  _mapOfTagPositions[132] = std::vector<double>{minDeltaX+deltaX, -maxDeltaY, bigDeltaZ};
   //7: ids{55}
-  _mapOfTagPositions[55] = std::vector<double>{minDeltaX+deltaX, maxDeltaY, superBigDeltaZ};
+  _mapOfTagPositions[55] = std::vector<double>{minDeltaX, -maxDeltaY, bigDeltaZ};
 
   _container.clear();
   // Creating an entry for each known id tag
@@ -302,10 +302,6 @@ void ArucoCalibration::step(float elapsed) {
       logger.log("The key %d was present %d times", index, nbPresent);
     }
 
-    // Making sure the seen tags are evenly represented by repeating inputs from underrepresented tags
-    std::cout << "Equalizing..." << std::endl;
-    equalizeTags();
-    std::cout << "Tags equalized : " << std::endl;
     for(auto const &pair : _container) {
       int index = pair.first;
       int nbPresent = pair.second.size();
@@ -338,7 +334,7 @@ void ArucoCalibration::stopDance() {
 
 
 void ArucoCalibration::moveHead(float angularSpeed) {
-  RhIO::Root.setFloat("/moves/head/localizeMaxPan", 80);
+  RhIO::Root.setFloat("/moves/head/localizeMaxPan", 100);
   RhIO::Root.setFloat("/moves/head/localizeMaxTilt", 90);
   RhIO::Root.setFloat("/moves/head/maxSpeed", angularSpeed);
   RhIO::Root.setBool("/moves/head/disabled", 0);
@@ -353,41 +349,3 @@ void ArucoCalibration::onStop() {
   stopDance();
   stopHead();
 }
-
-void ArucoCalibration::equalizeTags() {
-  if (_container.size() < 1) {
-    return;
-  }
-  unsigned int max = 0;
-  for(auto const &pair : _container) {
-    if (pair.second.size() > max) {
-      // pair.second.size() is the number of lines for pair.first id
-      max = pair.second.size();
-    }
-  }
-  
-  // Convention : every tag will have 'max' appearences
-  for(auto const &pair : _container) {
-    int index = pair.first;
-    std::cout << "index " << index << " nb : " << pair.second.size() << std::endl; 
-    if (pair.second.size() >= max || pair.second.size() == 0) {
-      // We either have enough lines or we don't have any and there is no point in trying
-      continue;
-    }
-    int nbToBeAdded = max - pair.second.size(); 
-    int nbAdded = 0;
-    std::vector<std::vector<double>> extra;
-    while(nbAdded < nbToBeAdded) {
-      for (std::vector<double> & list : _container[index]) {
-        extra.push_back(list);
-        nbAdded++;
-        if (nbAdded >= nbToBeAdded) {
-          break;
-        }
-      }
-    }
-    _container[index].insert(_container[index].end(), extra.begin(), extra.end());
-  }
-
-}
- 

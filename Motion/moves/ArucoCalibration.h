@@ -31,7 +31,6 @@ public:
   void stopDance();
   void moveHead(float angularSpeed=180.0);
   void stopHead();
-  void equalizeTags();
   
 private:
   // Data container that will be written to a csv file
