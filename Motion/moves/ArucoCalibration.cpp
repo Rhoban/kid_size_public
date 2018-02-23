@@ -283,9 +283,9 @@ void ArucoCalibration::step(float elapsed) {
 #ifdef VISION_COMPONENT
   loc->stealTags(markerIndices, markerPositions, markerCenters, &tagTimestamp);
 #endif
-  if (markerIndices.size() < 1) {
+  if (_t < 1.0 || markerIndices.size() < 1) {
     // Either the vision didn't detect anything, or we're asking for the tag
-    // info again
+    // info again or robot is not moving really yet
     // (this function will be ticked faster than the Vision)
     bind->push();
     return;
@@ -354,6 +354,7 @@ void ArucoCalibration::stopDance() {
 
 void ArucoCalibration::moveHead(float angularSpeed) {
   RhIO::Root.setFloat("/moves/head/localizeMaxPan", 100);
+  RhIO::Root.setFloat("/moves/head/localizeMinOverlap", 20);
   RhIO::Root.setFloat("/moves/head/localizeMaxTilt", 90);
   RhIO::Root.setFloat("/moves/head/maxSpeed", angularSpeed);
   RhIO::Root.setBool("/moves/head/disabled", 0);
