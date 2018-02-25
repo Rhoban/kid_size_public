@@ -3,7 +3,7 @@ Pièces pour 1 robot et 2 upgrades (une upgrade a déjà été faite).
 | Quantity | Done | Pièce            | Nom autodesk                   | Surfaçage | Vérification |
 |----------+------+------------------+--------------------------------+-----------+--------------|
 |        1 |    0 | Séparation torse | fitPlate                       | Non       | @Steve       |
-|        8 |    0 | Côté U64         | new_side_u64                   | Oui       |              |
+|        8 |    0 | Côté U64         | new_side_u64                   | Oui       | @Olivier     |
 |        4 |    0 | Côté U64 (Face)  | new_side_u64_head              | Oui       |              |
 |        6 |    0 | Côté U28 to U64  | new_U28_to_64_side_neck        | Oui       |              |
 |        2 |    0 | Base U64 Long    | new_base_u64_long              | Oui       |              |
