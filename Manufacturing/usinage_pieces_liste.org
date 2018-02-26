@@ -10,11 +10,11 @@ Pièces pour 1 robot et 2 upgrades (une upgrade a déjà été faite).
 |        4 |    0 | Base U64         | new_base_u64                   | Oui       |              |
 |        2 |    0 | Base U106 long   | new_base_u106_long             | Oui       |              |
 |        4 |    0 | Côté U106 long   | new_side_u106_long_design      | Oui       |              |
-|        2 |    0 | Protection tête  | ptgrey_protect2_base_eye_hair1 | Non       | @Steve       |
 |        1 |    0 | Fixation Caméra  | ptgrey_fix2                    | Oui       |              |
 |        2 |    0 | Bras             | NA                             | Non       | @Loic        |
 |        2 |    0 | Avant-Bras       | NA                             | Non       | @Loic        |
 |----------+------+------------------+--------------------------------+-----------+--------------|
+|        2 |    2 | Protection tête  | ptgrey_protect2_base_eye_hair1 | Non       |              |
 |        1 |    1 | Torse bas        | SigmaBan_torsebas64            | Non       |              |
 |        3 |    3 | Torse milieu     | new_torso_middleplate_nuc      | Oui       |              |
 |        3 |    3 | Torse haut       | new_torso_topplate_nuc         | Oui       |              |

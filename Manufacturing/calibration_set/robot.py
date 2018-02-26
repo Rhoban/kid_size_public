@@ -286,7 +286,7 @@ p = Piece(
 " Choose piece "
 outputs=["four_base_pieces","base","accroche"]
 
-output = outputs[2]
+output = outputs[0]
 if output == "accroche":
     d.add(
         geometry.Closed_path(

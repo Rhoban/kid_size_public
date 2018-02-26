@@ -118,23 +118,28 @@ void ArucoCalibration::onStart() {
   float rectangleX = 0.2995;
   float rectangleY = 0.4395;
 
-  // space between two rectangles (it is the same in X and Y). Symbols - and |
+  // distance between two rectangles (it is the same in X and Y). Symbols - and |
   float edge = 0.21;
 
-  // space to panel (it is the same in X and Y). Symbols : and ..
+  // distance to panel (it is the same in X and Y). Symbols : and ..
   float spaceToPanel = 0.054;
 
-  //   y
-  //   |_x
+  // position of little arucos inside a rectangle
+  float littleArucoX
+
+  //   x
+  // y_|
   //   . Z
   //
-  //   :   :   :
-  //  [*]-[*]-[3]..
-  //   |   |   |
-  //  [1]-[2]-[4]..
-  //   |   |   |
-  //  [7]-[6]-[5]..
-  //   :   :   :
+  //        103  104   105
+  //         :    :     :
+  //  102 ..[0]-[1,2 ]-[3]..106
+  //         |    |     |
+  //  101 ..[4]-[5,6 ]-[7]..107
+  //         |    |     |
+  //  100 ..[8]-[9,10]-[11]..108
+  //              ↑
+  //            robot
 
 
   //1: ids{0,1}
