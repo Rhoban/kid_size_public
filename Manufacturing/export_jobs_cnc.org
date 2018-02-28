@@ -42,6 +42,6 @@ le produit.
 *** Dans Post configuration, choisir Mach3Mill
 *** Mettre le flag ... G28 Safe retracts à False
 ** Choisir le dossier de sortie
-** Nommer le fichier (/Progam name or number/) avec la convention suivante: tacheId_name_outil_time.tap
+** Nommer le fichier (/Progam name or number/) avec la convention suivante: tacheId_name_toolSize_time.tap
 - Conventions pour /name/: holes, interior, exterior, surfacing
 - Pour trouver le temps click droit puis Simultate (Shift+S) puis onglet statistics

@@ -13,9 +13,6 @@
 
 static rhoban_utils::Logger logger("ArucoCalibration");
 
-// Visual verification
-void showTagArray();
-
 // All of the above should be done in the vision world.
 // This move should only handle the motion inteligence and set a flag in
 // LocalisationService when the positions are reached?
@@ -90,7 +87,7 @@ ArucoCalibration::ArucoCalibration()
     ->comment("Sets the maximum recorded lines for a given tag")
     ->minimum(1)
     ->maximum(500)
-    ->peristed(true)
+    ->persisted(true)
     ->defaultValue(100);
 }
 
@@ -113,32 +110,62 @@ void ArucoCalibration::onStart() {
   float bigDeltaZ = 0.1485;
   float superBigDeltaZ = 0.43;
   float superBigDeltaX = 0.025;
+  float maxDeltaY = 0.92;
+  float minDeltaX = 0.045;
 
-  //        [3][6]
-  //         |
-  //[1]-[2]-[4][7][9]
-  //         |
-  //        [5][8]
+  // rectange :
+  // [*]
+  float rectangleX = 0.2995;
+  float rectangleY = 0.4395;
+
+  // distance between two rectangles (it is the same in X and Y). Symbols - and |
+  float edge = 0.21;
+
+  // distance to panel (it is the same in X and Y). Symbols : and ..
+  float spaceToPanel = 0.054;
+
+  // position of little arucos inside a rectangle
+  //float littleArucoX
+
+  //   x
+  // y_|
+  //   . Z
+  //
+  //        103  104   105
+  //         :    :     :
+  //  102 ..[0]-[1,2 ]-[3]..106
+  //         |    |     |
+  //  101 ..[4]-[5,6 ]-[7]..107
+  //         |    |     |
+  //  100 ..[8]-[9,10]-[11]..108
+  //              ↑
+  //            robot
+
+
   //1: ids{0,1}
   _mapOfTagPositions[0] = std::vector<double>{x0, y0, z0};
   _mapOfTagPositions[1] = std::vector<double>{x0, -y0, z0};
   //2: ids{2,3}
   _mapOfTagPositions[2] = std::vector<double>{x0 + deltaX, y0, z0};
   _mapOfTagPositions[3] = std::vector<double>{x0 + deltaX, -y0, z0};
-  //3,4,5: Removed because they were hard to see
-  //6: ids{29}
+  //3: ids{29}
   _mapOfTagPositions[29] = std::vector<double>{absoluteBigX, deltaY, bigDeltaZ};
-  //7: ids{62}
+  //4: ids{62}
   _mapOfTagPositions[62] = std::vector<double>{absoluteBigX, 0.0, bigDeltaZ};
-  //8: ids{141}
+  //5: ids{141}
   _mapOfTagPositions[141] = std::vector<double>{absoluteBigX, -deltaY, bigDeltaZ};
-  //9: ids{173}
-  _mapOfTagPositions[173] = std::vector<double>{absoluteBigX + superBigDeltaX, 0.0, superBigDeltaZ};
+  //6: ids{132}
+  _mapOfTagPositions[132] = std::vector<double>{minDeltaX+deltaX, -maxDeltaY, bigDeltaZ};
+  //7: ids{55}
+  _mapOfTagPositions[55] = std::vector<double>{minDeltaX, -maxDeltaY, bigDeltaZ};
 
   _container.clear();
   // Creating an entry for each known id tag
-  for (const auto & pair : _mapOfTagPositions) {
+  // TODO : dimensions a verifier
+  double offsety=0.075;
+  for (auto & pair : _mapOfTagPositions) {
     int index = pair.first;
+    pair.second[1]-=offsety;
     _container[index] = (std::vector<std::vector<double> >());
   }
 }
@@ -198,7 +225,7 @@ void ArucoCalibration::writeFile() {
   file.open(_fileName, std::ios_base::trunc);
   // Adding the header
   std::vector<std::string> data;
-  file << "# ";
+  file << "# 'tag_id' ";
   for (const std::string name : Leph::NamesDOF) {
     file << "'" << name << "' ";
   }
@@ -212,8 +239,10 @@ void ArucoCalibration::writeFile() {
 
   // Adding the content
   for (auto & pair : _container) {
+    int tag_id = pair.first;
     // Adding all the lines for tag of index pair.first
     for (auto & line : pair.second) {
+      file << tag_id << " ";
       for (auto & word : line) {
         file << word << " ";
       }
@@ -259,9 +288,9 @@ void ArucoCalibration::step(float elapsed) {
 #ifdef VISION_COMPONENT
   loc->stealTags(markerIndices, markerPositions, markerCenters, &tagTimestamp);
 #endif
-  if (markerIndices.size() < 1) {
+  if (_t < 1.0 || markerIndices.size() < 1) {
     // Either the vision didn't detect anything, or we're asking for the tag
-    // info again
+    // info again or robot is not moving really yet
     // (this function will be ticked faster than the Vision)
     bind->push();
     return;
@@ -291,19 +320,15 @@ void ArucoCalibration::step(float elapsed) {
     _disabled = true;
     _nbFramesRead = 0;
     //Printing how often the tags where seen
-    for(auto const &paire : _container) {
-      int index = paire.first;
-      int nbPresent = paire.second.size();
+    for(auto const &pair : _container) {
+      int index = pair.first;
+      int nbPresent = pair.second.size();
       logger.log("The key %d was present %d times", index, nbPresent);
     }
 
-    // Making sure the seen tags are evenly represented by repeating inputs from underrepresented tags
-    std::cout << "Equalizing..." << std::endl;
-    equalizeTags();
-    std::cout << "Tags equalized : " << std::endl;
-    for(auto const &paire : _container) {
-      int index = paire.first;
-      int nbPresent = paire.second.size();
+    for(auto const &pair : _container) {
+      int index = pair.first;
+      int nbPresent = pair.second.size();
       logger.log("The key %d was present %d times", index, nbPresent);
     }
     // Our job here is done, saving the file
@@ -333,7 +358,8 @@ void ArucoCalibration::stopDance() {
 
 
 void ArucoCalibration::moveHead(float angularSpeed) {
-  RhIO::Root.setFloat("/moves/head/localizeMaxPan", 80);
+  RhIO::Root.setFloat("/moves/head/localizeMaxPan", 100);
+  RhIO::Root.setFloat("/moves/head/localizeMinOverlap", 20);
   RhIO::Root.setFloat("/moves/head/localizeMaxTilt", 90);
   RhIO::Root.setFloat("/moves/head/maxSpeed", angularSpeed);
   RhIO::Root.setBool("/moves/head/disabled", 0);
@@ -348,41 +374,3 @@ void ArucoCalibration::onStop() {
   stopDance();
   stopHead();
 }
-
-void ArucoCalibration::equalizeTags() {
-  if (_container.size() < 1) {
-    return;
-  }
-  unsigned int max = 0;
-  for(auto const &paire : _container) {
-    if (paire.second.size() > max) {
-      // paire.second.size() is the number of lines for paire.first id
-      max = paire.second.size();
-    }
-  }
-  
-  // Convention : every tag will have 'max' appearences
-  for(auto const &paire : _container) {
-    int index = paire.first;
-    std::cout << "index " << index << " nb : " << paire.second.size() << std::endl; 
-    if (paire.second.size() >= max || paire.second.size() == 0) {
-      // We either have enough lines or we don't have any and there is no point in trying
-      continue;
-    }
-    int nbToBeAdded = max - paire.second.size(); 
-    int nbAdded = 0;
-    std::vector<std::vector<double>> extra;
-    while(nbAdded < nbToBeAdded) {
-      for (std::vector<double> & list : _container[index]) {
-        extra.push_back(list);
-        nbAdded++;
-        if (nbAdded >= nbToBeAdded) {
-          break;
-        }
-      }
-    }
-    _container[index].insert(_container[index].end(), extra.begin(), extra.end());
-  }
-
-}
- 
