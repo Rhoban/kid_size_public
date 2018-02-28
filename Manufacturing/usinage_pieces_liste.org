@@ -1,4 +1,5 @@
 Pièces pour 1 robot et 2 upgrades (une upgrade a déjà été faite).
+Dossier autodesk pour l'usinage : SigmabanV2.1
 
 | Quantity | Done | Pièce            | Nom autodesk                   | Surfaçage | Vérification |
 |----------+------+------------------+--------------------------------+-----------+--------------|
