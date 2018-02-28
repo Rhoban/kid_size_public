@@ -3,17 +3,17 @@ Pièces pour 1 robot et 2 upgrades (une upgrade a déjà été faite).
 | Quantity | Done | Pièce            | Nom autodesk                   | Surfaçage | Vérification |
 |----------+------+------------------+--------------------------------+-----------+--------------|
 |        1 |    0 | Séparation torse | fitPlate                       | Non       | @Steve       |
-|        8 |    0 | Côté U64         | new_side_u64                   | Oui       | @Olivier     |
-|        4 |    0 | Côté U64 (Face)  | new_side_u64_head              | Oui       |              |
 |        6 |    0 | Côté U28 to U64  | new_U28_to_64_side_neck        | Oui       |              |
 |        2 |    0 | Base U64 Long    | new_base_u64_long              | Oui       |              |
 |        4 |    0 | Base U64         | new_base_u64                   | Oui       |              |
 |        2 |    0 | Base U106 long   | new_base_u106_long             | Oui       |              |
-|        4 |    0 | Côté U106 long   | new_side_u106_long_design      | Oui       |              |
+|        4 |    2 | Côté U106 long   | new_side_u106_long_design      | Oui       |              |
 |        1 |    0 | Fixation Caméra  | ptgrey_fix2                    | Oui       |              |
 |        2 |    0 | Bras             | NA                             | Non       | @Loic        |
 |        2 |    0 | Avant-Bras       | NA                             | Non       | @Loic        |
 |----------+------+------------------+--------------------------------+-----------+--------------|
+|        4 |    4 | Côté U64 (Face)  | new_side_u64_head              | Oui       |              |
+|        8 |    8 | Côté U64         | new_side_u64                   | Oui       | @Olivier     |
 |        2 |    2 | Protection tête  | ptgrey_protect2_base_eye_hair1 | Non       |              |
 |        1 |    1 | Torse bas        | SigmaBan_torsebas64            | Non       |              |
 |        3 |    3 | Torse milieu     | new_torso_middleplate_nuc      | Oui       |              |

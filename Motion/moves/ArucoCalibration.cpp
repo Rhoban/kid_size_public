@@ -125,7 +125,7 @@ void ArucoCalibration::onStart() {
   float spaceToPanel = 0.054;
 
   // position of little arucos inside a rectangle
-  float littleArucoX
+  //float littleArucoX
 
   //   x
   // y_|
