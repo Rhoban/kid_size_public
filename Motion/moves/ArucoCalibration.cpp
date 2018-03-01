@@ -122,7 +122,7 @@ void ArucoCalibration::onStart() {
   float edge = 0.21;
 
   // position of little arucos from the origin of its rectangle
-  float littleArucoX = (rectangleX-0.1)/2;
+  float littleArucoX = rectangleX-0.1/2;
   float littleArucoY = (rectangleY-0.1)/2;
 
   // distance to panel (it is the same in X and Y). Symbols : and ..
@@ -134,7 +134,7 @@ void ArucoCalibration::onStart() {
 
   // position of sides big aruco from the origin of its rectangle
   float sideBigArucoX = rectangleX/2;
-  float sideBigArucoY = rectangleY/2;
+  float sideBigArucoY = rectangleY/2 + spaceToPanel;
 
   // Robot left foot offset
   double offsetx=0.094;
@@ -178,7 +178,7 @@ void ArucoCalibration::onStart() {
   _mapOfTagPositions[105] = std::vector<double>{2*(rectangleX+edge)+frontBigArucoX, -(rectangleY+edge), bigArucoZ};
 
   _mapOfTagPositions[106] = std::vector<double>{2*(rectangleX+edge)+sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
-  _mapOfTagPositions[106] = std::vector<double>{rectangleX+edge+sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
+  _mapOfTagPositions[107] = std::vector<double>{rectangleX+edge+sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
 
 
   /*

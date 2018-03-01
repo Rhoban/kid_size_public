@@ -74,7 +74,8 @@ void TagsDetector::process() {
   Markers.clear();
   const cv::Mat & srcImg = *(getDependency().getImg());
 
-  // Sad binding with rhio and aruco params
+  // Importing parameters from rhio
+  // Adaptative threshold is used since it is note modified
   detectionParam._thresParam1 = thresholdParam1;
   detectionParam._thresParam2 = thresholdParam2;
   detectionParam._thresParam1_range = thresholdParamRange1;
