@@ -113,7 +113,7 @@ void ArucoCalibration::onStart() {
   float maxDeltaY = 0.92;
   float minDeltaX = 0.045;
 
-  // rectange :
+  // rectangle :
   // [*]
   float rectangleX = 0.2995;
   float rectangleY = 0.4395;
@@ -121,11 +121,24 @@ void ArucoCalibration::onStart() {
   // distance between two rectangles (it is the same in X and Y). Symbols - and |
   float edge = 0.21;
 
-  // distance to panel (it is the same in X and Y). Symbols : and ..
-  float spaceToPanel = 0.054;
+  // position of little arucos from the origin of its rectangle
+  float littleArucoX = (rectangleX-0.1)/2;
+  float littleArucoY = (rectangleY-0.1)/2;
 
-  // position of little arucos inside a rectangle
-  //float littleArucoX
+  // distance to panel (it is the same in X and Y). Symbols : and ..
+  float spaceToPanel = 0.053;
+
+  // position of big aruco, in front of the robot, from the origin of its rectangle
+  float frontBigArucoX = rectangleX + spaceToPanel;
+  float bigArucoZ = 0.153;
+
+  // position of sides big aruco from the origin of its rectangle
+  float sideBigArucoX = rectangleX/2;
+  float sideBigArucoY = rectangleY/2;
+
+  // Robot left foot offset
+  double offsetx=0.094;
+  double offsety=0.08;
 
   //   x
   // y_|
@@ -133,15 +146,42 @@ void ArucoCalibration::onStart() {
   //
   //        103  104   105
   //         :    :     :
-  //  102 ..[0]-[1,2 ]-[3]..106
+  //  102 ..[0]-[1,4 ]-[5]..106
   //         |    |     |
-  //  101 ..[4]-[5,6 ]-[7]..107
+  //  101 ..[6]-[2,3 ]-[7]..107
   //         |    |     |
   //  100 ..[8]-[9,10]-[11]..108
   //              ↑
   //            robot
 
+  _mapOfTagPositions[0] = std::vector<double>{littleArucoX+2*(rectangleX+edge), rectangleY+edge-littleArucoY, 0.003};
+  _mapOfTagPositions[1] = std::vector<double>{littleArucoX+2*(rectangleX+edge), littleArucoY, 0.003};
+  _mapOfTagPositions[4] = std::vector<double>{littleArucoX+2*(rectangleX+edge), -littleArucoY, 0.003};
+  _mapOfTagPositions[5] = std::vector<double>{littleArucoX+2*(rectangleX+edge), -(rectangleY+edge)+littleArucoY, 0.003};
 
+  _mapOfTagPositions[6] = std::vector<double>{littleArucoX+(rectangleX+edge), rectangleY+edge-littleArucoY, 0.003};
+  _mapOfTagPositions[2] = std::vector<double>{littleArucoX+(rectangleX+edge), littleArucoY, 0.003};
+  _mapOfTagPositions[3] = std::vector<double>{littleArucoX+(rectangleX+edge), -littleArucoY, 0.003};
+  _mapOfTagPositions[7] = std::vector<double>{littleArucoX+(rectangleX+edge), -(rectangleY+edge)+littleArucoY, 0.003};
+
+  _mapOfTagPositions[8] = std::vector<double>{littleArucoX, rectangleY+edge-littleArucoY, 0.003};
+  _mapOfTagPositions[9] = std::vector<double>{littleArucoX, littleArucoY, 0.003};
+  _mapOfTagPositions[10] = std::vector<double>{littleArucoX, -littleArucoY, 0.003};
+  _mapOfTagPositions[11] = std::vector<double>{littleArucoX, -(rectangleY+edge)+littleArucoY, 0.003};
+
+  _mapOfTagPositions[100] = std::vector<double>{sideBigArucoX, rectangleY+edge+sideBigArucoY, bigArucoZ};
+  _mapOfTagPositions[101] = std::vector<double>{rectangleX+edge+sideBigArucoX, rectangleY+edge+sideBigArucoY, bigArucoZ};
+  _mapOfTagPositions[102] = std::vector<double>{2*(rectangleX+edge)+sideBigArucoX, rectangleY+edge+sideBigArucoY, bigArucoZ};
+
+  _mapOfTagPositions[103] = std::vector<double>{2*(rectangleX+edge)+frontBigArucoX, rectangleY+edge, bigArucoZ};
+  _mapOfTagPositions[104] = std::vector<double>{2*(rectangleX+edge)+frontBigArucoX, 0, bigArucoZ};
+  _mapOfTagPositions[105] = std::vector<double>{2*(rectangleX+edge)+frontBigArucoX, -(rectangleY+edge), bigArucoZ};
+
+  _mapOfTagPositions[106] = std::vector<double>{2*(rectangleX+edge)+sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
+  _mapOfTagPositions[106] = std::vector<double>{rectangleX+edge+sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
+
+
+  /*
   //1: ids{0,1}
   _mapOfTagPositions[0] = std::vector<double>{x0, y0, z0};
   _mapOfTagPositions[1] = std::vector<double>{x0, -y0, z0};
@@ -158,13 +198,14 @@ void ArucoCalibration::onStart() {
   _mapOfTagPositions[132] = std::vector<double>{minDeltaX+deltaX, -maxDeltaY, bigDeltaZ};
   //7: ids{55}
   _mapOfTagPositions[55] = std::vector<double>{minDeltaX, -maxDeltaY, bigDeltaZ};
+  */
 
   _container.clear();
+
   // Creating an entry for each known id tag
-  // TODO : dimensions a verifier
-  double offsety=0.075;
   for (auto & pair : _mapOfTagPositions) {
     int index = pair.first;
+    pair.second[0]-=offsetx;
     pair.second[1]-=offsety;
     _container[index] = (std::vector<std::vector<double> >());
   }
