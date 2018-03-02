@@ -4,10 +4,10 @@ Dossier autodesk pour l'usinage : SigmabanV2.1
 | Quantity | Done | Pièce            | Nom autodesk                   | Surfaçage | Vérification | Affectation |
 |----------+------+------------------+--------------------------------+-----------+--------------|-------------|
 |        1 |    0 | Séparation torse | fitPlate                       | Non       | @Steve       | Adrien      |
-|        2 |    0 | Base U64 Long    | new_base_u64_long              | Oui       |              |             |
+|        2 |    0 | Base U64 Long    | new_base_u64_long              | Oui       |              | Patxi       |
 |        4 |    0 | Base U64         | new_base_u64                   | Oui       |              | Olivier     |
-|        2 |    0 | Base U106 long   | new_base_u106_long             | Oui       |              |             |
-|        1 |    0 | Fixation Caméra  | ptgrey_fix2                    | Oui       |              |             |
+|        2 |    0 | Base U106 long   | new_base_u106_long             | Oui       |              | Patxi       |
+|        1 |    0 | Fixation Caméra  | ptgrey_fix2                    | Oui       |              | Patxi       |
 |        2 |    0 | Bras             | NA                             | Non       | @Loic        |             |
 |        2 |    0 | Avant-Bras       | NA                             | Non       | @Loic        |             |
 |----------+------+------------------+--------------------------------+-----------+--------------|-------------|
