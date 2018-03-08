@@ -702,21 +702,22 @@ void Robocup::readPipeline() {
         // Calculating the center of the tags on the image (x, y)
         // TODO, if the barycenter is not good enough, do better (crossing the
         // diags?)
-        float avrgX = 0;
-        float avrgY = 0;
+        Eigen::Vector2d avg_in_img(0,0);
         for (unsigned int i = 0; i < marker.size(); i++) {
-          avrgX = avrgX + marker[i].x;
-          avrgY = avrgY + marker[i].y;
+          avg_in_img += Eigen::Vector2d(marker[i].x, marker[i].y);
         }
-        // Averaging and being a relative of the image
-        avrgX = (avrgX / 4.0) / (float)(size.width);
-        avrgY = (avrgY / 4.0) / (float)(size.height);
-        // DEBUG
-        // std::cout << "avrgX = " << avrgX << std::endl;
-        // std::cout << "avrgY = " << avrgY << std::endl;
+        avg_in_img /= 4.0;
+        // Undistort position
+        cv::Point2f avg_undistorded;
+        cs->undistortPoint(avg_in_img(0), avg_in_img(1), size.width, size.height, avg_undistorded);
         // Using a pair instead than a cv::Point so the structure is usable even
         // without opencv (will be read by the low level)
-        detectedTagsCenters.push_back(std::pair<float, float>(avrgX, avrgY));
+        std::pair<float, float> pair_in_img(avg_in_img(0) / size.width,
+                                            avg_in_img(1) / size.height);
+        std::pair<float, float> pair_undistorded(avg_undistorded.x / size.width,
+                                                 avg_undistorded.y / size.height);
+        detectedTagsCenters.push_back(pair_in_img);
+        detectedTagsCentersUndistort.push_back(pair_undistorded);
       }
     } catch (const std::bad_cast &exc) {
       tagsMutex.unlock();
@@ -903,15 +904,18 @@ std::vector<Filters::FieldBorderData> Robocup::stealClipping() {
 void Robocup::stealTags(std::vector<int> &indices,
                         std::vector<Eigen::Vector3d> &positions,
                         std::vector<std::pair<float, float>> &centers,
+                        std::vector<std::pair<float, float>> &undistorded_centers,
                         double *timestamp) {
   tagsMutex.lock();
   indices = detectedTagsIndices;
   positions = detectedTagsPositions;
   centers = detectedTagsCenters;
+  undistorded_centers = detectedTagsCentersUndistort;
   *timestamp = detectedTimestamp;
   detectedTagsIndices.clear();
   detectedTagsPositions.clear();
   detectedTagsCenters.clear();
+  detectedTagsCentersUndistort.clear();
   tagsMutex.unlock();
 }
 
@@ -1155,7 +1159,6 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         freshObservations.push_back(goal);
       }
     } else if (obsType == "tag") {
-      // detectedTagsCenters.push_back(std::pair<float, float>(avrgX, avrgY));
       // Reading tags
       // Going from and image position to a position on the field, in the origin
       // (of world) frame

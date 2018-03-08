@@ -163,8 +163,9 @@ public:
   /// Finally clear all memory about tags
   void stealTags(std::vector<int> & indices,
                  std::vector<Eigen::Vector3d> & positions,
-		 std::vector<std::pair<float, float> > & centers,
-		 double * timestamp);
+                 std::vector<std::pair<float, float> > & centers,
+                 std::vector<std::pair<float, float> > & undistorded_centers,
+                 double * timestamp);
 
 
   //steal the observations from the visual compass
@@ -255,6 +256,8 @@ private:
   std::vector<Eigen::Vector3d> detectedTagsPositions;
   /// Positions of the center of the tags on the image (x, y), range [-1, 1]
   std::vector<std::pair<float, float> > detectedTagsCenters;
+  /// Positions of the center of the tags on the undistort image (x, y), range [-1, 1]
+  std::vector<std::pair<float, float> > detectedTagsCentersUndistort;
   /// timestamp of the tag detection
   double detectedTimestamp=0.0;
 

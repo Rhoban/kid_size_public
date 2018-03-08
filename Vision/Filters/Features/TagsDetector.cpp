@@ -131,11 +131,12 @@ void TagsDetector::process() {
       // draw a point where the middle of the tag is supposed to be. Using a barycenter for now, TODO better if need be.
       int avrgX = 0;
       int avrgY = 0;
-      for (unsigned int i = 0; i < Markers.size(); i++) {
-        for (unsigned int j = 0; j < Markers[i].size(); j++) {
-          std::cout << "Tag " << i << ", corner " << j << " : " << Markers[i][j] << std::endl;
-          avrgX = avrgX + Markers[i][j].x;
-          avrgY = avrgY + Markers[i][j].y;
+      for (unsigned int markerId = 0; markerId < Markers.size(); markerId++) {
+        for (unsigned int cornerId = 0; cornerId < Markers[markerId].size(); cornerId++) {
+          std::cout << "Tag " << markerId << ", corner " << cornerId
+                    << " : " << Markers[markerId][cornerId] << std::endl;
+          avrgX = avrgX + Markers[markerId][cornerId].x;
+          avrgY = avrgY + Markers[markerId][cornerId].y;
         }
       }
       avrgX = avrgX/4.0;

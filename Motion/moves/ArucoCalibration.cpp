@@ -101,18 +101,6 @@ void ArucoCalibration::onStart() {
   logger.log("Starting ArucoCalibration");
   _disabled = false;
 
-  float x0 = 0.158;
-  float y0 = 0.17;
-  float z0 = 0.003;
-  float deltaX = 0.510;
-  float deltaY = 0.65;
-  float absoluteBigX = 1.281;
-  float bigDeltaZ = 0.1485;
-  float superBigDeltaZ = 0.43;
-  float superBigDeltaX = 0.025;
-  float maxDeltaY = 0.92;
-  float minDeltaX = 0.045;
-
   // rectangle :
   // [*]
   float rectangleX = 0.2995;
@@ -214,7 +202,8 @@ void ArucoCalibration::onStart() {
 // Fetching the low level info for the given timestamp and adding an entry for
 // each detected tag
 void ArucoCalibration::addEntry(std::vector<int> &indices,
-                                std::vector<std::pair<float, float>> &centers) {
+                                std::vector<std::pair<float, float>> & centers,
+                                std::vector<std::pair<float, float>> & uncorrected_centers) {
   // The imu value are not stored directly into the model as the DOF are. This
   // functions retrieves the
   // imu values. Leph has a test that proves that this works (the stoning should
@@ -223,8 +212,6 @@ void ArucoCalibration::addEntry(std::vector<int> &indices,
   Eigen::Vector3d RollPitchYaw = _model->trunkSelfOrientation();
   double pitch = RollPitchYaw[1];
   double roll = RollPitchYaw[0];
-  double pixelX = 0.0;
-  double pixelY = 0.0;
   for (unsigned int i = 0; i < indices.size(); i++) {
     // For each detected tag
     int indice = indices[i];
@@ -233,9 +220,12 @@ void ArucoCalibration::addEntry(std::vector<int> &indices,
       continue;
     }
     std::pair<float, float> center = centers[i];
-    // #LephConventionsAreGr8 pixels are in [-1, 1] and not [0, 1]
-    pixelX = (center.first - 0.5)*2;
-    pixelY = (center.second - 0.5)*2;
+    std::pair<float, float> uncorrected_center = uncorrected_centers[i];
+    // In Leph: pixels are in [-1, 1] and not [0, 1]
+    double pixelX = (center.first - 0.5)*2;
+    double pixelY = (center.second - 0.5)*2;
+    double pixelXUncorrected = (uncorrected_center.first - 0.5)*2;
+    double pixelYUncorrected = (uncorrected_center.second - 0.5)*2;
     
     if (!(_mapOfTagPositions.count(indice))) {
       logger.log("The index %d was seen but its position is unknown.", indice);
@@ -255,6 +245,8 @@ void ArucoCalibration::addEntry(std::vector<int> &indices,
     data.push_back(tagPosition[2]);
     data.push_back(pixelX);
     data.push_back(pixelY);
+    data.push_back(pixelXUncorrected);
+    data.push_back(pixelYUncorrected);
     _container[indice].push_back(data);
     data.clear();
   }
@@ -276,7 +268,9 @@ void ArucoCalibration::writeFile() {
   file << "'ground_y' ";
   file << "'ground_z' ";
   file << "'pixel_x' ";
-  file << "'pixel_y'\n";
+  file << "'pixel_y' ";
+  file << "'pixel_x_uncorrected' ";
+  file << "'pixel_y_uncorrected'\n";
 
   // Adding the content
   for (auto & pair : _container) {
@@ -323,11 +317,12 @@ void ArucoCalibration::step(float elapsed) {
   std::vector<int> markerIndices;
   std::vector<Eigen::Vector3d> markerPositions;
   std::vector<std::pair<float, float>> markerCenters;
+  std::vector<std::pair<float, float>> markerUncorrectedCenters;
   double tagTimestamp = 0;
   // Getting the detected tags from the vision.
   // The thread safety is handled inside the function
 #ifdef VISION_COMPONENT
-  loc->stealTags(markerIndices, markerPositions, markerCenters, &tagTimestamp);
+  loc->stealTags(markerIndices, markerPositions, markerUncorrectedCenters, markerCenters, &tagTimestamp);
 #endif
   if (_t < 1.0 || markerIndices.size() < 1) {
     // Either the vision didn't detect anything, or we're asking for the tag
@@ -346,7 +341,7 @@ void ArucoCalibration::step(float elapsed) {
   _model->updateDOFPosition();
 
   // We have observations, let's log them along with the robot state
-  addEntry(markerIndices, markerCenters);
+  addEntry(markerIndices, markerCenters, markerUncorrectedCenters);
 
   // Checking if we have enough frames for each tag
   bool weAreDone = true;

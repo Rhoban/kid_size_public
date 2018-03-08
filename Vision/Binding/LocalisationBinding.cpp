@@ -553,13 +553,18 @@ std::vector<CompassObservation *> LocalisationBinding::extractCompassObservation
 
 void LocalisationBinding::stealFromVision()
 {
+  // Declaring local unused variables to fit signature
+  std::vector<std::pair<float, float> > markerCenters;
+  std::vector<std::pair<float, float> > markerCentersUndistorded;
+  // Stealing data
   double tagTimestamp = 0;// Unused
   goalsLocations = vision_binding->stealGoals();
-  vision_binding->stealTags(markerIndices, markerPositions, markerCenters, &tagTimestamp);
+  vision_binding->stealTags(markerIndices, markerPositions,
+                            markerCenters, markerCentersUndistorded, &tagTimestamp);
   vision_binding->stealCompasses(compassOrientations,compassQuality);
   clipping_data = vision_binding->stealClipping();
   fieldLogger.log("Nb observations stolen: (%d goals, %d markers, %d compass)",
-                  goalsLocations.size(), markerCenters.size(), compassOrientations.size());
+                  goalsLocations.size(), markerPositions.size(), compassOrientations.size());
 }
 
 LocalisationBinding::ObservationVector LocalisationBinding::extractObservations()

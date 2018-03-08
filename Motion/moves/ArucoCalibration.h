@@ -23,7 +23,8 @@ public:
   virtual void onStop() override;
   
   void addEntry(std::vector<int> &indices,
-                std::vector<std::pair<float, float>> &centers);
+                std::vector<std::pair<float, float>> &centers,
+                std::vector<std::pair<float, float>> &uncorrected_centers);
 
   void writeFile();
 

@@ -157,9 +157,6 @@ public:
   /// Position of the center of the markers in the world
   std::vector<Eigen::Vector3d> markerPositions;
 
-  /// Centers of the markers (in the image)
-  std::vector<std::pair<float, float> > markerCenters;
-
   /// Clipping infos
   std::vector<Vision::Filters::FieldBorderData> clipping_data;
 

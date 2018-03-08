@@ -816,9 +816,10 @@ double LocalisationService::getLastVisionUpdate()
 void LocalisationService::stealTags(std::vector<int> & indices,
 				    std::vector<Eigen::Vector3d> & positions,
 				    std::vector<std::pair<float, float> > & centers,
+				    std::vector<std::pair<float, float> > & centersUndistorded,
 				    double * timestamp) {
 
-  robocup->stealTags(indices, positions, centers, timestamp);
+  robocup->stealTags(indices, positions, centers, centersUndistorded, timestamp);
 }
 #endif
 

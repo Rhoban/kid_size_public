@@ -118,9 +118,10 @@ class LocalisationService : public Service
 
 #ifdef VISION_COMPONENT
 	void stealTags(std::vector<int> & indices,
-		       std::vector<Eigen::Vector3d> & positions,
-		       std::vector<std::pair<float, float> > & centers,
-		       double * timestamp);
+                 std::vector<Eigen::Vector3d> & positions,
+                 std::vector<std::pair<float, float> > & centers,
+                 std::vector<std::pair<float, float> > & centersUndistorded,
+                 double * timestamp);
 #endif
 	
 #ifdef VISION_COMPONENT
