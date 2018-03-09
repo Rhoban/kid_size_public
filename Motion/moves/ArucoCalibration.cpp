@@ -40,6 +40,12 @@ ArucoCalibration::ArucoCalibration()
     ->minimum(0.0)
     ->maximum(300.0);
 
+  bind->bindNew("elbowOffset", _elbowOffset, RhIO::Bind::PullOnly)
+    ->comment("Ensure elbows are not masking nearby tags")
+    ->minimum(-90)
+    ->maximum(90)
+    ->defaultValue(0);
+
   bind->bindNew("hipPitchAmplitude", _hipPitchAmplitude, RhIO::Bind::PullOnly)
     ->comment("Sets the amplitude of a sinus added to the hip pitchs")
     ->minimum(0)
