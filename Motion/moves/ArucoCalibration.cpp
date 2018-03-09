@@ -167,26 +167,7 @@ void ArucoCalibration::onStart() {
 
   _mapOfTagPositions[106] = std::vector<double>{2*(rectangleX+edge)+sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
   _mapOfTagPositions[107] = std::vector<double>{rectangleX+edge+sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
-
-
-  /*
-  //1: ids{0,1}
-  _mapOfTagPositions[0] = std::vector<double>{x0, y0, z0};
-  _mapOfTagPositions[1] = std::vector<double>{x0, -y0, z0};
-  //2: ids{2,3}
-  _mapOfTagPositions[2] = std::vector<double>{x0 + deltaX, y0, z0};
-  _mapOfTagPositions[3] = std::vector<double>{x0 + deltaX, -y0, z0};
-  //3: ids{29}
-  _mapOfTagPositions[29] = std::vector<double>{absoluteBigX, deltaY, bigDeltaZ};
-  //4: ids{62}
-  _mapOfTagPositions[62] = std::vector<double>{absoluteBigX, 0.0, bigDeltaZ};
-  //5: ids{141}
-  _mapOfTagPositions[141] = std::vector<double>{absoluteBigX, -deltaY, bigDeltaZ};
-  //6: ids{132}
-  _mapOfTagPositions[132] = std::vector<double>{minDeltaX+deltaX, -maxDeltaY, bigDeltaZ};
-  //7: ids{55}
-  _mapOfTagPositions[55] = std::vector<double>{minDeltaX, -maxDeltaY, bigDeltaZ};
-  */
+  _mapOfTagPositions[108] = std::vector<double>{sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
 
   _container.clear();
 
