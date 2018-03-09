@@ -57,7 +57,6 @@ CameraState::CameraState(MoveScheduler *moveScheduler,const std::string& CameraP
   _model = &(_pastReadModel.get());
   _model->setAutoUpdate(false);
   _model->updateDOFPosition();
-  compass = RAD2DEG(_moveScheduler->getServices()->model->pastMagneto(now)); //FIXME: This is deprecated
 
 
   try {
@@ -83,10 +82,6 @@ CameraState::CameraState(MoveScheduler *moveScheduler,const std::string& CameraP
 
 void CameraState::updateInternalModel(double timeStamp) {
   _timeStamp = timeStamp;
-
-  // Surprising from the commité poids et mesures president
-  compass =
-    RAD2DEG(_moveScheduler->getServices()->model->pastMagneto(timeStamp)); //deprecated
 
   _params = _moveScheduler->getServices()->model->getCameraParameters();
   _model->setAutoUpdate(true);

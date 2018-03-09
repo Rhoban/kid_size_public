@@ -12,13 +12,14 @@ find_package(catkin REQUIRED COMPONENTS
   aruco
   tclap
   rhoban_team_play
+  rhoban_model_learning
   csa_mdp_experiments
   )
 
 catkin_package(
   INCLUDE_DIRS Motion/
   #LIBRARIES #TODO: which libraries are published?
-  CATKIN_DEPENDS tclap RhAL model robocup_referee rhoban_graphs rhoban_team_play rhoban_random rhoban_unsorted
+  CATKIN_DEPENDS tclap RhAL model robocup_referee rhoban_graphs rhoban_team_play rhoban_random rhoban_unsorted rhoban_model_learning
 )
 
 #Build option

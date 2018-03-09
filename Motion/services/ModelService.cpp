@@ -43,24 +43,11 @@ ModelService::ModelService() :
   _logPath(""),
   _isLogBinaryFormat(true)
 {
-  //Load camera model parameters from file
-  //Open file
-  std::ifstream fileCam("cameraModel.params");
-  //Check open
-  if (fileCam.is_open()) {
-    //Read data
-    Eigen::VectorXd tmpCamData =
-      Leph::ReadEigenVectorFromStream(fileCam);
-    Eigen::VectorXd tmpImuData =
-      Leph::ReadEigenVectorFromStream(fileCam);
-    //Assign model
-    _cameraParameters.widthAperture = tmpCamData(0);
-    _cameraParameters.heightAperture = tmpCamData(1);
-    _imuOffset.x() = tmpImuData(0);
-    _imuOffset.y() = tmpImuData(1);
-    _imuOffset.z() = tmpImuData(2);
-  }
-  fileCam.close();
+  // Reading the correection to bring to the model
+  rhoban_model_learning::VisionCorrectionModel correction_model;
+  correction_model.loadFile("VCM.json");
+  _cameraParameters = correction_model.getCameraParameters();
+  _imuOffset = correction_model.getNeckOffsetsRad();
 
   //Load odometry model parameters from file
   //Open file

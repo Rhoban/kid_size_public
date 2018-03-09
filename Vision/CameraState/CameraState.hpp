@@ -158,16 +158,6 @@ public:
    */
   void distortPoint(double pixelX, double pixelY, double imgWidth, double imgHeight, cv::Point2f &out);
 
-  /**
-   * Compass value
-   * TODO describe formally what the value means (0° should be adv goal)
-   */
-  rhoban_utils::Angle compass;
-
-  /**
-   * This value is valid locally
-   */
-
   // Parameters which shouldn't be here but...
   static double ballRadius; // In cm
 
