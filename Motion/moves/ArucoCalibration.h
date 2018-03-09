@@ -28,9 +28,9 @@ public:
 
   void writeFile();
 
-  void dance(float freq, float time);
+  void dance(float time);
   void stopDance();
-  void moveHead(float angularSpeed=180.0);
+  void moveHead();
   void stopHead();
   
 private:
@@ -40,17 +40,10 @@ private:
 
   Leph::HumanoidFixedPressureModel _pastReadModel;
   Leph::HumanoidModel *_model;
-  int _nbFramesInLog;
   std::string _fileName;
-  int _nbFramesRead;
-  bool _disabled;
   float _bpm;
-  bool _dance;
-  //float _elbowOffset;
+  float _elbowOffset;
   float _headSpeed;
-  bool _handTuned;
-  float _pan;
-  float _tilt;
   
   float _hipPitchAmplitude;
   float _losangeAmplitude;
@@ -59,8 +52,12 @@ private:
   float _trunkYAmplitude;
   float _trunkZAmplitude;
   
+  /// Time since start of aruco
   float _t;
-  int _maxFramesPerTag;
   
-  
+  /// ArucoCalibration starts smoothly over a given 
+  float _smoothingTime;
+
+  /// The duration of a log
+  float _logDuration;
 };
