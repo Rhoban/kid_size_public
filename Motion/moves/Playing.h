@@ -26,7 +26,7 @@ public:
         
   virtual void enterState(std::string state);
   virtual void exitState(std::string state);
-  void setTeamPlayState(TeamPlayState state);
+  void setTeamPlayState(rhoban_team_play::TeamPlayState state);
 
 protected:
   double t;
@@ -45,7 +45,7 @@ protected:
   Place findPlacingTarget(rhoban_geometry::Point pos,
                           rhoban_geometry::Point ball,
                           rhoban_geometry::Point ballTarget,
-                          TeamPlayState intention);
+                          rhoban_team_play::TeamPlayState intention);
 
   Walk *walk;
   Head *head;

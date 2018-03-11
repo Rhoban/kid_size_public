@@ -6,7 +6,9 @@
 #include "robocup_referee/constants.h"
 
 using namespace rhoban_utils;
+using namespace rhoban_team_play;
 using namespace robocup_referee;
+
 static rhoban_utils::Logger logger("Decision");
 
 DecisionService::DecisionService()

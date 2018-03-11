@@ -1,6 +1,7 @@
 #include <math.h>
 #include <services/ModelService.h>
 #include <services/LocalisationService.h>
+#include <services/StrategyService.h>
 #include <rhoban_utils/angle.h>
 #include <rhoban_utils/logging/logger.h>
 #include <Utils/Euler.h>
@@ -293,6 +294,9 @@ void Kick::onStart()
     over = false;
     applied = false;
     generated = true;
+
+    // Announce that a kick has been performed (information is shared to other robots)
+    getServices()->strategy->announceKick();    
 }
 
 void Kick::apply()

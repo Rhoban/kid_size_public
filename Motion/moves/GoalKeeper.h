@@ -20,8 +20,8 @@ public:
   void step(float elapsed);
   void enterState(std::string state);
   void exitState(std::string state);
-  void setTeamPlayPriority(TeamPlayPriority priority);
-  TeamPlayState teamState();
+  void setTeamPlayPriority(rhoban_team_play::TeamPlayPriority priority);
+  rhoban_team_play::TeamPlayState teamState();
 
 protected:
   Walk *walk;
@@ -44,7 +44,7 @@ protected:
 	
   /// pos[cm] and azimuth[deg] are output parameters
   void getFieldTarget(rhoban_geometry::Point & wishedPos, rhoban_utils::Angle & wishedAzimuth);
-  void setTeamPlayState(TeamPlayState state);
+  void setTeamPlayState(rhoban_team_play::TeamPlayState state);
         
   float t;
   float targetX, targetY, targetSmoothing;

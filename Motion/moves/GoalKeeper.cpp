@@ -24,6 +24,7 @@ static rhoban_utils::Logger logger("GoalKeeper");
 
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
+using namespace rhoban_team_play;
 using robocup_referee::Constants;
 // xxx hysteresis sur align trop grande.
 // Prévoir mouvement d'arrêt

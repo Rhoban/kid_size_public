@@ -11,32 +11,7 @@
 
 using namespace rhoban_utils;
 using namespace rhoban_geometry;
-
-float TeamPlayInfo::getAge() const
-{
-    return TimeStamp::now().getTimeMS() - timestamp;
-}
-bool TeamPlayInfo::isOutdated() const
-{
-    //Outdated after 3 seconds
-    return (getAge() > 3000);
-}
-double TeamPlayInfo::scoreFor(TeamPlayState role) const
-{
-    if (role == PlacingA) return scoreA;
-    if (role == PlacingB) return scoreB;
-    if (role == PlacingC) return scoreC;
-    if (role == PlacingD) return scoreD;
-    return -1;
-}
-float TeamPlayInfo::getBallDistance() const
-{
-    return sqrt(ballX*ballX + ballY*ballY);
-}
-float TeamPlayInfo::getBallAzimuth() const
-{
-    return atan2(ballY, ballX);
-}
+using namespace rhoban_team_play;
 
 TeamPlayService::TeamPlayService() : 
     _bind(nullptr), 
@@ -257,8 +232,11 @@ void TeamPlayService::messageSend()
         rhoban_utils::Logger::getTime(_selfInfo.hour, _selfInfo.min, _selfInfo.sec, ms_unused);
         //Ball position in self
         Point ballPos = loc->getBallPosSelf();
+        Point ballVel = loc->getBallSpeedSelf();
         _selfInfo.ballX = ballPos.x;
         _selfInfo.ballY = ballPos.y;
+        _selfInfo.ballVelX = ballVel.x;
+        _selfInfo.ballVelY = ballVel.y;
         _selfInfo.ballQ = loc->ballQ;
         _selfInfo.ballOk = decision->isBallQualityGood;
         //Robot in field
