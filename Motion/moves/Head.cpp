@@ -1,6 +1,7 @@
 #include "Head.h"
 
 #include "services/ModelService.h"
+#include "services/DecisionService.h"
 #include "services/LocalisationService.h"
 
 #include "rhoban_utils/logging/logger.h"
@@ -318,9 +319,13 @@ bool Head::shouldTrackBall()
   double ball_dist = loc->getBallPosSelf().getLength();
   // Never track ball if quality is too low
   if (loc->ballQ < 0.1) return false;
-  // If tracking is forced or forced by dist, track
-  if (force_track) return true;
-  if (ball_dist < force_track_dist) return true;
+  // For some cases, tracking is forced to stay active
+  if (force_track ||
+      ball_dist < force_track_dist ||
+      getServices()->decision->isBallMoving) {
+    return true;
+  }
+
   // If robot is tracking currently, stop tracking if period has ended
   if (is_tracking) {
     if (ball_dist < near_track_dist) {

@@ -20,6 +20,9 @@ class DecisionService : public Service
          */
         bool isBallQualityGood;
 
+        /// Is the ball currently moving or being kicked
+        bool isBallMoving;
+
         /**
          * Is the field quality good enough?
          */
@@ -95,6 +98,12 @@ class DecisionService : public Service
 
         // Thresholds for ball quality
         float ballQThreshold, ballQDisableThreshold;
+
+        /// Minimal ball speed to consider that ball speed is moving
+        float movingBallMinSpeed;
+
+        /// Time where a robot is forced to track the ball after a kick
+        float postKickTrackingTime;
 
         // Thresholds for field quality
         float fieldQThreshold, fieldQDisableThreshold;
