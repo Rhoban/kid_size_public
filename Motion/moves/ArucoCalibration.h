@@ -43,6 +43,7 @@ private:
   std::string _fileName;
   float _bpm;
   float _elbowOffset;
+  float _shoulderRollOffset;
   float _headSpeed;
   
   float _hipPitchAmplitude;

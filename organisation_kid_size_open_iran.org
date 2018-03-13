@@ -133,13 +133,8 @@
 * Attributions
 ** Non attribué
 *** Rôles pour matchs
-**** Arbitrage (Antoine? Patxi?)
 **** Monitoring UDP
 **** Initialisation/Intervention des robots
-*** Tuning paramètres vision
-**** Robots Adverses (@Antoine?)
-*** Apprentissage vision
-**** VisualCompass (@Antoine?)
 ** Patxi
 *** Match: à voir
 *** Hors-match
@@ -153,9 +148,12 @@
 **** ArenaCorners (@discuter avec Olivier)
 ** Thomas
 ** Antoine
-*** Match: À voir
+*** Match:
+**** Arbitrage
 *** Hors-match
 **** Gestion serveur de tag
+**** Robots Adverses (@Antoine?)
+**** VisualCompass (@Antoine?)
 ** Ludo
 *** Match: Handler
 *** Hors-match:

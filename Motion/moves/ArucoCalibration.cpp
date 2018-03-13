@@ -42,9 +42,15 @@ ArucoCalibration::ArucoCalibration()
 
   bind->bindNew("elbowOffset", _elbowOffset, RhIO::Bind::PullOnly)
     ->comment("Ensure elbows are not masking nearby tags")
-    ->minimum(-90)
-    ->maximum(90)
-    ->defaultValue(0);
+    ->minimum(0)
+    ->maximum(160)
+    ->defaultValue(150);
+
+  bind->bindNew("shoulderRollOffset", _shoulderRollOffset, RhIO::Bind::PullOnly)
+    ->comment("Ensure that arms are not colliding with the trunk")
+    ->minimum(0)
+    ->maximum(20)
+    ->defaultValue(15);
 
   bind->bindNew("hipPitchAmplitude", _hipPitchAmplitude, RhIO::Bind::PullOnly)
     ->comment("Sets the amplitude of a sinus added to the hip pitchs")
@@ -64,7 +70,7 @@ ArucoCalibration::ArucoCalibration()
 
   bind->bindNew("logDuration", _logDuration, RhIO::Bind::PullOnly)
     ->comment("How much time is used for the log? [s]")
-    ->defaultValue(10);
+    ->defaultValue(26);
 
   // Ensures default values are pushed
   bind->push();
@@ -281,6 +287,8 @@ void ArucoCalibration::step(float elapsed) {
   // We have observations, let's log them along with the robot state
   addEntry(markerIndices, markerCenters, markerUncorrectedCenters);
 
+  std::cout << "_t : " << _t << std::endl;
+
   if (_t > _logDuration + _smoothingTime * 2) {
     //Printing how often the tags where seen
     for(auto const &pair : _container) {
@@ -305,7 +313,7 @@ void ArucoCalibration::dance(float time) {
   if (time < _smoothingTime) {
     gain = time / _smoothingTime;
   } else if (time > end_move) {
-    gain = std::max(0.0, (time - end_move) / _smoothingTime);
+    gain = std::max(0.0, 1 - (time - end_move) / _smoothingTime);
   }
   // Oscillation on robot roll
   setAngle("left_hip_roll"   ,  gain * _losangeAmplitude*sin(2*M_PI*freq*time));
@@ -316,7 +324,11 @@ void ArucoCalibration::dance(float time) {
   setAngle("left_hip_pitch"  , gain * _hipPitchAmplitude*sin(2*M_PI*freq/2.0*time));
   setAngle("right_hip_pitch" , gain * _hipPitchAmplitude*sin(2*M_PI*freq/2.0*time));
   // Setting elbow straight
-  RhIO::Root.setFloat("/moves/walk/elbowOffset", _elbowOffset);
+  setAngle("right_elbow", gain * _elbowOffset);
+  setAngle("left_elbow" , gain * _elbowOffset);
+  // Moving arms further from the body
+  setAngle("left_shoulder_roll",  gain * _shoulderRollOffset);
+  setAngle("right_shoulder_roll", -gain * _shoulderRollOffset);
 }
 
 void ArucoCalibration::stopDance() {
@@ -325,7 +337,7 @@ void ArucoCalibration::stopDance() {
 
 
 void ArucoCalibration::moveHead() {
-  RhIO::Root.setFloat("/moves/head/localizeMaxPan", 100);
+  RhIO::Root.setFloat("/moves/head/localizeMaxPan", 120);
   RhIO::Root.setFloat("/moves/head/localizeMinOverlap", 20);
   RhIO::Root.setFloat("/moves/head/localizeMaxTilt", 90);
   RhIO::Root.setFloat("/moves/head/maxSpeed", _headSpeed);
