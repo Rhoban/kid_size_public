@@ -128,7 +128,8 @@ void ApproachMove::updateKickScore(double elapsed, const Point & ball_pos)
 {
   // Updating kick score
   const KickZone & kick_zone = kmc.getKickModel(expectedKick).getKickZone();
-  Eigen::Vector3d state(ball_pos.x, ball_pos.y, 0);
+  double kick_dir_rad = deg2rad(getKickCap().getSignedValue());
+  Eigen::Vector3d state(ball_pos.x, ball_pos.y, kick_dir_rad);
   // Debug
   std::ostringstream oss;
   oss << "Ball state: (" << state.transpose() << ") -> ";
