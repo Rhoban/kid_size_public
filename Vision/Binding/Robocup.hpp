@@ -6,6 +6,7 @@
 #include "Filters/Pipeline.hpp"
 #include "Filters/Custom/FieldBorderData.hpp"
 #include "Application/Application.hpp"
+#include "Utils/ImageLogger.h"
 
 #include "rhoban_utils/timing/time_stamp.h"
 
@@ -66,10 +67,8 @@ private:
   int imageDelay; // Delay between the image capture time [ms]
 
   // Logging
-  std::vector<cv::Mat> imagesBuffer;
-  std::vector<::rhoban_utils::TimeStamp> imagesTimes;
   bool logging;
-  std::string logPrefix;
+  Utils::ImageLogger manual_logger;
   ::rhoban_utils::TimeStamp endLog;
 
   void initImageHandlers();

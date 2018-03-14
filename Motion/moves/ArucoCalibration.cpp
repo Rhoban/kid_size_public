@@ -18,88 +18,71 @@ static rhoban_utils::Logger logger("ArucoCalibration");
 // LocalisationService when the positions are reached?
 
 ArucoCalibration::ArucoCalibration()
-    : Move(),
-      _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>()) {
+  : Move(),
+    _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>()) {
   _model = &(_pastReadModel.get());
   Move::initializeBinding();
-  bind->bindNew("nbFramesInLog", _nbFramesInLog, RhIO::Bind::PullOnly)
-      ->comment("Number of frames that will be taken in the log")
-      ->persisted(true)
-      ->defaultValue(500)
-      ->minimum(1)
-      ->maximum(1000);
-  bind->bindNew("currentNbFrames", _nbFramesRead, RhIO::Bind::PushOnly)
-      ->comment("Current number of processed frames")
-      ->defaultValue(0);
   bind->bindNew("filename", _fileName, RhIO::Bind::PullOnly)
-      ->comment("where to save the values")
-      ->persisted(false)
-      ->defaultValue("arucoCalibration.csv");
-  bind->bindNew("disabled", _disabled, RhIO::Bind::PushOnly)
-      ->comment("Starts being false, becomes true when the measures are over.")
-      ->defaultValue(false);
-  bind->bindNew("dance", _dance, RhIO::Bind::PullOnly)
-      ->comment("Starts a dance on the robot")
-      ->persisted(true)
-      ->defaultValue(1);
+    ->comment("where to save the values")
+    ->persisted(false)
+    ->defaultValue("arucoCalibration.csv");
   bind->bindNew("bpm", _bpm, RhIO::Bind::PullOnly)
-      ->comment("Sets the frequency of the dance")
-      ->persisted(true)
-      ->defaultValue(15)
-      ->minimum(0.0)
-      ->maximum(300.0);
+    ->comment("Sets the frequency of the dance")
+    ->persisted(true)
+    ->defaultValue(15)
+    ->minimum(0.0)
+    ->maximum(300.0);
 
-    bind->bindNew("headSpeed", _headSpeed, RhIO::Bind::PullOnly)
-      ->comment("Sets the angular speed in the head move")
-      ->persisted(true)
-      ->defaultValue(30)
-      ->minimum(0.0)
-      ->maximum(300.0);
- 
-  bind->bindNew("handTuned", _handTuned, RhIO::Bind::PullOnly)
-      ->comment("If true, the head will be handled by hand, throught pan and tilt")
-      ->persisted(true)
-      ->defaultValue(0);
-  bind->bindNew("pan", _pan, RhIO::Bind::PullOnly)
-      ->comment("Hand tuned pan")
-      ->minimum(-180.0)
-      ->maximum(180.0)
-      ->defaultValue(0);
-  bind->bindNew("tilt", _tilt, RhIO::Bind::PullOnly)
-      ->comment("Hand tuned tilt")
-      ->minimum(-30)
-      ->maximum(90)
-      ->defaultValue(0);
+  bind->bindNew("headSpeed", _headSpeed, RhIO::Bind::PullOnly)
+    ->comment("Sets the angular speed in the head move")
+    ->persisted(true)
+    ->defaultValue(30)
+    ->minimum(0.0)
+    ->maximum(300.0);
+
+  bind->bindNew("elbowOffset", _elbowOffset, RhIO::Bind::PullOnly)
+    ->comment("Ensure elbows are not masking nearby tags")
+    ->minimum(0)
+    ->maximum(160)
+    ->defaultValue(150);
+
+  bind->bindNew("shoulderRollOffset", _shoulderRollOffset, RhIO::Bind::PullOnly)
+    ->comment("Ensure that arms are not colliding with the trunk")
+    ->minimum(0)
+    ->maximum(20)
+    ->defaultValue(15);
 
   bind->bindNew("hipPitchAmplitude", _hipPitchAmplitude, RhIO::Bind::PullOnly)
-      ->comment("Sets the amplitude of a sinus added to the hip pitchs")
-      ->minimum(0)
-      ->maximum(40)
-      ->defaultValue(14);
+    ->comment("Sets the amplitude of a sinus added to the hip pitchs")
+    ->minimum(0)
+    ->maximum(40)
+    ->defaultValue(14);
 
-    bind->bindNew("losangeAmplitude", _losangeAmplitude, RhIO::Bind::PullOnly)
-      ->comment("Sets the amplitude of a sinus added to the hip+ankle losange")
-      ->minimum(0)
-      ->maximum(40)
-      ->defaultValue(12);
+  bind->bindNew("losangeAmplitude", _losangeAmplitude, RhIO::Bind::PullOnly)
+    ->comment("Sets the amplitude of a sinus added to the hip+ankle losange")
+    ->minimum(0)
+    ->maximum(40)
+    ->defaultValue(12);
 
-  bind->bindNew("maxFramesPerTag", _maxFramesPerTag, RhIO::Bind::PullOnly)
-    ->comment("Sets the maximum recorded lines for a given tag")
-    ->minimum(1)
-    ->maximum(500)
-    ->persisted(true)
-    ->defaultValue(100);
+  bind->bindNew("smoothingTime", _smoothingTime, RhIO::Bind::PullOnly)
+    ->comment("The transition at start/end of dance [s]")
+    ->defaultValue(2);
+
+  bind->bindNew("logDuration", _logDuration, RhIO::Bind::PullOnly)
+    ->comment("How much time is used for the log? [s]")
+    ->defaultValue(26);
+
+  // Ensures default values are pushed
+  bind->push();
 }
 
 std::string ArucoCalibration::getName() { return "arucoCalibration"; }
 
 void ArucoCalibration::onStart() {
   _container.clear();
-  _nbFramesRead = 0;
   bind->pull();
   _t = 0;
   logger.log("Starting ArucoCalibration");
-  _disabled = false;
 
   // rectangle :
   // [*]
@@ -196,10 +179,6 @@ void ArucoCalibration::addEntry(std::vector<int> &indices,
   for (unsigned int i = 0; i < indices.size(); i++) {
     // For each detected tag
     int indice = indices[i];
-    if (_container[indice].size() >= (size_t)_maxFramesPerTag) {
-      // We have enough of this tag
-      continue;
-    }
     std::pair<float, float> center = centers[i];
     std::pair<float, float> uncorrected_center = uncorrected_centers[i];
     // In Leph: pixels are in [-1, 1] and not [0, 1]
@@ -272,26 +251,10 @@ void ArucoCalibration::writeFile() {
 void ArucoCalibration::step(float elapsed) {
   bind->pull();
   _t = _t + elapsed;
-  if (_disabled) {
-    onStop();
-    return;
-  }
 
-  // Setting the elbow straight
-  //RhIO::Root.setFloat("/moves/walk/elbowOffset", _elbowOffset);
-  if (_dance && !_handTuned) {
-    float freq = _bpm/60.0;
-    dance(freq, _t);
-    moveHead(_headSpeed);
-  } else {
-    stopDance();
-    stopHead();
-  }
-
-  if (_handTuned) {
-    std::cout << "Hand tunned mode..." << std::endl;
-    setAngle("head_yaw", _pan);
-    setAngle("head_pitch", _tilt);
+  if (_t < 2 * _smoothingTime + _logDuration) {
+    dance(_t);
+    moveHead();
   }
   
   auto loc = getServices()->localisation;
@@ -305,14 +268,14 @@ void ArucoCalibration::step(float elapsed) {
 #ifdef VISION_COMPONENT
   loc->stealTags(markerIndices, markerPositions, markerUncorrectedCenters, markerCenters, &tagTimestamp);
 #endif
-  if (_t < 1.0 || markerIndices.size() < 1) {
+  if (_t < _smoothingTime || markerIndices.size() < 1) {
     // Either the vision didn't detect anything, or we're asking for the tag
     // info again or robot is not moving really yet
     // (this function will be ticked faster than the Vision)
     bind->push();
     return;
   }
-  _nbFramesRead = _nbFramesRead + 1;
+
   logger.log("Adding entry for TS %f", tagTimestamp);
   // Retrieving the model at the given timestamp
   _model->setAutoUpdate(true);
@@ -324,25 +287,10 @@ void ArucoCalibration::step(float elapsed) {
   // We have observations, let's log them along with the robot state
   addEntry(markerIndices, markerCenters, markerUncorrectedCenters);
 
-  // Checking if we have enough frames for each tag
-  bool weAreDone = true;
-  for (const auto & pair : _container) {
-    if (pair.second.size() != (size_t)_maxFramesPerTag) {
-      weAreDone = false;
-      break;
-    }
-  }
+  std::cout << "_t : " << _t << std::endl;
 
-  if ((_nbFramesRead >= _nbFramesInLog) || weAreDone) {
-    _disabled = true;
-    _nbFramesRead = 0;
+  if (_t > _logDuration + _smoothingTime * 2) {
     //Printing how often the tags where seen
-    for(auto const &pair : _container) {
-      int index = pair.first;
-      int nbPresent = pair.second.size();
-      logger.log("The key %d was present %d times", index, nbPresent);
-    }
-
     for(auto const &pair : _container) {
       int index = pair.first;
       int nbPresent = pair.second.size();
@@ -350,23 +298,37 @@ void ArucoCalibration::step(float elapsed) {
     }
     // Our job here is done, saving the file
     writeFile();
+    // End move
+    this->Move::stop();
   }
 
   bind->push();
 }
 
 
-void ArucoCalibration::dance(float freq, float time) {
-
-  setAngle("left_hip_roll", _losangeAmplitude*sin(2*M_PI*freq*time));
-  setAngle("right_hip_roll", _losangeAmplitude*sin(2*M_PI*freq*time));
-  setAngle("left_ankle_roll", -_losangeAmplitude*sin(2*M_PI*freq*time));
-  setAngle("right_ankle_roll", -_losangeAmplitude*sin(2*M_PI*freq*time));
-  
-  //trunkzoffset 0.05 max
-  // There is no pitchSwing. Trynig a different freq
-  setAngle("left_hip_pitch", _hipPitchAmplitude*sin(2*M_PI*freq/2.0*time));
-  setAngle("right_hip_pitch", _hipPitchAmplitude*sin(2*M_PI*freq/2.0*time));
+void ArucoCalibration::dance(float time) {
+  float freq = _bpm/60.0;
+  double gain = 1;
+  double end_move = _smoothingTime + _logDuration;
+  if (time < _smoothingTime) {
+    gain = time / _smoothingTime;
+  } else if (time > end_move) {
+    gain = std::max(0.0, 1 - (time - end_move) / _smoothingTime);
+  }
+  // Oscillation on robot roll
+  setAngle("left_hip_roll"   ,  gain * _losangeAmplitude*sin(2*M_PI*freq*time));
+  setAngle("right_hip_roll"  ,  gain * _losangeAmplitude*sin(2*M_PI*freq*time));
+  setAngle("left_ankle_roll" , -gain * _losangeAmplitude*sin(2*M_PI*freq*time));
+  setAngle("right_ankle_roll", -gain * _losangeAmplitude*sin(2*M_PI*freq*time));
+  // Oscillation on hip pitch
+  setAngle("left_hip_pitch"  , gain * _hipPitchAmplitude*sin(2*M_PI*freq/2.0*time));
+  setAngle("right_hip_pitch" , gain * _hipPitchAmplitude*sin(2*M_PI*freq/2.0*time));
+  // Setting elbow straight
+  setAngle("right_elbow", gain * _elbowOffset);
+  setAngle("left_elbow" , gain * _elbowOffset);
+  // Moving arms further from the body
+  setAngle("left_shoulder_roll",  gain * _shoulderRollOffset);
+  setAngle("right_shoulder_roll", -gain * _shoulderRollOffset);
 }
 
 void ArucoCalibration::stopDance() {
@@ -374,11 +336,11 @@ void ArucoCalibration::stopDance() {
 }
 
 
-void ArucoCalibration::moveHead(float angularSpeed) {
-  RhIO::Root.setFloat("/moves/head/localizeMaxPan", 100);
+void ArucoCalibration::moveHead() {
+  RhIO::Root.setFloat("/moves/head/localizeMaxPan", 120);
   RhIO::Root.setFloat("/moves/head/localizeMinOverlap", 20);
   RhIO::Root.setFloat("/moves/head/localizeMaxTilt", 90);
-  RhIO::Root.setFloat("/moves/head/maxSpeed", angularSpeed);
+  RhIO::Root.setFloat("/moves/head/maxSpeed", _headSpeed);
   RhIO::Root.setBool("/moves/head/disabled", 0);
   RhIO::Root.setBool("/moves/head/forceLocalize", 1);
 }

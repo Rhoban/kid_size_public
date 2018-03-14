@@ -14,7 +14,7 @@ using namespace rhoban_utils;
 StrategyService::StrategyService()
   : bind("strategy"),
     active_approach("none"), active_kick_controler("none"),
-    kick_target_x(0), kick_target_y(0)
+    kick_target_x(0), kick_target_y(0), lastKick(TimeStamp::fromMS(0))
 {
   kmc.loadFile();
 
@@ -165,7 +165,14 @@ bool StrategyService::tick(double elapsed)
   info.ballTargetX = kick_target_x;
   info.ballTargetY = kick_target_y;
 
+  // Publishing time elapsed since last kick
+  info.timeSinceLastKick = diffSec(lastKick, TimeStamp::now());
+
   bind.push();
 
   return true;
+}
+
+void StrategyService::announceKick() {
+  lastKick = TimeStamp::now();
 }

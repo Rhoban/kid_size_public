@@ -15,6 +15,7 @@
 using csa_mdp::KickZone;
 using namespace rhoban_utils;
 using namespace rhoban_geometry;
+using namespace rhoban_team_play;
 
 static rhoban_utils::Logger logger("ApproachMove");
 

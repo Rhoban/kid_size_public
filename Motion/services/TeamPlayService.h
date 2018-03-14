@@ -36,14 +36,14 @@ class TeamPlayService : public Service
          * Access a teamplay info 
          * struct of current robot
          */
-        const TeamPlayInfo& selfInfo() const;
-        TeamPlayInfo& selfInfo();
+        const rhoban_team_play::TeamPlayInfo& selfInfo() const;
+        rhoban_team_play::TeamPlayInfo& selfInfo();
 
         /**
          * Access to container to information 
          * on available other players
          */
-        const std::map<int, TeamPlayInfo>& allInfo() const;
+        const std::map<int, rhoban_team_play::TeamPlayInfo>& allInfo() const;
 
         /**
          * Read/Write network and 
@@ -54,7 +54,7 @@ class TeamPlayService : public Service
         /**
          * Should I attack?
          */
-        TeamPlayState myRole();
+        rhoban_team_play::TeamPlayState myRole();
  
         /**
          * TeamPlay radius
@@ -69,7 +69,7 @@ class TeamPlayService : public Service
         /**
          * My priority
          */
-        TeamPlayPriority myPriority();
+        rhoban_team_play::TeamPlayPriority myPriority();
         
     private:
 
@@ -86,8 +86,8 @@ class TeamPlayService : public Service
         /**
          * Current and other robots infos
          */
-        TeamPlayInfo _selfInfo;
-        std::map<int, TeamPlayInfo> _allInfo;
+        rhoban_team_play::TeamPlayInfo _selfInfo;
+        std::map<int, rhoban_team_play::TeamPlayInfo> _allInfo;
 
         /**
          * Send and check 
@@ -114,7 +114,7 @@ class TeamPlayService : public Service
          * Parse given message 
          * and update teamplay state
          */
-        void processInfo(TeamPlayInfo info);
+        void processInfo(rhoban_team_play::TeamPlayInfo info);
 
         /**
          * Is the placing aggressive or defensive?

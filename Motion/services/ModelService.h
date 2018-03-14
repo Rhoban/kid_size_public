@@ -1,5 +1,7 @@
 #pragma once
 
+#include <rhoban_model_learning/humanoid_models/vision_correction_model.h>
+
 #include <Eigen/Dense>
 #include <string>
 #include <map>
@@ -14,47 +16,15 @@
 #include <Utils/FileEigen.h>
 #include <Utils/FileMap.h>
 #include <iostream>
-
 class Move;
 
-/**
- * Initialize and return an Humanoid Model where
- * the robot type is retrieve fropm RhIO and the
- * geometry parameter from the camera model file.
- * Template type is either
- * HumanoidFixedModel or HumanoidFixedPressureModel.
- */
+
+///Initialize and return an Humanoid Model where the robot type is retrieved
+///from RhIO and the geometry parameter from the camera model file.
+///ModelType should be either HumanoidFixedModel or HumanoidFixedPressureModel.
 template <typename ModelType>
 ModelType InitHumanoidModel()
 {
-  //Load camera model parameters
-  Eigen::VectorXd camData;
-  Eigen::VectorXd imuData;
-  Eigen::MatrixXd geometryData;
-  std::map<std::string, size_t> geometryName;
-  //Open file
-  std::ifstream file("cameraModel.params");
-  //Check open
-  if (file.is_open()) {
-    //Read data
-    camData =
-      Leph::ReadEigenVectorFromStream(file);
-    imuData =
-      Leph::ReadEigenVectorFromStream(file);
-    geometryData =
-      Leph::ReadEigenMatrixFromStream(file);
-    geometryName =
-      Leph::ReadMapFromStream<std::string, size_t>(file);
-  } else {
-    //Error message
-    std::cout << "WARNING cameraModel.params configuration"
-              << " not found. Default model is used."
-              << std::endl;
-  }
-  file.close();
-  (void)camData;
-  (void)imuData;
-
   //Retrieve the robot model type from RhIO configuration
   Leph::RobotType robotType;
   if (RhIO::Root.getValueType("/model/modelType")
@@ -77,11 +47,27 @@ ModelType InitHumanoidModel()
     robotType = Leph::SigmabanModel;
   }
 
+  // Reading the correection to bring to the model
+  rhoban_model_learning::VisionCorrectionModel correction_model;
+  correction_model.loadFile("VCM.json");
+
+  // Importing geometry data from a default model
+  // Current intialization is based on the fact that initial root doesn't matter
+  Leph::HumanoidModel tmpModel(robotType, "left_foot_tip");
+  Eigen::MatrixXd geometryData;
+  std::map<std::string, size_t> geometryName;
+  geometryData = tmpModel.getGeometryData();
+  geometryName = tmpModel.getGeometryName();
+
+  // Modification of geometry data
+  geometryData.block(geometryName.at("camera"),0,1,3) +=
+    correction_model.getCameraOffsetsRad().transpose();
+  geometryData.block(geometryName.at("head_yaw"),0,1,3) +=
+    correction_model.getNeckOffsetsRad().transpose();
+
   //Initialize and return the model
-  return ModelType(
-    robotType,
-    Eigen::MatrixXd(), {},
-    geometryData, geometryName);
+  return ModelType (robotType, Eigen::MatrixXd(), {},
+                    geometryData, geometryName);
 }
 
 /**

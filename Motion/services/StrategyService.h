@@ -3,6 +3,8 @@
 #include "Service.h"
 #include "kick_model/kick_model_collection.h"
 
+#include <rhoban_utils/timing/time_stamp.h>
+
 class ApproachMove;
 class KickController;
 
@@ -21,6 +23,9 @@ public:
   const KickController * getActiveKickController() const;
 
   bool tick(double elapsed) override;
+
+  /// Inform the strategy service that a kick has been performed, 
+  void announceKick();
 
 protected:
   RhIO::Bind bind;
@@ -53,4 +58,6 @@ private:
   /// Collection of available kicks
   csa_mdp::KickModelCollection kmc;
 
+  /// When was last kick performed
+  rhoban_utils::TimeStamp lastKick;
 };

@@ -74,7 +74,7 @@ Robocup::Robocup(MoveScheduler *scheduler)
     : Application(),
       imageDelay(0),
       logging(false),
-      logPrefix("Logs"),
+      manual_logger("manual_logs", true, 1000),
       _scheduler(scheduler),
       benchmark(false), benchmarkDetail(0),
       cs(new CameraState(scheduler)), //TODO: maybe put the name of the param file elsewhere
@@ -114,7 +114,7 @@ Robocup::Robocup(MoveScheduler *scheduler)
 Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
     :  imageDelay(0),
        logging(false),
-       logPrefix("Logs"),
+       manual_logger("manual_logs", true, 1000),
        benchmark(false), benchmarkDetail(0),
        _runThread(NULL),
        cs(new CameraState(scheduler)),
@@ -160,13 +160,12 @@ Robocup::~Robocup() {
 }
 
 void Robocup::startLogging(unsigned int timeMS, const std::string &logDir) {
-  logPrefix = logDir;
-  int err = system(("mkdir " + logPrefix).c_str());
-  if (err != 0) {
-    throw std::runtime_error("Failed to create dir: '" + logDir + "'");
+  // If a name has been provided, start the session with a given name
+  if (logDir != "") {
+    manual_logger.initSession(logDir);
   }
   logMutex.lock();
-  startLoggingLowLevel(logPrefix + "/lowLevel.log");
+  startLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
   endLog = TimeStamp(TimeStamp::now() + milliseconds(timeMS));
   logging = true;
   logMutex.unlock();
@@ -179,28 +178,10 @@ void Robocup::endLogging() {
       << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Saving lowLevel log : "
       << endl;
   stopLoggingLowLevel();
+  // Ending session properly
   logging = false;
-  int nbImages = imagesBuffer.size();
-  ofstream description;
-  description.open(logPrefix + "/images.csv", std::ofstream::out);
-  for (int imageNo = 0; imageNo < nbImages; imageNo++) {
-    std::ostringstream pathOSS, filenameOSS;
-    int nbDigits = std::log10(nbImages);
-    int currentDigits = std::log10(imageNo + 1);
-    for (int i = 0; i < nbDigits - currentDigits; i++) {
-      filenameOSS << "0";
-    }
-    filenameOSS << (imageNo + 1) << ".png";
-    pathOSS << logPrefix << "/" << filenameOSS.str();
-    cv::imwrite(pathOSS.str(), imagesBuffer[imageNo]);
-    description << (unsigned long)imagesTimes[imageNo].getTimeMS() << ","
-                << filenameOSS.str() << std::endl;
-    std::cout << "*************************************** Saving image : "
-              << pathOSS.str() << endl;
-  }
-  imagesBuffer.clear();
-  imagesTimes.clear();
-  description.close();
+  manual_logger.endSession();
+  // TODO: examine if logMutex can be closed earlier 
   logMutex.unlock();
 }
 
@@ -337,7 +318,7 @@ void Robocup::initRhIO() {
               "Usage: logLocal <duration[s]> <opt:log_dir>");
         }
         double duration = std::stof(args[0]);
-        std::string logDir("Logs");
+        std::string logDir("");
         if (args.size() >= 2) {
           logDir = args[1];
         }
@@ -840,8 +821,7 @@ void Robocup::loggingStep() {
   bool dumpLogs = false;
   if (logging && endLog > TimeStamp::now()) {
     // TODO unlock mutex and throw exception if source filter does not exist
-    imagesBuffer.push_back(pipeline.get("source").getImg()->clone());
-    imagesTimes.push_back(pipeline.getTimestamp());
+    manual_logger.pushEntry(pipeline.getTimestamp(), *(pipeline.get("source").getImg()));
   } else if (logging) {
     dumpLogs = true;
   }

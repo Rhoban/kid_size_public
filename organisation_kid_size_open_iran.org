@@ -9,45 +9,38 @@
 ** 16 au 23 mars: Tests réels (fin construction robots)
 ** 23 au 30 mars: Améliorations
 ** 3-7 Avril: Compétition (départ le 2 avril)
-* Tâches à faire (IranOpen)
+* Calendrier V2
+** 12 au 16 mars:
+*** Carte éléctronique
+*** Assemblage nouveau robot
+*** Upgrade Olive (Attention aux démos)
+** 19 au 23 mars:
+*** Installation terrain complet
+*** Retuner tir + marche
+*** Premiers tests de match (formation à l'initialisation)
+*** Prise de logs vidéos
+** 26 au 30 mars:
+*** Entrainement réseaux de neurones avec Patxi
+*** Rattrapage du retard
+*** Diverses améliorations
+
+* Tâches à faire
 ** Indispensable
-*** Inventaire
-- Lister matériel disponible/requis
-  - Alu (3mm, 6mm)
-  - Moteurs
-    - MX-64 et MX-106
-    - Spare restant:
-      - 10 MX-64AR (RS485)
-  - Câblage
-  - NUC RAM + SSD
-  - Cartes + composants éléctroniques
-  - Jauges de contrainte
-  - Visserie
-  - Autres
-*** Finir le refactoring
-- Ludo
+*** Organisation mission
+1. Réponse Fonctionnaire sécurité défense
+2. Déclaration mission
+3. Réservation billets
 *** Construction robots
-- Combien de robots???
-  - À voir avec Olivier
-- Inventaire + commande matériel
-  - Patxi délégué officiel!!!
-  - NUC
-  - Moteurs
-  - Autres?
-    - Composants cartes éléc'
-- Usinage des pièces CNC
-  - À voir avec Steve + Antoine
+- Commande tête (Greg)
+- Usinage bras (Loic?)
+- Commande NUC (Julien)
+  - Renvoyer un lien avec des NUC
 - Cartes éléctroniques
-  - Tests à faire
-  - À voir avec Grégoire
-- Assemblage robots
-  - Câblages
-    - À voir avec Steve/Loïc/Olivier
-- En simultané
-  - Formation à la maintenance
-  - Création documentation
+  - Finir soudure + tester
+- Assemblage nouveau robot
+- Upgrade des deux robots
+- Vérifier le câblage de tous les robots
 *** Prise en main soft
-- Installation du code
 - Utilisation des robots
   - Lancement pour les matchs
   - Procédure de test
@@ -57,14 +50,8 @@
   - Utilisation des différents viewers
     - BehaviorViewer
     - Monitoring UDP
-- Fichiers de configuration principaux
-  - Calibration des robots
-    - Moteurs
-    - Erreurs d'angle sur la tête
 *** Tests réels
-- Préparer le terrain
-  - Demi-terrain ou terrain complet?
-  - Nouveau terrain?
+- Préparer le terrain complet pour phase de tests
 - Faire de vrais matchs d'entraînement
 - Familiarisation avec les règles
   - Arbitrage etc...
@@ -89,8 +76,8 @@
   - Améliorer/remplacer le système existant
   - Brancher les prises d'informations sur la position prédites
 - Améliorer tracking
-  - Forcer le tracking lors des shoots
-  - Reprise du tracking en dynamique
+  - Forcer le tracking lors des shoots <- Ludo
+  - Reprise du tracking en dynamique <- Adrien ?
 ** Si possible (non prioritaire)
 *** Apprentissage de modèles (logLikelihood)
   - Modèle prédictif de déplacement (marche)
@@ -116,3 +103,64 @@
     - prod_{X,Y} marginalLikelihood(M(p,x_i),y_i)
     - sum_{X,Y} logMarginalLikelihood(M(p,x_i),y_i)
 
+
+* Tâches effectuées
+** Indispensable
+*** Inventaire
+- Lister matériel disponible/requis
+  - Alu (3mm, 6mm)
+  - Moteurs
+    - MX-64 et MX-106
+    - Spare restant:
+      - 10 MX-64AR (RS485)
+  - Câblage
+  - NUC RAM + SSD
+  - Cartes + composants éléctroniques
+  - Jauges de contrainte
+  - Visserie
+  - Autres
+*** Refactoring
+*** Construction robots
+- Décision 1 robot supplémentaire dans un premier temps (voir par la suite)
+- Usinage CNC (majeur partie)
+- Commandes
+  - Moteurs + pièces dynamixels
+  - Composants élec
+*** Prise en main soft
+- Installation du code
+- Calibration robots (Patxi)
+
+* Attributions
+** Non attribué
+*** Rôles pour matchs
+**** Monitoring UDP
+**** Initialisation/Intervention des robots
+** Patxi
+*** Match: à voir
+*** Hors-match
+**** Calibration caméra
+**** Apprentissage réseaux de neurones
+**** Tuning Tir (avec Ludo)
+** Adrien
+*** Match: à voir (monitoring?)
+*** Hors-match
+**** Tuning Marche
+**** ArenaCorners (@discuter avec Olivier)
+** Thomas
+** Antoine
+*** Match:
+**** Arbitrage
+*** Hors-match
+**** Gestion serveur de tag
+**** Robots Adverses (@Antoine?)
+**** VisualCompass (@Antoine?)
+** Ludo
+*** Match: Handler
+*** Hors-match:
+**** Détection Balle
+**** Détection Goal
+**** Tuning Tir (avec Patxi)
+**** Tuning Approche (partagé avec qui a le temps)
+** Partagé/Suivant dispo
+*** Chargement LiPo
+*** Prise de logs

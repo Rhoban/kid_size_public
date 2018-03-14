@@ -6,7 +6,9 @@
 #include "robocup_referee/constants.h"
 
 using namespace rhoban_utils;
+using namespace rhoban_team_play;
 using namespace robocup_referee;
+
 static rhoban_utils::Logger logger("Decision");
 
 DecisionService::DecisionService()
@@ -19,8 +21,19 @@ DecisionService::DecisionService()
         ->defaultValue(0.3)->comment("Threshold to disable the ball good")->persisted(true);
     bind.bindNew("isBallQualityGood", isBallQualityGood)
         ->comment("Is ball quality good ?")->defaultValue(false);
-    bind.bindNew("lastSeenBallRight", lastSeenBallRight, RhIO::Bind::PushOnly)
-        ->comment("Was the last ball seen on the right ?")->defaultValue(false);
+    bind.bindNew("isBallMoving", isBallMoving, RhIO::Bind::PushOnly)
+        ->comment("Is the ball moving significantly according to one of the robots,"
+                  " is also true if one of the robot has performed a kick recently")
+        ->defaultValue(false);
+
+    // Constraint to say that ball is moving
+    bind.bindNew("movingBallMinSpeed", movingBallMinSpeed, RhIO::Bind::PullOnly)
+        ->comment("Ball is considered to move if it has a speed higher than this value [m/s]")
+        ->defaultValue(0.2);
+    bind.bindNew("postKickTrackingTime", postKickTrackingTime, RhIO::Bind::PullOnly)
+        ->comment("Time during which a ball is considered as moving after a "
+                  "robot started performing a kick [s]")
+        ->defaultValue(2);
 
     // Field quality
     bind.bindNew("fieldQThreshold", fieldQThreshold, RhIO::Bind::PullOnly)
@@ -306,6 +319,21 @@ bool DecisionService::tick(double elapsed)
             handledT = 0;
         }
     }
+
+    // Update the isBallMoving flag
+    const auto & teamplayInfos = getServices()->teamPlay->allInfo();
+    isBallMoving = false;
+    for (const auto & pair :  teamplayInfos) {
+      const rhoban_team_play::TeamPlayInfo & robotInfo = pair.second;
+      float vx = robotInfo.ballVelX;
+      float vy = robotInfo.ballVelY;
+      float ballSpeed = std::sqrt(vx * vx + vy * vy);
+      if (robotInfo.timeSinceLastKick < postKickTrackingTime ||
+          ballSpeed  > movingBallMinSpeed) {
+        isBallMoving = true;
+      }
+    }
+
         
     bind.push();
 

@@ -25,6 +25,7 @@ static rhoban_utils::Logger logger("PlayingSTM");
 
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
+using namespace rhoban_team_play;
 using namespace robocup_referee;
 
 PlayingMove::PlayingMove(Walk *walk)
