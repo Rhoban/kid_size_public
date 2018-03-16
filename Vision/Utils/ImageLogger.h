@@ -30,6 +30,9 @@ public:
   /// @param max_images The maximal number of images allowed for a single log session
   ImageLogger(const std::string & logger_prefix, bool store_images, int max_images);
 
+  /// Is the logger currently active?
+  bool isActive() const;
+
   /// Start a session at "logger_prefix/session_local_path"
   /// Create the directory if necessary
   /// If session_local_path is an empty string, then generates a name based on current time

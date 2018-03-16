@@ -29,7 +29,7 @@ DecisionService::DecisionService()
     // Constraint to say that ball is moving
     bind.bindNew("movingBallMinSpeed", movingBallMinSpeed, RhIO::Bind::PullOnly)
         ->comment("Ball is considered to move if it has a speed higher than this value [m/s]")
-        ->defaultValue(0.2);
+        ->defaultValue(0.5);
     bind.bindNew("postKickTrackingTime", postKickTrackingTime, RhIO::Bind::PullOnly)
         ->comment("Time during which a ball is considered as moving after a "
                   "robot started performing a kick [s]")

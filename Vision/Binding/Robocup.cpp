@@ -76,6 +76,7 @@ Robocup::Robocup(MoveScheduler *scheduler)
       imageDelay(0),
       logging(false),
       manual_logger("manual_logs", true, 1000),
+      moving_ball_logger("moving_ball_logs", true, 250),
       _scheduler(scheduler),
       benchmark(false), benchmarkDetail(0),
       cs(new CameraState(scheduler)), //TODO: maybe put the name of the param file elsewhere
@@ -116,6 +117,7 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
     :  imageDelay(0),
        logging(false),
        manual_logger("manual_logs", true, 1000),
+       moving_ball_logger("moving_ball_logs", true, 250),
        benchmark(false), benchmarkDetail(0),
        _runThread(NULL),
        cs(new CameraState(scheduler)),
@@ -814,15 +816,41 @@ void Robocup::getUpdatedCameraStateFromPipeline() {
 }
 
 void Robocup::loggingStep() {
+  // Is the ball moving?
+  bool ball_moving = _scheduler->getServices()->decision->isBallMoving;
   // Logs
   logMutex.lock();
 
   bool dumpLogs = false;
   if (logging && endLog > TimeStamp::now()) {
     // TODO unlock mutex and throw exception if source filter does not exist
-    manual_logger.pushEntry(pipeline.getTimestamp(), *(pipeline.get("source").getImg()));
+    try {
+      manual_logger.pushEntry(pipeline.getTimestamp(), *(pipeline.get("source").getImg()));
+    } catch (const std::runtime_error & exc) {
+      manual_logger.endSession();
+      stopLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
+    }
   } else if (logging) {
     dumpLogs = true;
+  }
+  if (ball_moving) {
+    /// Start session and start logging low level 
+    if (!moving_ball_logger.isActive()) {
+      moving_ball_logger.initSession();
+      std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
+      startLoggingLowLevel(lowLevelPath);
+    }
+    try {
+      moving_ball_logger.pushEntry(pipeline.getTimestamp(), *(pipeline.get("source").getImg()));
+    } catch (const std::runtime_error & exc) {
+      std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
+      stopLoggingLowLevel(lowLevelPath);
+      moving_ball_logger.endSession();
+    }
+  } else if (moving_ball_logger.isActive()) {
+    std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
+    stopLoggingLowLevel(lowLevelPath);
+    moving_ball_logger.endSession();
   }
   logMutex.unlock();
   if (dumpLogs) {

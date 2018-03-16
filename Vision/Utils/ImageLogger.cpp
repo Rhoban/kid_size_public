@@ -14,9 +14,13 @@ ImageLogger::ImageLogger(const std::string & logger_prefix, bool store_images, i
 {
 }
 
+bool ImageLogger::isActive() const {
+  return session_path != "";
+}
+
 void ImageLogger::pushEntry(const rhoban_utils::TimeStamp & timestamp, const cv::Mat & img) {
   // Start session if required
-  if (session_path == "") {
+  if (!isActive()) {
     initSession();
   }
   // If too much images have been written, close session and throw a runtime error
@@ -70,7 +74,10 @@ const std::string & ImageLogger::getSessionPath() {
 void ImageLogger::writeEntry(int idx, const Entry & e) {
   // Building image name
   int nb_digits = std::log10(max_img);
-  int currentDigits = std::log10(idx + 1);
+  int currentDigits = 1;
+  if (idx > 0 ) {
+    currentDigits = std::log10(idx);
+  }
   std::ostringstream image_path_oss;
   for (int i = 0; i < nb_digits - currentDigits; i++) {
     image_path_oss << "0";

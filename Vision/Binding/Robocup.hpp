@@ -71,6 +71,8 @@ private:
   Utils::ImageLogger manual_logger;
   ::rhoban_utils::TimeStamp endLog;
 
+  Utils::ImageLogger moving_ball_logger;
+
   void initImageHandlers();
 
   void initObservationTypes();
