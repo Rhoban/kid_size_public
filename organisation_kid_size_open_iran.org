@@ -27,29 +27,30 @@
 * Tâches à faire
 ** Indispensable
 *** Organisation mission
-1. Réponse Fonctionnaire sécurité défense
-2. Déclaration mission
-3. Réservation billets
+- Liste matériel ? (à enrichir)
 *** Construction robots
 - Commande tête (Greg)
-- Usinage bras (Loic?)
+- Usinage bras
+  - Transmis à Olivier
 - Commande NUC (Julien)
-  - Renvoyer un lien avec des NUC
+  - Attendre nouvelles
+- Designer + Usiner cale en Teflon
+  - Patxi/Adrien motivés ?
 - Cartes éléctroniques
   - Finir soudure + tester
 - Assemblage nouveau robot
 - Upgrade des deux robots
+  - Mail à olivier
 - Vérifier le câblage de tous les robots
 *** Prise en main soft
 - Utilisation des robots
   - Lancement pour les matchs
-  - Procédure de test
+  - Procédure de test <- ???
   - Prises de logs
     - Apprentissage vision
-    - Visual Compass
   - Utilisation des différents viewers
-    - BehaviorViewer
     - Monitoring UDP
+    - (BehaviorViewer)
 *** Tests réels
 - Préparer le terrain complet pour phase de tests
 - Faire de vrais matchs d'entraînement
