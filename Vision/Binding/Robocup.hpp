@@ -135,14 +135,13 @@ public:
   void robotsClear();
 
   /**
-   * Asks the model to start logging all the low level input
-   * and dumps the read data in path
+   * Asks the model to start a logging session with given path as a target
    */
-  void startLoggingLowLevel(const std::string path);
+  void startLoggingLowLevel(const std::string & path);
   /**
-   * Asks the model to stop logging the low level
+   * Asks the model to end and save a session with given path
    */
-  void stopLoggingLowLevel();
+  void stopLoggingLowLevel(const std::string & path);
   /**
    * Tells the model to read the low level values from a log file instead than
    * from the

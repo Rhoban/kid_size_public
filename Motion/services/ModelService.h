@@ -179,6 +179,17 @@ public:
   void stopLogging();
 
   /**
+   * Start a named log session on all histories
+   */
+  void startNamedLog(const std::string & filePath);
+  /**
+   * Stop adding new entries for the given log name (on all histories)
+   * Then, write the logs, histories will be written at filePath
+   */
+  void stopNamedLog(const std::string & filePath);
+
+
+  /**
    * Append to history container given name:value
    * couple to be logged at current timestamp
    */

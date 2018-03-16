@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <rhoban_utils/angle.h>
+#include <rhoban_utils/util.h>
 #include <Utils/Angle.h>
 #include <Model/NamesModel.h>
 #include <rhoban_utils/timing/time_stamp.h>
@@ -499,10 +500,37 @@ void ModelService::startLogging(
   _logPath = filepath;
   _isLogBinaryFormat = isBinary;
 }
+
 void ModelService::stopLogging()
 {
   //Ask write to next tick
   _doWriteLog = true;
+}
+
+void ModelService::startNamedLog(const std::string & filePath) {
+  for (auto& it : _histories) {
+    it.second.startNamedLog(filePath);
+  }
+}
+
+void ModelService::stopNamedLog(const std::string & filePath) {
+  /// First, freeze all histories for the session name
+  for (auto& it : _histories) {
+    it.second.freezeNamedLog(filePath);
+  }
+  //Open log file
+  std::ofstream file(filePath.c_str());
+  //Check file
+  if (!file.is_open()) {
+    throw std::runtime_error(DEBUG_INFO + "unable to write to file '" + filePath + "'");
+  }
+  /// Second write logs
+  for (auto& it : _histories) {
+    size_t length = it.first.length();
+    file.write((const char*)(&length), sizeof(size_t));
+    file.write((const char*)(it.first.c_str()), length);
+    it.second.closeFrozenLog(filePath, file);
+  }
 }
 
 void ModelService::logValue(

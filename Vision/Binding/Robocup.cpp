@@ -33,6 +33,7 @@
 
 #include "moves/Head.h"
 #include <rhoban_utils/logging/logger.h>
+#include <rhoban_utils/util.h>
 
 #include "Localisation/RobotBasis.hpp"
 #include "Localisation/Field/CompassObservation.hpp"
@@ -160,10 +161,8 @@ Robocup::~Robocup() {
 }
 
 void Robocup::startLogging(unsigned int timeMS, const std::string &logDir) {
-  // If a name has been provided, start the session with a given name
-  if (logDir != "") {
-    manual_logger.initSession(logDir);
-  }
+  // If logDir is empty a name session is generated automatically in manual_logger
+  manual_logger.initSession(logDir);
   logMutex.lock();
   startLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
   endLog = TimeStamp(TimeStamp::now() + milliseconds(timeMS));
@@ -177,7 +176,7 @@ void Robocup::endLogging() {
   std::cout
       << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Saving lowLevel log : "
       << endl;
-  stopLoggingLowLevel();
+  stopLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
   // Ending session properly
   logging = false;
   manual_logger.endSession();
@@ -1399,12 +1398,13 @@ void Robocup::setLogMode(const std::string path) {
   std::cout << "Loaded replay" << std::endl;
 }
 
-void Robocup::startLoggingLowLevel(const std::string path) {
-  _scheduler->getServices()->model->startLogging(path);
+void Robocup::startLoggingLowLevel(const std::string & path) {
+  std::cout << DEBUG_INFO << ": " <<  path  << std::endl;
+  _scheduler->getServices()->model->startNamedLog(path);
 }
 
-void Robocup::stopLoggingLowLevel() {
-  _scheduler->getServices()->model->stopLogging();
+void Robocup::stopLoggingLowLevel(const std::string & path) {
+  _scheduler->getServices()->model->stopNamedLog(path);
 }
 
 int Robocup::getFrames() { return pipeline.frames; }
