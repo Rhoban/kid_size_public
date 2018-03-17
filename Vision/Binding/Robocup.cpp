@@ -77,6 +77,7 @@ Robocup::Robocup(MoveScheduler *scheduler)
       logging(false),
       manual_logger("manual_logs", true, 1000),
       moving_ball_logger("moving_ball_logs", true, 250),
+      autologMovingBall(false),
       _scheduler(scheduler),
       benchmark(false), benchmarkDetail(0),
       cs(new CameraState(scheduler)), //TODO: maybe put the name of the param file elsewhere
@@ -118,6 +119,7 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
        logging(false),
        manual_logger("manual_logs", true, 1000),
        moving_ball_logger("moving_ball_logs", true, 250),
+       autologMovingBall(false),
        benchmark(false), benchmarkDetail(0),
        _runThread(NULL),
        cs(new CameraState(scheduler)),
@@ -217,6 +219,7 @@ Json::Value Robocup::toJson() const {
   v["benchmark"] = benchmark;
   v["benchmarkDetail"] = benchmarkDetail;
   v["imageDelay"] = imageDelay;
+  v["autologMovingBall"] = autologMovingBall;
 
   for (const auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
@@ -231,6 +234,7 @@ void Robocup::fromJson(const Json::Value & v, const std::string & dir_name) {
   rhoban_utils::tryRead(v,"benchmark",&benchmark);
   rhoban_utils::tryRead(v,"benchmarkDetail",&benchmarkDetail);
   rhoban_utils::tryRead(v,"imageDelay",&imageDelay);
+  rhoban_utils::tryRead(v,"autologMovingBall",&autologMovingBall);
   for (auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
 
@@ -833,7 +837,7 @@ void Robocup::loggingStep() {
   } else if (logging) {
     dumpLogs = true;
   }
-  if (ball_moving) {
+  if (autologMovingBall && ball_moving) {
     /// Start session and start logging low level 
     if (!moving_ball_logger.isActive()) {
       moving_ball_logger.initSession();

@@ -72,6 +72,9 @@ private:
   ::rhoban_utils::TimeStamp endLog;
 
   Utils::ImageLogger moving_ball_logger;
+  /// If enabled each time a robot kicks the ball or ball is detected as moving,
+  /// start a new log
+  bool autologMovingBall;
 
   void initImageHandlers();
 
