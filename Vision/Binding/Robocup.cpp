@@ -64,6 +64,7 @@ using namespace rhoban_geometry;
 using namespace std::chrono;
 
 using Vision::Utils::CameraState;
+using Vision::Utils::ImageLogger;
 using Vision::Filters::BallProvider;
 using Vision::Filters::CompassProvider;
 using Vision::Filters::TagsDetector;
@@ -74,9 +75,8 @@ namespace Vision {
 Robocup::Robocup(MoveScheduler *scheduler)
     : Application(),
       imageDelay(0),
-      logging(false),
-      manual_logger("manual_logs", true, 1000),
-      moving_ball_logger("moving_ball_logs", true, 250),
+      manual_logger("manual_logs", true, 10000),
+      moving_ball_logger("moving_ball_logs", false, 1000),
       autologMovingBall(false),
       _scheduler(scheduler),
       benchmark(false), benchmarkDetail(0),
@@ -100,7 +100,7 @@ Robocup::Robocup(MoveScheduler *scheduler)
     rememberObservations[obs] = std::vector<std::pair<cv::Point2f, float>>();
   }
 
-  std::cout << "Starting Robocup Pipeline" << std::endl;
+  out.log( "Starting Robocup Pipeline");
   pipeline.setCameraState(cs);
   loadFile();
   _doRun = true;
@@ -116,9 +116,8 @@ Robocup::Robocup(MoveScheduler *scheduler)
 
 Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
     :  imageDelay(0),
-       logging(false),
-       manual_logger("manual_logs", true, 1000),
-       moving_ball_logger("moving_ball_logs", true, 250),
+       manual_logger("manual_logs", true, 10000),
+       moving_ball_logger("moving_ball_logs", false, 1000),
        autologMovingBall(false),
        benchmark(false), benchmarkDetail(0),
        _runThread(NULL),
@@ -166,23 +165,17 @@ Robocup::~Robocup() {
 
 void Robocup::startLogging(unsigned int timeMS, const std::string &logDir) {
   // If logDir is empty a name session is generated automatically in manual_logger
-  manual_logger.initSession(logDir);
   logMutex.lock();
+  manual_logger.initSession(logDir);
   startLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
   endLog = TimeStamp(TimeStamp::now() + milliseconds(timeMS));
-  logging = true;
   logMutex.unlock();
 }
 
 void Robocup::endLogging() {
   logMutex.lock();
   // Telling the low level to stop logging and to dump the info
-  std::cout
-      << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Saving lowLevel log : "
-      << endl;
   stopLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
-  // Ending session properly
-  logging = false;
   manual_logger.endSession();
   // TODO: examine if logMutex can be closed earlier 
   logMutex.unlock();
@@ -822,43 +815,55 @@ void Robocup::getUpdatedCameraStateFromPipeline() {
 void Robocup::loggingStep() {
   // Is the ball moving?
   bool ball_moving = _scheduler->getServices()->decision->isBallMoving;
-  // Logs
-  logMutex.lock();
 
-  bool dumpLogs = false;
-  if (logging && endLog > TimeStamp::now()) {
-    // TODO unlock mutex and throw exception if source filter does not exist
-    try {
-      manual_logger.pushEntry(pipeline.getTimestamp(), *(pipeline.get("source").getImg()));
-    } catch (const std::runtime_error & exc) {
-      manual_logger.endSession();
-      stopLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
+  // Capture src_filter and throws a std::runtime_error if required
+  const Filter & src_filter =  pipeline.get("source");
+  ImageLogger::Entry entry(pipeline.getTimestamp(), *(src_filter.getImg()));
+
+  logMutex.lock();
+  // Handling manual logs
+  bool dumpManualLogs = false;
+  if (manual_logger.isActive()) {
+    if (endLog < TimeStamp::now()) {// If time is elapsed: close log
+      dumpManualLogs = true;
+    } else {// If there is still time left, add entry
+      try {
+        manual_logger.pushEntry(entry);
+      } catch (const ImageLogger::SizeLimitException & exc) {
+        out.warning("Automatically stopping manual log because size limit was reached");
+        dumpManualLogs = true;
+      }
     }
-  } else if (logging) {
-    dumpLogs = true;
   }
+  // Handling moving ball logs
+  bool dumpBallMovingLogs = false;
   if (autologMovingBall && ball_moving) {
     /// Start session and start logging low level 
     if (!moving_ball_logger.isActive()) {
       moving_ball_logger.initSession();
+      out.log("Starting a session at '%s'", moving_ball_logger.getSessionPath().c_str());
       std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
       startLoggingLowLevel(lowLevelPath);
     }
     try {
-      moving_ball_logger.pushEntry(pipeline.getTimestamp(), *(pipeline.get("source").getImg()));
-    } catch (const std::runtime_error & exc) {
-      std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
-      stopLoggingLowLevel(lowLevelPath);
-      moving_ball_logger.endSession();
+      moving_ball_logger.pushEntry(entry);
+    } catch (const ImageLogger::SizeLimitException & exc) {
+      dumpBallMovingLogs = true;
     }
   } else if (moving_ball_logger.isActive()) {
+    dumpBallMovingLogs = true;
+  }
+  logMutex.unlock();
+
+  // Writing logs is delayed until logMutex has been unlocked to avoid
+  // unnecessary lock of ressources
+  if (dumpManualLogs) {
+    endLogging();
+  }
+  if (dumpBallMovingLogs) {
     std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
     stopLoggingLowLevel(lowLevelPath);
     moving_ball_logger.endSession();
-  }
-  logMutex.unlock();
-  if (dumpLogs) {
-    endLogging();
   }
 }
 
@@ -1436,6 +1441,7 @@ void Robocup::startLoggingLowLevel(const std::string & path) {
 }
 
 void Robocup::stopLoggingLowLevel(const std::string & path) {
+  out.log("Saving lowlevel log to: %s", path.c_str());
   _scheduler->getServices()->model->stopNamedLog(path);
 }
 

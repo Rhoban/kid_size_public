@@ -18,18 +18,17 @@ bool ImageLogger::isActive() const {
   return session_path != "";
 }
 
-void ImageLogger::pushEntry(const rhoban_utils::TimeStamp & timestamp, const cv::Mat & img) {
+void ImageLogger::pushEntry(const ImageLogger::Entry & cst_entry) {
   // Start session if required
   if (!isActive()) {
     initSession();
   }
-  // If too much images have been written, close session and throw a runtime error
+  // If too much images have been written, throw a SizeLimitException
   if (img_index >= max_img)  {
-    endSession();
-    throw std::runtime_error(DEBUG_INFO + " max images reached");
+    throw SizeLimitException(DEBUG_INFO + " max images reached");
   }
   // Store or write imaged depending on mode
-  Entry entry(timestamp, img.clone());
+  Entry entry(cst_entry.first, cst_entry.second.clone());
   if (store_images) {
     entries_map[img_index] = entry;
   } else {
@@ -46,6 +45,8 @@ void ImageLogger::endSession() {
   }
   description_file.close();
   session_path = "";
+  entries_map.clear();
+  img_index = 0;
 }
 
 void ImageLogger::initSession(const std::string & session_local_path) {

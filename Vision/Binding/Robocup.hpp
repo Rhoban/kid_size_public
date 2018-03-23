@@ -67,7 +67,6 @@ private:
   int imageDelay; // Delay between the image capture time [ms]
 
   // Logging
-  bool logging;
   Utils::ImageLogger manual_logger;
   ::rhoban_utils::TimeStamp endLog;
 

@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <map>
+#include <stdexcept>
 
 namespace Vision {
 namespace Utils {
@@ -24,6 +25,8 @@ namespace Utils {
 /// 2. Images are written directly
 class ImageLogger {
 public:
+  typedef std::pair<rhoban_utils::TimeStamp,cv::Mat> Entry;
+
   /// Create a Logger
   /// @param logger_prefix The prefix for all sessions using this ImageLogger
   /// @param store_images If true, images are stored and dumped at the end of the session
@@ -38,9 +41,9 @@ public:
   /// If session_local_path is an empty string, then generates a name based on current time
   void initSession(const std::string & session_local_path = "");
 
-  /// Push the image with the associated timestamp in the log, open a session
-  /// if it is currently logging
-  void pushEntry(const rhoban_utils::TimeStamp & timestamp, const cv::Mat & img);
+  /// Push the entry in the log, if there is no active session, open a new session
+  /// @throws a SizeLimitException if the maximal number of images per session has been reached
+  void pushEntry(const Entry & entry);
 
   /// Close current session and dump images if necessary
   void endSession();
@@ -48,8 +51,12 @@ public:
   /// Return the path to current session (empty if no session is in progress)
   const std::string & getSessionPath();
 
+  class SizeLimitException : public std::runtime_error {
+  public:
+    SizeLimitException(const std::string & what) : std::runtime_error(what) {}
+  };
+
 private:
-  typedef std::pair<rhoban_utils::TimeStamp,cv::Mat> Entry;
   /// The prefix of the folder name containing the logs
   std::string logger_prefix;
   /// Are images written directly or stored in memory?
