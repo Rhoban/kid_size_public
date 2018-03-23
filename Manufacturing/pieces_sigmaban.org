@@ -55,7 +55,7 @@ Légende :
 |  10 | MX-106T   |                               | 485.00 |                                             |                                        |
 |   7 | FR08-B101 | original_plaque_fixatiox_rx64 |  32.90 | Hanche(2)+Cou(1)+Bloc106(4)                 |                                        |
 |  10 | HN05-T1   | 64_106_fake_bearing           |  22.73 | T1 ou T101 avec rondelle usinée             |                                        |
-|  10 | HN05-I101 |                               |  16.65 | blocs moteurs(4) + genoux(2) + bras(4)      |                                        |
+|  14 | HN05-I101 |                               |  16.65 | blocs moteurs(8) + genoux(2) + bras(4)      |                                        |
 |   1 | HN07-I101 |                               |  14.35 | head_pitch                                  |                                        |
 |   4 | FR05-F101 |                               |  42.14 | blocs moteurs                               | 1xHN05-I101 + 1xFR05-S101              |
 |   4 | FR05-S1   | NA                            |  18.50 | Épaules(2) + Coudes(2)                      |                                        |

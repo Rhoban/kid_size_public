@@ -26,3 +26,5 @@
 | FR05-S101 | 14.65 |       9 |     131.85 |
 
 Total commande: 7516.3
+
+Commentaire: erreur sur HN05-I101, en vrai, il en faut 14 par robot
