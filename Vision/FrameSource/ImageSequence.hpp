@@ -4,6 +4,7 @@
 
 namespace Vision {
 namespace Utils {
+
 class ImageSequence {
 private:
   int frameNo, nextFrameNo;
@@ -33,9 +34,6 @@ public:
   /// ls <folder>/*.jpg > filename
   /// or something similar
   void loadImages(const std::string &fileName);
-
-  /* Name without prefix */
-  // std::string actualName() const;
 
   /* Load previous or next image, throw exception if operation cannot be
    * done (beginning/end of imageSequence)

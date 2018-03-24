@@ -12,6 +12,7 @@
 #include <map>
 #include "CameraState/CameraState.hpp"
 #include "rhoban_utils/timing/benchmark.h"
+#include "rhoban_utils/util.h"
 
 #include "Utils/OpencvUtils.h"
 
@@ -313,17 +314,11 @@ void Filter::runStep(UpdateType updateType) {
         << "' failed to update throwing error:" << std::endl
         << exc.what();
     throw std::runtime_error(oss.str());
-  } catch (const std::runtime_error & exc) {
+  } catch (...) {
     Benchmark::close(name.c_str());
     throw;
   }
 
-  if (terminatePipeline) {
-    std::cout << "Terminate pipeline in filter.cpp. Name = " << name
-              << std::endl;
-    Benchmark::close(name.c_str(), debugLevel.perfs);
-    return;
-  }
   Benchmark::open("PublishToRhio");
   publishToRhIO("Vision/");
   Benchmark::close("PublishToRhio");

@@ -37,7 +37,6 @@ public:
   void update() override;
   void previous() override;
   void updateImg();
-  void setErrorImg(const std::string &errorMsg);
 
 protected:
   /**

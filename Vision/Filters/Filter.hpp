@@ -106,7 +106,6 @@ typedef Parameter<float> ParamFloat;
  */
 class Filter : public rhoban_utils::JsonSerializable {
 public:
-  bool terminatePipeline = false;
   enum UpdateType { backward, forward, steady };
 
   /**

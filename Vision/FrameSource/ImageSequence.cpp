@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "ImageSequence.hpp"
+#include "Exceptions.hpp"
 
 #include <opencv2/highgui/highgui.hpp>
 
@@ -24,19 +25,19 @@ std::string ImageSequence::imgFileName() const {
 
 std::string ImageSequence::imgOriginalName() const {
   if (frameNo < 0) {
-    throw std::out_of_range("Index before start of image");
+    throw StreamEndException(DEBUG_INFO + "Index before start of image");
   }
   if (frameNo >= (int)images.size()) {
-    throw std::out_of_range("Index after last image");
+    throw StreamEndException(DEBUG_INFO + "Index after last image");
   }
   return images[frameNo];
 }
 
 void ImageSequence::setIndex(int index) {
   if (index >= (int)images.size())
-    throw std::runtime_error("End of stream has been reached");
+    throw StreamEndException(DEBUG_INFO + "End of stream has been reached");
   if (index < 0)
-    throw std::runtime_error("Negative index in imageSequence");
+    throw StreamEndException(DEBUG_INFO + "Negative index in imageSequence");
   nextFrameNo = index;
 }
 
@@ -87,9 +88,13 @@ void ImageSequence::previousImg() {
   update();
 }
 
-void ImageSequence::nextImg() { update(); }
+void ImageSequence::nextImg() {
+  update();
+}
 
-bool ImageSequence::isFirst() const { return (frameNo == 0); }
+bool ImageSequence::isFirst() const {
+  return (frameNo == 0);
+}
 
 bool ImageSequence::isLast() const {
   return (frameNo + 1 == (int)images.size());

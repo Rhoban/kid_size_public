@@ -23,14 +23,8 @@ void SourceLogs::openImageSequence() {
 }
 
 void SourceLogs::process() {
-  try {
-    images.nextImg();
-    updateImg();
-  } catch (const std::runtime_error &exc) {
-    setErrorImg(exc.what());
-  } catch (const std::out_of_range &exc) {
-    setErrorImg(exc.what());
-  }
+  images.nextImg();
+  updateImg();
   //_pipeline->updateGlobalCS(_sourceTimestamp);
 }
 
@@ -42,14 +36,6 @@ void SourceLogs::updateImg() {
 
   }
   getPipeline()->setTimestamp(::rhoban_utils::TimeStamp::fromMS(images.getTimestamp()));
-}
-
-void SourceLogs::setErrorImg(const std::string &errorMsg) {
-  img() = cv::Mat(600, 600, CV_8UC3, cv::Scalar(0, 0, 0));
-  cv::putText(img(), errorMsg, cv::Point(img().cols / 3, img().rows / 2),
-              cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 4);
-  getPipeline()->setTimestamp(::rhoban_utils::TimeStamp::fromMS(0));
-  throw std::runtime_error(errorMsg);
 }
 
 void SourceLogs::fromJson(const Json::Value & v, const std::string & dir_name) {
@@ -78,16 +64,15 @@ int SourceLogs::getIndex() const { return images.getIndex(); }
 bool SourceLogs::isValid() const { return images.isValid(); }
 
 void SourceLogs::previous() {
-  try {
-    images.previousImg();
-    updateImg();
-  } catch (const std::runtime_error &exc) {
-    setErrorImg(exc.what());
-  } catch (const std::out_of_range &exc) {
-    setErrorImg(exc.what());
-  }
+  images.previousImg();
+  updateImg();
 }
 
-void SourceLogs::update() { updateImg(); }
+void SourceLogs::update() {
+  updateImg();
 }
+
+}
+
+
 }

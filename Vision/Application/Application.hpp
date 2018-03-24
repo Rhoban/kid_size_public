@@ -47,6 +47,8 @@ protected:
 
   Utils::CameraState *lastCS, *cs;
   mutable std::mutex csMutex;
+
+  bool exit_on_stream_end;
 };
 }
 }

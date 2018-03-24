@@ -1,9 +1,10 @@
 #include "Filters/Source/Source.hpp"
+#include "FrameSource/Exceptions.hpp"
 
 #include "Application.hpp"
 
+#include <rhoban_utils/util.h>
 #include <rhoban_utils/logging/logger.h>
-
 #include <opencv2/highgui/highgui.hpp>
 
 #include <exception>
@@ -22,7 +23,7 @@ namespace Application {
 Application::Application()
       : updateType(Filter::UpdateType::forward),
         playing(false), embedded(false), gpuOn(false),
-        pathToLog("") {
+        pathToLog(""), exit_on_stream_end(false) {
 }
 
 Application::~Application() {}
@@ -65,9 +66,18 @@ void Application::init() {
 }
 
 void Application::step() {
-  if (!pipeline.step(updateType)) {
-    std::cout << "pipeline.step() returned false, time to leave" << std::endl;
-    end = true;
+  try {
+    pipeline.step(updateType);
+  } catch(const Utils::StreamEndException & exc) {
+    if (exit_on_stream_end) {
+      end = true;
+    } else {
+      logger.warning("End of stream has been reached");
+      updateType = Filter::UpdateType::steady;
+      playing = false;
+    }
+  } catch (const std::runtime_error & exc) {
+    std::cerr << DEBUG_INFO << ": " << exc.what() << std::endl;
   }
 }
 
@@ -125,6 +135,7 @@ void Application::fromJson(const Json::Value & v, const std::string & dir_name) 
   rhoban_utils::tryRead(v,"gpuOn",&gpuOn);
   rhoban_utils::tryRead(v,"pathToLog",&pathToLog);
   rhoban_utils::tryRead(v,"angularPitchTolerance",&angularPitchTolerance);
+  rhoban_utils::tryRead(v,"exit_on_stream_end",&exit_on_stream_end);
 
   pipeline.tryRead(v, "pipeline", dir_name);
   checkConsistency();
@@ -138,6 +149,7 @@ Json::Value Application::toJson() const {
   v["angularPitchTolerance"] = angularPitchTolerance;
   v["pathToLog"] = pathToLog;
   v["pipeline"] = pipeline.toJson();
+  v["exit_on_stream_end"] = exit_on_stream_end;
   return v;
 }
 

@@ -179,7 +179,7 @@ void Pipeline::setFrequency(const std::string &name, Frequency::type freq) {
   resolveFrequencies();
 }
 
-bool Pipeline::step(Filter::UpdateType updateType) {
+void Pipeline::step(Filter::UpdateType updateType) {
   Benchmark::open("Resolve dependecies");
   resolveDependencies();
   Benchmark::close("Resolve dependecies");
@@ -207,9 +207,6 @@ bool Pipeline::step(Filter::UpdateType updateType) {
       }
 
     }
-    if (filter->terminatePipeline) {
-      return false;
-    }
     for (auto &son : _children.at(filter->getName())) {
       std::string sonName = son->getName();
 
@@ -228,10 +225,6 @@ bool Pipeline::step(Filter::UpdateType updateType) {
     Filter *filter = list.front();
     filter->runStep();
 
-    if (filter->terminatePipeline) {
-      std::cout << "TerminatePipeline in pipeline.cpp" << std::endl;
-      return false;
-    }
     for (auto &son : _children.at(filter->getName())) {
       std::string sonName = son->getName();
       dependenciesSolved[sonName]++;
@@ -242,24 +235,11 @@ bool Pipeline::step(Filter::UpdateType updateType) {
     }
     list.pop_front();
   }
-
-  return true;
 }
 
-void Pipeline::runStep() { step(Filter::UpdateType::forward); }
-
-// Commented cos not used and scary to read
-/*void Pipeline::run()
-{
-  resolveDependencies();
-  resolveFrequencies();
-
-  //Start all Filter in a thread
-  for (auto& it : _filters) {
-      _filterThread[it.first] = std::thread(
-          std::bind(&Filter::run, it.second));
-  }
-  }*/
+void Pipeline::runStep() {
+  step(Filter::UpdateType::forward);
+}
 
 void Pipeline::resolveDependencies() {
   if (_children.size() != 0) {

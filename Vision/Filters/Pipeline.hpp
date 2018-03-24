@@ -109,11 +109,9 @@ public:
    */
   void runStep();
 
-  /**
-   * Update all roots with the given updateType and then
-   * perform a processing step
-   */
-  bool step(Filter::UpdateType updateType);
+  /// Update all roots with the given updateType and then perform a processing
+  /// step
+  void step(Filter::UpdateType updateType);
 
   /**
    * Start all Filters processing
