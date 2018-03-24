@@ -199,7 +199,12 @@ public:
   
   void closeCamera();
 
-  void resetAllTagLevels();
+  /// Uses MoveScheduler to check current mode (fake or active)
+  bool isFakeMode() const;
+
+  /// In classic mode, uses steady clock.
+  /// In fake mode, uses pipeline clock.
+  rhoban_utils::TimeStamp getNowTS() const;
 
   /**
    * Pipeline main loop thread

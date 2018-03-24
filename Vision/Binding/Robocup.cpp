@@ -168,7 +168,7 @@ void Robocup::startLogging(unsigned int timeMS, const std::string &logDir) {
   logMutex.lock();
   manual_logger.initSession(logDir);
   startLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
-  endLog = TimeStamp(TimeStamp::now() + milliseconds(timeMS));
+  endLog = TimeStamp(getNowTS() + milliseconds(timeMS));
   logMutex.unlock();
 }
 
@@ -270,13 +270,10 @@ void Robocup::initRhIO() {
     return;
   }
   // Init interface with RhIO
-  RhIO::Root.newCommand(
+  if (isFakeMode()) {/// Highgui is not available on robot
+    RhIO::Root.newCommand(
       "Vision/showFilters", "Display the given filters",
       [this](const std::vector<std::string> &args) -> std::string {
-        if (embedded) {
-          throw std::runtime_error(
-              "Cannot display filters on embedded servers");
-        }
         if (args.size() < 1) {
           throw std::runtime_error("Usage: showFilters <name1> <name2> ...");
         }
@@ -290,7 +287,7 @@ void Robocup::initRhIO() {
         }
         return "Filters are now displayed";
       });
-  RhIO::Root.newCommand(
+    RhIO::Root.newCommand(
       "Vision/hideFilters", "Hide the given filters",
       [this](const std::vector<std::string> &args) -> std::string {
         if (args.size() < 1) {
@@ -307,6 +304,7 @@ void Robocup::initRhIO() {
         }
         return "Filters are now hidden";
       });
+  }
   RhIO::Root.newCommand(
       "Vision/logLocal", "Starts logging for a specified duration. Images are "
                          "saved on board for now.",
@@ -400,15 +398,13 @@ void Robocup::step() {
   // If the camera is unplugged or doesn't respond for too long, we should avoid
   // keeping the filters data
   {
-    double timeSinceLastFrame = diffSec(lastTS, TimeStamp::now());
+    double timeSinceLastFrame = diffSec(lastTS, getNowTS());
     if (timeSinceLastFrame > 5) {
       out.warning("no frame for %f, reseting the ball filter",
                   timeSinceLastFrame);
 
-      if (!_scheduler->getServices()->model->isFakeMode()) {
-          // Resetting the ball stack filter
-          ballStackFilter->clear();
-      }
+      // Resetting the ball stack filter
+      ballStackFilter->clear();
 
       // Telling the localisation
       LocalisationService *loc = dynamic_cast<LocalisationService *>(
@@ -511,7 +507,7 @@ void Robocup::step() {
   Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);
 
   // Set the log timestamp during fake mode
-  if (_scheduler->getServices()->model->isFakeMode()) {
+  if (isFakeMode()) {
     double ts = pipeline.getTimestamp().getTimeMS();
     _scheduler->getServices()->model->setReplayTimestamp(ts / 1000.0);
   }
@@ -531,7 +527,7 @@ void Robocup::importFromRhIO() {
 }
 
 void Robocup::publishToRhIO() {
-  RhIO::Root.setFloat("/Vision/lastUpdate", diffMs(lastTS, TimeStamp::now()));
+  RhIO::Root.setFloat("/Vision/lastUpdate", diffMs(lastTS, getNowTS()));
   std::string cameraStatus = getCameraStatus();
   RhIO::Root.setStr("/Vision/cameraStatus", cameraStatus);
 }
@@ -829,7 +825,7 @@ void Robocup::loggingStep() {
   // Handling manual logs
   bool dumpManualLogs = false;
   if (manual_logger.isActive()) {
-    if (endLog < TimeStamp::now()) {// If time is elapsed: close log
+    if (endLog < getNowTS()) {// If time is elapsed: close log
       dumpManualLogs = true;
     } else {// If there is still time left, add entry
       try {
@@ -1017,9 +1013,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
         // Elapsed time
         double tag_ball_anticipation = 0.2;// [s] (TODO: set as rhio parameters?)
         double elapsed = tag_ball_anticipation;
-        if (!_scheduler->getServices()->model->isFakeMode()) {// Fake mode here
-          elapsed += diffSec(cs->getTimeStamp(), TimeStamp::now());
-        }
+        elapsed += diffSec(cs->getTimeStamp(), getNowTS());
         // Compute futur position
         Point ball_usable_speed = ballSpeedEstimator->getUsableSpeed();
         Eigen::Vector3d ball_speed(ball_usable_speed.x, ball_usable_speed.y, 0);
@@ -1423,6 +1417,17 @@ void Robocup::closeCamera() {
   }
 }
 
+TimeStamp Robocup::getNowTS() const{
+  if (isFakeMode()) {
+    return sourceTS;
+  }
+  return TimeStamp::now();
+}
+
+bool Robocup::isFakeMode() const{
+  return _scheduler->getServices()->model->isFakeMode();
+}
+
 void Robocup::ballClear() { 
     ballStackFilter->clear(); 
 }
@@ -1454,7 +1459,7 @@ void Robocup::stopLoggingLowLevel(const std::string & path) {
 int Robocup::getFrames() { return pipeline.frames; }
 
 double Robocup::getLastUpdate() const {
-  return diffMs(lastTS, TimeStamp::now());
+  return diffMs(lastTS, getNowTS());
 }
 
 }
