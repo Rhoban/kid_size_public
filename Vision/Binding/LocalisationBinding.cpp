@@ -255,6 +255,10 @@ void LocalisationBinding::initRhIO()
   RhIO::Root.newBool("/Localisation/Field/isUsingVisualCompass")
       ->defaultValue(isUsingVisualCompass)
       ->comment("Is the localisation currently using the visual compass");
+  RhIO::Root.newInt("/Localisation/debugLevel")
+      ->defaultValue(1)
+      ->comment("Verbosity level for Localisation: 0 -> silent")
+      ->persisted(true);
 
   RhIO::Root.newFrame("Localisation/TopView", "", RhIO::FrameFormat::BGR);
 
@@ -295,6 +299,7 @@ void LocalisationBinding::importFromRhIO() {
   consistencyMaxNoise =
       RhIO::Root.getValueFloat("/Localisation/Consistency/maxNoise").value;
   period = RhIO::Root.getValueFloat("/Localisation/period").value;
+  debugLevel = RhIO::Root.getValueInt("/Localisation/debugLevel").value;
 }
 
 void LocalisationBinding::publishToRhIO() {
@@ -340,7 +345,9 @@ void LocalisationBinding::step()
   if (!refereeAllowTicks) {
     lastForbidden = currTS;
     isForbidden = true;
-    fieldLogger.log("Referee forbid ticks");
+    if (debugLevel > 0) {
+      fieldLogger.log("Referee forbid ticks");
+    }
     // Avoid having a uniform reset pending when robot is penalized or in initial phase
     field_filter->cancelPendingReset(FieldPF::ResetType::Uniform);
     // Since we don't want uniform reset, make sur that nbVCObs is equal to minVCObs
@@ -357,7 +364,9 @@ void LocalisationBinding::step()
   // Determining if the robot is fallen
   DecisionService * decisionService = scheduler->getServices()->decision;
   if (decisionService->isFallen) {
-    fieldLogger.log("Robot is fallen, forbidding ticks");
+    if (debugLevel > 0) {
+      fieldLogger.log("Robot is fallen, forbidding ticks");
+    }
     publishToRhIO();
     return;
   }
@@ -373,7 +382,9 @@ void LocalisationBinding::step()
     msg << "Delaying restart of filter: "
         << "elapsed since forbidden:" << elapsed_since_forbidden << " "
         << "Pending reset: '" << FieldPF::getName(pending_reset) << "'";
-    fieldLogger.log(msg.str().c_str());
+    if (debugLevel > 0) {
+      fieldLogger.log(msg.str().c_str());
+    }
 
     publishToRhIO();
     return;
@@ -382,8 +393,10 @@ void LocalisationBinding::step()
   isForbidden = false;
 
   // Determine if a visualCompass is required
-  fieldLogger.log("consistency: %d | nbVCObs: %d | minVCObs: %d",
-                  consistencyEnabled, nbVCObs, minVCObs);
+  if (debugLevel > 0) {
+    fieldLogger.log("consistency: %d | nbVCObs: %d | minVCObs: %d",
+                    consistencyEnabled, nbVCObs, minVCObs);
+  }
   setVisualCompassStatus(consistencyEnabled && nbVCObs < minVCObs);
 
   // Compute observations if there is no reset pending
@@ -425,7 +438,9 @@ void LocalisationBinding::setVisualCompassStatus(bool active)
 {
   // When status changes, update filters and localisationService
   if (active != isUsingVisualCompass) {
-    fieldLogger.log("Setting compass status to %d, previously %d", active, isUsingVisualCompass);
+    if (debugLevel > 0) {
+      fieldLogger.log("Setting compass status to %d, previously %d", active, isUsingVisualCompass);
+    }
     isUsingVisualCompass = active;
     try {
       std::string visualCompassPath = "Vision/visualCompass";
@@ -476,7 +491,9 @@ std::vector<ArenaCornerObservation *>
 LocalisationBinding::extractArenaCornerObservations() {
   // Introduction des observations des coins du terrain 
   std::vector<ArenaCornerObservation *> arenaCornerObservations;
-  printf("retrieving arenaCornerObs : %d\n", (int)clipping_data.size());
+  if (debugLevel > 0) {
+    fieldLogger.log("retrieving arenaCornerObs : %d\n", (int)clipping_data.size());
+  }
   for (size_t i = 0; i < clipping_data.size(); i++) {
     if (clipping_data[i].is_obs_valid()) {
       cv::Point2f pos_in_self = cs->getPosInSelf(clipping_data[i].getCornerInWorldFrame());
@@ -490,7 +507,7 @@ LocalisationBinding::extractArenaCornerObservations() {
           new ArenaCornerObservation(clipping_data[i], panToGoal, tiltToGoal, cs->getHeight());
         arenaCornerObservations.push_back(newObs);
       } catch (const std::string msg) {
-        printf("ArenaCornerObservation unconsistancy; error at construction : %s", msg.c_str());
+        fieldLogger.error("ArenaCornerObservation inconsistency; error at construction : %s", msg.c_str());
       }
     }
   }
@@ -563,8 +580,10 @@ void LocalisationBinding::stealFromVision()
                             markerCenters, markerCentersUndistorded, &tagTimestamp);
   vision_binding->stealCompasses(compassOrientations,compassQuality);
   clipping_data = vision_binding->stealClipping();
-  fieldLogger.log("Nb observations stolen: (%d goals, %d markers, %d compass)",
-                  goalsLocations.size(), markerPositions.size(), compassOrientations.size());
+  if (debugLevel > 0) {
+    fieldLogger.log("Nb observations stolen: (%d goals, %d markers, %d compass)",
+                    goalsLocations.size(), markerPositions.size(), compassOrientations.size());
+  }
 }
 
 LocalisationBinding::ObservationVector LocalisationBinding::extractObservations()
@@ -587,29 +606,35 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
     int obsId = 0;
     for (GoalObservation * obs : extractGoalObservations()) {
       fieldObservations.push_back(obs);
-      fieldLogger.log("Goal %d -> pan: %lf, tilt: %lf, weight: %1lf",
-                      obsId, obs->pan.getSignedValue(),
-                      obs->tilt.getSignedValue(), obs->weight);
+      if (debugLevel > 0) {
+        fieldLogger.log("Goal %d -> pan: %lf, tilt: %lf, weight: %1lf",
+                        obsId, obs->pan.getSignedValue(),
+                        obs->tilt.getSignedValue(), obs->weight);
+      }
       obsId++;
     }
     for (ArenaCornerObservation * obs : extractArenaCornerObservations()) {
       fieldObservations.push_back(obs);
-      fieldLogger.log("Arena Corner %d -> pan: %lf, tilt: %lf, weight: %1lf, dist: %lf",
-		      obsId, obs->getPan().getSignedValue(),
-		      obs->getTilt().getSignedValue(),
-		      obs->getWeight(),
-		      obs->getBrutData().getRobotCornerDist());
+      if (debugLevel > 0) {
+        fieldLogger.log("Arena Corner %d -> pan: %lf, tilt: %lf, weight: %1lf, dist: %lf",
+                        obsId, obs->getPan().getSignedValue(),
+                        obs->getTilt().getSignedValue(),
+                        obs->getWeight(),
+                        obs->getBrutData().getRobotCornerDist());
+      }
       obsId++;
     }
 
     for (TagsObservation * obs : extractTagsObservations()) {
       fieldObservations.push_back(obs);
-      fieldLogger.log("Tags %d -> id: %d, pos: (%.3lf, %.3lf, %.3lf), "
-                      "dev: (%.3lf, %.3lf, %.3lf), height: %lf  weight: %lf",
-                      obsId, obs->id,
-                      obs->seenPos.x, obs->seenPos.y, obs->seenPos.z,
-                      obs->stdDev.x, obs->stdDev.y, obs->stdDev.z,
-                      obs->robotHeight, obs->weight);
+      if (debugLevel > 0) {
+        fieldLogger.log("Tags %d -> id: %d, pos: (%.3lf, %.3lf, %.3lf), "
+                        "dev: (%.3lf, %.3lf, %.3lf), height: %lf  weight: %lf",
+                        obsId, obs->id,
+                        obs->seenPos.x, obs->seenPos.y, obs->seenPos.z,
+                        obs->stdDev.x, obs->stdDev.y, obs->stdDev.z,
+                        obs->robotHeight, obs->weight);
+      }
       obsId++;
     }
   }
@@ -682,7 +707,7 @@ void LocalisationBinding::updateFilter(
     field_filter->step(rc, obs, elapsed);
     filterMutex.unlock();
   }
-  else {
+  else if (debugLevel > 0) {
     std::stringstream oss;
     oss << "skipping step: ";
     if (!enableFieldFilter) oss << "field disabled, ";
@@ -732,8 +757,10 @@ void LocalisationBinding::applyWatcher(
     double score = goalObs->potential(particle, true);
     double minScore = goalObs->getMinScore();
     // Debug
-    fieldLogger.log("Observation %d: %s -> score: %f , minScore: %f",
-                    obsId, goalObs->toStr().c_str(), score, minScore);
+    if (debugLevel > 0) {
+      fieldLogger.log("Observation %d: %s -> score: %f , minScore: %f",
+                      obsId, goalObs->toStr().c_str(), score, minScore);
+    }
     obsId++;
     // If score <= minScore, then observation is so different from expected result
     // that there is only two possibilities:
@@ -749,8 +776,10 @@ void LocalisationBinding::applyWatcher(
   /// Update consistency score
   consistencyScore += stepDeltaScore;
   consistencyScore = std::min(1.0,std::max(0.0, consistencyScore));
-  fieldLogger.log("Updating consistency: deltaStep: %f | new consistency: %f",
-                  stepDeltaScore, consistencyScore);
+  if (debugLevel > 0) {
+    fieldLogger.log("Updating consistency: deltaStep: %f | new consistency: %f",
+                    stepDeltaScore, consistencyScore);
+  }
 
   /// Reset of the particle filter requires several conditions
   /// - We have not reseted the filter for  long time
@@ -769,11 +798,13 @@ void LocalisationBinding::applyWatcher(
     consistencyScore = 0;
     field_filter->askForReset();
     vcCounterMutex.unlock();
-    std::ostringstream msg;
-    msg << "Asking for a full reset: " << std::endl;
-    msg << "consistencyScore: " << consistencyScore
-        << " robotQ: " << robotQ;
-    fieldLogger.log(msg.str().c_str());
+    if (debugLevel > 0) {
+      std::ostringstream msg;
+      msg << "Asking for a full reset: " << std::endl;
+      msg << "consistencyScore: " << consistencyScore
+          << " robotQ: " << robotQ;
+      fieldLogger.log(msg.str().c_str());
+    }
   }
 }
 

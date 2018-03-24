@@ -178,6 +178,9 @@ public:
   /// Is Localisation in a forbidden state
   bool isForbidden;
 
+  /// Verbosity level
+  int debugLevel;
+
 private:
   /// Main thread running
   std::thread *_runThread;

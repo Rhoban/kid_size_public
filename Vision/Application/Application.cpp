@@ -117,7 +117,6 @@ void Application::launch() {
         int minWait = 5;
         if (timeToWait < minWait)
           timeToWait = minWait;
-        logger.log("waitKey called in Application for %d (ms) : ", timeToWait);
         key = cv::waitKey(timeToWait);
       }
     }
