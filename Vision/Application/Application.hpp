@@ -15,6 +15,9 @@ public:
   virtual void configure(int argc, char *argv[]);
   virtual void launch();
 
+  /// Return false if application has finished
+  bool isActive() const;
+
   virtual void printHelp();
 
   // Json stuff

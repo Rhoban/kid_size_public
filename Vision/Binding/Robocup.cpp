@@ -431,6 +431,11 @@ void Robocup::step() {
   try {
     Application::step();
     activeSource = true;
+    // If Vision application has finished, ask for scheduler to shut down
+    if (!isActive()) {
+      out.log("Vision exiting, asking to scheduler to shut down");
+      _scheduler->askQuit();
+    }
   } catch (const Vision::Filters::PtGreyException &exc) {
     globalMutex.unlock();
     Benchmark::close("Pipeline");

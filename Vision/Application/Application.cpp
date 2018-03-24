@@ -28,6 +28,10 @@ Application::Application()
 
 Application::~Application() {}
 
+bool Application::isActive() const {
+  return !end;
+}
+
 void Application::configure(int argc, char *argv[]) {
   if (argc < 2) {
     std::ostringstream oss;
@@ -135,7 +139,7 @@ void Application::fromJson(const Json::Value & v, const std::string & dir_name) 
   rhoban_utils::tryRead(v,"gpuOn",&gpuOn);
   rhoban_utils::tryRead(v,"pathToLog",&pathToLog);
   rhoban_utils::tryRead(v,"angularPitchTolerance",&angularPitchTolerance);
-  rhoban_utils::tryRead(v,"exit_on_stream_end",&exit_on_stream_end);
+  rhoban_utils::tryRead(v,"exitOnStreamEnd",&exit_on_stream_end);
 
   pipeline.tryRead(v, "pipeline", dir_name);
   checkConsistency();
@@ -149,7 +153,7 @@ Json::Value Application::toJson() const {
   v["angularPitchTolerance"] = angularPitchTolerance;
   v["pathToLog"] = pathToLog;
   v["pipeline"] = pipeline.toJson();
-  v["exit_on_stream_end"] = exit_on_stream_end;
+  v["exitOnStreamEnd"] = exit_on_stream_end;
   return v;
 }
 
