@@ -165,11 +165,6 @@ public:
   Pipeline *getPipeline();
 
   /**
-   * Enable image dump in given directory
-   */
-  void enableDump(const std::string &path);
-
-  /**
    * Write Filter parameters to given stream
    */
   void writeConfig(std::ofstream &os) const;
@@ -361,13 +356,6 @@ protected:
    * Access granted to Pipeline container
    */
   friend class Pipeline;
-
-  /**
-   * Dump directory, and index
-   * Negative index means no dumping
-   */
-  std::string _dumpPath;
-  unsigned int _dumpIndex;
 
   /**
    * Says if we have a real ROI or the default image-wide one

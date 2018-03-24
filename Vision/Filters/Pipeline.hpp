@@ -75,12 +75,6 @@ public:
   FiltersMap &filters();
 
   /**
-   * Enable output image dump for all
-   * filter
-   */
-  void enableDump(const std::string &path);
-
-  /**
    * Enable debuging for all Filters with
    * given level
    */

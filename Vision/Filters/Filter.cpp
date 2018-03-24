@@ -40,15 +40,9 @@ Filter::Filter(const std::string &n, const Dependencies &dependencies,
       _img1(480, 640, CV_8UC3), _img2(480, 640, CV_8UC3),
        _params(), _frequency(frequency), _stopThread(false),
       _lockParams(), _lockImgs(),
-      _lockFrequency(), _pipeline(nullptr), _dumpPath(), _dumpIndex(-1),
+      _lockFrequency(), _pipeline(nullptr),
       monitor_scale(1), rhio_initialized(false) {
   _defaultRoi = false;
-  // Uncomment this if you want a default, image-wide ROI when no ROI is found
-  // (we should not need this anymore)
-  //     //Default image-wide ROI
-  // cv::RotatedRect roi(cv::Point2f(240,320), cv::Size2f(480,640), 0);
-  // _rois.insert(std::pair<cv::RotatedRect, float >(roi, 0));
-  // _defaultRoi = true;
   setParameters();
 }
 
@@ -104,14 +98,6 @@ Pipeline *Filter::getPipeline() {
         "Requesting CameraState in a filter not attached to a pipeline");
   }
   return _pipeline;
-}
-
-void Filter::enableDump(const std::string &path) {
-  _dumpPath = path;
-  if (_dumpPath.size() > 0 && _dumpPath[_dumpPath.size() - 1] != '/') {
-    _dumpPath = _dumpPath + "/";
-  }
-  _dumpIndex = 0;
 }
 
 void Filter::setDebugLevel(DebugLevel newLevel) {
@@ -336,18 +322,6 @@ void Filter::runStep(UpdateType updateType) {
   }
   _lockImgs.unlock();
 
-  // Dump image if enabled
-  if (_dumpIndex != (unsigned int)-1) {
-    std::ostringstream oss;
-    oss << _dumpPath << name << "_" << _dumpIndex << ".jpg";
-    if (_availableImg == 0) {
-      cv::imwrite(oss.str(), _img1);
-      _dumpIndex++;
-    } else {
-      cv::imwrite(oss.str(), _img2);
-      _dumpIndex++;
-    }
-  }
   // Show performances if enabled
   if (debugLevel.threads) {
     std::cout << now() << "ms " << name << " TICK ";

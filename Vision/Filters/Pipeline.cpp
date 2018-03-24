@@ -80,34 +80,11 @@ Filter &Pipeline::get(const std::string &name) {
 }
 
 bool Pipeline::isFilterPresent(const std::string &name) {
-  /*
-    try{
-    *(_filters.at(name));
-    }
-    catch(const std::out_of_range & e){
-    return false;
-    }
-    return true;
-  */
-
-  if (_filters.find(name) == _filters.end()) {
-    return false;
-  } else {
-    // if(_filters.at(name) )
-    //     return true;
-    // return false;
-    return true;
-  }
+  return _filters.find(name) != _filters.end();
 }
 
 const Pipeline::FiltersMap &Pipeline::filters() const { return _filters; }
 Pipeline::FiltersMap &Pipeline::filters() { return _filters; }
-
-void Pipeline::enableDump(const std::string &path) {
-  for (auto &it : _filters) {
-    it.second->enableDump(path);
-  }
-}
 
 void Pipeline::setDebugLevel(DebugLevel newLevel) {
   for (auto &it : _filters) {
