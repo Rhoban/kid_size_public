@@ -876,9 +876,10 @@ void Robocup::updateBallInformations() {
       Eigen::Vector3d ball_in_world = cs->ballInfoFromPixel(ballPix, 1, 1);
       positions.push_back(ball_in_world);
       ballSpeedEstimator->update(cs->getTimeStamp(),
-                                 Point(ball_in_world(0), ball_in_world(1)));
+                                 Eigen::Vector2d(ball_in_world(0), ball_in_world(1)));
     } catch (const std::runtime_error &exc) {
-      // Ignore the candidate
+      out.warning("Ignoring a candidate at (%f,%f) because of '%s'",
+                  ballsX[k], ballsY[k], exc.what());
     }
   }
   // Positions are transmitted in the world referential

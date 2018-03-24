@@ -6,8 +6,6 @@
 
 #include <cmath>
 
-using namespace rhoban_geometry;
-
 using ::rhoban_utils::TimeStamp;
 using namespace std;
 
@@ -17,97 +15,89 @@ namespace Vision {
 namespace Localisation {
 
 SpeedEstimator::SpeedEstimator()
-  : bind(nullptr), memory_size(20), min_dt(0.05), max_dt(1),
-    disc(0.9), flat_tol(0.25), speed(0, 0), qSpeed(0, 0)
+  : bind(nullptr), speed(0, 0), speed_quality(0)
 {
   initBinding();
 }
 
 void SpeedEstimator::update(const rhoban_utils::TimeStamp & ts,
-                            const Point &p, double quality) {
-  // Debug message (TODO: make it an option)
-  //logger.log("update: pos:  %f, %f, time: %f [s], quality: %f",
-  //           p.x, p.y, ts.getTimeSec(), quality);
+                            const Eigen::Vector2d &pos) {
+  // Debug message
+  if (debug_level > 0) {
+    logger.log("update: pos:  %f, %f, time: %f [s]",
+               pos.x(), pos.y(), ts.getTimeSec());
+  }
   // Insert entry
-  positions.push_front(TimedPosition(ts, p));
-  qualities.push_front(quality);
+  positions.push_front(TimedPosition(ts, pos));
 
   bind->pull();
 
   cleanOldEntries();
 
   // Each pair of position gives a speed difference
-  std::vector<WeightedSpeed> weightedSpeeds = getWeightedSpeeds();
-  int nb_entries = weightedSpeeds.size();
-  double max_weight = (1 - pow(disc,nb_entries)) / (1 - disc);
+  updateMeasuredSpeeds();
 
   // Compute mean using weights
-  Point totSpeeds(0, 0);
+  Eigen::Vector2d totSpeeds(0, 0);
   double totWeight = 0;
-  for (unsigned int i = 0; i < weightedSpeeds.size(); i++) {
-    const Point & speed = weightedSpeeds[i].first;
-    double weight = weightedSpeeds[i].second;
+  for (unsigned int i = 0; i < measured_speeds.size(); i++) {
+    const Eigen::Vector2d & speed = measured_speeds[i].first;
+    double weight = measured_speeds[i].second;
     totSpeeds = totSpeeds + speed * weight;
     totWeight += weight;
-  }
-
-  if (debug_level > 1) {
-    for (unsigned int i = 0; i < weightedSpeeds.size(); i++) {
-      const Point & speed = weightedSpeeds[i].first;
-      double weight = weightedSpeeds[i].second;
-      logger.log("weightedSpeeds[%d] : {speed: (%f,%f), weight: %f }",
-                 i, speed.x, speed.y, weight);
+    if (debug_level > 1) {
+      logger.log("measured_speeds[%d] : {speed: (%f,%f), weight: %f }",
+                   i, speed.x(), speed.y(), weight);
     }
   }
 
 
   if (totWeight > 0) {
-    Point avgSpeed = totSpeeds / totWeight;
+    Eigen::Vector2d avgSpeed = totSpeeds / totWeight;
 
-    // Compute stdDev using weights
-    Point totDev(0,0);
-    for (unsigned int i = 0; i < weightedSpeeds.size(); i++) {
-      const Point & speed = weightedSpeeds[i].first;
-      double weight = weightedSpeeds[i].second;
-      totDev.x += weight * fabs(speed.getX() - avgSpeed.getX());
-      totDev.y += weight * fabs(speed.getY() - avgSpeed.getY());
+    // Compute sum of squared errors weighted
+    double norm_var = 0;
+    for (unsigned int i = 0; i < measured_speeds.size(); i++) {
+      const Eigen::Vector2d & speed = measured_speeds[i].first;
+      double weight = measured_speeds[i].second;
+      // 
+      double squared_error = (speed - avgSpeed).squaredNorm();
+      norm_var += squared_error * weight;
     }
-    Point avgDev = totDev / totWeight;
+    norm_var /= totWeight;
+    // Getting speed deviation 
+    double speed_dev = std::sqrt(norm_var);
 
-    // Compute quality according to calculated values
-    // Quality of estimation depends on:
-    // - Coherency of received values
-    // - Qualities of positions seen
-    Point coherenceScore;
-    // Coherence score is based on 1 - avgError / (speed + flatTol)
-    coherenceScore.x = (1 - avgDev.getX() / (fabs(avgSpeed.getX() + flat_tol)));
-    coherenceScore.y = (1 - avgDev.getY() / (fabs(avgSpeed.getY() + flat_tol)));
-    if (coherenceScore.x < 0)
-      coherenceScore.x = 0;
-    if (coherenceScore.y < 0)
-      coherenceScore.y = 0;
-    double qualityScore = totWeight / max_weight;
+    // Quality of speed depends on speed_dev
+    speed_quality = std::max(0.0, 1 - speed_dev / max_speed_dev);
+
+
+    speed = avgSpeed;
+    usable_speed = avgSpeed * speed_quality;
 
     if (debug_level > 0) {
-      logger.log("Speed    : (%f,%f) ", avgSpeed.x, avgSpeed.y);
-      logger.log("Coherence: (%f,%f) ", coherenceScore.x, coherenceScore.y);
+      logger.log("Raw speed    : (%f,%f) ", speed.x(), speed.y());
+      logger.log("Usable speed : (%f,%f) ", usable_speed.x(), usable_speed.y());
+      logger.log("Quality      : (%f) "   , speed_quality);
     }
-
-    qSpeed = coherenceScore * qualityScore;
-    speed = avgSpeed;
   } else { // totWeight == 0
-    qSpeed = Point(0, 0);
-    speed = Point(0, 0);
+    speed_quality = 0;
+    speed = Eigen::Vector2d(0, 0);
+    usable_speed = Eigen::Vector2d(0, 0);
   }
 
   bind->push();
 }
 
-Point SpeedEstimator::getSpeed() { return speed; }
-double SpeedEstimator::getQuality() { return qSpeed.x * qSpeed.y; }
-Point SpeedEstimator::getQualities() { return qSpeed; }
-Point SpeedEstimator::getUsableSpeed() {
-  return Point(speed.x * qSpeed.x, speed.y * qSpeed.y);
+Eigen::Vector2d SpeedEstimator::getSpeed() {
+  return speed;
+}
+
+double SpeedEstimator::getQuality() {
+  return speed_quality;
+}
+Eigen::Vector2d SpeedEstimator::getUsableSpeed() {
+  return usable_speed;
 }
 
 void SpeedEstimator::initBinding() {
@@ -128,63 +118,68 @@ void SpeedEstimator::initBinding() {
   bind->bindNew("disc", disc, RhIO::Bind::PullOnly)
     ->comment("Discount gain used for speeds")
     ->defaultValue(0.9)->minimum(0)->maximum(1);
-  bind->bindNew("flat_tol", flat_tol, RhIO::Bind::PullOnly)
-    ->comment("Speed tolerance for coherency evaluation [m/s]")
-    ->defaultValue(0.25)->minimum(0)->maximum(2);
+  bind->bindNew("max_speed_dev", max_speed_dev, RhIO::Bind::PullOnly)
+    ->comment("Maximal standard error on speed before usable_speed "
+              "reaches 0 [m/s]")
+    ->defaultValue(0.5)->minimum(0)->maximum(2);
+  bind->bindNew("max_speed", max_speed, RhIO::Bind::PullOnly)
+    ->comment("Maximal theoric speed of the ball [m/s], higher values are "
+              "considered as two different ball candidates and are simply ignored")
+    ->defaultValue(3);
   bind->bindNew("debug_level", debug_level, RhIO::Bind::PullOnly)
     ->comment("Verbosity of output")
     ->defaultValue(0)->minimum(0)->maximum(2);
   // TODO: eventually output speeds and qSpeed to RhIO
+
+  bind->pull();// Ensures proper initialization of all RhIO PullOnly variable
 }
 
 void SpeedEstimator::cleanOldEntries() {
   while (positions.size() > (unsigned int)memory_size) {
     positions.pop_back();
-    qualities.pop_back();
   }
 
   // Ensure there is never a difference higher than max_dt
   while (positions.size() > 0 &&
          diffSec(positions.back().first, positions.front().first) > max_dt) {
     positions.pop_back();
-    qualities.pop_back();
   }
 }
 
-std::vector<SpeedEstimator::WeightedSpeed> SpeedEstimator::getWeightedSpeeds() const {
-  std::vector<WeightedSpeed> speeds;
+void SpeedEstimator::updateMeasuredSpeeds() {
+  measured_speeds.clear();
   auto newP = positions.cbegin();
-  auto newQ = qualities.cbegin();
   auto oldP = positions.cbegin();
-  auto oldQ = qualities.cbegin();
   double age_weight = 1.0;
   while (true) {
     double dt = diffSec(oldP->first, newP->first);
 
     if (dt >= min_dt) {
-      const Point & src = oldP->second;
-      const Point & dst = newP->second;
-      Point speed = (dst - src) / dt;
-      // The weight of each pair of positions is influenced by both:
-      // - age (more recent values are more important)
-      // - quality product
-      double weight = age_weight * (*oldQ) * (*newQ);
+      const Eigen::Vector2d & src = oldP->second;
+      const Eigen::Vector2d & dst = newP->second;
+      Eigen::Vector2d speed = (dst - src) / dt;
+      // The weight of each pair of positions is influenced by age
+      // (more recent values are more important)
+      double weight = age_weight;
       age_weight *= disc;
-      speeds.push_back(WeightedSpeed(speed, weight));
+      if (speed.norm() > max_speed) {
+        if (debug_level > 0) {
+          logger.warning("ignoring improbable speed: (%f,%f)", speed.x(), speed.y());
+        }
+      } else {
+        measured_speeds.push_back(WeightedSpeed(speed, weight));
+      }
       // Reduce dt by taking an older entry as 'new'
       newP++;
-      newQ++;
     } else {
       // Computing speed is forbidden, thus trying to increase dt by taking an older entry
       if (oldP == positions.cend()) {
         break;// Exit loop if we reach the last entry
       } else {
         oldP++;
-        oldQ++;
       }
     }
   }
-  return speeds;
 }
 
 }

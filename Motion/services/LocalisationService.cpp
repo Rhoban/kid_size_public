@@ -615,13 +615,6 @@ void LocalisationService::gameStartReset()
 {
 #ifdef VISION_COMPONENT
   // TODO: Do something for the ball?
-  // robocup->ballPF.gameStartReset();
-  // float distToCenter = (Field::fieldLength/2)-Field::goalAreaLength;
-  // robocup->ballReset(distToCenter, 0);
-  // TODO: Something specific per robot for Y?
-  // customFieldReset(-distToCenter, 0, 50, 0, 5);
-  // float distToCenter = (Field::fieldLength/2)-Field::goalAreaLength;
-  // robocup->ballReset(distToCenter, 0);
 
   locBinding->fieldReset(FieldPF::ResetType::Borders);
   robocup->robotsClear();

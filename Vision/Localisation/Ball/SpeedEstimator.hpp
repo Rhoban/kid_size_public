@@ -1,10 +1,11 @@
 #pragma once
 
-#include <cstdlib>
-#include <list>
+#include <rhoban_utils/timing/time_stamp.h>
 
-#include "rhoban_utils/timing/time_stamp.h"
-#include "rhoban_geometry/point.h"
+#include <Eigen/Core>
+
+#include <cstdlib>
+#include <deque>
 
 namespace RhIO {
 class Bind;
@@ -18,24 +19,21 @@ public:
 
   // Insert the value if it is not equivalent to the last on
   void update(const rhoban_utils::TimeStamp & ts,
-              const rhoban_geometry::Point &p, double quality = 1);
+              const Eigen::Vector2d & pos);
 
-  rhoban_geometry::Point getSpeed(); // in m/s, in world referential
+  Eigen::Vector2d getSpeed(); // in m/s, in world referential
   double getQuality();
-  rhoban_geometry::Point getQualities(); // q are separate for x and y
 
-  rhoban_geometry::Point getUsableSpeed();
+  Eigen::Vector2d getUsableSpeed();
 
 private:
-  typedef std::pair<rhoban_utils::TimeStamp, rhoban_geometry::Point> TimedPosition;
-  typedef std::pair<rhoban_geometry::Point, double> WeightedSpeed;
+  typedef std::pair<rhoban_utils::TimeStamp, Eigen::Vector2d> TimedPosition;
+  typedef std::pair<Eigen::Vector2d, double> WeightedSpeed;
 
   RhIO::Bind * bind;
 
   /// Positions are stored in world referential (most recent entry front)
   std::deque<TimedPosition> positions;
-  /// Qualities of the observations (most recent entry front)
-  std::deque<double> qualities;
   /// Maximal number of elements stored
   int memory_size;
 
@@ -48,14 +46,26 @@ private:
   /// Discount rate for weights
   double disc;
 
-  /// Tolerance for quality
-  double flat_tol;
+  /// A factor used to score the quality of speed, if deviation on speed is
+  /// higher than max_speed_dev, speed_quality will be 0
+  double max_speed_dev;
 
-  // Stored results
-  rhoban_geometry::Point speed, qSpeed;
+  /// Theoric limit for ball speed, entries with a higher speed will simply be
+  /// ignored
+  double max_speed;
+
+  /// Stored results
+  Eigen::Vector2d speed;
+  Eigen::Vector2d usable_speed;
+
+  /// Quality of speed estimation
+  double speed_quality;
 
   /// Verbosity of debug output (0 -> no output)
   int debug_level;
+
+  /// The speeds measured from couples
+  std::vector<WeightedSpeed> measured_speeds;
 
   void initBinding();
 
@@ -63,7 +73,7 @@ private:
   void cleanOldEntries();
 
   /// Compute speeds candidates based on memory content and min_dt
-  std::vector<WeightedSpeed> getWeightedSpeeds() const;
+  void updateMeasuredSpeeds();
 };
 
 }
