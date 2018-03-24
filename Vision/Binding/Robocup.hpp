@@ -223,7 +223,6 @@ public:
   // Sensors and related
   Utils::CameraState * cs;
   ::rhoban_utils::TimeStamp lastTS, sourceTS;
-  double timeSinceLastFrame; // in seconds
 
   bool ballDetected;
   std::vector<double> ballsX, ballsY, ballsRadius;

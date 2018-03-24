@@ -238,7 +238,6 @@ void Robocup::fromJson(const Json::Value & v, const std::string & dir_name) {
 
 void Robocup::init() {
   Application::init();
-  timeSinceLastFrame = 0;
   lastTS = ::rhoban_utils::TimeStamp::fromMS(0);
 
   initRhIO();
@@ -797,19 +796,14 @@ void Robocup::getUpdatedCameraStateFromPipeline() {
 
   sourceTS = cs->getTimeStamp();
 
-  // Debug Print for negative timestamps
-  if (cs != NULL) {
-    timeSinceLastFrame = diffSec(lastTS, sourceTS);
-    // Bug happens with logs
-    if (timeSinceLastFrame > 2) {
-      timeSinceLastFrame = 2;
-    }
-    if (timeSinceLastFrame < 0) {
-      std::cout << "Bug in Timestamps: time since last frame = "
-                << timeSinceLastFrame << std::endl;
-      timeSinceLastFrame = 0;
+  // TODO: identify if this part is only debug
+  if (!isFakeMode()) {
+    double timeSinceLastFrame = diffSec(lastTS, sourceTS);
+    if (timeSinceLastFrame > 2 || timeSinceLastFrame < 0) {
+      out.warning("Suspicious elapsed time: %f [s]", timeSinceLastFrame);
     }
   }
+
   csMutex.unlock();
 }
 
