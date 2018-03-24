@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_THRESHOLD_HPP
-#define VISION_FILTERS_THRESHOLD_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -16,12 +15,6 @@ namespace Filters {
 class Threshold : public Filter {
 public:
   Threshold() : Filter("Threshold") {}
-
-  /**
-   * Initialization with filter name, filter source
-   */
-  Threshold(const std::string &name, const std::string &source,
-            Frequency::type frequency = Frequency::Auto);
 
   virtual std::string getClassName() const override { return "Threshold"; }
 
@@ -47,5 +40,3 @@ private:
 };
 }
 }
-
-#endif

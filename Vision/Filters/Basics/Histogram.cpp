@@ -6,12 +6,7 @@ namespace Vision {
 namespace Filters {
 
 Histogram::Histogram() : Filter("Histogram") {
-  // setParameters();
 }
-
-Histogram::Histogram(const std::string &name, const std::string &source,
-                     Frequency::type frequency)
-    : Filter(name, {source}, frequency) {}
 
 void Histogram::setParameters() {
   bins = ParamInt(256, 0, 256);

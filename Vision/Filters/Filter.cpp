@@ -33,31 +33,25 @@ bool Filter::GPU_ON = false;
 
 std::vector<std::string> Filter::listOfPresentWindows;
 
-Filter::Filter(const std::string &n, const Dependencies &dependencies,
-               Frequency::type frequency)
-    : debugLevel(DebugLevel(false)),
+Filter::Filter(const std::string &n, const Dependencies &dependencies)
+    : display(false),
       _dependencies(dependencies), name(n), _availableImg(0),
       _img1(480, 640, CV_8UC3), _img2(480, 640, CV_8UC3),
-       _params(), _frequency(frequency), _stopThread(false),
+       _params(),
       _lockParams(), _lockImgs(),
-      _lockFrequency(), _pipeline(nullptr),
+      _pipeline(nullptr),
       monitor_scale(1), rhio_initialized(false) {
   _defaultRoi = false;
   setParameters();
 }
 
 Filter::~Filter() {
-  // Deallocation of debug image
-  if (debugLevel.graphics) {
+  if (display) {
     cv::destroyWindow(name);
   }
 }
 
 const std::string &Filter::getName() const { return name; }
-
-SafePtr<const Frequency::type> Filter::getFrequency() const {
-  return SafePtr<const Frequency::type>(_frequency, _lockFrequency);
-}
 
 SafePtr<const cv::Mat> Filter::getImg() const {
   _lockImgs.lock();
@@ -100,68 +94,14 @@ Pipeline *Filter::getPipeline() {
   return _pipeline;
 }
 
-void Filter::setDebugLevel(DebugLevel newLevel) {
-  debugLevel = newLevel;
-  if (!(debugLevel.graphics)) {
+void Filter::initWindow() {
+  if (!display) {
     return;
   }
 
   // Create Opencv window for image and parameters
   cv::namedWindow(name, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO);
-  if (debugLevel.parameters) {
-    cv::namedWindow(name + "_parameters",
-                    CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO);
-  }
 
-  // Defining a local structure
-  // for passing data to trackbar callback
-  struct TrackbarArg {
-    const std::string name;
-    const float scale;
-    Filter *self;
-  };
-  // Initializing OpenCV trackbar for some parameters
-  // and declare the callback function in second windows
-  if (debugLevel.parameters) {
-    for (const auto &it : params()->params<ParamInt>()) {
-      cv::createTrackbar(
-          it.first, name + "_parameters", &(it.second.value), it.second.max,
-          // For passing value to the callback
-          // sadly some memory leak are done
-          [](int val, void *param) -> void {
-            TrackbarArg *arg = (TrackbarArg *)param;
-            // Check for bound since trackbar
-            // does not have minimum
-            if (val >= arg->self->params()->set<ParamInt>(arg->name).min) {
-              arg->self->params()->set<ParamInt>(arg->name) = val;
-            }
-          },
-          new TrackbarArg({it.first, 1.0, this}));
-    }
-    for (const auto &it : params()->params<ParamFloat>()) {
-      float max = it.second.max;
-      float scale = 1.0;
-      if (max < 100.0) {
-        scale = 100.0 / max;
-      }
-      cv::createTrackbar(
-          it.first, name + "_parameters", new int(it.second.value * scale),
-          max *scale,
-          // For passing value to the callback
-          // sadly some memory leak are done
-          [](int val, void *param) -> void {
-            TrackbarArg *arg = (TrackbarArg *)param;
-            // Check for bound since trackbar
-            // does not have minimum
-            if (val / arg->scale >=
-                arg->self->params()->set<ParamFloat>(arg->name).min) {
-              arg->self->params()->set<ParamFloat>(arg->name) =
-                  val / arg->scale;
-            }
-          },
-          new TrackbarArg({it.first, scale, this}));
-    }
-  }
   // Set up and initialize mouse callback
   cv::setMouseCallback(
       name, [](int event, int x, int y, int, void *param) -> void {
@@ -212,7 +152,7 @@ void Filter::setDebugLevel(DebugLevel newLevel) {
         std::cout << " --> YUV[" << Y << ",";
         std::cout << V << ",";
         std::cout << U << "]" << std::endl;
-        std::cout << "Note :  it seems that we've inverted U and V everywhere in our code, so I did it here too." << std::endl;
+        std::cout << "Note :  YUV format is YCrCb" << std::endl;
 
         std::cout << "-> pos: " << ball_pos.transpose() << std::endl
                   << "-> radiusMin: " << radiusMin << std::endl
@@ -226,39 +166,6 @@ void Filter::setDebugLevel(DebugLevel newLevel) {
         }
         filter->displayCurrent();
       }, this);
-}
-
-void Filter::writeConfig(std::ofstream &os) const {
-  std::locale::global(std::locale("C"));
-  // Dump all ParamInt, ParamFloat and PairInt
-  for (const auto &it : params()->params<ParamInt>()) {
-    os << name << "." << it.first << ": " << it.second.value << std::endl;
-  }
-  for (const auto &it : params()->params<ParamFloat>()) {
-    os << name << "." << it.first << ": " << it.second.value << std::endl;
-  }
-}
-
-void Filter::readConfig(const std::string &name, const std::string &value) {
-  std::locale::global(std::locale("C"));
-  // Try to read the parameter for ParamInt and ParamFloat
-  if (params()->exists<ParamInt>(name)) {
-    params()->set<ParamInt>(name) = std::stoi(value);
-    // Verbose
-    if (debugLevel.enabled()) {
-      std::cout << "ReadConfig " << name << ".";
-      std::cout << name << " (int) " << std::stoi(value);
-      std::cout << std::endl;
-    }
-  } else if (params()->exists<ParamFloat>(name)) {
-    params()->set<ParamFloat>(name) = std::stof(value);
-    // Verbose
-    if (debugLevel.enabled()) {
-      std::cout << "ReadConfig " << name << ".";
-      std::cout << name << " (float) " << std::stof(value);
-      std::cout << std::endl;
-    }
-  }
 }
 
 void Filter::update() {
@@ -322,62 +229,11 @@ void Filter::runStep(UpdateType updateType) {
   }
   _lockImgs.unlock();
 
-  // Show performances if enabled
-  if (debugLevel.threads) {
-    std::cout << now() << "ms " << name << " TICK ";
-    std::cout << "(" << *getFrequency() << "Hz)";
-    std::cout << std::endl;
-  }
   /// Show output image if enabled
-  if (debugLevel.graphics) displayCurrent();
+  if (display) displayCurrent();
 
   // Close filter benchmark
-  Benchmark::close(name.c_str(), debugLevel.perfs);
-}
-
-void Filter::run() {
-  if (*getFrequency() == Frequency::Auto) {
-    throw std::logic_error("Filter frequency not resolved");
-  }
-
-  // Do not return until stop is asked
-  _stopThread = false;
-  while (!_stopThread) {
-    // Wait for dependencies in order
-    // to synchronize filters and reduce the lag
-    waitDependencies();
-    // Call virtual implementation and computed
-    // elapsed time duration
-    auto start = std::chrono::steady_clock::now();
-    runStep();
-    auto end = std::chrono::steady_clock::now();
-    auto elapsed = end - start;
-
-    if (*getFrequency() == Frequency::Max) {
-      // No wait if frequence Max
-      continue;
-    } else if (*getFrequency() == Frequency::Stop) {
-      // Do nothing until the frequency is changed
-      while (!_stopThread && *getFrequency() == Frequency::Stop) {
-        std::chrono::seconds wait(1);
-        std::this_thread::sleep_for(wait);
-      }
-      continue;
-    } else {
-      // Else wait to meet the require frequency
-      std::chrono::microseconds period(1000000 / (*getFrequency()));
-      auto wait = period - elapsed;
-      if (debugLevel.perfs) {
-        std::cout << now() << "ms " << name << " SLEEP ";
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(wait)
-                         .count() << "ms";
-        std::cout << std::endl;
-      }
-      // Negative duration (should be) handle by sleep
-      std::this_thread::sleep_for(wait);
-      continue;
-    }
-  }
+  Benchmark::close(name.c_str());
 }
 
 const Filter &Filter::getDependency(const std::string &name) const {
@@ -522,18 +378,11 @@ void Filter::waitDependencies() const {
   }
 }
 
-void Filter::setFrequency(Frequency::type freq) {
-  _lockFrequency.lock();
-  _frequency = freq;
-  _lockFrequency.unlock();
-}
-
-
 Json::Value Filter::toJson() const {
   Json::Value v;
   v["className"] = getClassName();
   v["name"] = name;
-  v["debugLevel"] = debugLevel.toJson();
+  v["display"] = display;
   v["dependencies"] = vector2Json(_dependencies);
   v["paramInts"] = parameters2Json<int>();
   v["paramFloats"] = parameters2Json<float>();
@@ -546,7 +395,7 @@ void Filter::fromJson(const Json::Value & v, const std::string & dir_name) {
   try {
     // Then update content from json data
     rhoban_utils::tryRead(v,"name",&name);
-    debugLevel.tryRead(v, "debugLevel");
+    rhoban_utils::tryRead(v,"display",&display);;
     // Read dependencies
     rhoban_utils::tryReadVector(v, "dependencies", &_dependencies);
     // Checking dependencies size
@@ -566,8 +415,8 @@ void Filter::fromJson(const Json::Value & v, const std::string & dir_name) {
     oss << err.what() << " in filter with name '" << name << "' of class '" << getClassName() << "'";
     throw rhoban_utils::JsonParsingError(oss.str());
   }
-  // setDebugLevel creates Trackbar with parameters if activated
-  setDebugLevel(debugLevel);
+  // Init display if required
+  initWindow();
   // Publish parameters to RhIO
   publishToRhIO("Vision/");
 }
@@ -603,7 +452,7 @@ void Filter::clearRois() {
 }
 
 void Filter::displayCurrent() {
-    Benchmark::open((string("Graphics for ") + name.c_str()).c_str());
+    Benchmark::open("display");
 
     // Computing current image
     cv::Mat & current_img = cachedImg();
@@ -648,12 +497,7 @@ void Filter::displayCurrent() {
       Filter::listOfPresentWindows.push_back(name);
     }
 
-    if (debugLevel.parameters) {
-      cv::imshow(name + "_parameters", cv::Mat::ones(1, 400, CV_8UC1));
-    }
-    cv::waitKey(1);
-    // Getting tired of your shit c++
-    Benchmark::close((string("Graphics for ") + name.c_str()).c_str());
+    Benchmark::close("display");
 }
 
 }

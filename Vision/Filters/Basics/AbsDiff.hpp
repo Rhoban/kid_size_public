@@ -16,13 +16,6 @@ class AbsDiff : public Filter {
 public:
   AbsDiff() : Filter("absDiff") {}
 
-  /**
-   * Initialization with filter name, A and B sources abs(A-B) and
-   * frequency
-   */
-  AbsDiff(const std::string &name, const std::string &A, const std::string &B,
-          Frequency::type frequency = Frequency::Auto);
-
 protected:
   /**
    * @Inherit

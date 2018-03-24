@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_INVERT_HPP
-#define VISION_FILTERS_INVERT_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -15,12 +14,6 @@ class Invert : public Filter {
 public:
   Invert() : Filter("Invert") {}
 
-  /**
-   * Initialization with filter name, filter source
-   */
-  Invert(const std::string &name, const std::string &source,
-         Frequency::type frequency = Frequency::Auto);
-
   virtual std::string getClassName() const override { return "Invert"; }
 
 protected:
@@ -31,5 +24,3 @@ protected:
 };
 }
 }
-
-#endif

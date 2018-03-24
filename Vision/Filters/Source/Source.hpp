@@ -11,8 +11,7 @@ public:
 
   Source(const std::string & name) : Filter(name) {}
 
-  Source(const std::string &name, const Dependencies & dependencies,
-         Frequency::type frequency) : Filter(name, dependencies, frequency) {}
+  Source(const std::string &name, const Dependencies & dependencies) : Filter(name, dependencies) {}
 
   virtual Type getType() const = 0;
 };

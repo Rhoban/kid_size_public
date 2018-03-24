@@ -11,12 +11,6 @@ static rhoban_utils::Logger out("FREAK");
 namespace Vision {
 namespace Filters {
 
-FREAK::FREAK(const std::string &name, const std::string &path,
-             Frequency::type frequency)
-    : Filter(name, Dependencies(), frequency), featurePath(path) {
-  deserialize();
-}
-
 void FREAK::deserialize() {
   cv::FileStorage fs(featurePath, cv::FileStorage::READ);
   if (fs.isOpened()) {

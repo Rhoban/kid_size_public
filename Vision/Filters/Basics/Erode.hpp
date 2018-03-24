@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_ERODE_HPP
-#define VISION_FILTERS_ERODE_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -14,12 +13,6 @@ namespace Filters {
 class Erode : public Filter {
 public:
   Erode() : Filter("Erode") {}
-
-  /**
-   * Initialization with filter name, filter source
-   */
-  Erode(const std::string &name, const std::string &source,
-        Frequency::type frequency = Frequency::Auto);
 
   virtual std::string getClassName() const override { return "Erode"; }
 
@@ -44,5 +37,3 @@ private:
 };
 }
 }
-
-#endif

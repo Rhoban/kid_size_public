@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_RESCALE_HPP
-#define VISION_FILTERS_RESCALE_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -14,12 +13,6 @@ namespace Filters {
 class Rescale : public Filter {
 public:
   Rescale() : Filter("Rescale") {}
-
-  /**
-   * Initialization with filter name, filter source
-   */
-  Rescale(const std::string &name, const std::string &source,
-          Frequency::type frequency = Frequency::Auto);
 
   virtual std::string getClassName() const override { return "Rescale"; }
 
@@ -36,5 +29,3 @@ private:
 };
 }
 }
-
-#endif

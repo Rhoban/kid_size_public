@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_MASK_HPP
-#define VISION_FILTERS_MASK_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -16,12 +15,6 @@ class Mask : public Filter {
 public:
   Mask() : Filter("Mask") {}
 
-  /**
-   * Initialization with filter, src and mask names.
-   */
-  Mask(const std::string &name, const std::string &src, const std::string &mask,
-       Frequency::type frequency = Frequency::Auto);
-
   virtual std::string getClassName() const override { return "Mask"; }
   virtual int expectedDependencies() const override { return 2; }
 
@@ -33,5 +26,3 @@ protected:
 };
 }
 }
-
-#endif

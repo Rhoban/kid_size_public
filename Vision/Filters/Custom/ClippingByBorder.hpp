@@ -1,5 +1,4 @@
-#ifndef FILTER_CLIPPING_BY_BORDER_HPP
-#define FILTER_CLIPPING_BY_BORDER_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -13,8 +12,6 @@ class ClippingByBorder : public Filter {
 
  public:
   ClippingByBorder();
-  ClippingByBorder(const std::string &name, const std::string &source,
-		   Frequency::type frequency = Frequency::Auto);
   ~ClippingByBorder();
 
   virtual std::string getClassName() const override { return "ClippingByBorder"; }
@@ -35,5 +32,3 @@ class ClippingByBorder : public Filter {
 
 }
 }
-
-#endif /* FILTER_CLIPPING_BY_BORDER_HPP */

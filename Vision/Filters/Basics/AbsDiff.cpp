@@ -7,10 +7,6 @@
 namespace Vision {
 namespace Filters {
 
-AbsDiff::AbsDiff(const std::string &name, const std::string &A,
-                 const std::string &B, Frequency::type frequency)
-        : Filter(name, {A, B}, frequency) {}
-
 void AbsDiff::process() {
     cv::Mat A = *(getDependency(_dependencies[0]).getImg());
     cv::Mat B = *(getDependency(_dependencies[1]).getImg());

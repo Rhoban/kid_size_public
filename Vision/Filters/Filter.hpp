@@ -10,8 +10,6 @@
 #include "Utils/ParamsContainer.hpp"
 #include "Utils/SafePtr.hpp"
 
-#include "DebugLevel.hpp"
-
 #include "rhoban_utils/serialization/json_serializable.h"
 
 #include "rhoban_geometry/circle.h"
@@ -23,19 +21,6 @@ class CameraState;
 
 class Pipeline;
 
-/**
- * Filter frequency
- * Auto means that frequency is adapted
- * according with others filters
- * Stop means that the filter is disable
- * Max means that the frequency is no limited
- */
-namespace Frequency {
-typedef unsigned int type;
-static const unsigned int Auto = -1;
-static const unsigned int Stop = 0;
-static const unsigned int Max = -2;
-}
 
 enum ParameterType { DEFAULT, OUTPUT, INPUT, PARAM };
 
@@ -108,10 +93,8 @@ class Filter : public rhoban_utils::JsonSerializable {
 public:
   enum UpdateType { backward, forward, steady };
 
-  /**
-   * Debug is enable if true
-   */
-  DebugLevel debugLevel;
+  /// Is the image displayed using openCV
+  bool display;
 
   /**
    * Typedef for Parameter Container and
@@ -131,8 +114,7 @@ public:
    * Initialization with Filter name and
    * others needed filter names
    */
-  Filter(const std::string &name, const Dependencies &dependencies,
-         Frequency::type frequency = Frequency::Max);
+  Filter(const std::string &name, const Dependencies &dependencies);
 
   /**
    * Virtual destructor
@@ -143,11 +125,6 @@ public:
    * Return Filter name
    */
   const std::string &getName() const;
-
-  /**
-   * Return filter resolved frequency
-   */
-  SafePtr<const Frequency::type> getFrequency() const;
 
   /**
    * Return output image
@@ -165,28 +142,12 @@ public:
   Pipeline *getPipeline();
 
   /**
-   * Write Filter parameters to given stream
-   */
-  void writeConfig(std::ofstream &os) const;
-
-  /**
-   * Try to read and assign if exists
-   * the given parameter name and its string value
-   */
-  void readConfig(const std::string &name, const std::string &value);
-
-  /**
    * Do a single processing step and return
    */
   void runStep(UpdateType updateType = UpdateType::forward);
 
-  /**
-   * Start the filter processing
-   * Do not return until stopThread is set
-   */
-  void run();
-
-  void setDebugLevel(DebugLevel newLevel);
+  /// Initialize the display window
+  void initWindow();
 
   // Json stuff
   virtual void fromJson(const Json::Value & v, const std::string & dir_name);
@@ -329,22 +290,10 @@ protected:
   Parameters _params;
 
   /**
-   * Filter scheduling frequency
-   */
-  Frequency::type _frequency;
-
-  /**
-   * True if the processing thread
-   * is asked to end
-   */
-  bool _stopThread;
-
-  /**
    * Mutex lock
    */
   mutable std::mutex _lockParams;
   mutable std::mutex _lockImgs;
-  mutable std::mutex _lockFrequency;
 
   /**
    * Access to Pipeline container instance
@@ -377,10 +326,5 @@ protected:
    * fresh and updated
    */
   void waitDependencies() const;
-
-  /**
-   * Set the Filter frequency
-   */
-  void setFrequency(Frequency::type freq);
 };
 }

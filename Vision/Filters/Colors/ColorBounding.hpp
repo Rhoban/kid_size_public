@@ -15,13 +15,6 @@ class ColorBounding : public Filter {
 public:
   ColorBounding() : Filter("ColorBounding") {}
 
-  /**
-   * Initialization with filter name and
-   * filter dependency source name
-   */
-  ColorBounding(const std::string &name, const std::string &source,
-                Frequency::type frequency = Frequency::Auto);
-
   virtual std::string getClassName() const override { return "ColorBounding"; }
 
   /**

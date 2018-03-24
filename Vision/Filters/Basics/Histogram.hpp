@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_HISTOGRAM_HPP
-#define VISION_FILTERS_HISTOGRAM_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -16,12 +15,6 @@ class Histogram : public Filter {
 public:
   Histogram();
 
-  /**
-   * Initialization with filter name, filter source
-   */
-  Histogram(const std::string &name, const std::string &source,
-            Frequency::type frequency = Frequency::Auto);
-
   virtual std::string getClassName() const override { return "Histogram"; }
 
 protected:
@@ -37,5 +30,3 @@ private:
 };
 }
 }
-
-#endif

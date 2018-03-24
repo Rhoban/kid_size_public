@@ -4,11 +4,6 @@
 namespace Vision {
 namespace Filters {
 
-ChannelSelector::ChannelSelector(const std::string &name,
-                                 const std::string &source,
-                                 Frequency::type frequency)
-    : Filter(name, {source}, frequency) {}
-
 void ChannelSelector::setParameters() {
   channel = ParamInt(0, 0, 2);
   params()->define<ParamInt>("channel", &channel);

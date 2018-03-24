@@ -5,10 +5,6 @@ namespace Vision {
 namespace Filters {
 
 ClippingByBorder::ClippingByBorder() : Filter("ClippingByBorder") {}
-ClippingByBorder::ClippingByBorder(const std::string &name,
-				   const std::string &source,
-				   Frequency::type frequency)
-  : Filter(name, {source}, frequency) {}
 
 ClippingByBorder::~ClippingByBorder() {}
   

@@ -24,14 +24,6 @@ Pipeline::Pipeline()
 }
 
 Pipeline::~Pipeline() {
-  // End Filters thread
-  for (auto &it : _filters) {
-    it.second->_stopThread = true;
-  }
-  for (auto &it : _filterThread) {
-    it.second.join();
-  }
-
   // Free Filters
   _rootFilters.clear();
   _children.clear();
@@ -85,76 +77,6 @@ bool Pipeline::isFilterPresent(const std::string &name) {
 
 const Pipeline::FiltersMap &Pipeline::filters() const { return _filters; }
 Pipeline::FiltersMap &Pipeline::filters() { return _filters; }
-
-void Pipeline::setDebugLevel(DebugLevel newLevel) {
-  for (auto &it : _filters) {
-    it.second->debugLevel = newLevel;
-  }
-}
-
-void Pipeline::writeConfig(const std::string &path) const {
-  std::ofstream file;
-  file.open(path);
-
-  if (!file.is_open()) {
-    throw std::runtime_error("Pipeline unable to open/write config file " +
-                             path);
-  }
-
-  for (const auto &it : _filters) {
-    it.second->writeConfig(file);
-  }
-  file.close();
-}
-
-void Pipeline::readConfig(const std::string &path) {
-  std::ifstream file;
-  file.open(path);
-
-  if (!file.is_open()) {
-    throw std::runtime_error("Pipeline unable to open/read config file " +
-                             path);
-  }
-
-  while (file.good()) {
-    char filterName[128];
-    char paramName[128];
-    char valueStr[128];
-    // Extract filter name
-    file.get(filterName, 128, '.');
-    if (!file.good())
-      break;
-    file.ignore();
-    // Extract parameter name
-    file.get(paramName, 128, ':');
-    if (!file.good())
-      break;
-    file.ignore();
-    if (file.peek() == ' ') {
-      file.ignore();
-    }
-    // And string value
-    file.get(valueStr, 128, '\n');
-    if (!file.good())
-      break;
-    file.ignore();
-    // Then call the associated filter to parse the value
-    if (_filters.count(filterName) != 0) {
-      _filters[filterName]->readConfig(paramName, valueStr);
-    }
-  }
-
-  file.close();
-}
-
-void Pipeline::setFrequency(const std::string &name, Frequency::type freq) {
-  if (freq == Frequency::Auto) {
-    throw std::logic_error("Pipeline invalid set auto frequency");
-  }
-
-  get(name).setFrequency(freq);
-  resolveFrequencies();
-}
 
 void Pipeline::step(Filter::UpdateType updateType) {
   Benchmark::open("Resolve dependecies");
@@ -254,38 +176,6 @@ void Pipeline::resolveDependencies() {
   }
 }
 
-void Pipeline::resolveFrequencies() {
-  bool isModif = true;
-  while (isModif) {
-    isModif = false;
-    for (auto &it : _filters) {
-      // Check that leaf filters are not Auto
-      if (*(it.second->getFrequency()) == Frequency::Auto &&
-          _children[it.first].size() == 0) {
-        throw std::logic_error(
-            "Pipeline invalid leaf filter with Auto frequency");
-      }
-      // Resolve Auto frequency by finding the maximum
-      // frequency of children for all non leaf Filters
-      if (_children[it.first].size() != 0) {
-        Frequency::type max = Frequency::Stop;
-        for (const auto &dep : _children[it.first]) {
-          if (*(dep->getFrequency()) == Frequency::Auto) {
-            max = Frequency::Auto;
-            break;
-          } else if (max < *(dep->getFrequency())) {
-            max = *(dep->getFrequency());
-          }
-        }
-        if (max != *(it.second->getFrequency())) {
-          it.second->setFrequency(max);
-          isModif = true;
-        }
-      }
-    }
-  }
-}
-
 Json::Value Pipeline::toJson() const {
   Json::Value v;
   for (auto &f : _filters) {
@@ -305,7 +195,7 @@ void Pipeline::setTimestamp(const ::rhoban_utils::TimeStamp &ts) {
   _timestamp = ts;
 }
   
-const ::rhoban_utils::TimeStamp& Pipeline::getTimestamp() const {
+const rhoban_utils::TimeStamp& Pipeline::getTimestamp() const {
   return _timestamp;
 }
   

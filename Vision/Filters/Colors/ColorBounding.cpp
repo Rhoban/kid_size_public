@@ -5,10 +5,6 @@
 namespace Vision {
 namespace Filters {
 
-ColorBounding::ColorBounding(const std::string &name, const std::string &source,
-                             Frequency::type frequency)
-    : Filter(name, {source}, frequency) {}
-
 void ColorBounding::setParameters() {
   minY = ParamInt(124, 0, 255, ParameterType::PARAM);
   maxY = ParamInt(124, 0, 255, ParameterType::PARAM);

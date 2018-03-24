@@ -6,10 +6,6 @@ namespace Vision {
 namespace Filters {
 
 ColorDensity::ColorDensity() : Filter("ColorDensity") {}
-ColorDensity::ColorDensity(const std::string &name,
-			   const std::string &source,
-			   Frequency::type frequency)
-  : Filter(name, {source}, frequency) {}
 
 ColorDensity::~ColorDensity() {}
   

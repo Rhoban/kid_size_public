@@ -40,12 +40,6 @@ public:
 
 Undistort::Undistort() : Filter("Undistort") { _first = true; }
 
-Undistort::Undistort(const std::string &name, const std::string &source,
-                     Frequency::type frequency)
-    : Filter(name, {source}, frequency) {
-  _first = true;
-}
-
 cv::Point Undistort::predecessor(const cv::Point &p) const {
   cv::Point result;
   result.x = _map1Inverted.at<cv::Vec2s>(p)[0];

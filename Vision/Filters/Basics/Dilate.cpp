@@ -5,10 +5,6 @@
 namespace Vision {
 namespace Filters {
 
-Dilate::Dilate(const std::string &name, const std::string &source,
-               Frequency::type frequency)
-    : Filter(name, {source}, frequency) {}
-
 void Dilate::setParameters() {
   shape = ParamInt(2, 0, 2);
   kWidth = ParamInt(5, 1, 11);

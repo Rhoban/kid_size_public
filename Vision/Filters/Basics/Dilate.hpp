@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_DILATE_HPP
-#define VISION_FILTERS_DILATE_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -14,12 +13,6 @@ namespace Filters {
 class Dilate : public Filter {
 public:
   Dilate() : Filter("Dilate") {}
-
-  /**
-   * Initialization with filter name, filter source
-   */
-  Dilate(const std::string &name, const std::string &source,
-         Frequency::type frequency = Frequency::Auto);
 
   virtual std::string getClassName() const override { return "Dilate"; }
 
@@ -44,5 +37,3 @@ private:
 };
 }
 }
-
-#endif

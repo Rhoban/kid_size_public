@@ -9,12 +9,6 @@ using rhoban_utils::Benchmark;
 namespace Vision {
 namespace Filters {
 
-Blur::Blur(const std::string &name, const std::string &source,
-           Frequency::type frequency)
-    : Filter(name, {source}, frequency) {
-  setParameters();
-}
-
 void Blur::setParameters() {
   kWidth = ParamInt(3, 1, 25);
   kHeight = ParamInt(3, 1, 25);

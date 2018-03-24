@@ -4,10 +4,6 @@
 namespace Vision {
 namespace Filters {
 
-Norm::Norm(const std::string &name, const std::string &source,
-           Frequency::type frequency)
-    : Filter(name, {source}, frequency) {}
-
 void Norm::process() {
   cv::Mat src = *(getDependency().getImg());
   cv::Mat dst = cv::Mat(src.rows, src.cols, CV_8U);

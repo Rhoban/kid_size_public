@@ -1,5 +1,4 @@
-#ifndef WHITE_LINES_HPP
-#define WHITE_LINES_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -13,8 +12,6 @@ class WhiteLines : public Filter {
 
  public:
   WhiteLines();
-  WhiteLines(const std::string &name, const std::string &source,
-	      Frequency::type frequency = Frequency::Auto);
   ~WhiteLines();
 
   virtual std::string getClassName() const override { return "WhiteLines"; }
@@ -31,6 +28,3 @@ class WhiteLines : public Filter {
 
 }
 }
-
-
-#endif /* WHITE_LINES_HPP */

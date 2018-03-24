@@ -4,10 +4,6 @@
 namespace Vision {
 namespace Filters {
 
-Mask::Mask(const std::string &name, const std::string &src,
-           const std::string &mask, Frequency::type frequency)
-    : Filter(name, {src, mask}, frequency) {}
-
 void Mask::process() {
   std::string srcName = _dependencies[0];
   std::string maskName = _dependencies[1];

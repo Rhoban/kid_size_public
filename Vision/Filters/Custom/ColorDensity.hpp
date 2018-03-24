@@ -1,5 +1,4 @@
-#ifndef FILTER_COLORDENSITY_HPP
-#define FILTER_COLORDENSITY_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -13,8 +12,6 @@ class ColorDensity : public Filter {
 
  public:
   ColorDensity();
-  ColorDensity(const std::string &name, const std::string &source,
-	      Frequency::type frequency = Frequency::Auto);
   ~ColorDensity();
 
   virtual std::string getClassName() const override { return "ColorDensity"; }
@@ -38,6 +35,3 @@ private:
 
 }
 }
-
-
-#endif /* FILTER_COLORDENSITY_HPP */

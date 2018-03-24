@@ -18,9 +18,6 @@ class SourceLogs : public Source {
 public:
   SourceLogs() : Source("SourceLogs") {}
 
-  SourceLogs(const std::string &name, const std::string &logFile,
-              int sIndex, Frequency::type frequency = Frequency::Auto);
-
   // JSON stuff
   virtual void fromJson(const Json::Value & v, const std::string & dir_name);
   virtual Json::Value toJson() const;

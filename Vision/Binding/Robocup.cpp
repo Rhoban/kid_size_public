@@ -278,7 +278,7 @@ void Robocup::initRhIO() {
         }
         for (const std::string &name : args) {
           try {
-            pipeline.get(name).debugLevel.graphics = true;
+            pipeline.get(name).display = true;
           } catch (const std::out_of_range &exc) {
             throw std::runtime_error("Filter " + name +
                                      " is not found in pipeline");
@@ -294,7 +294,7 @@ void Robocup::initRhIO() {
         }
         for (const std::string &name : args) {
           try {
-            pipeline.get(name).debugLevel.graphics = false;
+            pipeline.get(name).display = false;
             cv::destroyWindow(name);
           } catch (const std::out_of_range &exc) {
             throw std::runtime_error("Filter " + name +

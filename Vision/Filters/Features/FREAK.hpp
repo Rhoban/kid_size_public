@@ -14,21 +14,12 @@
 namespace Vision {
 namespace Filters {
 
-/**
- * FREAK
- *
- */
+/// FREAK
 class FREAK : public Filter {
 public:
   typedef rhoban_geometry::Circle Circle;
   
   FREAK() : Filter("FREAK") {}
-
-  /**
-   * Initialization with filter name and asked frequency
-   */
-  FREAK(const std::string &name, const std::string &path,
-        Frequency::type frequency = Frequency::Auto);
 
   void deserialize();
   void normalizeROI(const cv::RotatedRect &roi);

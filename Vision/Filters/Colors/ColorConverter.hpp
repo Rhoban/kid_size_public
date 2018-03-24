@@ -14,14 +14,6 @@ class ColorConverter : public Filter {
 public:
   ColorConverter() : Filter("ColorConverter") {}
 
-  /**
-   * Initialization with filter name, filter source
-   * name and asked frequency
-   */
-  ColorConverter(const std::string &name, const std::string &source,
-                 const std::string &conversion,
-                 Frequency::type frequency = Frequency::Auto);
-
   // Json stuff
   virtual void fromJson(const Json::Value & v, const std::string & dir_name);
   virtual Json::Value toJson() const;

@@ -20,8 +20,6 @@ class FieldBorder : public Filter {
 public:
   FieldBorder();
   ~FieldBorder();
-  FieldBorder(const std::string &name, const std::string &source,
-	      Frequency::type frequency = Frequency::Auto);
 
   virtual std::string getClassName() const override { return "FieldBorder"; }
   virtual int expectedDependencies() const override { return 3; }

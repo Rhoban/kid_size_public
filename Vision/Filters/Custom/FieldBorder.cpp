@@ -18,14 +18,6 @@ namespace Filters {
 #define lfscore_cum(l,k) line_fine_score_cum[l*corr_comb_size+k]
 #define lfscore_sq_cum(l,k) line_fine_score_square_cum[l*corr_comb_size+k]
 #define lsscore_cum(l,k) line_sep_cum_score[l*corr_comb_size+k]
-
-FieldBorder::FieldBorder(const std::string &name, const std::string &source,
-             Frequency::type frequency)
-  : Filter(name, {source}, frequency),
-    col_nb(1), row_nb(1),
-    gd_ratio(1), comb_dx(1), corr_comb_size(1),
-    l_line(-1), r_line(-1), best_K(-1)
-{}
   
 FieldBorder::FieldBorder() :
   Filter("FieldBorder"), col_nb(1), row_nb(1), gd_ratio(1), comb_dx(1), corr_comb_size(1),

@@ -7,12 +7,6 @@ namespace Filters {
 
 std::map<std::string, int> ColorConverter::strToCVCode;
 
-ColorConverter::ColorConverter(const std::string &name,
-                               const std::string &source,
-                               const std::string &conv,
-                               Frequency::type frequency)
-    : Filter(name, {source}, frequency), conversion(conv) {}
-
 void ColorConverter::process() {
   cv::cvtColor(*(getDependency().getImg()), img(), getConvCode());
 }

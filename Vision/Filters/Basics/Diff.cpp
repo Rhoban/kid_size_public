@@ -6,10 +6,6 @@
 namespace Vision {
 namespace Filters {
 
-Diff::Diff(const std::string &name, const std::string &A, const std::string &B,
-           Frequency::type frequency)
-    : Filter(name, {A, B}, frequency) {}
-
 void Diff::process() {
   std::string aName = _dependencies[0];
   std::string bName = _dependencies[1];

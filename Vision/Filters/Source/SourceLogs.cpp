@@ -10,13 +10,6 @@
 namespace Vision {
 namespace Filters {
 
-SourceLogs::SourceLogs(const std::string &name, const std::string &logFile,
-                       int sIndex, Frequency::type frequency)
-    : Source(name, Dependencies(), frequency), 
-      startIndex(sIndex), imagesFile(logFile), images() {
-  openImageSequence();
-}
-
 void SourceLogs::openImageSequence() {
   images.loadImages(imagesFile);
   images.setIndex(startIndex);
@@ -25,12 +18,11 @@ void SourceLogs::openImageSequence() {
 void SourceLogs::process() {
   images.nextImg();
   updateImg();
-  //_pipeline->updateGlobalCS(_sourceTimestamp);
 }
 
 void SourceLogs::updateImg() {
   img() = images.getImg().clone();
-  if (debugLevel.graphics) {
+  if (display) {
     std::cout << "Displaying image : " << images.getIndex() << std::endl;
     std::cout << "-> Time: " << images.getTimestamp() << std::endl;
 

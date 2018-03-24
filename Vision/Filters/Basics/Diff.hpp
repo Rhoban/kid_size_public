@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_DIFF_HPP
-#define VISION_FILTERS_DIFF_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -16,12 +15,6 @@ class Diff : public Filter {
 public:
   Diff() : Filter("Diff") {}
 
-  /**
-   * Initialization with filter name, A and B sources (A-B) and frequency
-   */
-  Diff(const std::string &name, const std::string &A, const std::string &B,
-       Frequency::type frequency = Frequency::Auto);
-
   virtual std::string getClassName() const override { return "Diff"; }
   virtual int expectedDependencies() const override { return 2; }
 
@@ -33,5 +26,3 @@ protected:
 };
 }
 }
-
-#endif

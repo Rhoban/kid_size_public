@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_BLUR_HPP
-#define VISION_FILTERS_BLUR_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 
@@ -14,12 +13,6 @@ namespace Filters {
 class Blur : public Filter {
 public:
   Blur() : Filter("Blur") {}
-
-  /**
-   * Initialization with filter name, filter source
-   */
-  Blur(const std::string &name, const std::string &source,
-       Frequency::type frequency = Frequency::Auto);
 
   virtual std::string getClassName() const override { return "Blur"; }
 
@@ -37,5 +30,3 @@ private:
 };
 }
 }
-
-#endif

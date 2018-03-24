@@ -1,5 +1,4 @@
-#ifndef VISION_FILTERS_UNDISTORT_HPP
-#define VISION_FILTERS_UNDISTORT_HPP
+#pragma once
 
 #include "Filters/Filter.hpp"
 #include "opencv2/ocl/ocl.hpp"
@@ -15,12 +14,6 @@ namespace Filters {
 class Undistort : public Filter {
 public:
   Undistort();
-
-  /**
-   * Initialization with filter name, filter source
-   */
-  Undistort(const std::string &name, const std::string &source,
-            Frequency::type frequency = Frequency::Auto);
 
   virtual std::string getClassName() const override { return "Undistort"; }
 
@@ -45,5 +38,3 @@ private:
 };
 }
 }
-
-#endif

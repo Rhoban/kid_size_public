@@ -75,29 +75,6 @@ public:
   FiltersMap &filters();
 
   /**
-   * Enable debuging for all Filters with
-   * given level
-   */
-  void setDebugLevel(DebugLevel debugLevel = DebugLevel());
-
-  /**
-   * Write all Filters parameters to given
-   * file (this file is overwriten)
-   */
-  void writeConfig(const std::string &path) const;
-
-  /**
-   * Read Filter parameters fron given file
-   */
-  void readConfig(const std::string &path);
-
-  /**
-   * Set and update the frequency of given
-   * Filter name
-   */
-  void setFrequency(const std::string &name, Frequency::type freq);
-
-  /**
    * Sweep throug all Filters a do a single
    * processing step
    */
@@ -152,21 +129,10 @@ private:
    */
   FilterThread _filterThread;
 
-  /**
-   * Timestamp of the current pipeline execution (usually updated by the source filter)
-   */
-  ::rhoban_utils::TimeStamp _timestamp;
+  /// Timestamp of the current pipeline execution (usually updated by the source filter)
+  rhoban_utils::TimeStamp _timestamp;
   
-  /**
-   * Resolve dependencies for all Filters
-   * Compute inversed dependency link
-   */
+  /// Resolve dependencies for all Filters Compute inversed dependency link
   void resolveDependencies();
-
-  /**
-   * Resolve frequencies for
-   * all filters
-   */
-  void resolveFrequencies();
 };
 }

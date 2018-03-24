@@ -7,10 +7,6 @@ namespace Vision {
 namespace Filters {
 
 WhiteLines::WhiteLines() : Filter("WhiteLines") {}
-WhiteLines::WhiteLines(const std::string &name,
-		       const std::string &source,
-                       Frequency::type frequency)
-  : Filter(name, {source}, frequency) {}
 
 WhiteLines::~WhiteLines() {}
   
