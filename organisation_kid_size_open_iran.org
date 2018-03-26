@@ -24,24 +24,40 @@
 *** Rattrapage du retard
 *** Diverses améliorations
 
+* Calendrier dernière semaine
+** Lundi
+- Prise de logs + Extraction des logs
+- Montage des tibias
+** Mardi
+- Prise en main entrainement des réseaux de neurones par Patxi
+- Ajout corde à piano sur les robots
+- Usinage cales en teflon
+- Scratch
+** Mercredi
+- Ludo pas là
+** Jeudi
+- Amélioration approche
+** Vendredi
+- Premiers tests de match
+- Tests des match avec Adrien
+** Samedi
+- Tests de match + paquetage
 * Tâches à faire
 ** Indispensable
 *** Organisation mission
 - Liste matériel ? (à enrichir)
 *** Construction robots
-- Commande tête (Greg)
 - Usinage bras
   - Transmis à Olivier
-- Commande NUC (Julien)
-  - Attendre nouvelles
+- Commande NUC
+  - 2 commandes en cours, il ne reste plus qu'à espérer
 - Designer + Usiner cale en Teflon
-  - Patxi/Adrien motivés ?
-- Cartes éléctroniques
-  - Finir soudure + tester
-- Assemblage nouveau robot
-- Upgrade des deux robots
-  - Mail à olivier
+  - Commencer par check épaisseur du teflon
+- Terminer l'assemblage du nouveau robot
 - Vérifier le câblage de tous les robots
+- Gestion corde à piano
+  - CAO disponible?
+- Impression crampons de rechange
 *** Prise en main soft
 - Utilisation des robots
   - Lancement pour les matchs
@@ -77,7 +93,6 @@
   - Améliorer/remplacer le système existant
   - Brancher les prises d'informations sur la position prédites
 - Améliorer tracking
-  - Forcer le tracking lors des shoots <- Ludo
   - Reprise du tracking en dynamique <- Adrien ?
 ** Si possible (non prioritaire)
 *** Apprentissage de modèles (logLikelihood)
