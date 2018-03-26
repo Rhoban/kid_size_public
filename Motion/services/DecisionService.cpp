@@ -12,7 +12,7 @@ using namespace robocup_referee;
 static rhoban_utils::Logger logger("Decision");
 
 DecisionService::DecisionService()
-    : bind("decision")
+  : bind("decision")
 {
     // Ball quality
     bind.bindNew("ballQThreshold", ballQThreshold, RhIO::Bind::PullOnly)

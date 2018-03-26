@@ -68,12 +68,18 @@ private:
 
   // Logging
   Utils::ImageLogger manual_logger;
-  ::rhoban_utils::TimeStamp endLog;
+  rhoban_utils::TimeStamp endLog;
 
   Utils::ImageLogger moving_ball_logger;
   /// If enabled each time a robot kicks the ball or ball is detected as moving,
   /// start a new log
   bool autologMovingBall;
+
+  /// Keep logging for a while after ball stopped moving [s]
+  float logBallExtraTime;
+
+  /// When was the ball moving for last time
+  rhoban_utils::TimeStamp lastBallMoving;
 
   void initImageHandlers();
 
@@ -252,9 +258,6 @@ private:
 
   /// Controls access to the clipping
   mutable std::mutex clippingMutex;
-
-  //do we use the visualcompass?
-  bool useVisualCompass;
 
   /// Indexes of the tags detected
   std::vector<int> detectedTagsIndices;

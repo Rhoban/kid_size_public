@@ -78,6 +78,7 @@ Robocup::Robocup(MoveScheduler *scheduler)
       manual_logger("manual_logs", true, 10000),
       moving_ball_logger("moving_ball_logs", false, 1000),
       autologMovingBall(false),
+      logBallExtraTime(2.0),
       _scheduler(scheduler),
       benchmark(false), benchmarkDetail(0),
       cs(new CameraState(scheduler)), //TODO: maybe put the name of the param file elsewhere
@@ -119,6 +120,7 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
        manual_logger("manual_logs", true, 10000),
        moving_ball_logger("moving_ball_logs", false, 1000),
        autologMovingBall(false),
+       logBallExtraTime(2.0),
        benchmark(false), benchmarkDetail(0),
        _runThread(NULL),
        cs(new CameraState(scheduler)),
@@ -213,6 +215,7 @@ Json::Value Robocup::toJson() const {
   v["benchmarkDetail"] = benchmarkDetail;
   v["imageDelay"] = imageDelay;
   v["autologMovingBall"] = autologMovingBall;
+  v["logBallExtraTime"] = logBallExtraTime;
 
   for (const auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
@@ -228,6 +231,7 @@ void Robocup::fromJson(const Json::Value & v, const std::string & dir_name) {
   rhoban_utils::tryRead(v,"benchmarkDetail",&benchmarkDetail);
   rhoban_utils::tryRead(v,"imageDelay",&imageDelay);
   rhoban_utils::tryRead(v,"autologMovingBall",&autologMovingBall);
+  rhoban_utils::tryRead(v,"logBallExtraTime",&logBallExtraTime);
   for (auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
 
@@ -320,6 +324,12 @@ void Robocup::initRhIO() {
         this->startLogging((unsigned int)(duration * 1000), logDir);
         return "";
       });
+  RhIO::Root.newBool("/Vision/autologMovingBall")
+      ->defaultValue(autologMovingBall)
+      ->comment("If enabled, start writing logs each time the ball is considered as moving");
+  RhIO::Root.newFloat("/Vision/logBallExtraTime")
+      ->defaultValue(logBallExtraTime)
+      ->comment("Extra duration of log once ball stopped being flagged as moving [s]");
   RhIO::Root.newBool("/Vision/benchmark")
       ->defaultValue(benchmark)
       ->comment("Is logging activated ?");
@@ -513,6 +523,8 @@ void Robocup::step() {
 }
 
 void Robocup::importFromRhIO() {
+  autologMovingBall = RhIO::Root.getValueBool("/Vision/autologMovingBall").value;
+  logBallExtraTime = RhIO::Root.getValueFloat("/Vision/logBallExtraTime").value;
   benchmark = RhIO::Root.getValueBool("/Vision/benchmark").value;
   benchmarkDetail = RhIO::Root.getValueInt("/Vision/benchmarkDetail").value;
   imageDelay = RhIO::Root.getValueInt("/Vision/imageDelay").value;
@@ -785,7 +797,6 @@ void Robocup::readPipeline() {
     }
   }
   compassMutex.unlock();
-
 }
 
 void Robocup::getUpdatedCameraStateFromPipeline() {
@@ -808,8 +819,7 @@ void Robocup::getUpdatedCameraStateFromPipeline() {
 }
 
 void Robocup::loggingStep() {
-  // Is the ball moving?
-  bool ball_moving = _scheduler->getServices()->decision->isBallMoving;
+  TimeStamp now = getNowTS();
 
   // Capture src_filter and throws a std::runtime_error if required
   const Filter & src_filter =  pipeline.get("source");
@@ -819,7 +829,7 @@ void Robocup::loggingStep() {
   // Handling manual logs
   bool dumpManualLogs = false;
   if (manual_logger.isActive()) {
-    if (endLog < getNowTS()) {// If time is elapsed: close log
+    if (endLog < now) {// If time is elapsed: close log
       dumpManualLogs = true;
     } else {// If there is still time left, add entry
       try {
@@ -831,8 +841,12 @@ void Robocup::loggingStep() {
     }
   }
   // Handling moving ball logs
+  if (_scheduler->getServices()->decision->isBallMoving) {
+    lastBallMoving = now;
+  }
+  double elapsedSinceBallMoving = diffSec(lastBallMoving, now);
   bool dumpBallMovingLogs = false;
-  if (autologMovingBall && ball_moving) {
+  if (autologMovingBall && elapsedSinceBallMoving < logBallExtraTime) {
     /// Start session and start logging low level 
     if (!moving_ball_logger.isActive()) {
       moving_ball_logger.initSession();
