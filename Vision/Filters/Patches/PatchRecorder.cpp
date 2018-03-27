@@ -2,11 +2,14 @@
 
 #include "PatchProvider.hpp"
 
+#include "rhoban_utils/logging/logger.h"
 #include "rhoban_utils/timing/benchmark.h"
 
 #include <opencv2/opencv.hpp>
 
 using rhoban_utils::Benchmark;
+
+rhoban_utils::Logger logger("PatchRecorder");
 
 namespace Vision
 {
@@ -66,10 +69,12 @@ void PatchRecorder::process()
   const std::vector<cv::Mat> & patches = patch_provider.getPatches();
   for (int patchId = 0; patchId < (int)patches.size(); patchId++)
   {
-    char filename[100];
-    sprintf(filename, "%s_%06d_patch_%02d.png", prefix.c_str(), imgId, patchId);
-    cv::imwrite(filename, patches[patchId]);
-//    std::cout << "Writing to file: " << filename << std::endl;
+    char suffix[50];
+    sprintf(suffix, "%06d_patch_%02d.png", imgId, patchId);
+    std::string filename = prefix + suffix;
+    if (!cv::imwrite(filename.c_str(), patches[patchId])) {
+      logger.warning("Failed imwrite to '%s'", filename.c_str());
+    }
   }
   Benchmark::close("Writing patches");
   imgId++;
