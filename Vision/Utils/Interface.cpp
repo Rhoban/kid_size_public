@@ -22,7 +22,7 @@ cv::Point rg2cv(const rhoban_geometry::Point & p)
 
 cv::Point2f rg2cv2f(const rhoban_geometry::Point & p)
 {
-  return cv::Point(p.x,p.y);
+  return cv::Point2f(p.x,p.y);
 }
 
 rhoban_utils::Angle angleBetween(const cv::Point3f & v1, const cv::Point3f & v2)
