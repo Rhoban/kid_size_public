@@ -78,6 +78,10 @@ private:
   /// Keep logging for a while after ball stopped moving [s]
   float logBallExtraTime;
 
+  /// If activated: write ball position and speed in self referntial at each
+  /// vision step
+  bool writeBallStatus;
+
   /// When was the ball moving for last time
   rhoban_utils::TimeStamp lastBallMoving;
 

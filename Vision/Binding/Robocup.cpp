@@ -23,6 +23,7 @@
 
 #include "CameraState/CameraState.hpp"
 #include "Utils/Drawing.hpp"
+#include "Utils/Interface.h"
 
 #include "rhoban_geometry/point.h"
 
@@ -79,6 +80,7 @@ Robocup::Robocup(MoveScheduler *scheduler)
       moving_ball_logger("moving_ball_logs", false, 1000),
       autologMovingBall(false),
       logBallExtraTime(2.0),
+      writeBallStatus(false),
       _scheduler(scheduler),
       benchmark(false), benchmarkDetail(0),
       cs(new CameraState(scheduler)), //TODO: maybe put the name of the param file elsewhere
@@ -121,6 +123,7 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
        moving_ball_logger("moving_ball_logs", false, 1000),
        autologMovingBall(false),
        logBallExtraTime(2.0),
+       writeBallStatus(false),
        benchmark(false), benchmarkDetail(0),
        _runThread(NULL),
        cs(new CameraState(scheduler)),
@@ -216,6 +219,7 @@ Json::Value Robocup::toJson() const {
   v["imageDelay"] = imageDelay;
   v["autologMovingBall"] = autologMovingBall;
   v["logBallExtraTime"] = logBallExtraTime;
+  v["writeBallStatus"] = writeBallStatus;
 
   for (const auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
@@ -232,6 +236,7 @@ void Robocup::fromJson(const Json::Value & v, const std::string & dir_name) {
   rhoban_utils::tryRead(v,"imageDelay",&imageDelay);
   rhoban_utils::tryRead(v,"autologMovingBall",&autologMovingBall);
   rhoban_utils::tryRead(v,"logBallExtraTime",&logBallExtraTime);
+  rhoban_utils::tryRead(v,"writeBallStatus",&writeBallStatus);
   for (auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
 
@@ -867,6 +872,7 @@ void Robocup::loggingStep() {
   // Writing logs is delayed until logMutex has been unlocked to avoid
   // unnecessary lock of ressources
   if (dumpManualLogs) {
+    _scheduler->stopMove("head",0.5);
     endLogging();
   }
   if (dumpBallMovingLogs) {
@@ -908,6 +914,27 @@ void Robocup::updateBallInformations() {
                       cs->getTimeStamp());
   } else {
     loc->setNoBall();
+  }
+
+  /// If active: write ballStatus
+  if (writeBallStatus) {
+    // Some properties are shared for the frame
+    double time = getNowTS().getTimeSec();
+    Eigen::Vector2d usable_speed_world_eigen = ballSpeedEstimator->getUsableSpeed();
+    cv::Point2f usable_speed_world = rg2cv2f(usable_speed_world_eigen);
+    cv::Point2f usable_speed_self = rg2cv2f(cs->getVecInSelf(usable_speed_world_eigen));
+    for (const Eigen::Vector3d & pos_in_world : positions) {
+      Eigen::Vector2d tmp = pos_in_world.segment(0,2);
+      cv::Point2f pos_in_self = cs->getPosInSelf(rg2cv2f(tmp));
+      // Entry format:
+      // TimeStamp, xWorld, yWorld, vxWorld, vyWorld, xSelf, ySelf, vxSelf, vySelf,
+      out.log("ballStatusEntry: %lf,%f,%f,%f,%f,%f,%f,%f,%f",
+              time,
+              pos_in_world.x(), pos_in_world.y(),
+              usable_speed_world.x, usable_speed_world.y,
+              pos_in_self.x, pos_in_self.y,
+              usable_speed_self.x, usable_speed_self.y);
+    }
   }
 }
 
