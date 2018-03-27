@@ -34,6 +34,9 @@ public:
   cv::Point2f robotPosFromImg(double imgX, double imgY, double imgWidth,
                               double imgHeight, bool self = true);
 
+  /// Converting vector from world referential to self referential
+  Eigen::Vector2d getVecInSelf(const Eigen::Vector2d & vec_in_world);
+
   /// Return the position in the robot basis from a position in origin basis
   cv::Point2f getPosInSelf(const cv::Point2f & pos_in_origin);
 

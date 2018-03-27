@@ -128,6 +128,19 @@ cv::Point2f CameraState::robotPosFromImg(double imgX, double imgY,
   return cv::Point2f(pos(0), pos(1));
 }
 
+Eigen::Vector2d CameraState::getVecInSelf(const Eigen::Vector2d & vec_in_world)
+{
+  Eigen::Vector3d src_in_world = Eigen::Vector3d::Zero();
+  Eigen::Vector3d dst_in_world = Eigen::Vector3d::Zero();
+  dst_in_world.segment(0,2) = vec_in_world;
+
+  Eigen::Vector3d src_in_self, dst_in_self;
+  src_in_self = _model->frameInSelf("origin", src_in_world);
+  dst_in_self = _model->frameInSelf("origin", dst_in_world);
+
+  return (dst_in_self - src_in_self).segment(0,2);
+}
+
 cv::Point2f CameraState::getPosInSelf(const cv::Point2f & pos_in_origin)
 {
   Eigen::Vector3d pos_in_origin_3d(pos_in_origin.x, pos_in_origin.y, 0);
