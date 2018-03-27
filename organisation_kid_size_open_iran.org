@@ -29,13 +29,14 @@
 - Prise de logs + Extraction des logs
 - Montage des tibias
 ** Mardi
-- Prise en main entrainement des réseaux de neurones par Patxi
+- Réparation RhobanTagger
 - Ajout corde à piano sur les robots
 - Usinage cales en teflon
 - Scratch
 ** Mercredi
 - Ludo pas là
 ** Jeudi
+- Prise en main entrainement des réseaux de neurones par Patxi
 - Amélioration approche
 ** Vendredi
 - Premiers tests de match
@@ -53,10 +54,10 @@
   - 2 commandes en cours, il ne reste plus qu'à espérer
 - Designer + Usiner cale en Teflon
   - Commencer par check épaisseur du teflon
-- Terminer l'assemblage du nouveau robot
+- Terminer l'assemblage du nouveau robot (bras manquants)
 - Vérifier le câblage de tous les robots
 - Gestion corde à piano
-  - CAO disponible?
+  - CAO à faire
 - Impression crampons de rechange
 *** Prise en main soft
 - Utilisation des robots
