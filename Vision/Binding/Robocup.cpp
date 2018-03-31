@@ -187,7 +187,7 @@ void Robocup::endLogging() {
 }
 
 void Robocup::applyKick(double x, double y) {
-  ballStackFilter->applyKick(x / 100.0, y / 100.0);
+  //ballStackFilter->applyKick(x / 100.0, y / 100.0);
 }
 
 cv::Mat Robocup::getImg(const std::string &name, int wishedWidth,
@@ -1053,7 +1053,6 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
         Point ball_usable_speed = ballSpeedEstimator->getUsableSpeed();
         Eigen::Vector3d ball_speed(ball_usable_speed.x, ball_usable_speed.y, 0);
 
-        out.log("Ball usable speed: (%f,%f)", ball_usable_speed.x, ball_usable_speed.y);
         auto next_cpos = cpos +  ball_speed * elapsed;
         auto futur_pos = cs->imgXYFromRobotPosition(cv::Point2f(next_cpos.x(), next_cpos.y()),
                                                     img.cols, img.rows, false);
