@@ -1,16 +1,15 @@
 * Travail sur robots
 ** Indispensable
 *** Câbles ethernets
-*** USB3 to Ethernet (à acheter!!!)
-*** LiPo (à acheter???)
+*** USB3 to Ethernet
+*** LiPo
 *** Chargeurs de batterie
 ** Confort
 *** Trépied caméra
-
 * Entretien: minimal
 ** Visserie
 *** Mini-clefs plates
-**** Tailles: 5,8
+**** Tailles: 5,5.5,8
 **** Source possible: https://www.amazon.fr/Andux-Mini-cl%C3%A9s-Trousse-fourche-Vanadium/dp/B01MDUUHHO/ref=sr_1_11?ie=UTF8&qid=1521208755&sr=8-11&keywords=cl%C3%A9s+plates
 *** Tournevis Allen
 **** Tailles: (1.5, 2, 2.5, 3)
@@ -21,12 +20,25 @@
 ** Divers
 *** Colliers de serrage
 ** Outils
-*** Pince coupante
-
+*** Pince coupante (diverses tailles)
+*** Pince plate
+*** Pince multi-prise
 * Entretien: complémentaire
 *** Frein-filet
-**** À sourcer
 *** Fer à souder + étain
+*** Multimètre
+* Logistique RoboCup
+** Table d'équipe:
+*** 2 Alims PC
+*** 2-3 Multiprises
+*** Routeur (+switch?)
+*** Fithub éventuel
+** Rechange
+*** Moteurs neufs + moteurs usés pour si jamais
+*** Corde à piano
+*** Scratch qualité
+*** Marqueurs couleur
+*** Jauges de pression
 
 * Usinage
 ** Mèches

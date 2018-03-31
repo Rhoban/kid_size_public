@@ -1,4 +1,4 @@
-* Calendrier Optimiste
+
 ** ASAP
 - Pré-enregistrement sur le site
   - Antoine, Adrien, Patxi, Ludo
@@ -48,17 +48,14 @@
 *** Organisation mission
 - Liste matériel ? (à enrichir)
 *** Construction robots
-- Usinage bras
-  - Transmis à Olivier
-- Commande NUC
-  - 2 commandes en cours, il ne reste plus qu'à espérer
+- Monter bras
+- Monter Fitlets sur robots restants
 - Designer + Usiner cale en Teflon
   - Commencer par check épaisseur du teflon
 - Terminer l'assemblage du nouveau robot (bras manquants)
 - Vérifier le câblage de tous les robots
-- Gestion corde à piano
-  - CAO à faire
 - Impression crampons de rechange
+  - Voir avec Antoine
 *** Prise en main soft
 - Utilisation des robots
   - Lancement pour les matchs
@@ -69,7 +66,6 @@
     - Monitoring UDP
     - (BehaviorViewer)
 *** Tests réels
-- Préparer le terrain complet pour phase de tests
 - Faire de vrais matchs d'entraînement
 - Familiarisation avec les règles
   - Arbitrage etc...
@@ -120,7 +116,6 @@
     - prod_{X,Y} marginalLikelihood(M(p,x_i),y_i)
     - sum_{X,Y} logMarginalLikelihood(M(p,x_i),y_i)
 
-
 * Tâches effectuées
 ** Indispensable
 *** Inventaire
@@ -156,8 +151,7 @@
 *** Match: à voir
 *** Hors-match
 **** Calibration caméra
-**** Apprentissage réseaux de neurones
-**** Tuning Tir (avec Ludo)
+**** Tuning Tir (avec Ludo ou quelqu'un d'autre)
 ** Adrien
 *** Match: à voir (monitoring?)
 *** Hors-match
@@ -176,8 +170,19 @@
 *** Hors-match:
 **** Détection Balle
 **** Détection Goal
-**** Tuning Tir (avec Patxi)
+**** Apprentissage réseaux de neurones
 **** Tuning Approche (partagé avec qui a le temps)
 ** Partagé/Suivant dispo
 *** Chargement LiPo
 *** Prise de logs
+
+
+
+* État robots
+| Robot | Corde à piano | Calib vision | Tir classic | Tir Lat. | Tir small | Commentaires                            |
+|-------+---------------+--------------+-------------+----------+-----------+-----------------------------------------|
+| Olive | 1.5 tressée   | 2018.03.30   |             |          |           |                                         |
+| Tom   | 1.5 simple    | 2018.03.31   |             |          |           | Non testé en match                      |
+| Arya  | 1.5 simple    | TODO         |             |          |           | Non testé en match                      |
+| Nova  | 1.5 simple    | TODO         |             |          |           | À mettre en route, checker le Rhal.json |
+
