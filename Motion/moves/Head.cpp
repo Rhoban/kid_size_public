@@ -35,8 +35,6 @@ Head::Head()
 {
   Move::initializeBinding();
   // Special modes variables
-  bind->bindNew("forceLogCompass", force_log_compass, RhIO::Bind::PullOnly)
-    ->comment("Special mode: taking logs for compass")->defaultValue(false);
   bind->bindNew("forceCompass", force_compass, RhIO::Bind::PullOnly)
     ->comment("Special mode: looking above to get visual compass observation")
     ->defaultValue(false);
@@ -87,9 +85,6 @@ Head::Head()
   bind->bindNew("compassMaxPan", compass_max_pan, RhIO::Bind::PullOnly)
     ->comment("Maximum pan wished for an image point")->persisted(true)
     ->defaultValue(160);
-  bind->bindNew("logCompassMaxPan", log_compass_max_pan, RhIO::Bind::PullOnly)
-    ->comment("Maximum pan wished for an image point")->persisted(true)
-    ->defaultValue(210);
   // Speed and acc limits for orders
   bind->bindNew("maxSpeed", max_speed, RhIO::Bind::PullOnly)
     ->comment("Maximal angular speed [deg/s]")->persisted(true)
@@ -100,9 +95,6 @@ Head::Head()
   bind->bindNew("vcMaxSpeed", vc_max_speed, RhIO::Bind::PullOnly)
     ->comment("Maximal angular speed with visual compass [deg/s]")->persisted(true)
     ->defaultValue(60);
-  bind->bindNew("logMaxSpeed", log_max_speed, RhIO::Bind::PullOnly)
-    ->comment("Maximal angular speed with visual compass in log mode [deg/s]")->persisted(true)
-    ->defaultValue(20);
   // Tracking
   bind->bindNew("maxTiltTrack", max_tilt_track, RhIO::Bind::PullOnly)
     ->comment("Maximum tilt wished for the center of the image when tracking")->persisted(true)
@@ -214,7 +206,7 @@ void Head::step(float elapsed)
   if (disabled) {
     target_in_self = Eigen::Vector3d(1,0,0);
   }
-  else if (force_compass || force_log_compass || loc->getVisualCompassStatus()) {
+  else if (force_compass || loc->getVisualCompassStatus()) {
     target_in_self = getScanTarget(model, compass_scanner);
     is_tracking = false;
   }
@@ -418,10 +410,6 @@ void Head::updateScanners()
   // update compass_scanner
   double tmp_max_speed = vc_max_speed;
   double tmp_max_pan = compass_max_pan;
-  if (force_log_compass) {
-    tmp_max_speed = log_max_speed;
-    tmp_max_pan = log_compass_max_pan;
-  }
   compass_scanner.setFOV(rad2deg(cam_params.widthAperture),
                          rad2deg(cam_params.heightAperture));
   compass_scanner.setMinTilt(compass_min_tilt);

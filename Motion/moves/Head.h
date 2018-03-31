@@ -11,11 +11,10 @@ namespace Leph {
 
 /// PermaScan Move based on smooth trajectories
 ///
-/// There is 4 different modes for head with the following priority
-/// 1. LogCompass
-/// 2. Compass   (looking around above horizon)
-/// 3. Localize  (looking around near horizon to find posts)
-/// 4. Scan/Track ball
+/// There is 3 different modes for head with the following priority
+/// 1. Compass   (looking around above horizon)
+/// 2. Localize  (looking around near horizon to find posts)
+/// 3. Scan/Track ball
 class Head : public Move
 {
 public:
@@ -95,8 +94,6 @@ private:
   double compass_max_tilt;
   /// Max pan wished for compass [deg]
   double compass_max_pan;
-  /// Max pan wished for the log compass [deg]
-  double log_compass_max_pan;
 
   /// Maximal pan allowed for tracking [deg]
   double max_pan_track;
@@ -109,8 +106,6 @@ private:
   double max_acc;
   /// Maximal angular speed when using visual compass [deg/s]
   double vc_max_speed;
-  /// Maximal angular speed when logging panoramic images [deg/s]
-  double log_max_speed;
 
   /// Duration of a default cycle in [s]
   double scan_period;
@@ -168,9 +163,6 @@ private:
 
   /// Is the robot supposed to perform a compass scan
   bool force_compass;
-
-  /// Is the robot supposed to perform a log compass scan
-  bool force_log_compass;
 
   /// When Head is disabled, it looks at a fixed position and uses only
   /// safety
