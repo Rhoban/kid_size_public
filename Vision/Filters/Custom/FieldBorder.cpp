@@ -33,7 +33,7 @@ void FieldBorder::setParameters() {
   params()->define<ParamInt>("density_kernel_size", &density_kernel_size);
   comb_size = ParamInt(100, 10, 640);
   params()->define<ParamInt>("comb_size", &comb_size);
-  max_obs_score = ParamFloat(20.0, 0.0, 100.0);
+  max_obs_score = ParamFloat(5.0, 0.0, 100.0);
   params()->define<ParamFloat>("max_obs_score", &max_obs_score);
   loc_data.max_obs_score = max_obs_score;
   scale_factor = ParamInt(4, 1, 16);
@@ -42,6 +42,14 @@ void FieldBorder::setParameters() {
   params()->define<ParamInt>("loc_active", &loc_active);
   debug_output = ParamInt(1, 0, 1);
   params()->define<ParamInt>("debug_output", &debug_output);
+  max_dist_corner = ParamFloat(10.0, 0.0, 30.0);
+  params()->define<ParamFloat>("max_dist_corner", &max_dist_corner);
+  tolerance_angle_corner = ParamFloat(15.0, 0.0, 360.0);
+  params()->define<ParamFloat>("tolerance_angle_corner", &tolerance_angle_corner);
+  tolerance_angle_line = ParamFloat(10.0, 0.0, 360.0);
+  params()->define<ParamFloat>("tolerance_angle_line", &tolerance_angle_line);
+  minimal_segment_length = ParamFloat(0.30, 0.0, 10.0);
+  params()->define<ParamFloat>("minimal_segment_length", &minimal_segment_length);
 
 
   potential_pos50 = ParamFloat(25.0, 0.0, 500.0);
@@ -147,6 +155,9 @@ void FieldBorder::init_params(cv::Mat & green, cv::Mat & green_density) {
   loc_data.max_obs_score = max_obs_score;
   loc_data.loc_active = loc_active;
   loc_data.debug_output = debug_output;
+  loc_data.max_dist_corner = max_dist_corner;
+  loc_data.tolerance_angle_line = tolerance_angle_line;
+  loc_data.tolerance_angle_corner = tolerance_angle_corner;
   Vision::Localisation::ArenaCornerObservation::potential_pos50 = potential_pos50;
   Vision::Localisation::ArenaCornerObservation::potential_angle50 = potential_angle50;
   Vision::Localisation::ArenaCornerObservation::potential_exp = potential_exp;

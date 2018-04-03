@@ -111,6 +111,14 @@ private:
   ParamInt loc_active;
   /* 0 or 1 : activate debug info */
   ParamInt debug_output;
+  /* 0.0 or 3.0 :  */
+  ParamFloat max_dist_corner;
+  /* 0.0 or 360.0 :  */
+  ParamFloat tolerance_angle_corner;
+  /* 0.0 or 360.0 :  */
+  ParamFloat tolerance_angle_line;
+  /* Minimal segment length  */
+  ParamFloat minimal_segment_length;
 
   // calcul des potentiels
   ParamFloat potential_pos50, potential_angle50, potential_exp, potential_error;
