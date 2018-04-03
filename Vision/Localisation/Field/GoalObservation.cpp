@@ -123,8 +123,9 @@ bool GoalObservation::isSimilar(const GoalObservation & o1,
   double dx = seenDir1.x - seenDir2.x;
   double dy = seenDir1.y - seenDir2.y;
   double dist = dx*dx + dy*dy;
-  // aDiff is in [0,180]
-  return aDiff.getValue() < similarAngleLimit || dist < similarPosLimit;
+  bool angleSimilar = aDiff.getValue() < similarAngleLimit;// aDiff is in [0,180]
+  bool posSimilar = dist < similarPosLimit;
+  return angleSimilar || posSimilar;
 }
 
 void GoalObservation::bindWithRhIO() {
@@ -183,6 +184,7 @@ void GoalObservation::importFromRhIO() {
   pError = node.getValueFloat("pError").value;
   maxAngleError = node.getValueFloat("maxAngleError").value;
   similarAngleLimit = node.getValueFloat("similarAngleLimit").value;
+  similarPosLimit = node.getValueFloat("similarCartLimit").value;
 }
 
 std::string GoalObservation::getClassName() const { return "GoalObservation"; }
