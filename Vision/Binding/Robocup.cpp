@@ -85,6 +85,7 @@ Robocup::Robocup(MoveScheduler *scheduler)
       benchmark(false), benchmarkDetail(0),
       cs(new CameraState(scheduler)), //TODO: maybe put the name of the param file elsewhere
       activeSource(false),
+      clearRememberObservations(false),
       wasHandled(false),
       wasFallen(false)
 {
@@ -128,6 +129,7 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
        _runThread(NULL),
        cs(new CameraState(scheduler)),
        activeSource(false),
+       clearRememberObservations(false),
        wasHandled(false),
        wasFallen(false)
 {
@@ -379,6 +381,13 @@ void Robocup::finish() {
 }
 
 void Robocup::step() {
+  if (clearRememberObservations) {
+    for (auto & entry : rememberObservations) {
+      entry.second.clear();
+    }
+    clearRememberObservations = false;
+  }
+
   // Sometimes vision is useless and even bug prone, in this case, cancel the
   // step
   DecisionService *decision = _scheduler->getServices()->decision;

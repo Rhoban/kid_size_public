@@ -143,6 +143,7 @@ void LocalisationBinding::initRhIO()
                               currTS = lastFieldReset;
                               lastUniformReset = lastFieldReset;
                               vision_binding->ballStackFilter->clear();
+                              vision_binding->clearRememberObservations = true;
                               vcCounterMutex.lock();
                               nbVCObs = 0;
                               consistencyScore = 0;
@@ -696,7 +697,6 @@ void LocalisationBinding::updateFilter(
 
   RobotController rc(cv2rg(robotMove), orientationChange, noiseGain);
 
-  double elapsed = odom_end - odom_start;
 
   // Update the filter if one of the following conditions are met:
   // - An observation has been found
@@ -704,9 +704,15 @@ void LocalisationBinding::updateFilter(
   // - A reset has been required
   bool isResetPending = field_filter->isResetPending();
   if (enableFieldFilter && (obs.size() > 0 || isWalkEnabled || isResetPending)) {
+
+    double elapsed = odom_end - odom_start;
+    double max_step_time = 5;
+    if (elapsed > max_step_time) {
+      fieldLogger.warning("Large time elapsed in fieldFilter: %f [s]", elapsed);
+    }
     filterMutex.lock();
     field_filter->resize(nb_particles_ff);
-    field_filter->step(rc, obs, elapsed);
+    field_filter->step(rc, obs, std::min(max_step_time,elapsed));
     filterMutex.unlock();
   }
   else if (debugLevel > 0) {
