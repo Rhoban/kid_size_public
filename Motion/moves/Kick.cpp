@@ -71,7 +71,8 @@ Kick::Kick()
     // Load available kicks
     kmc.loadFile();
 
-    loadCompiledKicks();
+    // Forcing generation of kick motions at kick creation
+    cmdKickGen();
 }
         
 void Kick::set(bool left, const std::string & newKickName)
