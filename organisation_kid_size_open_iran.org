@@ -148,16 +148,20 @@
 **** Monitoring UDP
 **** Initialisation/Intervention des robots
 ** Patxi
-*** Match: à voir
+*** Match:
+**** Startup
 *** Hors-match
 **** Calibration caméra
 **** Tuning Tir (avec Ludo ou quelqu'un d'autre)
 ** Adrien
-*** Match: à voir (monitoring?)
+*** Match:
+**** Monitoring
 *** Hors-match
 **** Tuning Marche
 **** ArenaCorners (@discuter avec Olivier)
 ** Thomas
+*** Match:
+**** Startup
 ** Antoine
 *** Match:
 **** Arbitrage
@@ -179,10 +183,15 @@
 
 
 * État robots
-| Robot | Corde à piano | Calib vision | Tir classic | Tir Lat. | Tir small | Commentaires                            |
-|-------+---------------+--------------+-------------+----------+-----------+-----------------------------------------|
-| Olive | 1.5 tressée   | 2018.03.30   |             |          |           |                                         |
-| Tom   | 1.5 simple    | 2018.03.31   |             |          |           | Non testé en match                      |
-| Arya  | 1.5 simple    | TODO         |             |          |           | Non testé en match                      |
-| Nova  | 1.5 simple    | TODO         |             |          |           | À mettre en route, checker le Rhal.json |
+| Robot | Corde à piano | Calib vision | Tir classic | Tir Lat. | Tir small | Commentaires       |
+|-------+---------------+--------------+-------------+----------+-----------+--------------------|
+| Olive | 1.5 tressée   | 2018.03.30   |             |          |           |                    |
+| Tom   | 1.5 tressée   | 2018.03.31   |             |          |           |                    |
+| Arya  | 1.5 simple    | TODO         |             |          |           | Non testé en match |
+| Nova  | 1.5 simple    | TODO         |             |          |           | Non-fonctionnel    |
 
+** Arya:
+*** Mauvais montage
+- Right hip pitch (180° ?)
+- Right shoulder pitch (180° ?)
+- Left pressure missing

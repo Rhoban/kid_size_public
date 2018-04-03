@@ -1,0 +1,99 @@
+* URGENCE
+** Mesurer terrain
+- Adrien + Thomas
+- Modifs codes
+** Check erreurs modèle
+- Patxi
+** Ajustement paramètres borderDetection
+- Adrien
+- Dépend de la prise de logs
+** Check performance on fitlet + listing heterogéneité
+- Ludo
+** Forcer le kickGen au lancement de RhobanServer
+** Fix sur Localisation dans replay (lire en négatif)
+* Survie des robots
+** Calibrer/checker les tirs
+- Ceux qui ont le temps
+- Attention: Il faut modifier le fichier KickModelCollection (@Ludo)
+** Tuner la marche
+- Ceux qui peuvent
+** Évitement des robots basés sur la loc
+- Ludo
+- Dépend de la précision de la loc
+* À travailler sérieusement
+** Modèle prédictif pour la position de la balle
+- Grosse différence entre les deux sens de l'herbe
+** Décision de passe
+* Amélioration vision (si nécessaire)
+** Prendre des logs
+- Tout le monde
+- Dépend de calib caméra
+** Ajustement paramètres BallByII + GoalByII + Extraction de patchs
+- Ludo
+- Dépend de la prise de logs
+** Tagging
+- Ceux qui ont du temps
+- Dépend de "extraction patches"
+** Entrainement nouveaux réseaux de neurone
+- Ludo
+- Dépend de Tagging
+* Souhaitable
+** Reprendre en main la génération de stratégie d'équipe
+*** Éviter de tirer près des cages
+** Reprise en main de la stratégie du gardien
+** Profil de vitesse pour les tirs pour améliorer le suivi de balle
+- Possibilité d'utiliser une spline pour la vitesse attendue
+* Si besoin / le temps
+** Déplacements du robot
+*** Predictive Motion Model 
+*** Odométrie
+* Remarques en vrac
+** État terrains
+*** Pas totalement terminé
+*** Sol un peu plus dur
+*** Effet de l'herbe très marqué
+** Premier passage vision
+*** Shutter à augmenter 3 -> 5
+*** Vision balle
+- Ok jusqu'à 5 mètres mais quelques faux positifs sur les poteaux
+*** Vision poteaux
+- Catastrophique pour l'instant
+- Indispensable d'intégrer fieldBorder
+- Éventuellement à désactiver pour l'instant
+*** Vision fieldBorder
+- Pas dégueulasse de base
+- Possibilité d'améliorer les perfs en incluant la bordure noire à la détection
+*** Détection robots
+- À vérifier, pas convaincant out of the box
+** Approche:
+- OK, assez fonctionnel
+** Tir
+| Sens herbe   | Distance |
+|--------------+----------|
+| Bon sens     |      2.8 |
+| Bon sens     |      3.0 |
+| Bon sens     |      3.1 |
+| Bon sens     |      3.0 |
+| Bon sens     |      2.5 |
+| Mauvais sens |      1.2 |
+| Mauvais sens |      1.4 |
+| Mauvais sens |      1.3 |
+| Mauvais sens |     1.35 |
+| Mauvais sens |      1.6 |
+
+* DONE
+** 2018/04/03: Jour 1
+*** Calib paramètres `source`
+**** Remarques
+- Léger flickering
+- Besoin de checker flou lors des logs
+- Ludo + Patxi
+*** Premier test "approche" out of the box
+- Ludo + Patxi
+*** Préparer le stand de chargement de LIPO
+- Thomas
+*** Vérifier accès internet
+- À priori: OK
+*** Préparation slides
+- Ludo
+*** Désactivation compas visuel et poteaux de goal (temporaire?)
