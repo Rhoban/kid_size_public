@@ -33,7 +33,7 @@ void FieldBorder::setParameters() {
   params()->define<ParamInt>("density_kernel_size", &density_kernel_size);
   comb_size = ParamInt(100, 10, 640);
   params()->define<ParamInt>("comb_size", &comb_size);
-  max_obs_score = ParamFloat(5.0, 0.0, 100.0);
+  max_obs_score = ParamFloat(20.0, 0.0, 100.0);
   params()->define<ParamFloat>("max_obs_score", &max_obs_score);
   loc_data.max_obs_score = max_obs_score;
   scale_factor = ParamInt(4, 1, 16);
