@@ -140,6 +140,7 @@ void LocalisationBinding::initRhIO()
                         [this](const std::vector<std::string> &args)
                             -> std::string {
                               lastFieldReset = getNowTS();
+                              currTS = lastFieldReset;
                               lastUniformReset = lastFieldReset;
                               vision_binding->ballStackFilter->clear();
                               vcCounterMutex.lock();
@@ -176,6 +177,7 @@ void LocalisationBinding::initRhIO()
           k++;
         }
         lastFieldReset = getNowTS();
+        currTS = lastFieldReset;
         vcCounterMutex.lock();
         nbVCObs = minVCObs;
         consistencyScore = 1;
