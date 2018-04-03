@@ -105,10 +105,10 @@ Robocup::Robocup(MoveScheduler *scheduler)
 
   out.log( "Starting Robocup Pipeline");
   pipeline.setCameraState(cs);
+  initImageHandlers();
   loadFile();
   _doRun = true;
   _runThread = new std::thread(std::bind(&Robocup::run, this));
-  initImageHandlers();
   Filter::GPU_ON = gpuOn;
   if (pathToLog != "") {
     // The low level info will come from a log
@@ -148,9 +148,9 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
   }
   pipeline.setCameraState(cs);
   _scheduler = scheduler;
+  initImageHandlers();
   loadFile(configFile);
   _doRun = true;
-  initImageHandlers();
   Filter::GPU_ON = gpuOn;
   if (pathToLog != "") {
     // The low level info will come from a log
@@ -226,6 +226,9 @@ Json::Value Robocup::toJson() const {
     const std::vector<std::string> &providers = entry.second;
     v[featureName + "Providers"] = vector2Json(providers);
   }
+  for (const SpecialImageHandler & sih : imageHandlers) {
+    v[sih.name] = sih.display;
+  }
   return v;
 }
 
@@ -242,6 +245,9 @@ void Robocup::fromJson(const Json::Value & v, const std::string & dir_name) {
 
     std::string nodeName = featureName + "Providers";
     rhoban_utils::tryReadVector<std::string>(v, nodeName, &entry.second);
+  }
+  for (SpecialImageHandler & sih : imageHandlers) {
+    rhoban_utils::tryRead(v, sih.name, &sih.display);
   }
 }
 
