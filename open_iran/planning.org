@@ -11,6 +11,11 @@
 - Ludo
 ** Forcer le kickGen au lancement de RhobanServer
 ** Fix sur Localisation dans replay (lire en négatif)
+- Problème sur l'accumulation des informations dans la vision
+** Problème au début de Localisation -> Checker s'il n'y a pas une mutation avec un large DT
+** Problème sur les observations
+-> non présentes dans RadarImg
+-> Peu d'effet dans VisionFilter
 * Survie des robots
 ** Calibrer/checker les tirs
 - Ceux qui ont le temps
