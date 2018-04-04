@@ -1,15 +1,13 @@
 * EXTREME URGENCE
-** Consistency=0 sur tous les robots
-** Critical fix rhio issues
-- Commit one image every 'k' images?
-- Empty all images buffered rhio
 ** Ajout check espace disque avant match et autoLogMovingBall
-* Préparation match
+* Préparation match Entrainement
 ** Booker le terrain
 ** Vérifier le fonctionnement du wifi
 ** Vérifier que les robots ont assez d'espace
 ** Tous se synchroniser 15-20 minutes avant
 ** Préparer les sacs de lipos
+* Préparation match ZJU
+** Connexion au wifi du terrain de match
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso
@@ -40,7 +38,9 @@
     1. Walk enabled -> true
     2. Attente quelques secondes
     3. Walk enabled -> false
-** Vérif performance localisation
+** Critical fix rhio issues
+- Commit one image every 'k' images?
+- Empty all images buffered rhio
 * Survie des robots
 ** Modifier le fichier KickModelCollection (@Ludo)
 ** Tuner la marche
@@ -176,3 +176,6 @@
 *** Calibrer/checker les tirs
 - Olive, Arya
 - Checker les tirs
+*** Consistency=0 sur tous les robots
+*** Vérif performance localisation
+- Très satisfaisant
