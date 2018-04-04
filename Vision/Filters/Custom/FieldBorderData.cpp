@@ -4,8 +4,6 @@
 
 #define FBPRINT_DEBUG(str...) if (debug_output) { printf("[CLIPPING] "); printf(str); }
 
-#define MAX_DIST_CORNER 10.0
-
 using namespace rhoban_utils;
 
 namespace Vision {
@@ -64,8 +62,8 @@ void FieldBorderData::computeTransformations(Vision::Utils::CameraState * cs,
 	  if (final_compute) {
             FBPRINT_DEBUG("Corrected Corner angle (ACB) = %f\n", 180.0 / M_PI * corner_angle);
           }
-	  if (fabs(M_PI/2 - corner_angle) > deg2rad(25.0) // TODO: parametre
-              || CA < 0.30 || CB < 0.30) {
+	  if (fabs(M_PI/2 - corner_angle) > deg2rad(tolerance_angle_corner) // TODO: parametre
+              || CA < minimal_segment_length || CB < minimal_segment_length ) {
 	    if (final_compute) {
               FBPRINT_DEBUG("Corner avoided (bad angle or segment too short)\n");
             }
@@ -73,12 +71,12 @@ void FieldBorderData::computeTransformations(Vision::Utils::CameraState * cs,
             observation_valid = false;
 	  }
 
-          if (corner_robot_dist > MAX_DIST_CORNER) {
+          if (corner_robot_dist > max_dist_corner) {
 	    if (final_compute) { FBPRINT_DEBUG("Corner avoided : it is too far : seen at %f\n", corner_robot_dist); }
             observation_valid = false;
 	  }
 
-	  if (fabs(M_PI - corner_angle) < deg2rad(10.0)) {
+	  if (fabs(M_PI - corner_angle) < deg2rad(tolerance_angle_line)) {
 	    define_segment(final_compute);
             return;
 	  }

@@ -42,6 +42,16 @@ void FieldBorder::setParameters() {
   params()->define<ParamInt>("loc_active", &loc_active);
   debug_output = ParamInt(1, 0, 1);
   params()->define<ParamInt>("debug_output", &debug_output);
+  max_dist_corner = ParamFloat(10.0, 0.0, 30.0);
+  params()->define<ParamFloat>("max_dist_corner", &max_dist_corner);
+  tolerance_angle_corner = ParamFloat(15.0, 0.0, 360.0);
+  params()->define<ParamFloat>("tolerance_angle_corner", &tolerance_angle_corner);
+  tolerance_angle_line = ParamFloat(10.0, 0.0, 360.0);
+  params()->define<ParamFloat>("tolerance_angle_line", &tolerance_angle_line);
+  minimal_segment_length = ParamFloat(0.30, 0.0, 10.0);
+  params()->define<ParamFloat>("minimal_segment_length", &minimal_segment_length);
+  with_black = ParamInt(1, 0, 1);
+  params()->define<ParamInt>("with_black", &with_black);
 
 
   potential_pos50 = ParamFloat(25.0, 0.0, 500.0);
@@ -63,11 +73,17 @@ void FieldBorder::process() {
   std::string greenName = _dependencies[0];
   std::string greenDensityName = _dependencies[1];
   std::string sourceName = _dependencies[2];
+  std::string greenDensityWithoutBlackName = _dependencies[3];
   
   // le canal vert selectionné par la couleur
   cv::Mat green = (getDependency(greenName).getImg())->clone();
   // smooth à base d'image intégrale
-  cv::Mat green_density = (getDependency(greenDensityName).getImg())->clone();
+  cv::Mat green_density;
+  if( with_black == 1 ){
+	green_density = (getDependency(greenDensityWithoutBlackName).getImg())->clone();
+  }else{
+	green_density = (getDependency(greenDensityName).getImg())->clone();
+  }
   // image source (juste pour le débug)
   if (tag_level > 0) {
     cv::Mat source = (getDependency(sourceName).getImg())->clone();
@@ -147,6 +163,9 @@ void FieldBorder::init_params(cv::Mat & green, cv::Mat & green_density) {
   loc_data.max_obs_score = max_obs_score;
   loc_data.loc_active = loc_active;
   loc_data.debug_output = debug_output;
+  loc_data.max_dist_corner = max_dist_corner;
+  loc_data.tolerance_angle_line = tolerance_angle_line;
+  loc_data.tolerance_angle_corner = tolerance_angle_corner;
   Vision::Localisation::ArenaCornerObservation::potential_pos50 = potential_pos50;
   Vision::Localisation::ArenaCornerObservation::potential_angle50 = potential_angle50;
   Vision::Localisation::ArenaCornerObservation::potential_exp = potential_exp;

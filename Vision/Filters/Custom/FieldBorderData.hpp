@@ -31,7 +31,11 @@ public:
   bool loc_active;
   bool debug_output;
   bool is_obs_valid();
-  
+  double max_dist_corner;
+  double tolerance_angle_corner;
+  double tolerance_angle_line;
+  double minimal_segment_length;
+ 
   std::vector<float> line_scores;
   FieldBorderData();
 
@@ -60,21 +64,6 @@ public:
   float getCornerAngle() const;
   void define_segment(bool debug_info = false);
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

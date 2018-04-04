@@ -22,7 +22,7 @@ public:
   ~FieldBorder();
 
   virtual std::string getClassName() const override { return "FieldBorder"; }
-  virtual int expectedDependencies() const override { return 3; }
+  virtual int expectedDependencies() const override { return 4; }
 
   FieldBorderData loc_data;
   void update_loc_data(std::vector<cv::Vec2f> line_pair_eq,
@@ -111,6 +111,16 @@ private:
   ParamInt loc_active;
   /* 0 or 1 : activate debug info */
   ParamInt debug_output;
+  /* 0.0 or 3.0 :  */
+  ParamFloat max_dist_corner;
+  /* 0.0 or 360.0 :  */
+  ParamFloat tolerance_angle_corner;
+  /* 0.0 or 360.0 :  */
+  ParamFloat tolerance_angle_line;
+  /* Minimal segment length  */
+  ParamFloat minimal_segment_length;
+  /* Minimal segment length  */
+  ParamInt with_black;
 
   // calcul des potentiels
   ParamFloat potential_pos50, potential_angle50, potential_exp, potential_error;
