@@ -23,6 +23,13 @@
 *** Tagging (All available)
 *** Entraînement réseaux
 ** Ajouter dans startup questions sur autologMovingBall (nuc)
+** Identification problème potentiel dans playing
+- Avec playing/approach, le robot tombe après le tir
+- Avec du step forward avant le tir, le robot ne tombe pas après le tir
+  - Procédure: (avec stepForward = 40)
+    1. Walk enabled -> true
+    2. Attente quelques secondes
+    3. Walk enabled -> false
 * Survie des robots
 ** Calibrer/checker les tirs
 - Olive, Nova, Arya
