@@ -243,6 +243,10 @@ public:
   // Connection status
   bool activeSource;
 
+  /// When set to true, will remove all observations from the memory at next
+  /// vision tick
+  bool clearRememberObservations;
+
 private:
   /// Detected positions for goals in "origin" basis
   std::vector<cv::Point2f> detectedGoals;

@@ -35,7 +35,7 @@ rhoban_utils::Angle angleBetween(const cv::Point3f & v1, const cv::Point3f & v2)
   double x = v1.dot(v2) / (nv1 * nv2);
   if (x > 1.0) { x = 1.0;}
   if (x < -1.0) { x = -1.0;}
-  return acos(x);
+  return rhoban_utils::Angle::arccos(x);
 }
 
 }

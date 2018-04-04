@@ -71,7 +71,8 @@ Kick::Kick()
     // Load available kicks
     kmc.loadFile();
 
-    loadCompiledKicks();
+    // Forcing generation of kick motions at kick creation
+    cmdKickGen();
 }
         
 void Kick::set(bool left, const std::string & newKickName)
@@ -128,12 +129,7 @@ void Kick::loadKick(std::string filename)
     logger.log("Generating kick");
 
     // Loading spline
-    std::map<std::string, Function> kickSplines;
-    try {
-      kickSplines = Function::fromFile(filename);
-    } catch (const rhoban_utils::JsonParsingError & exc) {
-      logger.error("%s", exc.what());
-    }
+    std::map<std::string, Function> kickSplines = Function::fromFile(filename);
     for (auto &entry : kickSplines) {
         double duration = entry.second.getXMax();
         if (duration > xMax) {
@@ -228,28 +224,33 @@ std::string Kick::getCompiledPath(const std::string kickName, bool left)
 
 std::string Kick::cmdKickGen()
 {
-    for (const std::string & kickName : kmc.getKickNames()) {
-        logger.log("Generating spline for '%s' kick", kickName.c_str());
-        // Loading the kick
-        loadKick(getPath(kickName));
-        // Writing it to output file
-        logger.log("Generated spline, tMax=%f", tMax);
-        Function::toFile(splines, getCompiledPath(kickName));
+  try {
+      for (const std::string & kickName : kmc.getKickNames()) {
+          logger.log("Generating spline for '%s' kick", kickName.c_str());
+          // Loading the kick
+          loadKick(getPath(kickName));
+          // Writing it to output file
+          logger.log("Generated spline, tMax=%f", tMax);
+          Function::toFile(splines, getCompiledPath(kickName));
+      
+          // Trying to compile specific splines for left foot
+          if (file_exists(getPath(kickName, true))) {
+              // Loading the kick
+              loadKick(getPath(kickName, true));
+              // Writing it to output file
+              logger.log("Generated spline, specific for left, tMax=%f", tMax);
+              Function::toFile(splines, getCompiledPath(kickName, true));
+          }
+      }
 
-        // Trying to compile specific splines for left foot
-        if (file_exists(getPath(kickName, true))) {
-            // Loading the kick
-            loadKick(getPath(kickName, true));
-            // Writing it to output file
-            logger.log("Generated spline, specific for left, tMax=%f", tMax);
-            Function::toFile(splines, getCompiledPath(kickName, true));
-        }
-    }
+      // Re loading kicks
+      loadCompiledKicks();
+  } catch (const rhoban_utils::JsonParsingError & exc) {
+      logger.error("%s", exc.what());
+      return exc.what();
+  }
 
-    // Re loading kicks
-    loadCompiledKicks();
-
-    return "Generated";
+  return "Generated";
 }
 
 std::string Kick::getName()

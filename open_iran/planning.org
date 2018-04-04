@@ -1,23 +1,45 @@
+* Planning Jour 2
+** 07h-09h: Petit-déj' + préparation + 1er départ
+** 09h-12h: Tâches diverses perso
+*** Vérification Tir, Marche, Approche
+*** Homologation robots
+*** Vision: Détection robots + lignes
+- Détection robots : Antoine
+*** Tester localisation avec poteaux / borderField
+** 12h-13h: Match + Débrief
+** 13h-16h: Tâches diverses perso
+** 16h-17h: Second débrief 
+** 17h-19h: Tâches perso
+** 19h-20h: Second match
 * URGENCE
-** Mesurer terrain
-- Adrien + Thomas
-- Modifs codes
-** Check erreurs modèle
-- Patxi
 ** Ajustement paramètres borderDetection
 - Adrien
-- Dépend de la prise de logs
+- Un peu plus compliqué qu'à la première estimation
 ** Check performance on fitlet + listing heterogéneité
+- Note: Localisation/period peut aussi changer
 - Ludo
-** Forcer le kickGen au lancement de RhobanServer
-** Fix sur Localisation dans replay (lire en négatif)
+** Entrainement détection buts
+*** Extraction Patchs (Ludo) (10.1.0.10/tagger)
+*** Tagging (All available)
+*** Entraînement réseaux
+** Ajouter dans startup questions sur autologMovingBall (nuc)
 * Survie des robots
 ** Calibrer/checker les tirs
-- Ceux qui ont le temps
+- Olive, Nova, Arya
+- Checker les tirs
 - Attention: Il faut modifier le fichier KickModelCollection (@Ludo)
 ** Tuner la marche
-- Ceux qui peuvent
+- Patxi, Thomas
+** Mettre la nouvelle poignée sur Arya
 ** Évitement des robots basés sur la loc
+- In LocalisationService:
+  - Add RhIO variables
+    - matesAsObstacles
+    - matesRadius
+  - Add teammatesInWorld (based on opponentsInWorld and fueled by TeamPlayService)
+  - Add getPlayersInField method
+  - Add getObstaclesInField method
+  - replace getOpponentsInField by getObstaclesInField in placer 
 - Ludo
 - Dépend de la précision de la loc
 * À travailler sérieusement
@@ -25,9 +47,8 @@
 - Grosse différence entre les deux sens de l'herbe
 ** Décision de passe
 * Amélioration vision (si nécessaire)
-** Prendre des logs
+** Reprendre des logs
 - Tout le monde
-- Dépend de calib caméra
 ** Ajustement paramètres BallByII + GoalByII + Extraction de patchs
 - Ludo
 - Dépend de la prise de logs
@@ -43,6 +64,10 @@
 ** Reprise en main de la stratégie du gardien
 ** Profil de vitesse pour les tirs pour améliorer le suivi de balle
 - Possibilité d'utiliser une spline pour la vitesse attendue
+** Ajouter des distances différentes pour les marges de vert
+- Dans le modèle du terrain (robocup_referee)
+* Avant la fin
+** Passer des logs à Marc
 * Si besoin / le temps
 ** Déplacements du robot
 *** Predictive Motion Model 
@@ -82,7 +107,7 @@
 | Mauvais sens |      1.6 |
 
 * DONE
-** 2018/04/03: Jour 1
+** 2018/04/03: Jour 1: Setup
 *** Calib paramètres `source`
 **** Remarques
 - Léger flickering
@@ -97,3 +122,35 @@
 *** Préparation slides
 - Ludo
 *** Désactivation compas visuel et poteaux de goal (temporaire?)
+*** Fix informations dans radar_img
+*** Fix Problème au début de Localisation du à un dt énorme
+*** Fix sur Localisation dans replay (lire en négatif)
+*** Force kickGen au lancement de RhobanServer
+*** Débusquage d'une erreur grave dans angleBetween (angle/rad)
+- Après vérification, l'erreur datait probablement du Refactoring, en tout cas
+  elle n'était pas là en 2017
+*** Calibrage Tirs
+- Tom: Classic + Small
+*** Mesurer terrain
+- Adrien + Thomas
+- Modif Code
+*** Extraction patches (Balle + Goal)
+*** Tags Goal (80%)
+** 2018/04/04: Jour 2: Setup
+*** Tags Goal (20% manquant)
+*** Entrainement DNN Goal
+| Taille ROI | Grid size | kernel_size | n_fmaps | n_fc | learning_rate | overfit at | accuracy | Choice |
+|------------+-----------+-------------+---------+------+---------------+------------+----------+--------|
+|         16 |         2 |           5 |      16 |   16 |          0.08 |      0.090 |     97.4 | XXX    |
+|         16 |         2 |           5 |      16 |    8 |          0.06 |      0.070 |     96.3 |        |
+|         16 |         2 |           5 |       8 |   16 |          0.10 |      0.110 |     96.1 |        |
+|         16 |         2 |           5 |       8 |    8 |          0.19 |      0.020 |     95.9 |        |
+|         16 |         4 |           5 |      16 |   16 |          0.02 |      0.030 |     95.4 |        |
+|         16 |         4 |           5 |       8 |   16 |          0.03 |      0.035 |     94.7 |        |
+|         16 |         4 |           5 |       8 |    8 |          0.06 |      0.070 |     96.4 |        |
+|         16 |         4 |           5 |      16 |    8 |          0.03 |      0.035 |     95.0 |        |
+*** Check erreurs modèle
+- Patxi
+*** Download logs script
+- Importer les logs dans un dossier avec nom du robot
+- Antoine
