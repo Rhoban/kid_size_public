@@ -47,6 +47,10 @@ Moves::Moves(MoveScheduler* scheduler) :
 
     //Loading all Moves
     Kick *kick = new Kick;
+    add(kick);
+    // Forcing generation of kick motions at kick creation
+    kick->cmdKickGen();
+    
     Walk *walk = new Walk(kick);
     Head *head = new Head;
     Placer *placer = new Placer(walk);
@@ -60,7 +64,6 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(approach);
     add(new ApproachPotential(walk));
     add(placer);
-    add(kick);
     add(lateralStep);
 
     add(new GoalKeeper(walk, placer));

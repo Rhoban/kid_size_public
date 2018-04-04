@@ -183,12 +183,12 @@
 
 
 * État robots
-| Robot | Corde à piano | Calib vision | Tir classic | Tir Lat. | Tir small | Commentaires       |
-|-------+---------------+--------------+-------------+----------+-----------+--------------------|
-| Olive | 1.5 tressée   | 2018.03.30   |             |          |           |                    |
-| Tom   | 1.5 tressée   | 2018.03.31   |             |          |           |                    |
-| Arya  | 1.5 simple    | TODO         |             |          |           | Non testé en match |
-| Nova  | 1.5 simple    | TODO         |             |          |           | Non-fonctionnel    |
+| Robot | Corde à piano | Calib vision | Tir classic | Tir Lat. | Tir small | Commentaires        |
+|-------+---------------+--------------+-------------+----------+-----------+---------------------|
+| Olive | 1.5 tressée   | 2018.04.03   | Ok          |          | Ok        |                     |
+| Tom   | 1.5 tressée   | 2018.04.03   | Ok          |          | Ok        |                     |
+| Arya  | 1.5 simple    | 2018.04.03   | Ok          |          | Ok        | Non testée en match |
+| Nova  | 1.5 tressée   | 2018.04.03   |             |          |           | Non-fonctionnel     |
 
 ** Arya:
 *** Mauvais montage
