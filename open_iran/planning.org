@@ -3,22 +3,27 @@
 *** Début entraînement (test)
 | Taille ROI | Grid size | kernel_size | n_fmaps | n_fc | learning_rate | overfit at | accuracy |
 |------------+-----------+-------------+---------+------+---------------+------------+----------|
-|         16 |         2 |           5 |      16 |   16 |          0.08 |       0.09 |     97.4 |
-|         16 |         4 |           5 |      16 |   16 |          0.02 |       0.05 |     95.4 |
+|         16 |         2 |           5 |      16 |   16 |          0.08 |      0.090 |     97.4 |
+|         16 |         2 |           5 |      16 |    8 |          0.06 |      0.070 |     96.3 |
+|         16 |         2 |           5 |       8 |   16 |          0.10 |      0.110 |     96.1 |
+|         16 |         2 |           5 |       8 |    8 |          0.19 |      0.020 |     95.9 |
+|         16 |         4 |           5 |      16 |   16 |          0.02 |      0.030 |     95.4 |
+|         16 |         4 |           5 |       8 |   16 |          0.03 |      0.035 |     94.7 |
+|         16 |         4 |           5 |       8 |    8 |          0.06 |      0.070 |     96.4 |
+|         16 |         4 |           5 |      16 |    8 |          0.03 |      0.035 |     95.0 |
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso
 *** Vérification Tir, Marche, Approche
 *** Homologation robots
 *** Vision: Détection robots + lignes
+*** Tester localisation avec poteaux / borderField
 ** 12h-13h: Match + Débrief
 ** 13h-16h: Tâches diverses perso
 ** 16h-17h: Second débrief 
 ** 17h-19h: Tâches perso
 ** 19h-20h: Second match
 * URGENCE
-** Check erreurs modèle
-- Patxi
 ** Ajustement paramètres borderDetection
 - Adrien
 - Un peu plus compliqué qu'à la première estimation
@@ -117,7 +122,7 @@
 | Mauvais sens |      1.6 |
 
 * DONE
-** 2018/04/03: Jour 1
+** 2018/04/03: Jour 1: Setup
 *** Calib paramètres `source`
 **** Remarques
 - Léger flickering
@@ -144,3 +149,10 @@
 *** Mesurer terrain
 - Adrien + Thomas
 - Modif Code
+*** Extraction patches (Balle + Goal)
+*** Tags Goal (80%)
+** 2018/04/04: Jour 2: Setup
+*** Tags Goal (20% manquant)
+*** Entrainement DNN Goal
+*** Check erreurs modèle
+- Patxi
