@@ -1,6 +1,19 @@
+* EXTREME URGENCE
+** Consistency=0 sur tous les robots
+** Critical fix rhio issues
+- Commit one image every 'k' images?
+- Empty all images buffered rhio
+** Ajout check espace disque avant match et autoLogMovingBall
+* Préparation match
+** Booker le terrain
+** Vérifier le fonctionnement du wifi
+** Vérifier que les robots ont assez d'espace
+** Tous se synchroniser 15-20 minutes avant
+** Préparer les sacs de lipos
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso
+*** En réalité, jusqu'à 13h15, puis repas
 *** Vérification Tir, Marche, Approche
 *** Homologation robots
 *** Vision: Détection robots + lignes
@@ -11,17 +24,14 @@
 ** 16h-17h: Second débrief 
 ** 17h-19h: Tâches perso
 ** 19h-20h: Second match
+* Réalité Jour 2
+** 07h-10h: Petit-déj' + préparation + tagging
+** 10h-13h15: Tâches diverses perso
+** 13h15-14h: Repas
 * URGENCE
-** Ajustement paramètres borderDetection
-- Adrien
-- Un peu plus compliqué qu'à la première estimation
 ** Check performance on fitlet + listing heterogéneité
 - Note: Localisation/period peut aussi changer
 - Ludo
-** Entrainement détection buts
-*** Extraction Patchs (Ludo) (10.1.0.10/tagger)
-*** Tagging (All available)
-*** Entraînement réseaux
 ** Ajouter dans startup questions sur autologMovingBall (nuc)
 ** Identification problème potentiel dans playing
 - Avec playing/approach, le robot tombe après le tir
@@ -30,14 +40,11 @@
     1. Walk enabled -> true
     2. Attente quelques secondes
     3. Walk enabled -> false
+** Vérif performance localisation
 * Survie des robots
-** Calibrer/checker les tirs
-- Olive, Nova, Arya
-- Checker les tirs
-- Attention: Il faut modifier le fichier KickModelCollection (@Ludo)
+** Modifier le fichier KickModelCollection (@Ludo)
 ** Tuner la marche
 - Patxi, Thomas
-** Mettre la nouvelle poignée sur Arya
 ** Évitement des robots basés sur la loc
 - In LocalisationService:
   - Add RhIO variables
@@ -50,6 +57,7 @@
 - Ludo
 - Dépend de la précision de la loc
 * À travailler sérieusement
+** Mettre nova en route
 ** Modèle prédictif pour la position de la balle
 - Grosse différence entre les deux sens de l'herbe
 ** Décision de passe
@@ -161,3 +169,10 @@
 *** Download logs script
 - Importer les logs dans un dossier avec nom du robot
 - Antoine
+*** Modification poignée arya
+*** Modifications détection des bords
+- Ajout bordure noire
+- Adrien
+*** Calibrer/checker les tirs
+- Olive, Arya
+- Checker les tirs
