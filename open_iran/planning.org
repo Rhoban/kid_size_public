@@ -4,7 +4,11 @@
 *** Vérification Tir, Marche, Approche
 *** Homologation robots
 *** Vision: Détection robots + lignes
-- Détection robots : Antoine
+**** Détection robots : Antoine
+ - Prendre beaucoup de logs de robots
+ - Faire RobotByII
+ - Faire RobotByDNN
+ - Ajouter Catégorie robot tagger
 *** Tester localisation avec poteaux / borderField
 ** 12h-13h: Match + Débrief
 ** 13h-16h: Tâches diverses perso
