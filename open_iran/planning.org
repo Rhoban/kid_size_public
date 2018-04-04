@@ -1,22 +1,10 @@
-* Planning soirée + nuit
-*** Upload Patchs + Début Tagging
-*** Début entraînement (test)
-| Taille ROI | Grid size | kernel_size | n_fmaps | n_fc | learning_rate | overfit at | accuracy |
-|------------+-----------+-------------+---------+------+---------------+------------+----------|
-|         16 |         2 |           5 |      16 |   16 |          0.08 |      0.090 |     97.4 |
-|         16 |         2 |           5 |      16 |    8 |          0.06 |      0.070 |     96.3 |
-|         16 |         2 |           5 |       8 |   16 |          0.10 |      0.110 |     96.1 |
-|         16 |         2 |           5 |       8 |    8 |          0.19 |      0.020 |     95.9 |
-|         16 |         4 |           5 |      16 |   16 |          0.02 |      0.030 |     95.4 |
-|         16 |         4 |           5 |       8 |   16 |          0.03 |      0.035 |     94.7 |
-|         16 |         4 |           5 |       8 |    8 |          0.06 |      0.070 |     96.4 |
-|         16 |         4 |           5 |      16 |    8 |          0.03 |      0.035 |     95.0 |
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso
 *** Vérification Tir, Marche, Approche
 *** Homologation robots
 *** Vision: Détection robots + lignes
+- Détection robots : Antoine
 *** Tester localisation avec poteaux / borderField
 ** 12h-13h: Match + Débrief
 ** 13h-16h: Tâches diverses perso
@@ -30,9 +18,6 @@
 ** Check performance on fitlet + listing heterogéneité
 - Note: Localisation/period peut aussi changer
 - Ludo
-** Download logs script
-- Importer les logs dans un dossier avec nom du robot
-- Antoine
 ** Entrainement détection buts
 *** Extraction Patchs (Ludo) (10.1.0.10/tagger)
 *** Tagging (All available)
@@ -154,5 +139,18 @@
 ** 2018/04/04: Jour 2: Setup
 *** Tags Goal (20% manquant)
 *** Entrainement DNN Goal
+| Taille ROI | Grid size | kernel_size | n_fmaps | n_fc | learning_rate | overfit at | accuracy | Choice |
+|------------+-----------+-------------+---------+------+---------------+------------+----------+--------|
+|         16 |         2 |           5 |      16 |   16 |          0.08 |      0.090 |     97.4 | XXX    |
+|         16 |         2 |           5 |      16 |    8 |          0.06 |      0.070 |     96.3 |        |
+|         16 |         2 |           5 |       8 |   16 |          0.10 |      0.110 |     96.1 |        |
+|         16 |         2 |           5 |       8 |    8 |          0.19 |      0.020 |     95.9 |        |
+|         16 |         4 |           5 |      16 |   16 |          0.02 |      0.030 |     95.4 |        |
+|         16 |         4 |           5 |       8 |   16 |          0.03 |      0.035 |     94.7 |        |
+|         16 |         4 |           5 |       8 |    8 |          0.06 |      0.070 |     96.4 |        |
+|         16 |         4 |           5 |      16 |    8 |          0.03 |      0.035 |     95.0 |        |
 *** Check erreurs modèle
 - Patxi
+*** Download logs script
+- Importer les logs dans un dossier avec nom du robot
+- Antoine
