@@ -11,6 +11,7 @@
 *** Vérification Tir, Marche, Approche
 *** Homologation robots
 *** Vision: Détection robots + lignes
+- Détection robots : Antoine
 ** 12h-13h: Match + Débrief
 ** 13h-16h: Tâches diverses perso
 ** 16h-17h: Second débrief 
@@ -25,9 +26,6 @@
 ** Check performance on fitlet + listing heterogéneité
 - Note: Localisation/period peut aussi changer
 - Ludo
-** Download logs script
-- Importer les logs dans un dossier avec nom du robot
-- Antoine
 ** Entrainement détection buts
 *** Extraction Patchs (Ludo) (10.1.0.10/tagger)
 *** Tagging (All available)
@@ -144,3 +142,7 @@
 *** Mesurer terrain
 - Adrien + Thomas
 - Modif Code
+** 2018/04/04: Jour 2
+*** Download logs script
+- Importer les logs dans un dossier avec nom du robot
+- Antoine
