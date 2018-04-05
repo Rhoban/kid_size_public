@@ -39,6 +39,9 @@ class KickStrategy
         // plot
         void gnuplot();
 
+        // Write data as a csv file
+        void writeCSV(const std::string & path);
+
     protected:
         // Accuracies
         double accuracy;

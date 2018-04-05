@@ -23,6 +23,7 @@ static bool block = false;
 using ::rhoban_utils::TimeStamp;
 using ::rhoban_utils::Benchmark;
 using namespace rhoban_geometry;
+using namespace rhoban_utils;
 using namespace robocup_referee;
 
 #ifdef VISION_COMPONENT

@@ -113,7 +113,7 @@ KickStrategy KickQLearning::generate()
             std::set<std::string> possibleKicks;
             std::map<std::string, double> kickLength;
             for (auto &kickName : kicks.getKickNames()) {
-                if (kickName == "small") continue;
+//                if (kickName == "small") continue;
                 auto &kickModel = kicks.getKickModel(kickName);
                 auto tmp = kickModel.applyKick(Eigen::Vector2d(0, 0), 0);
                 kickLength[kickName] = tmp[0];
@@ -207,7 +207,7 @@ void KickQLearning::generateTemplate()
 
     for (int a=0; a<aSteps; a++) {
         for (auto &kickName : kicks.getKickNames()) {
-            if (kickName == "small") continue;
+//            if (kickName == "small") continue;
             auto &kickModel = kicks.getKickModel(kickName);
             Action action;
             action.kick = kickName;

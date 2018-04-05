@@ -1,0 +1,30 @@
+* Match préparatoire: Tom+Olive vs Cages vide
+** Déroulement match
+*** 5 buts première mi-temps (mauvais sens de l'herbe)
+*** 3 buts seconde mi-temps (bon sens de l'herbe)
+** Préparation 
+*** Un peu hasardeux
+**** Problèmes de synchronisation des commits
+**** Modifications vision non-testées sur les fitlets
+**** Modifs scripts de startup non testées
+**** Lancement à revoir
+- Antoine aussi au lancement: 3 personnes pour 4 robots
+*** Comportement robots
+**** Gros problèmes sur l'estimation des résultats de tir
+- Vraiment énoorme
+**** Trop de kicks latéraux -> Stratégie à revoir
+**** Trop de temps de placement
+**** Chute sur un changement d'ordre brutal sur la marche
+*** Vision
+**** Détection de balle sur un autre terrain -> checker clipping
+** Remarques
+*** Deuxième mi-temps:
+**** Collision de robots:
+- Problèmes referee
+  - Un des robots cherche à tirer alors que son statut est "Let play"
+**** Tir trop loin avec perte de balle
+*** Casse
+**** Poignée Olive abimée
+**** Head-yaw Tom
+- Seulement deux vis trouvées sur la fixation
+- Vis trop courtes

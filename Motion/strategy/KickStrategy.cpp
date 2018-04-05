@@ -124,3 +124,22 @@ void KickStrategy::gnuplot()
         }
     }
 }
+
+
+void KickStrategy::writeCSV(const std::string & path) {
+  std::ostringstream out;
+  out << "x,y,kickName,kickDir" << std::endl;
+  for (auto &xEntry : actions) {
+    int x = xEntry.first;
+    for (auto &yEntry : xEntry.second) {
+      int y = yEntry.first;
+      double X = x*accuracy;
+      double Y = y*accuracy;
+      std::string kickName = yEntry.second.kick;
+      double kickDir = yEntry.second.orientation;
+
+      out << X << "," << Y << "," << kickName << "," << kickDir  << std::endl;
+    }
+  }
+  rhoban_utils::file_put_contents(path, out.str());
+}
