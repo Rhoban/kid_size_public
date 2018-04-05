@@ -39,6 +39,10 @@ void ApproachMove::initBindings()
   bind->bindNew("noKickGain", no_kick_gain, RhIO::Bind::PullOnly)->defaultValue(0.5)
     ->comment("DecreaseRate when ball is not kickable (score decreases by elapsed * no_kick_gain)")
     ->persisted(true);
+  bind->bindNew("enableLateral", enableLateral, RhIO::Bind::PullOnly)
+    ->defaultValue(true)->comment("Enable the lateral kicks"
+                                  "(this option is only used if there is no kick controller)")
+    ->persisted(true);
 
 }
 
@@ -85,7 +89,10 @@ std::vector<std::string> ApproachMove::getAllowedKicks()
   if (useKickController()) {
     return getKickController()->getAllowedKicks();
   }
-  return {"classic", "lateral"};
+  if (enableLateral) {
+    return {"classic", "lateral"};
+  }
+  return {"classic"};
 }
 
 bool ApproachMove::isKickAllowed(const std::string & name)

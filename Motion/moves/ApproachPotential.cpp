@@ -66,16 +66,11 @@ ApproachPotential::ApproachPotential(Walk *walk)
     // Don't walk
     bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)
         ->defaultValue(false);
-
-    // Lateral kick
-    bind->bindNew("enableLateral", enableLateral, RhIO::Bind::PullOnly)
-        ->defaultValue(true)->comment("Enable the lateral kicks")
-        ->persisted(true);
 }
 
 Angle ApproachPotential::getKickCap()
 {
-    return ApproachMove::getKickCap() + Angle(currentTolerance);
+  return ApproachMove::getKickCap()+ Angle(currentTolerance);
 }
 
 std::string ApproachPotential::getName()
@@ -196,8 +191,10 @@ void ApproachPotential::step(float elapsed)
 
                     std::vector<double> toleranceAngles;
                     toleranceAngles.push_back(0);
-                    for (double alpha=5; alpha<getKickTolerance()-
-                            rad2deg(kmc.getKickModel(name).getKickZone().getThetaTol()); alpha+=5) {
+                    double toleranceStep = 1;// Previously 5
+                    double kick_tol_rad = kmc.getKickModel(name).getKickZone().getThetaTol();
+                    double maxAlpha = getKickTolerance()- rad2deg(kick_tol_rad);
+                    for (double alpha=toleranceStep; alpha< maxAlpha; alpha+=toleranceStep) {
                         toleranceAngles.push_back(-alpha);
                         toleranceAngles.push_back(alpha);
                     }

@@ -28,3 +28,24 @@
 **** Head-yaw Tom
 - Seulement deux vis trouvées sur la fixation
 - Vis trop courtes
+*  8-0 (2018_04_05) ZJUDancer
+* 11-0 (2018_04_05) Bitbots
+** Notes
+
+* XX-XX (2018_04_05) MRL-HSL
+** Notes
+1) Approche catastrophique
+   1) Augmenter les tolérances
+   2) Tuner les gains
+   3) Éventuellement changer deux-trois choses à l'intérieur
+2) Tir à accélérer
+3) Changement stratégie ad-hoc
+   1) Opposition à la balle
+   2) Forcer plus le passage par les couloirs
+   3) Avoir un couloir de préférence
+4) Détection de la balle (surtout de loin)
+5) Besoins d'un 4ème robot
+6) Marche arya à revoir
+   1) Cf logs
+7) Réparations à faire
+

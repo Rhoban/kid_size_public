@@ -58,9 +58,6 @@ protected:
   // Gains
   double stepP, rotationP, stepPunch;
 
-  // Enable lateral kick
-  bool enableLateral;
-
   // Current tolerance used
   double currentTolerance;
 

@@ -78,4 +78,7 @@ protected:
 
   /// The list of available kicks
   csa_mdp::KickModelCollection kmc;
+
+  // Enable lateral kick
+  bool enableLateral;
 };

@@ -1,26 +1,32 @@
-* TODO immédiat
-** Vérifier le bon fonctionnement de wifi.sh pour le match de demain
-- Adrien
-** Head-yaw: checker Olive
-** Mettre à jour les estimations de distance
-** Générer des stratégie de tir adaptée
-*** Requiert des tests!!!
-* Préparation match ZJU
-** Modifier le fichier KickModelCollection
-- Requiert tests en temps réel
-** Mettre nova en route
+* TODO sur place
+** Améliorer approche
+*** Augmentation tolérance ?
+*** Tunage de gains
+**** approachPotential: kickGain 1 -> 4
+**** walk/warmup: 1 -> 0.2
+**** walk/cooldown 1 -> 0.5
+*** Autres si nécessaire
+*** Ludo
+** Améliorer rapidité du tir
+*** Tir lui même
+*** Réduire phase de tir
+*** Adrien + Patxi
+** Améliorer/retuner le tir latéral
+** Regarder marche Arya
+*** Particulièrement vers les moments
+** Essayer de mettre en route nova
 - Problèmes de sécurité sur la marche
+- Antoine
+** Problème sur le câble du bipper batterie
+* TODO Hotel
+** Trier les logs de match et extraire les images
+** Travailler les stratégies
+* TODO immédiat
+** Ajouter une deadzone près des cages où virer le tir latéral?
+** Tuner potential approach
+*** Particulièrement pour le tir latéral
+** Mettre nova en route
 * URGENCE
-** Check performance on fitlet + listing heterogéneité
-- Note: Localisation/period peut aussi changer
-- Ludo
-** Identification problème potentiel dans playing
-- Avec playing/approach, le robot tombe après le tir
-- Avec du step forward avant le tir, le robot ne tombe pas après le tir
-  - Procédure: (avec stepForward = 40)
-    1. Walk enabled -> true
-    2. Attente quelques secondes
-    3. Walk enabled -> false
 ** Critical fix rhio issues
 - Commit one image every 'k' images?
 - Empty all images buffered rhio
@@ -164,6 +170,24 @@
 *** Ajout de 'autoMovingBall' dans 
 *** Réparation head-yaw: Tom
 *** Récupération de la génération de stratégies de tir
+- Non testée
+** 2018/04/05: Jour 3: Compétition
+*** Tests nouvelles stratégies
+- Plantage
+*** Test script wifi
+- Quelques coquilles
+*** Mise à jour des estimations de distance
+*** Cérémonie ouverture
+*** Match ZJU (cf matchs.org)
+**** Note: Arya marque bien des buts
+*** Débug BehaviorViewer + problèmes nouvelles stratégies
+*** Head-yaw: check Olive
+*** Vérification wifi.sh
+- Adrien + Thomas
+*** Match Bitbots: Notes
+*** Assurer que chacun puisse faire un deploy
+*** Réparation poignée Olive
+- Adrien + Thomas
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso
@@ -191,3 +215,4 @@
 ** 17h30-18h: Match entrainement
 ** 18h-19h: Débrief match + commentaires
 ** 19h-20h: Logs détection de robot + Réparation tête
+* Jour 3
