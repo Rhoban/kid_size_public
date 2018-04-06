@@ -63,3 +63,14 @@
 *** Olive overshoot
 *** Perte de balle sur approche -> augmenter mémoire sur nuc
 *** Gros problèmes d'approche sur la présence d'obstacle
+* 7-0 (2018_04_06) Bitbots
+** Méca
+*** Tom chute beaucoup, puis perd une jambe (dévissée)
+** Vision
+*** Beaucoup de faux-positifs de balle
+**** Mains arya
+**** Tête arya
+**** Bas de poteaux
+*** Trop de mémoire sur la position de la balle
+** Commentaires
+*** Premiers buts de Nova
