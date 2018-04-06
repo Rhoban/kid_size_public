@@ -1,55 +1,55 @@
+* En cours
+** Entrainement DNN Ball
+| Taille ROI | Grid size | kernel_size | n_fmaps | n_fc | learning_rate | overfit at | accuracy | Choice |
+|------------+-----------+-------------+---------+------+---------------+------------+----------+--------|
+|         16 |         2 |           5 |      32 |   32 |        0.0025 |      0.003 |       98 |        |
+|         16 |         2 |           5 |      32 |   16 |         0.002 |      0.004 |     97.5 | XXX    |
+- No time to test more stuff
+
 * TODO sur place
-** Améliorer approche
-*** Augmentation tolérance ?
-*** Tunage de gains
-**** approachPotential: kickGain 1 -> 4
-**** walk/warmup: 1 -> 0.2
-**** walk/cooldown 1 -> 0.5
-*** Autres si nécessaire
-*** Ludo
-** Améliorer rapidité du tir
-*** Tir lui même
-*** Réduire phase de tir
-*** Adrien + Patxi
+** Évaluer la direction des kicks (small/classic)
 ** Améliorer/retuner le tir latéral
-** Regarder marche Arya
-*** Particulièrement vers les moments
-** Essayer de mettre en route nova
-- Problèmes de sécurité sur la marche
-- Antoine
 ** Problème sur le câble du bipper batterie
+** Vérifier/Tuner tir/approche sur Nova
+** Réparer tête arya + vérifier sa marche (plusieurs chutes lors de rotations)
+** Parler de Arya avec Adrien
+** Search ball à vérifier
 * TODO Hotel
 ** Trier les logs de match et extraire les images
-** Travailler les stratégies
-* TODO immédiat
-** Ajouter une deadzone près des cages où virer le tir latéral?
-** Tuner potential approach
-*** Particulièrement pour le tir latéral
-** Mettre nova en route
-* URGENCE
-** Critical fix rhio issues
-- Commit one image every 'k' images?
-- Empty all images buffered rhio
-** Reprise en main de la stratégie du gardien
-* Survie des robots
-** Tuner la marche
-- Patxi, Thomas
-** Évitement des robots basés sur la loc
-- In LocalisationService:
-  - Add RhIO variables
-    - matesAsObstacles
-    - matesRadius
-  - Add teammatesInWorld (based on opponentsInWorld and fueled by TeamPlayService)
-  - Add getPlayersInField method
-  - Add getObstaclesInField method
-  - replace getOpponentsInField by getObstaclesInField in placer 
 - Ludo
-- Dépend de la précision de la loc
+** Travailler les stratégies
+*** @Ludo
+*** Possibilités
+**** Opposition à la balle pour le tir (dépend du tuning tir latéral)
+**** Forcer plus le passage par les couloirs
+** Amélioration vision balle
+** Mettre à jour autoLog
+*** ne pas logger quand referee dit que (pénalisé  init ou finished)
+*** Condition entrante: un de nos robots kick
+*** Condition sortante: balle à faible vitesse 
+* Planning demain matin
+** 7h30-8h45:
+*** Amélioration vision balle
+- Ludo
+*** Tester modifs autoLog
+- Ludo
+*** Améliorer retuner le tir latéral
+**** Patxi + Ludo
+*** Réparer tête arya
+**** Adrien
+*** Vérifier marche arya
+**** Adrien + Ludo
+*** Vérif + tuning approche Nova
+**** Antoine
+** 8h45: Débrief + merge party
+** 9h30: Match
 * À travailler sérieusement
 ** Modèle prédictif pour la position de la balle
 - Grosse différence entre les deux sens de l'herbe
 ** Décision de passe
 * Amélioration vision (si nécessaire)
+** Profil de vitesse pour les tirs pour améliorer le suivi de balle
+- Possibilité d'utiliser une spline pour la vitesse attendue
 ** Reprendre des logs
 - Tout le monde
 ** Ajustement paramètres BallByII + GoalByII + Extraction de patchs
@@ -61,9 +61,9 @@
 ** Entrainement nouveaux réseaux de neurone
 - Ludo
 - Dépend de Tagging
+** Regarder marche Arya
+*** Particulièrement vers les moments
 * Souhaitable
-** Profil de vitesse pour les tirs pour améliorer le suivi de balle
-- Possibilité d'utiliser une spline pour la vitesse attendue
 ** Ajouter des distances différentes pour les marges de vert
 - Dans le modèle du terrain (robocup_referee)
 ** Arrêter la tête des robots à la mi-temps
@@ -73,6 +73,22 @@
 ** Déplacements du robot
 *** Predictive Motion Model 
 *** Odométrie
+* À ne pas oublier après
+** Fix rhio issues
+- Commit one image every 'k' images?
+- Empty all images buffered rhio
+** Évitement des robots basés sur la loc
+- In LocalisationService:
+  - Add RhIO variables
+    - matesAsObstacles
+    - matesRadius
+  - Add teammatesInWorld (based on opponentsInWorld and fueled by TeamPlayService)
+  - Add getPlayersInField method
+  - Add getObstaclesInField method
+  - replace getOpponentsInField by getObstaclesInField in placer 
+- Ludo
+- Dépend de la précision de la loc
+** Gestion des placements robots pour kick-off quand le joueur B est manquant
 * Remarques en vrac
 ** État terrains
 *** Pas totalement terminé
@@ -186,8 +202,20 @@
 - Adrien + Thomas
 *** Match Bitbots: Notes
 *** Assurer que chacun puisse faire un deploy
+*** Établissement stratégie sans tir latéral
 *** Réparation poignée Olive
-- Adrien + Thomas
+- Thomas
+*** Accélération approche
+**** approachPotential: kickGain 1 -> 4
+**** walk/warmup: 1 -> 0.2
+**** walk/cooldown 1 -> 0.5
+*** Accélération tir
+- Adrien + Patxi
+*** Amélioration sécurité nova
+- Antoine
+*** Regarder le code du goal
+- Adrien
+*** Tri + Tagging images balles
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso

@@ -31,8 +31,14 @@
 *  8-0 (2018_04_05) ZJUDancer
 * 11-0 (2018_04_05) Bitbots
 ** Notes
-
-* XX-XX (2018_04_05) MRL-HSL
+*  2-1 (2018_04_05) MRL-HSL
+** Remarques
+*** Arya catastrophique en première mi-temps
+**** Sabote les autres avec des mauvaises infos (problème de head_pitch)
+*** Chute fatale à la tête: t=570
+**** 1:t=603: Arya croit voir la balle et fait reculer Tom
+**** Vérifier épaule Arya
+*** 2: t=492: Olive voit un obstacle et fait le tir latéral du désespoir
 ** Notes
 1) Approche catastrophique
    1) Augmenter les tolérances
