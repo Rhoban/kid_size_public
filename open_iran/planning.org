@@ -2,7 +2,6 @@
 ** Améliorer/retuner le tir latéral
 ** Vérifier/Tuner tir/approche sur Nova
 ** Réparer tête arya + vérifier sa marche (plusieurs chutes lors de rotations)
-** Search ball: accélérer le process
 ** Travailler les stratégies
 *** @Ludo
 *** Possibilités
@@ -12,7 +11,9 @@
 ** Amélioration vision balle de loin
 *** Reprendre d'autres logs avec plusieurs distance de balle
 ** Vérifier les enregistrements de AutoLog
-** Revert commit vision
+** Améliorer gestion obstacle
+*** Switcher à targets = [-(tangent+tol),(tangent+tol)]
+**** Évite que la tolérance nous fasse tirer dans le robot
 * À travailler sérieusement
 ** Modèle prédictif pour la position de la balle
 - Grosse différence entre les deux sens de l'herbe
@@ -197,9 +198,18 @@
 - Pas concluant, dépend du positionnement initial de la balle
 *** Résolution du problème sur le câble du bipper batterie
 *** Match MRL (cf matchs.org)
-*** Amélioration approches
+*** Revert commit vision
+*** Amélioration approches (perte de balle)
+- Réduction scoreDecreaseOut
+- Changement rotationP de olive
+*** Search ball: Check du process: Rien trouvé
+- Rien de particulier dans code/environnement -> à vérifier en jeu
 **** Réduction drastique scoreDecrease 
 **** Changement rotationP sur olive
+*** Regarder comment se passe l'évitement des obstacles
+**** Risque de changement de target fréquent par le QKickController
+- Augmentation de la tolérance sur QKickController
+
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso
