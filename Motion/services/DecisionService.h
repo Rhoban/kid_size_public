@@ -20,8 +20,11 @@ class DecisionService : public Service
          */
         bool isBallQualityGood;
 
-        /// Is the ball currently moving or being kicked
+        /// Is the ball currently moving according to the robot
         bool isBallMoving;
+
+        /// Is one of the robot of the team currently kicking
+        bool isMateKicking;
 
         /**
          * Is the field quality good enough?

@@ -42,6 +42,7 @@
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
 #include "services/ModelService.h"
+#include "services/RefereeService.h"
 #include <cmath>
 #include <cstdlib>
 #include <sstream>
@@ -841,6 +842,9 @@ void Robocup::getUpdatedCameraStateFromPipeline() {
 void Robocup::loggingStep() {
   TimeStamp now = getNowTS();
 
+  DecisionService * decision = _scheduler->getServices()->decision;
+  RefereeService * referee = _scheduler->getServices()->referee;
+
   // Capture src_filter and throws a std::runtime_error if required
   const Filter & src_filter =  pipeline.get("source");
   ImageLogger::Entry entry(pipeline.getTimestamp(), *(src_filter.getImg()));
@@ -861,26 +865,30 @@ void Robocup::loggingStep() {
     }
   }
   // Handling moving ball logs
-  if (_scheduler->getServices()->decision->isBallMoving) {
+  if (decision->isBallMoving) {
     lastBallMoving = now;
   }
   double elapsedSinceBallMoving = diffSec(lastBallMoving, now);
-  bool dumpBallMovingLogs = false;
-  if (autologMovingBall && elapsedSinceBallMoving < logBallExtraTime) {
-    /// Start session and start logging low level 
-    if (!moving_ball_logger.isActive()) {
-      moving_ball_logger.initSession();
+  // Status of autoLog
+  bool autoLogActive = moving_ball_logger.isActive();
+  bool startAutoLog = !autoLogActive &&  decision->isMateKicking;
+  bool stopAutoLog =
+    autoLogActive && !(elapsedSinceBallMoving < logBallExtraTime || decision->isMateKicking);
+  bool useAutoLogEntry = startAutoLog || (autoLogActive && !stopAutoLog);
+  // Starting autoLog
+  if (startAutoLog) {
+    moving_ball_logger.initSession();
       out.log("Starting a session at '%s'", moving_ball_logger.getSessionPath().c_str());
       std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
       startLoggingLowLevel(lowLevelPath);
-    }
+  }
+  // Trying to log entry (can fail is maxSize is reached)
+  if (useAutoLogEntry) {
     try {
       moving_ball_logger.pushEntry(entry);
     } catch (const ImageLogger::SizeLimitException & exc) {
-      dumpBallMovingLogs = true;
+      stopAutoLog = true;
     }
-  } else if (moving_ball_logger.isActive()) {
-    dumpBallMovingLogs = true;
   }
   logMutex.unlock();
 
@@ -890,7 +898,7 @@ void Robocup::loggingStep() {
     _scheduler->stopMove("head",0.5);
     endLogging();
   }
-  if (dumpBallMovingLogs) {
+  if (stopAutoLog) {
     std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
     stopLoggingLowLevel(lowLevelPath);
     moving_ball_logger.endSession();

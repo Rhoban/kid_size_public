@@ -22,8 +22,10 @@ DecisionService::DecisionService()
     bind.bindNew("isBallQualityGood", isBallQualityGood)
         ->comment("Is ball quality good ?")->defaultValue(false);
     bind.bindNew("isBallMoving", isBallMoving, RhIO::Bind::PushOnly)
-        ->comment("Is the ball moving significantly according to one of the robots,"
-                  " is also true if one of the robot has performed a kick recently")
+        ->comment("Is the ball moving significantly according to one of the robot of the team")
+        ->defaultValue(false);
+    bind.bindNew("isMateKicking", isMateKicking, RhIO::Bind::PushOnly)
+        ->comment("True if one of the robot of the team has performed a kick recently")
         ->defaultValue(false);
 
     // Constraint to say that ball is moving
@@ -320,19 +322,25 @@ bool DecisionService::tick(double elapsed)
         }
     }
 
-    // Update the isBallMoving flag
+    // Update the isBallMoving amd isMateKicking flags
+    // a tmp value is used to ensure thread-safety
     const auto & teamplayInfos = getServices()->teamPlay->allInfo();
-    isBallMoving = false;
+    bool tmpIsBallMoving = false;
+    bool tmpIsMateKicking = false;
     for (const auto & pair :  teamplayInfos) {
       const rhoban_team_play::TeamPlayInfo & robotInfo = pair.second;
       float vx = robotInfo.ballVelX;
       float vy = robotInfo.ballVelY;
       float ballSpeed = std::sqrt(vx * vx + vy * vy);
-      if (robotInfo.timeSinceLastKick < postKickTrackingTime ||
-          ballSpeed  > movingBallMinSpeed) {
-        isBallMoving = true;
+      if (robotInfo.timeSinceLastKick < postKickTrackingTime) {
+        tmpIsMateKicking = true;
+      }
+      if (ballSpeed  > movingBallMinSpeed) {
+        tmpIsBallMoving = true;
       }
     }
+    isBallMoving  = tmpIsBallMoving;
+    isMateKicking = tmpIsMateKicking;
 
         
     bind.push();
