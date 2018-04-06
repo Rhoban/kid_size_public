@@ -1,48 +1,18 @@
-* En cours
-** Entrainement DNN Ball
-| Taille ROI | Grid size | kernel_size | n_fmaps | n_fc | learning_rate | overfit at | accuracy | Choice |
-|------------+-----------+-------------+---------+------+---------------+------------+----------+--------|
-|         16 |         2 |           5 |      32 |   32 |        0.0025 |      0.003 |       98 |        |
-|         16 |         2 |           5 |      32 |   16 |         0.002 |      0.004 |     97.5 | XXX    |
-- No time to test more stuff
-
-* TODO sur place
-** Évaluer la direction des kicks (small/classic)
+* URGENT:
 ** Améliorer/retuner le tir latéral
-** Problème sur le câble du bipper batterie
 ** Vérifier/Tuner tir/approche sur Nova
 ** Réparer tête arya + vérifier sa marche (plusieurs chutes lors de rotations)
-** Parler de Arya avec Adrien
-** Search ball à vérifier
-* TODO Hotel
-** Trier les logs de match et extraire les images
-- Ludo
+** Search ball: accélérer le process
 ** Travailler les stratégies
 *** @Ludo
 *** Possibilités
 **** Opposition à la balle pour le tir (dépend du tuning tir latéral)
 **** Forcer plus le passage par les couloirs
-** Amélioration vision balle
-** Mettre à jour autoLog
-*** ne pas logger quand referee dit que (pénalisé  init ou finished)
-*** Condition entrante: un de nos robots kick
-*** Condition sortante: balle à faible vitesse 
-* Planning demain matin
-** 7h30-8h45:
-*** Amélioration vision balle
-- Ludo
-*** Tester modifs autoLog
-- Ludo
-*** Améliorer retuner le tir latéral
-**** Patxi + Ludo
-*** Réparer tête arya
-**** Adrien
-*** Vérifier marche arya
-**** Adrien + Ludo
-*** Vérif + tuning approche Nova
-**** Antoine
-** 8h45: Débrief + merge party
-** 9h30: Match
+**** Passage par couloir gauche contre MRL
+** Amélioration vision balle de loin
+*** Reprendre d'autres logs avec plusieurs distance de balle
+** Vérifier les enregistrements de AutoLog
+** Revert commit vision
 * À travailler sérieusement
 ** Modèle prédictif pour la position de la balle
 - Grosse différence entre les deux sens de l'herbe
@@ -200,7 +170,7 @@
 *** Head-yaw: check Olive
 *** Vérification wifi.sh
 - Adrien + Thomas
-*** Match Bitbots: Notes
+*** Match Bitbots (cf matchs.org)
 *** Assurer que chacun puisse faire un deploy
 *** Établissement stratégie sans tir latéral
 *** Réparation poignée Olive
@@ -216,6 +186,20 @@
 *** Regarder le code du goal
 - Adrien
 *** Tri + Tagging images balles
+** 2018/04/06: Jour 4: Compétition
+*** Entrainement DNN Ball
+| Taille ROI | Grid size | kernel_size | n_fmaps | n_fc | learning_rate | overfit at | accuracy | Choice |
+|------------+-----------+-------------+---------+------+---------------+------------+----------+--------|
+|         16 |         2 |           5 |      32 |   32 |        0.0025 |      0.003 |       98 |        |
+|         16 |         2 |           5 |      32 |   16 |         0.002 |      0.004 |     97.5 | XXX    |
+- Total overfitting, logs are not adapted
+*** Évaluation de direction des kicks (small/classic)
+- Pas concluant, dépend du positionnement initial de la balle
+*** Résolution du problème sur le câble du bipper batterie
+*** Match MRL (cf matchs.org)
+*** Amélioration approches
+**** Réduction drastique scoreDecrease 
+**** Changement rotationP sur olive
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso
@@ -243,4 +227,19 @@
 ** 17h30-18h: Match entrainement
 ** 18h-19h: Débrief match + commentaires
 ** 19h-20h: Logs détection de robot + Réparation tête
-* Jour 3
+* Planning Jour 4 matin
+** 7h30-8h45:
+*** Amélioration vision balle
+- Ludo
+*** Tester modifs autoLog
+- Ludo
+*** Améliorer retuner le tir latéral
+**** Patxi + Ludo
+*** Réparer tête arya
+**** Adrien
+*** Vérifier marche arya
+**** Adrien + Ludo
+*** Vérif + tuning approche Nova
+**** Antoine
+** 8h45: Débrief + merge party
+** 9h30: Match

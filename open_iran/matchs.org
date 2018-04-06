@@ -55,3 +55,11 @@
    1) Cf logs
 7) Réparations à faire
 
+*  4-1 (2018_04_06) ZJUDancer
+** Remarques
+*** Kick latéral au milieu de nulle part au début -> Pourquoi?
+*** PLusieurs chutes d'olive
+*** Cache d'olive qui est tombé plusieurs fois
+*** Olive overshoot
+*** Perte de balle sur approche -> augmenter mémoire sur nuc
+*** Gros problèmes d'approche sur la présence d'obstacle
