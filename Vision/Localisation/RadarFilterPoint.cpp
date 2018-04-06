@@ -35,6 +35,11 @@ bool RadarFilterPoint::bindToRhIO(std::string node, std::string command)
             ->defaultValue(5)
             ->persisted(true);
 
+        bind->bindNew("alignedAngle", alignedAngle, RhIO::Bind::PullOnly)
+            ->comment("Angle until which objects are considered as visible [deg]")
+            ->defaultValue(60)
+            ->persisted(true);
+
         return true;
     }
     
@@ -54,8 +59,11 @@ bool RadarFilterPoint::isVisible(const Eigen::Vector3d &pt)
         (point.x <= 0 || point.y <= 0 || point.x >= 1000 || point.y >= 1000);
 
     bool isFar = pos.norm() > far;
+    // When objects are excentred and close, there is a risk to have them 
+    Angle objDir = Angle::fromXY(pos.x(),pos.y());
+    bool isAligned = objDir.getSignedValue() < alignedAngle;
 
-    return !outOfScreen && !isFar;
+    return !outOfScreen && !isFar && isAligned;
 }
 
 bool RadarFilterPoint::isSimilar(const Eigen::Vector3d &pt1, const Eigen::Vector3d &pt2)

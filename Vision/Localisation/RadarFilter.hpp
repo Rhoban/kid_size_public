@@ -88,7 +88,7 @@ class RadarFilter
 		    ->persisted(true);
 
 		bind->bindNew("scoreReductionOut", scoreReductionOut, RhIO::Bind::PullOnly)
-		    ->comment("Score reduction at each frame where ")
+		    ->comment("Score reduction at each frame where the object should be in the image ")
 		    ->defaultValue(0.01)
 		    ->persisted(true);
 

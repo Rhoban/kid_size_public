@@ -31,6 +31,7 @@ class RadarFilterPoint : public RadarFilter<Eigen::Vector3d>
         // Merge thresholds
         float matchDistance;
         float matchAngle;
+        float alignedAngle;
 
         // Is the object far ?
         float far;

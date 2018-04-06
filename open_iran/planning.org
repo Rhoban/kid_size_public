@@ -1,5 +1,4 @@
 * Self-task before MRL game:
-** Checker maxAngleTrack sur tous les robots
 ** Double kick sur balle fantôme
 *** Traiter différemment le cas où la balle est cachée par les épaules
 *** Augmenter scoreReductionOut
@@ -225,9 +224,10 @@
 **** Risque de changement de target fréquent par le QKickController
 - Augmentation de la tolérance sur QKickController
 
-*** Tuning kick latéral
+*** Tuning kick lateral
 **** On olive, testing after on the other
 *** Fix nova
+*** Checker maxPanTrack: same on all robots
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso
