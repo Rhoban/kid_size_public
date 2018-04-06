@@ -1,13 +1,24 @@
-* Self-task before MRL game:
-** Double kick sur balle fantôme
-*** Traiter différemment le cas où la balle est cachée par les épaules
-*** Augmenter scoreReductionOut
-*** Retarder l'application du kick
-** Améliorer gestion obstacle
+* TODO Sur site
+** Préparer le goal
+*** Adrien
+** Réparation tête Olive
+*** Adrien + Patxi
+** Mettre poignée Nova sur Olive
+** Améliorer cache batterie
+** Calibration vision
+*** Patxi
+** Refaire une session de logs
+*** Balles près des poteaux
+*** Balles de loin
+*** Balles sur ligne
+*** Point de penaltys
+*** Bases de poteaux (à différentes distances)
+* TODO Hotel
+** Améliorer ou supprimer gestion obstacle
 *** Switcher à targets = [-(tangent+tol),(tangent+tol)]
 **** Évite que la tolérance nous fasse tirer dans le robots
-* URGENT:
-** Réparer tête arya + vérifier sa marche (plusieurs chutes lors de rotations)
+*** À discuter
+** Revoir match MRL
 ** Travailler les stratégies
 *** @Ludo
 *** Possibilités
@@ -15,17 +26,14 @@
 **** Opposition à la balle pour le tir (dépend du tuning tir latéral)
 **** Forcer plus le passage par les couloirs
 **** Passage par couloir gauche contre MRL
-** Amélioration vision balle de loin
-*** Reprendre d'autres logs avec plusieurs distance de balle
+** Améliorer position en défense
+** Vérifier pourquoi Tom prend longtemps à bouger
+* URGENT:
 ** Vérifier les enregistrements de AutoLog
-** Refaire une session de logs
-*** Balles près des poteaux
-*** Balles de loin
-*** Balles sur ligne
-*** Point de penaltys
-*** Bases de poteaux (à différentes distances)
 ** Faire une session de logs avec balle en mouvement
 *** AutoLog doit être tuné
+** Amélioration vision balle de loin
+*** Reprendre d'autres logs avec plusieurs distance de balle
 * À travailler sérieusement
 ** Modèle prédictif pour la position de la balle
 - Grosse différence entre les deux sens de l'herbe
@@ -74,6 +82,11 @@
 ** Gestion des placements robots pour kick-off quand le joueur B est manquant
 ** Faire quelque chose pour les grosses mêlées
 *** Robot à nous tombé près de la balle: l'autre robot vient dessus et se suicide
+** Faire quelque chose pour le démarrage des robots
+*** Suppresion des chkdsk pas suffisant (pas clair que ce soit efficace)
+** NUC: Vérifier l'espace sur les disques
+** LiPo: Est-ce que certaines sont en fin de vie?
+*** Durée de vie très variable
 * Remarques en vrac
 ** État terrains
 *** Pas totalement terminé
@@ -228,6 +241,13 @@
 **** On olive, testing after on the other
 *** Fix nova
 *** Checker maxPanTrack: same on all robots
+*** Gestion Kick fantôme
+**** Traitement différemment pour le cas où la balle est cachée par les épaules
+**** Augmentation de scoreReduction
+**** Assez satisfaisant
+*** Suppression des checkdisk pour accélérer le démarrage
+*** Réparation tête arya OK
+**** Effet pas clair
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso

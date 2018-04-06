@@ -74,3 +74,6 @@
 *** Trop de mémoire sur la position de la balle
 ** Commentaires
 *** Premiers buts de Nova
+* 2-3 (2018_04_06) MRL-HSL
+** Remarques
+*** Arya avait 15° d'erreur sur le pitch (post-réparation)
