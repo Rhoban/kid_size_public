@@ -228,7 +228,8 @@ void QKickController::updateAction()
                 if (candidates.size()) {
                     std::sort(candidates.begin(), candidates.end());
                     action = candidates[candidates.size()-1];
-                    tolerance = 10;
+                    tolerance = 25;//Previously 10, increased to have faster
+                                   //kick when there is an obstacle
                 }
             }
         }
