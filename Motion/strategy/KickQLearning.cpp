@@ -19,7 +19,8 @@ KickQLearning::KickQLearning(
         bool dump,
         double tolerance,
         double grassOffset,
-        double penaltyMultiplier
+        double penaltyMultiplier,
+        std::string corridorProfilePath
         )
     :
         accuracy(accuracy),
@@ -32,6 +33,9 @@ KickQLearning::KickQLearning(
 {
     kicks.loadFile(kickFiles);
     kicks.setGrassConeOffset(grassOffset);
+    if (corridorProfilePath != "") { 
+      corridorProfile.loadFile(corridorProfilePath);
+    }
 }
 
 double KickQLearning::rewardFor(State *from, State *state)
@@ -48,7 +52,7 @@ double KickQLearning::rewardFor(State *from, State *state)
     //double fY = accuracy*from->y;
     double X = accuracy*state->x;
     double Y = accuracy*state->y;
-    double multiplier = 1;
+    double multiplier = corridorProfile.getWeight(X,Y);
 
     if (X > (Constants::fieldLength-Constants::goalAreaLength)/100.0 &&
             fabs(Y-Constants::fieldWidth/200.0) < Constants::goalAreaWidth/100.0) {

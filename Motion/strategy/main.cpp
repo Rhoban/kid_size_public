@@ -23,6 +23,9 @@ int main(int argc, char *argv[])
     TCLAP::ValueArg<std::string> csvPath("c", "write_csv",
                                          "Output for writing a csv file for strategy",
                                          false, "","write_csv", cmd);
+    TCLAP::ValueArg<std::string> corridorPath("f", "corridor-path",
+                                              "Output for the corridor condfiguration",
+                                              false, "","corridor-path", cmd);
     TCLAP::SwitchArg gnuplot("g", "gnuplot", "write gnuplot format file", cmd, false);
     TCLAP::SwitchArg writeJson("w", "write_json", "write json result file", cmd, false);
     TCLAP::SwitchArg excentric("e", "excentric", "excentric", cmd, false);
@@ -31,8 +34,10 @@ int main(int argc, char *argv[])
 
     KickStrategy strategy;
     KickQLearning kickQLearning(json.getValue(), accuracy.getValue(), angleAccuracy.getValue(),
-            goalie.getValue(), excentric.getValue(), dump.getValue(), tol.getValue(), 
-            grassOffset.getValue(), penalty.getValue());
+                                goalie.getValue(), excentric.getValue(),
+                                dump.getValue(), tol.getValue(), 
+                                grassOffset.getValue(), penalty.getValue(),
+                                corridorPath.getValue());
 
     if (load.getValue() != "") {
         strategy.fromJson(load.getValue());

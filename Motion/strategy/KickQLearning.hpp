@@ -4,11 +4,13 @@
 #include <vector>
 #include <json/json.h>
 #include "KickStrategy.hpp"
+#include "CorridorProfile.hpp"
 #include <kick_model/kick_model_collection.h>
 
 class KickQLearning
 {
     public:
+       // TODO: This class should be parsed instead of having so many parameters
         KickQLearning(
                 std::string kicksFile,
                 double accuracy = 0.2, 
@@ -18,7 +20,8 @@ class KickQLearning
                 bool dump = false,
                 double tolerance = 5,
                 double grassOffset = 180,
-                double penaltyMultiplier = 1
+                double penaltyMultiplier = 1,
+                std::string corridorProfilePath = ""
                 );
 
         // Actions are discrete ints
@@ -72,6 +75,7 @@ class KickQLearning
         bool dump;
         double tolerance;
         double penaltyMultiplier;
+        CorridorProfile corridorProfile;
 
         // Fail & success states
         State failState, successState;
