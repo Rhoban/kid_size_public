@@ -63,7 +63,7 @@
 *** Olive overshoot
 *** Perte de balle sur approche -> augmenter mémoire sur nuc
 *** Gros problèmes d'approche sur la présence d'obstacle
-* 7-0 (2018_04_06) Bitbots
+*  7-0 (2018_04_06) Bitbots
 ** Méca
 *** Tom chute beaucoup, puis perd une jambe (dévissée)
 ** Vision
@@ -74,6 +74,17 @@
 *** Trop de mémoire sur la position de la balle
 ** Commentaires
 *** Premiers buts de Nova
-* 2-3 (2018_04_06) MRL-HSL
+*  2-3 (2018_04_06) MRL-HSL
 ** Remarques
-*** Arya avait 15° d'erreur sur le pitch (post-réparation)
+*** Au début tous les robots sont bien
+*** À 170s environ, nova perd la pression gauche
+**** Jauge revenue en deuxième mi-temps
+**** Jauge déjà problématique plus tôt
+*** Olive se casse le pitch en première mi-temps
+*** Assez rapidement plus qu'un robot opérationel
+*** Arya avait ~15° d'erreur sur le pitch (post-réparation)
+**** Beaucoup de problèmes en deuxième mi-temps
+**** Broadcast de mauvaises positions
+*** Tom perd énormément de temps sur les approches des fois
+**** De l'ordre de 20 secondes à hésiter devant
+*** Beaucoup trop de temps passé à un seul robot

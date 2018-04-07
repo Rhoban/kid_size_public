@@ -1,33 +1,28 @@
-* TODO Sur site
+* TODO avant finale
+** Réparer git
+** Améliorer cache batterie
+*** Patxi
+** Tester Vision avec nouveau réseau
+*** Patxi
 ** Préparer le goal
 *** Adrien
-** Réparation tête Olive
-*** Adrien + Patxi
-** Mettre poignée Nova sur Olive
-** Améliorer cache batterie
+** À regarder: quand robot est unpenalized, mais handled, continuer à attendre
+*** Ludo
 ** Calibration vision
 *** Patxi
-** Refaire une session de logs
-*** Balles près des poteaux
-*** Balles de loin
-*** Balles sur ligne
-*** Point de penaltys
-*** Bases de poteaux (à différentes distances)
-* TODO Hotel
+** Préparer penalty
+** Plus de scratch sur les batteries
+** Beaucoup d'oscillations dans l'approche sur tom
+** Vérifier le buzzer d'olive
+** Travailler les stratégies (en regardant match ZJU vs MR)L
+* Si possible avant finale
 ** Améliorer ou supprimer gestion obstacle
 *** Switcher à targets = [-(tangent+tol),(tangent+tol)]
 **** Évite que la tolérance nous fasse tirer dans le robots
 *** À discuter
-** Revoir match MRL
-** Travailler les stratégies
-*** @Ludo
-*** Possibilités
-**** Ajouter une deadzone proche des cages adverse (~1m)
-**** Opposition à la balle pour le tir (dépend du tuning tir latéral)
-**** Forcer plus le passage par les couloirs
-**** Passage par couloir gauche contre MRL
 ** Améliorer position en défense
-** Vérifier pourquoi Tom prend longtemps à bouger
+* Demain matin
+** Check méca+élec sur les robots
 * URGENT:
 ** Vérifier les enregistrements de AutoLog
 ** Faire une session de logs avec balle en mouvement
@@ -248,6 +243,27 @@
 *** Suppression des checkdisk pour accélérer le démarrage
 *** Réparation tête arya OK
 **** Effet pas clair
+*** Réparation tête Olive
+**** Antoine
+*** Échange poignées Nova sur Olive
+*** Nouvelle session de logs manuels
+**** Balles près des poteaux
+**** Balles de loin
+**** Balles sur ligne
+**** Point de penaltys
+**** Bases de poteaux (à différentes distances)
+*** Revoir match MRL
+*** Augmenter scanSpeed et forceTrackDist sur tous les nucs
+*** Entrainement DNN Ball
+**** IranOpen only
+| Taille ROI | Grid size | kernel_size | n_fmaps | n_fc | learning_rate | overfit at | accuracy | Choice |
+|------------+-----------+-------------+---------+------+---------------+------------+----------+--------|
+|         16 |         2 |           5 |      32 |   32 |          0.02 |       0.03 |     95.3 |        |
+|         16 |         2 |           5 |      32 |   16 |          0.04 |       0.05 |     97.1 | XXX    |
+|            |           |             |         |      |               |            |          |        |
+
+** 2018/04/06: Jour 5: Compétition
+*** aggressivity -> 0.5
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso
