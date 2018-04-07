@@ -37,11 +37,11 @@ void PenaltyKickController::step(float elapsed)
     auto ball = loc->getBallPosField();
     Point target;
 
-    // We kick either at 1/4 of the goal on the left or the right
+    // We kick either at 1/5 of the goal on the left or the right (much noise on kick dir)
     if (left) {
-        target = Point(Constants::fieldLength/200.0, Constants::goalWidth/400.0);
+        target = Point(Constants::fieldLength/200.0, Constants::goalWidth/500.0);
     } else {
-        target = Point(Constants::fieldLength/200.0, -Constants::goalWidth/400.0);
+        target = Point(Constants::fieldLength/200.0, -Constants::goalWidth/500.0);
     }
 
     // Kicking with a powerful kick only to the target, 15° tolerance
