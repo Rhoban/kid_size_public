@@ -1,20 +1,17 @@
 * TODO avant finale
-** Réparer git
 ** Améliorer cache batterie
 *** Patxi
 ** Tester Vision avec nouveau réseau
 *** Patxi
 ** Préparer le goal
 *** Adrien
-** À regarder: quand robot est unpenalized, mais handled, continuer à attendre
-*** Ludo
 ** Calibration vision
 *** Patxi
 ** Préparer penalty
 ** Plus de scratch sur les batteries
 ** Beaucoup d'oscillations dans l'approche sur tom
 ** Vérifier le buzzer d'olive
-** Travailler les stratégies (en regardant match ZJU vs MR)L
+** Travailler les stratégies (en regardant match ZJU vs MRL)
 * Si possible avant finale
 ** Améliorer ou supprimer gestion obstacle
 *** Switcher à targets = [-(tangent+tol),(tangent+tol)]
@@ -82,6 +79,8 @@
 ** NUC: Vérifier l'espace sur les disques
 ** LiPo: Est-ce que certaines sont en fin de vie?
 *** Durée de vie très variable
+** Ajouter état temporaire dans isHandled pour après unpenalized
+*** Gestion du cas où le referee unpenalize trop tôt
 * Remarques en vrac
 ** État terrains
 *** Pas totalement terminé
@@ -264,6 +263,7 @@
 
 ** 2018/04/06: Jour 5: Compétition
 *** aggressivity -> 0.5
+*** Swith git bare de l'extrême
 * Planning Jour 2
 ** 07h-09h: Petit-déj' + préparation + 1er départ
 ** 09h-12h: Tâches diverses perso

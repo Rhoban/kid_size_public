@@ -88,3 +88,7 @@
 *** Tom perd énormément de temps sur les approches des fois
 **** De l'ordre de 20 secondes à hésiter devant
 *** Beaucoup trop de temps passé à un seul robot
+*  ?-0 (2018_04_07) Bitbots
+*  0-1 (2018_04_07) MRL
+** Remarques en attentes
+*** Pas de teamplay de leur part

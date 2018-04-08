@@ -28,6 +28,7 @@
 *** DONE Frein-filet
 *** DONE Fer à souder + étain
 *** DONE Multimètre
+*** De quoi 
 * DONE Logistique RoboCup
 ** DONE Table d'équipe:
 *** DONE 2 Alims PC
@@ -38,9 +39,16 @@
 *** DONE Câblage (divers câbles (3/4 brins) + gaine)
 *** DONE Corde à piano
 *** DONE Scratch qualité
+* À trier
+** LiPo: Est-ce que certaines sont en fin de vie?
+*** Durée de vie très variable
+* À trier
+** LiPo: Est-ce que certaines sont en fin de vie?
+*** Durée de vie très variable
 *** DONE Marqueurs couleur
 *** DONE Jauges de pression
 *** DONE Visserie
+*** Poignée Teflon de rechange
 *** DONE Cartes de rechange
 **** DONE Pression
 **** DONE HotSwap
