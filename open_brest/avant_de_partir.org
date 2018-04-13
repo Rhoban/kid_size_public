@@ -1,0 +1,34 @@
+* Méca
+** Manufacturing
+   - 4/8 nouvelles épaules
+   - 0/4 poignée téflon 10.5mm
+   - 0/8 tige filetés
+   - 0/8 noeud papillon (Adrien)
+
+** Peinture
+   - 0/8 nouvelles épaules
+   - bras Nova
+
+** Réparation/Upgrade
+*** Olive
+   - [ ] remplacer coup pitch
+   - [ ] nouvelle poignée
+   - [ ] protection coup ? (Adrien)
+*** Nova
+   - [ ] remplacer tête : téflon -> alu ?
+   - [ ] nouvelle poignée
+   - [ ] protection coup ? (Adrien)
+*** Arya
+   - [ ] remplacer épaule pitch
+      Récupérer un MX-64 sur le yaw d'un autre robot ?
+   - [ ] remplacer coup pitch
+   - [ ] nouvelle poignée
+   - [ ] protection coup ? (Adrien)
+*** Tom
+   - [ ] nouvelle poignée
+   - [ ] protection coup ? (Adrien)
+
+* Mouvement
+  - [ ] Refaire le stand up
+  - [ ] Refaire le kick latéral
+  - [ ] Augmenter le pan/yaw du scan ?
