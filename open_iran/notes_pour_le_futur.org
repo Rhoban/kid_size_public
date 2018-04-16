@@ -86,6 +86,37 @@
 **** Suppression des chkdsk pas suffisant (pas clair que ce soit efficace)
 *** Améliorer l'espace disque
 ** matériel achats: réalisabilité
-*** Cinquième robot?
-*** Spare matériel?
-*** Autre terrain?
+*** Spare matériel -> À voir 
+*** Autre terrain -> OK
+*** LiPo plus costaude -> OK
+
+* Répartition tâches + calendrier
+** 04/09 - 04/13
+*** Préparation Open Brest
+**** Voir qui vient
+**** Réserver Hôtel
+***** CityHotel?
+*** Changements méca
+**** Refaire caches / intégration lipos
+**** Baisser les épaules
+**** Poignée teflon plus épaisse
+**** Têtes plus légères
+- Noter le poids gagné
+**** Noeud papillons sécurité tête
+**** Intégration bipper dans les robots (vérifier)
+**** Réparations robots
+*** Software
+**** Changer le code de sécurité tête
+**** Éliminer les balles totalement hors terrain
+*** Achats
+**** Sourcing Lipo
+- Voir taille emplacement
+- Ludo
+**** Sourcing Terrain
+- Commande d'échantillons
+- Patxi + Ludo
+** 04/16 - 04/20
+*** Achats
+**** Sourcing Terrain
+- Commande terrain adapté
+*** Open de Brest
