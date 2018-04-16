@@ -1,7 +1,7 @@
 * Méca
 ** Manufacturing
    - 8/8 nouvelles épaules
-   - 1/4 poignée téflon 10.5mm
+   - 2/4 poignée téflon 10.5mm
    - 8/8 tige filetés
    - 0/8 nœud papillon (Adrien)
    - 0/4 têtes vidées
