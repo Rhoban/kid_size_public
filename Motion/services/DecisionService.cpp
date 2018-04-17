@@ -48,6 +48,14 @@ DecisionService::DecisionService()
     // Robot fallen
     bind.bindNew("isFallen", isFallen)
         ->comment("Is the robot fallen ?")->defaultValue(false);
+// TODO: solve issue with RhIO and enums
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+    bind.bindNew("fallDirection", (int&)fallDirection)
+        ->comment("Direction of the robot fall ?")->defaultValue(FallDirection::None);
+    bind.bindNew("fallStatus", (int&)fallStatus)
+        ->comment("Status of the fall ")->defaultValue(FallStatus::Ok);
+#pragma GCC diagnostic pop
 
     // Let play
     bind.bindNew("shouldLetPlay", shouldLetPlay, RhIO::Bind::PushOnly)
@@ -304,9 +312,40 @@ bool DecisionService::tick(double elapsed)
             isFieldQualityGood = false;
         }
 
+
         // Is the robot fallen?
-        isFallen = ((fabs(rad2deg(getPitch())) > 45) 
-                || (fabs(rad2deg(getRoll())) > 45));
+        double pitch_angle = rad2deg(getPitch());
+        double roll_angle = rad2deg(getRoll());
+
+        double max_imu_angle = std::max(fabs(pitch_angle), fabs(roll_angle));
+
+        double threshold_falling = 45;
+        double threshold_fallen = 60;
+        isFallen = max_imu_angle > threshold_falling;
+
+        if (max_imu_angle < threshold_falling) {
+          fallStatus =  FallStatus::Ok;
+          fallDirection = FallDirection::None;
+        } else {
+          // Computing fallStatus
+          if (max_imu_angle < threshold_fallen) {
+            fallStatus = FallStatus::Falling;
+          } else { 
+            fallStatus = FallStatus::Fallen;
+          }
+          // Computing fallDirection
+          if (fabs(pitch_angle) > fabs(roll_angle)) {
+            if (pitch_angle > 0) {
+              fallDirection = FallDirection::Forward;
+            } else {
+              fallDirection = FallDirection::Backward;
+            }
+          } else {
+            fallDirection = FallDirection::Side;
+          }
+        }
+
+
 
         bind.push();
 

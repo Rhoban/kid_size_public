@@ -1,65 +1,50 @@
-* DONE Travail sur robots
-** DONE Indispensable
-*** DONE Câbles ethernets
-*** DONE USB3 to Ethernet
-*** DONE LiPo
-*** DONE Chargeurs de batterie
-*** DONE Ballons (*2)
-** DONE Confort
-*** DONE Trépied caméra
-* DONE Entretien: minimal
-** DONE Visserie
-*** DONE Mini-clefs plates
+* Travail sur robots
+** Indispensable
+*** Câbles ethernets
+*** USB3 to Ethernet
+*** LiPo
+*** Chargeurs de batterie
+*** Ballons (*2)
+** Confort
+*** Trépied caméra
+* Entretien: minimal
+** Visserie
+*** Mini-clefs plates
 **** Tailles: 5,5.5,8
 **** Source possible: https://www.amazon.fr/Andux-Mini-cl%C3%A9s-Trousse-fourche-Vanadium/dp/B01MDUUHHO/ref=sr_1_11?ie=UTF8&qid=1521208755&sr=8-11&keywords=cl%C3%A9s+plates
-*** DONE Tournevis Allen
+*** Tournevis Allen
 **** Tailles: (1.5, 2, 2.5, 3)
 **** Boules (on peut trouver mieux): https://www.amazon.fr/Metric-hexagonale-pilotes-tournevis-Engineer/dp/B001YHFI14/ref=sr_1_1?s=hi&ie=UTF8&qid=1521208828&sr=8-1&keywords=precision+screwdriver+allen+ball
 **** Droits: https://www.amazon.fr/dp/B00R7IWPEM/ref=sxbs_sxwds-stvp_1?pf_rd_m=A1X6FK5RDHNB96&pf_rd_p=1671751967&pd_rd_wg=fHfZL&pf_rd_r=WB36T98YKWM26KBWVE2S&pf_rd_s=desktop-sx-bottom-slot&pf_rd_t=301&pd_rd_i=B00R7IWPEM&pd_rd_w=3w557&pf_rd_i=precision+screwdriver+allen&pd_rd_r=5557197c-c08b-4c16-8f58-f01d0c472640&ie=UTF8&qid=1521208878&sr=1
-
 **** Clés courtes:
-** DONE Divers
-*** DONE Colliers de serrage
-** DONE Outils
-*** DONE Pince coupante (diverses tailles)
-*** DONE Pince plate
-*** DONE Pince multi-prise
-* DONE Entretien: complémentaire
-*** DONE Frein-filet
-*** DONE Fer à souder + étain
-*** DONE Multimètre
-*** De quoi 
-* DONE Logistique RoboCup
-** DONE Table d'équipe:
-*** DONE 2 Alims PC
-*** DONE 2-3 Multiprises
-*** DONE Routeur
-** DONE Rechange
-*** DONE Moteurs neufs + moteurs usés pour si jamais
-*** DONE Câblage (divers câbles (3/4 brins) + gaine)
-*** DONE Corde à piano
-*** DONE Scratch qualité
-* À trier
-** LiPo: Est-ce que certaines sont en fin de vie?
-*** Durée de vie très variable
-* À trier
-** LiPo: Est-ce que certaines sont en fin de vie?
-*** Durée de vie très variable
-*** DONE Marqueurs couleur
-*** DONE Jauges de pression
-*** DONE Visserie
-*** Poignée Teflon de rechange
-*** DONE Cartes de rechange
-**** DONE Pression
-**** DONE HotSwap
-**** DONE Triple Bus
-** DONE Divers
-*** DONE Set de calibration
-*** DONE Cameras monitoring (*2)
-* DONE À prendre Ludo
-** DONE Câbles ethernet
-** DONE Station soudure
-** DONE Switch
+** Divers
+*** Colliers de serrage
+*** Matériel pour flasher servomoteurs
+** Outils
+*** Pince coupante (diverses tailles)
+*** Pince plate
+*** Pince multi-prise
+* Entretien: complémentaire
+*** Frein-filet
+*** Fer à souder + étain
+*** Multimètre
+*** Station soudure
+*** De quoi reflasher les servos
+* Logistique RoboCup
+** Table d'équipe:
+*** 2 Alims PC
+*** Adaptateurs électriques
+*** 2-3 Multiprises
+*** Routeur
+*** Switch
+** Rechange
+*** Moteurs neufs + moteurs usés pour si jamais
+*** Câblage (divers câbles (3/4 brins) + gaine)
+*** Corde à piano
+*** Scratch qualité
+** Divers
+*** Set de calibration
+*** Cameras monitoring
 
 
 

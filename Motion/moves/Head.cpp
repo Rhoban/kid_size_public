@@ -13,19 +13,8 @@ using rhoban_unsorted::HeadScan;
 
 static rhoban_utils::Logger logger("Head");
 
-std::string fallStatusToString(Head::FallStatus fs) {
-  switch(fs) {
-    case Head::FallStatus::Forward: return "Forward";
-    case Head::FallStatus::Backward: return "Backward";
-    case Head::FallStatus::Side: return "Side";
-    case Head::FallStatus::Ok: return "Ok";
-  }
-  throw std::logic_error("Head::fallStatusToString: Unknown fall status");
-}
-
 Head::Head()
-  : last_fall_status(FallStatus::Ok),
-    scan_period(-1),
+  : scan_period(-1),
     pan_deg(0), tilt_deg(0),
     target_x(0), target_y(0),
     wished_pan(0), wished_tilt(0), wished_dist(0),
@@ -242,23 +231,14 @@ void Head::step(float elapsed)
     std::cout << "head: failed lookAtNoUpdate" << std::endl;
   }
 
-  FallStatus fall_status = getFallStatus();
+  FallStatus fall_status = getServices()->decision->fallStatus;
 
   // if robot is fallen apply a specific procedure
   if (fall_status != FallStatus::Ok)
   {
-    // To avoid oscillating between several fall_status, only the first
-    // detected status is considered
-    if (last_fall_status == FallStatus::Ok)
-    {
-      std::string fs_string = fallStatusToString(fall_status);
-      logger.log("Changing last_fall_status to %s", fs_string.c_str());
-      last_fall_status = fall_status;
-    }
-    applyProtection(last_fall_status);
+    applyProtection();
   }
   else {
-    last_fall_status = FallStatus::Ok;
     // Smoothing orders
     pan_deg  = smoothing * pan_deg  + (1-smoothing) * rad2deg(wished_pan_rad );
     tilt_deg = smoothing * tilt_deg + (1-smoothing) * rad2deg(wished_tilt_rad);
@@ -278,6 +258,7 @@ void Head::step(float elapsed)
       Move::setAngle("head_yaw", pan_deg);
       Move::setAngle("head_pitch", tilt_deg);
     }
+    setTorqueLimit("head_pitch", 0.5);
   }
 
   bind->push();
@@ -428,35 +409,28 @@ void Head::updateScanners()
   compass_scan_period = compass_scanner.getCycleDuration();
 }
 
-Head::FallStatus Head::getFallStatus()
+void Head::applyProtection()
 {
-  double pitch = rad2deg(Helpers::getPitch());
-  double roll = rad2deg(Helpers::getRoll());
-  if (pitch > 45) {
-    return FallStatus::Forward;
-  } else if (pitch < -45) {
-    return FallStatus::Backward;
-  } else if (std::fabs(roll) > 45) {
-    return FallStatus::Side;
-  }
-  return FallStatus::Ok;
-}
-
-void Head::applyProtection(FallStatus status)
-{
-  pan_deg = 0;
-  tilt_deg = 0;
-  switch(status)
-  {
-    case FallStatus::Forward:
-      tilt_deg = fall_forward_pitch;
-      break;
-    case FallStatus::Backward:
-      tilt_deg = fall_backward_pitch;
-      break;
-    default:
-      break;
+  DecisionService * decision = getServices()->decision;
+  FallStatus fall_status = decision->fallStatus;
+  FallDirection fall_direction = decision->fallDirection;
+  if (fall_status == FallStatus::Falling) {
+    tilt_deg = 0;
+    switch(fall_direction)
+    {
+      case FallDirection::Forward:
+        tilt_deg = fall_forward_pitch;
+        break;
+      case FallDirection::Backward:
+        tilt_deg = fall_backward_pitch;
+        break;
+      default:
+        break;
+    }
+    Move::setAngle("head_pitch", tilt_deg);
+    setTorqueLimit("head_pitch", 0.5);
+  } else if ( fall_status == FallStatus::Fallen) {
+    setTorqueLimit("head_pitch", 0.0);
   }
   Move::setAngle("head_yaw"  , pan_deg );
-  Move::setAngle("head_pitch", tilt_deg);
 }

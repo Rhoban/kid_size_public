@@ -10,6 +10,20 @@
 
 class Move;
 
+enum FallDirection : int
+{
+  None = 0, Forward = 1, Backward = 2, Side = 3
+};
+
+/// TODO: threshold as variables
+/// OK      : means no fall has been detected
+/// Falling : means the robot is currently falling (error above 45 deg)
+/// Fallen  : means the robot is almost (error above 75 deg)
+enum FallStatus : int
+{
+  Ok = 0, Falling = 1, Fallen = 2
+};
+
 class DecisionService : public Service
 {
     public:
@@ -33,6 +47,7 @@ class DecisionService : public Service
 
         /**
          * Is the robot fallen?
+         * TODO: remove and use only fallStatus/fallDirection?
          */
         bool isFallen;
 
@@ -95,6 +110,11 @@ class DecisionService : public Service
          * Is self attacking
          */
         bool isSelfAttacking;
+
+        /// Filtered direction of the fall
+        FallDirection fallDirection;
+        /// Filtered status of the fall
+        FallStatus fallStatus;
     
     protected:
         RhIO::Bind bind;
