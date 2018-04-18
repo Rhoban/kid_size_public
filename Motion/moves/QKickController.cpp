@@ -24,7 +24,7 @@ QKickController::QKickController()
         ->persisted(true);
 
     bind->bindNew("avoidOpponents", avoidOpponents, RhIO::Bind::PullOnly)
-        ->defaultValue(false)->->comment("Avoid the opponents?");
+        ->defaultValue(false)->comment("Avoid the opponents?");
 
     bind->bindNew("farUpdateDist", farUpdateDist, RhIO::Bind::PullOnly)
         ->defaultValue(0.35)->persisted(true);
