@@ -29,12 +29,6 @@ public:
   void setDisabled(bool value);
   void setLocalizeMaxPan(double maxPan);
 
-  // TODO: Ideally, this should be move somewhere else, maybe in a state machine
-  //       controlling head
-  enum class FallStatus
-  {
-    Forward, Backward, Side, Ok
-  };
 
 private:
   /// Synchronize local parameters with 'scanner'
@@ -52,13 +46,8 @@ private:
   Eigen::Vector3d getBallTarget(Leph::HumanoidModel * model,
                                 Leph::CameraParameters * cam_params);
 
-  /// Return actual FallStatus, based on IMU
-  FallStatus getFallStatus();
-
   /// Apply the protection orders based on provided status
-  void applyProtection(FallStatus status);
-
-  FallStatus last_fall_status;
+  void applyProtection();
 
   /// Default scanner, used to find the ball
   rhoban_unsorted::HeadScan scanner;

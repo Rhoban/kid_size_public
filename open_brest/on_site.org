@@ -1,0 +1,30 @@
+* Jour 1
+** Ludo
+- BallRadius 7.5 -> 5 -> tmp
+- Shutter 5 -> 3
+*** TODO
+- nova all_fitlet.json -> all.json
+*** Tuning green
+- YUV: [43,99] * [103,122] * [123,165]
+- Problem -> looking toward the window -> critical failure
+*** Tuning white
+- Threshold : ~190 (vs window)
+*** ballByII
+- Reducing greenWeight 6 -> 2  critical (bad green quality)
+- Reducing minScore 60 -> 30 (lower contrast ball/grass)
+- Decimation rate 5 -> 2 ou 3
+*** ballByDNN
+- Tagging nécessaire, mais à voir
+*** goal detection
+- Decimation rate 5 -> 2 ou 3
+- useMask -> 0 ?
+- widthScale 1.15 -> 1.7
+- Catastrophic 
+  - Require white/green tuning
+  - Not possible to score white vs green coeffs in code
+- ScoreThreshold -> 0.6
+*** To be decided
+- head/maxPan -> 150
+- head/maxSpeed -> 240
+- Reduce/harmonize ballStackFilter increase/decrease
+- Reduce even more the shutter? (before new logs)

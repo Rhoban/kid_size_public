@@ -32,7 +32,7 @@ namespace Vision {
 namespace Utils {
 
 // Actually this class became a helper that could be 100% static
-double CameraState::ballRadius(7.5);
+double CameraState::ballRadius(5);
 
 /*
  *TODO :
