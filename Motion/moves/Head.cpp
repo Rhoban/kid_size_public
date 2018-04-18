@@ -258,7 +258,7 @@ void Head::step(float elapsed)
       Move::setAngle("head_yaw", pan_deg);
       Move::setAngle("head_pitch", tilt_deg);
     }
-    setTorqueLimit("head_pitch", 0.5);
+    setTorqueLimit("head_pitch", 1.0);
   }
 
   bind->push();
