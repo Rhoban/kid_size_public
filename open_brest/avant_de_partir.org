@@ -1,34 +1,50 @@
 * Méca
 ** Manufacturing
-   - 4/8 nouvelles épaules
-   - 0/4 poignée téflon 10.5mm
-   - 0/8 tige filetés
-   - 0/8 noeud papillon (Adrien)
+   - 8/8 nouvelles épaules
+   - 4/4 poignée téflon 10.5mm (fin 4/4 à [19:00])
+   - 8/8 tige filetés
+   - 8/16 crampons pour sol dur (attention rondelle en alu à ajouter au montage)
+   - 2/8 nœud papillon (Adrien)
+   - (0/4 têtes vidées)
 
 ** Peinture
-   - 0/8 nouvelles épaules
-   - bras Nova
+   - 8/8 nouvelles épaules première couche [14:50]
+   - 8/8 nouvelles épaules deuxième couche [17:00]
+   - bras Nova ?
 
 ** Réparation/Upgrade
 *** Olive
-   - [ ] remplacer coup pitch
-   - [ ] nouvelle poignée
-   - [ ] protection coup ? (Adrien)
+   - [X] remplacer cou pitch
+   - [X] nouvelle poignée
+   - [ ] vérifier les jauges
+   - [X] zéro tête
+   - [ ] calibration
+   - [ ] protection cou ? (Adrien)
+   - [X] changer crampon
 *** Nova
    - [ ] remplacer tête : téflon -> alu ?
-   - [ ] nouvelle poignée
-   - [ ] protection coup ? (Adrien)
+   - [X] nouvelle poignée
+   - [ ] protection cou ? (Adrien)
+   - [ ] protection pied
+   - [ ] vérifier les jauges
+   - [ ] changer crampon
 *** Arya
-   - [ ] remplacer épaule pitch
+   - [X] remplacer cou pitch
+   - [X] nouvelle poignée
+   - [ ] vérifier les jauges
+   - [X] zéro tête
+   - [ ] calibration
+   - [ ] protection cou ? (Adrien)
+   - [ ] remplacer épaule pitch ?
       Récupérer un MX-64 sur le yaw d'un autre robot ?
-   - [ ] remplacer coup pitch
-   - [ ] nouvelle poignée
-   - [ ] protection coup ? (Adrien)
+   - [X] changer crampon
 *** Tom
-   - [ ] nouvelle poignée
-   - [ ] protection coup ? (Adrien)
+   - [X] nouvelle poignée (on a gardé l'ancienne)
+   - [ ] vérifier les jauges
+   - [ ] protection cou ? (Adrien)
+   - [X] changer crampon
 
 * Mouvement
-  - [ ] Refaire le stand up
+  - [X] Refaire le stand up
   - [ ] Refaire le kick latéral
   - [ ] Augmenter le pan/yaw du scan ?

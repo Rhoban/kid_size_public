@@ -4,6 +4,7 @@
 
 #include <Eigen/Core>
 
+#include <vector>
 #include <cstdlib>
 #include <deque>
 
