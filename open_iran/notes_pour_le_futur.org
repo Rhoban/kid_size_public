@@ -8,6 +8,7 @@
 *** Ajouter état temporaire dans isHandled pour après unpenalized
 **** Gestion du cas où le referee unpenalize trop tôt
 ** Mouvement
+*** Accélérer relevage
 *** Refaire le tir latéral tranquillement
 **** Enlever le cartésien et le supprimer de la génération des kicks du coup
 ** Features software
