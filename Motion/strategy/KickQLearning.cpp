@@ -9,11 +9,11 @@
 
 using namespace robocup_referee;
 using namespace rhoban_geometry;
-        
+
 KickQLearning::KickQLearning(
         std::string kickFiles,
-        double accuracy, 
-        double angleAccuracy, 
+        double accuracy,
+        double angleAccuracy,
         double goalieWidth,
         bool enableExcentric,
         bool dump,
@@ -33,7 +33,7 @@ KickQLearning::KickQLearning(
 {
     kicks.loadFile(kickFiles);
     kicks.setGrassConeOffset(grassOffset);
-    if (corridorProfilePath != "") { 
+    if (corridorProfilePath != "") {
       corridorProfile.loadFile(corridorProfilePath);
     }
 }
@@ -45,9 +45,9 @@ double KickQLearning::rewardFor(State *from, State *state)
     }
 
     if (state == &failState) {
-        return -1000;
+        return -100;
     }
-    
+
     //double fX = accuracy*from->x;
     //double fY = accuracy*from->y;
     double X = accuracy*state->x;
@@ -58,7 +58,7 @@ double KickQLearning::rewardFor(State *from, State *state)
             fabs(Y-Constants::fieldWidth/200.0) < Constants::goalAreaWidth/100.0) {
         multiplier = penaltyMultiplier;
     }
- 
+
     if (enableExcentric) {
         bool ok = false;
         double limitA = Constants::fieldLength*0.5/100.0;
@@ -130,7 +130,7 @@ KickStrategy KickQLearning::generate()
                 for (auto &possibility : entry.second) {
                     actionScore +=
                         possibility.first*(
-                                rewardFor(&states[x][y], possibility.second) + 
+                                rewardFor(&states[x][y], possibility.second) +
                                 possibility.second->score
                                 )
                         ;
@@ -161,7 +161,7 @@ KickStrategy KickQLearning::generate()
                     }
                 }
 
-            } 
+            }
 
             KickStrategy::Action resultAction;
             // XXX: We suppose that the possible orientations are dispatched evenly
@@ -174,7 +174,7 @@ KickStrategy KickQLearning::generate()
             } else {
                 resultAction.kick = action.kick;
             }
-            
+
             strategy.setAction(X, Y, resultAction);
         }
     }
@@ -206,7 +206,7 @@ void KickQLearning::generateTemplate()
 {
     std::default_random_engine generator;
     std::normal_distribution<double> posNoise(0, 0.3);
-        
+
 #define SAMPLES 10000
 
     for (int a=0; a<aSteps; a++) {
@@ -269,12 +269,12 @@ void KickQLearning::generateModels()
                             if (fabs(yIntersect) < goalieWidth/2.0) {
                                 double goalProbability = 0.25;
 
-                                auto goalFeet = stateFor(Constants::fieldLength/100.0 - 0.1, 
+                                auto goalFeet = stateFor(Constants::fieldLength/100.0 - 0.1,
                                         Constants::fieldWidth/200.0 + yIntersect);
 
                                 count[goalFeet]
                                     += p*goalProbability;
-                                
+
                                 count[&successState] += p*(1-goalProbability);
 
                             } else if (fabs(yIntersect) < (Constants::goalWidth*0.95)/200.0) {
@@ -308,9 +308,9 @@ bool KickQLearning::iterate()
             for (auto &entry : states[x][y].models) {
                 double actionScore = 0;
                 for (auto &possibility : entry.second) {
-                    actionScore += 
+                    actionScore +=
                         possibility.first*(
-                                rewardFor(&states[x][y], possibility.second) + 
+                                rewardFor(&states[x][y], possibility.second) +
                                 possibility.second->score
                                 );
                 }
