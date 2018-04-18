@@ -5,6 +5,8 @@
 *** LiPo
 *** Chargeurs de batterie
 *** Ballons (*2)
+*** Robots
+*** Marqueur blanc (pour commentaires sur moteurs)
 ** Confort
 *** Trépied caméra
 * Entretien: minimal
@@ -29,10 +31,9 @@
 *** Fer à souder + étain
 *** Multimètre
 *** Station soudure
-*** De quoi reflasher les servos
 * Logistique RoboCup
 ** Table d'équipe:
-*** 2 Alims PC
+*** Alim PC
 *** Adaptateurs électriques
 *** 2-3 Multiprises
 *** Routeur
