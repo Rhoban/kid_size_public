@@ -910,6 +910,17 @@ void Robocup::updateBallInformations() {
   std::vector<Eigen::Vector3d> positions;
   for (size_t k = 0; k < ballsX.size(); k++) {
     try {
+      // Dirty fix to avoid seeing balls in shoulders
+      cv::Point2f posInSelf = cs->robotPosFromImg(ballsX[k], ballsY[k], 1, 1);
+      double ballXSelf = posInSelf.x;
+      double ballYSelf = posInSelf.y;
+      double ballDist = std::sqrt(posInSelf.x * posInSelf.x + posInSelf.y * posInSelf.y);
+      Angle ballTheta = Angle::fromXY(ballXSelf,ballYSelf);
+      if ((ballXSelf < 0.2 && std::fabs(ballYSelf) > 0.15) || 
+          (ballDist < 1.5 && std::fabs(ballTheta.getSignedValue()) > 70)) {
+        continue;
+      }
+      // Usual code
       cv::Point2f ballPix(ballsX[k], ballsY[k]);
       Eigen::Vector3d ball_in_world = cs->ballInfoFromPixel(ballPix, 1, 1);
       positions.push_back(ball_in_world);
