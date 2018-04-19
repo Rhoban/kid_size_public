@@ -68,7 +68,7 @@ BallByDNN::BallByDNN() : BallProvider("BallByDNN"),
 void BallByDNN::setParameters()
 {
   debugLevel = ParamInt(0,0,1);
-  scoreThreshold = ParamFloat(0.5,0.01,1.0);
+  scoreThreshold = ParamFloat(0.5,0.0,1.0);
 
   params()->define<ParamInt>("debugLevel", &debugLevel);
   params()->define<ParamFloat>("scoreThreshold", &scoreThreshold);
@@ -159,7 +159,7 @@ void BallByDNN::process() {
         std::cout << "\t" << Utils::toRect(roi) << " score: " << score << std::endl;
       }
 
-      bool isValid = score > scoreThreshold;
+      bool isValid = score >= scoreThreshold;
 
       if (isValid) {
         pushBall(Circle(cv2rg(roi.center), -1), output);
