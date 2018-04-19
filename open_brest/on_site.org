@@ -38,3 +38,34 @@
 |  16 |    2 |      5 |      16 |   16 |          0.08 |        0.1 |     84.5 |        |
 |  16 |    2 |      5 |      32 |   32 |          0.08 |        0.1 |     84.5 |        |
 |  16 |    2 |      5 |      32 |   32 |          0.05 |       0.06 |     86.1 |        |
+*** GoalByDNN training v2
+| ROI | Grid | kernel | n_fmaps | n_fc | learning_rate | overfit at | accuracy | Choice |
+|-----+------+--------+---------+------+---------------+------------+----------+--------|
+|  16 |    4 |      5 |      16 |   16 |        0.0225 |      0.025 |     89.9 | XXX    |
+
+
+* Notes pour tout de suite
+** Olive + Nova: head_yaw overload
+*** Lié à la nouvelle sécurité tête?
+** Repositionner la penalty mark
+** Retunner
+** Transition placer/approche
+
+* Notes pour la suite
+** Achat
+*** MX-64 / MX-106
+*** Corde à piano (2.5 et 3)
+*** Terrain
+*** LiPo
+** Méca
+*** Corde à piano pour le dos
+*** Intégration LiPo à vérifier
+*** Fixation NUC + LiPo à revoir
+*** Améliorer le passage des câbles de hanches
+*** Ajouter teflon intérieur coude
+*** Refaire des caches caméras
+** Soft
+*** Vérifier le YCrCb / YCbCr
+*** Virer les balles hors du terrain
+*** Tester les compils avec flag sse4
+*** Convertir robocup_referee/constants to a serializable file

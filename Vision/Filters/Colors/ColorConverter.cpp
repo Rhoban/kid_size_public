@@ -36,12 +36,12 @@ int ColorConverter::getConvCode() {
 
 void ColorConverter::buildMap() {
   strToCVCode.clear();
-  strToCVCode["BGR2YUV"] = CV_BGR2YUV;
-  strToCVCode["RGB2YUV"] = CV_RGB2YUV;
-  strToCVCode["YUV2RGB"] = CV_YUV2RGB;
-  strToCVCode["YUV2BGR"] = CV_YUV2BGR;
   strToCVCode["BGR2HSV"] = CV_BGR2HSV;
+  strToCVCode["HSV2BGR"] = CV_HSV2BGR;
   strToCVCode["YCrCb2BGR"] = CV_YCrCb2BGR;
+  strToCVCode["YCrCb2RGB"] = CV_YCrCb2RGB;
+  strToCVCode["RGB2YCrCb"] = CV_RGB2YCrCb;
+  strToCVCode["BGR2YCrCb"] = CV_BGR2YCrCb;
 }
 }
 }
