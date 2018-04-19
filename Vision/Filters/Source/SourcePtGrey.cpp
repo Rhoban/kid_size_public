@@ -765,13 +765,12 @@ void SourcePtGrey::invertChannels(cv::Mat &frame) {
 
 bool SourcePtGrey::isEquivalent(const FlyCapture2::Property &prop1,
                                 const FlyCapture2::Property &prop2) {
-  double abs_value_tol = 0.02; // TODO! Use something specific to each property
   if (prop1.type == FlyCapture2::WHITE_BALANCE) {
-    return false;
     return prop1.valueA == prop2.valueA &&
       prop1.valueB == prop2.valueB &&
       prop1.autoManualMode == prop2.autoManualMode;
   }
+  double abs_value_tol = 0.02; // TODO! Use something specific to each property
   return (prop1.absControl == prop2.absControl &&
           prop1.autoManualMode == prop2.autoManualMode &&
           std::fabs(prop1.absValue - prop2.absValue) <= abs_value_tol);
