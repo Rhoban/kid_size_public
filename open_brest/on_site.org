@@ -31,3 +31,10 @@
 - Reduce even more the shutter? (before new logs)
 *** Orange ball
 - YUV: [126,180] [151,214] [97,119]
+*** GoalByDNN training
+| ROI | Grid | kernel | n_fmaps | n_fc | learning_rate | overfit at | accuracy | Choice |
+|-----+------+--------+---------+------+---------------+------------+----------+--------|
+|  16 |    4 |      5 |      16 |   16 |         0.045 |       0.05 |     86.2 | XXX    |
+|  16 |    2 |      5 |      16 |   16 |          0.08 |        0.1 |     84.5 |        |
+|  16 |    2 |      5 |      32 |   32 |          0.08 |        0.1 |     84.5 |        |
+|  16 |    2 |      5 |      32 |   32 |          0.05 |       0.06 |     86.1 |        |
