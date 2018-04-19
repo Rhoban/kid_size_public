@@ -22,17 +22,17 @@ QKickController::QKickController()
         ->defaultValue("kickStrategy_with_grass.json")
         ->comment("Strategy file")
         ->persisted(true);
-    
+
     bind->bindNew("avoidOpponents", avoidOpponents, RhIO::Bind::PullOnly)
-        ->defaultValue(true)->persisted(true) ->comment("Avoid the opponents?");
+        ->defaultValue(false)->comment("Avoid the opponents?");
 
     bind->bindNew("farUpdateDist", farUpdateDist, RhIO::Bind::PullOnly)
         ->defaultValue(0.35)->persisted(true);
-    
+
     bind->bindNew("moveUpdateDist", moveUpdateDist, RhIO::Bind::PullOnly)
         ->defaultValue(0.5)->persisted(true);
-    
-    bind->bindFunc("reloadStrategy", 
+
+    bind->bindFunc("reloadStrategy",
         "Reload the strategy file",
         &QKickController::cmdReloadStrategy, *this);
 
@@ -42,7 +42,7 @@ QKickController::QKickController()
     if (!strategy.fromJson(strategyFile)) {
         logger.error("Can't load kick strategy file %s", strategyFile.c_str());
     }
-    
+
     // Load available kicks
     kmc.loadFile();
 }
@@ -97,7 +97,7 @@ void QKickController::updateAction()
             if (action.kick == "opportunist") {
                 kick = "classic";
             }
-            
+
             // Shoot segment and opponent
             std::vector<Circle> opponents;
             for (auto &opponentPos : opponentsPos) {
@@ -108,7 +108,7 @@ void QKickController::updateAction()
             // Does the shoot intersects an opponent ?
             auto intersects = [&opponents, &ball](Point &point) -> bool {
                 Segment shoot(ball, point);
-           
+
                 for (auto &opponent : opponents) {
                     if (shoot.intersects(opponent)) {
                         return true;
@@ -126,7 +126,7 @@ void QKickController::updateAction()
                     opponent.setCenter(opponent.getCenter() + tmp.normalize(limit));
                 }
             }
-            
+
             // Predicting the current shoot
             auto tmp = kmc.getKickModel(kick).applyKick(
                     Eigen::Vector2d(ball.x, ball.y), action.orientation
@@ -155,7 +155,7 @@ void QKickController::updateAction()
                     double y = sin(deg2rad(alpha));
                     tangents.push_back(ball + Point(x, y));
                 }
-                
+
                 for (auto &tangent : tangents) {
                     auto vect = tangent-ball;
                     auto orientation = atan2(vect.y, vect.x);
@@ -184,7 +184,7 @@ void QKickController::updateAction()
                                 fabs(target.y) > Constants::fieldWidth/200.0) {
                             // Ball goes out of the field
                             ok = false;
-                            if (target.x > Constants::fieldLength/200.0 && 
+                            if (target.x > Constants::fieldLength/200.0 &&
                                     ball.x <= Constants::fieldLength/200.0) {
                                 double dY = (target.y-ball.y)/(target.x-ball.x);
                                 double yIntersect = ball.y + (Constants::fieldLength/200.0-ball.x)*dY;
@@ -270,4 +270,3 @@ void QKickController::step(float elapsed)
         updateAction();
     }
 }
-
