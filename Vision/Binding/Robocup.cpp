@@ -1049,7 +1049,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
 
   cv::resize(tmp, tmp_small, cv::Size(width, height));
 
-  cv::cvtColor(tmp_small, img, CV_YUV2BGR);
+  cv::cvtColor(tmp_small, img, CV_YCrCb2BGR);
 
   // Tagging horizon
   double halfTagAngle =
