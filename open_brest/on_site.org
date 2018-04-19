@@ -13,6 +13,7 @@
 - Reducing greenWeight 6 -> 2  critical (bad green quality)
 - Reducing minScore 60 -> 30 (lower contrast ball/grass)
 - Decimation rate 5 -> 2 ou 3
+- Increasing maximal number of ROIs
 *** ballByDNN
 - Tagging nécessaire, mais à voir
 *** goal detection
@@ -28,3 +29,5 @@
 - head/maxSpeed -> 240
 - Reduce/harmonize ballStackFilter increase/decrease
 - Reduce even more the shutter? (before new logs)
+*** Orange ball
+- YUV: [126,180] [151,214] [97,119]

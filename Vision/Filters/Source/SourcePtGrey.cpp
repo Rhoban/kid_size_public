@@ -28,7 +28,9 @@ std::map<std::string, FlyCapture2::PropertyType> SourcePtGrey::names_to_types =
      {"Exposure", FlyCapture2::AUTO_EXPOSURE},
      {"Shutter", FlyCapture2::SHUTTER},
      {"FrameRate", FlyCapture2::FRAME_RATE},
-     {"Gain", FlyCapture2::GAIN}};
+     {"Gain", FlyCapture2::GAIN},
+     {"WhiteBalance", FlyCapture2::WHITE_BALANCE}
+};
 
 PtGreyException::PtGreyException(const std::string & msg)
   : std::runtime_error(msg) {}
@@ -48,18 +50,32 @@ SourcePtGrey::~SourcePtGrey() {}
 FlyCapture2::Property
 SourcePtGrey::propertyFromJson(const Json::Value & v,
                                FlyCapture2::PropertyType type) const {
+
+  bool isWhiteBalance = (type == FlyCapture2::PropertyType::WHITE_BALANCE);
   FlyCapture2::Property p;
   p.type = type;
   // default values
   p.present = true;
-  p.absControl = true;
+  p.absControl = !isWhiteBalance;
   p.onePush = false;
   p.onOff = true;
   p.autoManualMode = false; // false -> manual
   p.valueA = 0;
   p.valueB = 0;
   p.autoManualMode = rhoban_utils::read<bool>(v, "autoManualMode");
-  p.absValue = rhoban_utils::read<double>(v, "absValue");
+  // Reading using temporary variables due to type
+  if (!isWhiteBalance) {
+    double tmpAbsVal = 0;
+    rhoban_utils::tryRead(v, "absValue", &tmpAbsVal);
+    p.absValue = tmpAbsVal;
+  } else {
+    int tmpValA = 0;
+    int tmpValB = 0;
+    rhoban_utils::tryRead(v, "valueA", &tmpValA);
+    rhoban_utils::tryRead(v, "valueB", &tmpValB);
+    p.valueA = tmpValA;
+    p.valueB = tmpValB;
+  }
   return p;
 }
 
@@ -431,11 +447,22 @@ void SourcePtGrey::bindProperties() {
     RhIO::IONode &node = RhIO::Root.child(property_path);
     // Create a node for each property
     node.newBool("auto")->defaultValue(false);
-    node.newBool("absControl")->defaultValue(true);
-    node.newFloat("absValue")
+    if (property.type == FlyCapture2::WHITE_BALANCE) {
+      node.newInt("valueA")
+        ->defaultValue(property.valueA)
+        ->minimum(0)
+        ->maximum(1023);
+      node.newInt("valueB")
+        ->defaultValue(property.valueB)
+        ->minimum(0)
+        ->maximum(1023);
+    } else {
+      node.newBool("absControl")->defaultValue(true);
+      node.newFloat("absValue")
         ->defaultValue(property.absValue)
         ->minimum(property_info.absMin)
         ->maximum(property_info.absMax);
+    }
     // TODO handle other types
   }
 }
@@ -450,8 +477,14 @@ void SourcePtGrey::importPropertiesFromRhIO() {
     std::string property_path = filter_path + "/" + property_name;
     RhIO::IONode &node = RhIO::Root.child(property_path);
     property.autoManualMode = node.getValueBool("auto").value;
-    property.absControl = node.getValueBool("absControl").value;
-    property.absValue = node.getValueFloat("absValue").value;
+    if (property.type == FlyCapture2::WHITE_BALANCE) {
+      property.absControl = false;
+      property.valueA = node.getValueInt("valueA").value;
+      property.valueB = node.getValueInt("valueB").value;
+    } else {
+      property.absControl = node.getValueBool("absControl").value;
+      property.absValue = node.getValueFloat("absValue").value;
+    }
   }
 }
 
@@ -478,10 +511,18 @@ void SourcePtGrey::applyWishedProperties() {
     if (!isEquivalent(wished_property, properties.at(property_name))) {
       std::cout << "Difference found in configuration for property: '"
                 << property_name << "'" << std::endl;
+      if (wished_property.type == FlyCapture2::WHITE_BALANCE) {
+        wished_property.absControl = false;
+      }
       FlyCapture2::Error error;
       // Uploading property to camera
       error = camera.SetProperty(&wished_property, false);
       if (error != FlyCapture2::PGRERROR_OK) {
+        dumpProperties(std::cout);
+        //dumpPropertiesInformation(std::cout);
+        std::cout << "PtGreyError: " <<  error.GetDescription() << std::endl;
+        std::cout << "Wished prop: ";
+        writeProperty(entry.second, std::cout, "  ");
         throw PtGreyException("Failed to apply property: '" + property_name +
                                  "'");
       }
@@ -725,6 +766,12 @@ void SourcePtGrey::invertChannels(cv::Mat &frame) {
 bool SourcePtGrey::isEquivalent(const FlyCapture2::Property &prop1,
                                 const FlyCapture2::Property &prop2) {
   double abs_value_tol = 0.02; // TODO! Use something specific to each property
+  if (prop1.type == FlyCapture2::WHITE_BALANCE) {
+    return false;
+    return prop1.valueA == prop2.valueA &&
+      prop1.valueB == prop2.valueB &&
+      prop1.autoManualMode == prop2.autoManualMode;
+  }
   return (prop1.absControl == prop2.absControl &&
           prop1.autoManualMode == prop2.autoManualMode &&
           std::fabs(prop1.absValue - prop2.absValue) <= abs_value_tol);
