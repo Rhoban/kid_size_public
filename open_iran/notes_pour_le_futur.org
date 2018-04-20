@@ -7,9 +7,10 @@
 - Empty all images buffered rhio
 *** Ajouter état temporaire dans isHandled pour après unpenalized
 **** Gestion du cas où le referee unpenalize trop tôt
+**** Apparemment lié aux chutes
 ** Mouvement
 *** Accélérer relevage
-*** Refaire le tir latéral tranquillement
+*** DONE Refaire le tir latéral tranquillement
 **** Enlever le cartésien et le supprimer de la génération des kicks du coup
 ** Features software
 *** Évitement/répartition de nos robots basés sur la loc
@@ -42,7 +43,7 @@
 **** Éventuellement proposer un sujet de PDP l'année prochaine
 ** Méca
 *** Faire quelque chose pour la protection de la tête (poignée teflon suffisante?)
-*** Baisser les épaules (changement du U)
+*** DONE Baisser les épaules (changement du U)
 *** Fixation Lipos et cache LiPo à revoir
 *** Bipper intégré à rajouté dans tous les robots
 ** Problèmes à réfléchir

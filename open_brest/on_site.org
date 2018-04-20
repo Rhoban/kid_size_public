@@ -43,13 +43,12 @@
 |-----+------+--------+---------+------+---------------+------------+----------+--------|
 |  16 |    4 |      5 |      16 |   16 |        0.0225 |      0.025 |     89.9 | XXX    |
 
+* Jour 3
+** Ignorer les balles hors terrain
 
-* Notes pour tout de suite
-** Olive + Nova: head_yaw overload
+* À surveiller
+** Overload sur head_yaw (3 robots différents)
 *** Lié à la nouvelle sécurité tête?
-** Repositionner la penalty mark
-** Retunner
-** Transition placer/approche
 
 * Notes pour la suite
 ** Achat
@@ -61,11 +60,17 @@
 *** Corde à piano pour le dos
 *** Intégration LiPo à vérifier
 *** Fixation NUC + LiPo à revoir
-*** Améliorer le passage des câbles de hanches
+*** Améliorer le passage des câbles de hanches (dans le capot)
 *** Ajouter teflon intérieur coude
 *** Refaire des caches caméras
 ** Soft
-*** Vérifier le YCrCb / YCbCr
-*** Virer les balles hors du terrain
 *** Tester les compils avec flag sse4
 *** Convertir robocup_referee/constants to a serializable file
+** Mouvement/Comportement
+*** Ajouter le walkOnKick en commande
+*** Éviter le isFallen quand un robot est handled
+*** Stabilité à améliorer
+**** Particulièrement quand on marche sur des robots
+*** Transition placer/approche
+** Localisation
+*** Reset la position au lancement de RoboCup pour le monitoring
