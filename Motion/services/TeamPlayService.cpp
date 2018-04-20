@@ -30,9 +30,13 @@ TeamPlayService::TeamPlayService() :
     _bind->bindNew("broadcastPeriod", _broadcastPeriod, RhIO::Bind::PullOnly)
         ->comment("UDP broadcast period in seconds")
         ->defaultValue(0.3)->persisted(true);
+// TODO: solve issue with RhIO and enums
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
     _bind->bindNew("priority", (int&)_selfInfo.priority, RhIO::Bind::PullOnly)
         ->comment("0: low; 1: normal; 2: high Priority")
         ->defaultValue(1)->persisted(true);
+#pragma GCC diagnostic pop
     _bind->bindFunc("team", "Display information about teamplay",
         &TeamPlayService::cmdTeam, *this);
     _bind->bindNew("teamRadius", teamRadius)
