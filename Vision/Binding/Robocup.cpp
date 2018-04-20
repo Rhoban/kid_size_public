@@ -88,7 +88,8 @@ Robocup::Robocup(MoveScheduler *scheduler)
       activeSource(false),
       clearRememberObservations(false),
       wasHandled(false),
-      wasFallen(false)
+      wasFallen(false),
+      ignoreOutOfFieldBalls(true)
 {
   ballStackFilter = new BallStackFilter(cs);
   robotFilter = new RobotFilter(cs);
@@ -132,7 +133,8 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
        activeSource(false),
        clearRememberObservations(false),
        wasHandled(false),
-       wasFallen(false)
+       wasFallen(false),
+      ignoreOutOfFieldBalls(true)
 {
 
   ballStackFilter = new BallStackFilter(cs);
@@ -223,6 +225,7 @@ Json::Value Robocup::toJson() const {
   v["autologMovingBall"] = autologMovingBall;
   v["logBallExtraTime"] = logBallExtraTime;
   v["writeBallStatus"] = writeBallStatus;
+  v["ignoreOutOfFieldBalls"] = ignoreOutOfFieldBalls;
 
   for (const auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
@@ -243,6 +246,7 @@ void Robocup::fromJson(const Json::Value & v, const std::string & dir_name) {
   rhoban_utils::tryRead(v,"autologMovingBall",&autologMovingBall);
   rhoban_utils::tryRead(v,"logBallExtraTime",&logBallExtraTime);
   rhoban_utils::tryRead(v,"writeBallStatus",&writeBallStatus);
+  rhoban_utils::tryRead(v,"ignoreOutOfFieldBalls",&ignoreOutOfFieldBalls);
   for (auto &entry : featureProviders) {
     const std::string &featureName = entry.first;
 
@@ -910,15 +914,22 @@ void Robocup::updateBallInformations() {
   std::vector<Eigen::Vector3d> positions;
   for (size_t k = 0; k < ballsX.size(); k++) {
     try {
-      // Dirty fix to avoid seeing balls in shoulders
-      cv::Point2f posInSelf = cs->robotPosFromImg(ballsX[k], ballsY[k], 1, 1);
-      double ballXSelf = posInSelf.x;
-      double ballYSelf = posInSelf.y;
-      double ballDist = std::sqrt(posInSelf.x * posInSelf.x + posInSelf.y * posInSelf.y);
-      Angle ballTheta = Angle::fromXY(ballXSelf,ballYSelf);
-      if ((ballXSelf < 0.2 && std::fabs(ballYSelf) > 0.15) || 
-          (ballDist < 1.5 && std::fabs(ballTheta.getSignedValue()) > 70)) {
-        continue;
+      if (ignoreOutOfFieldBalls) {
+        cv::Point2f posInSelf = cs->robotPosFromImg(ballsX[k], ballsY[k], 1, 1);
+        double ballXSelf = posInSelf.x;
+        double ballYSelf = posInSelf.y;
+        LocalisationService * localisation = _scheduler->getServices()->localisation;
+        rhoban_geometry::Point robot = localisation->getFieldPos();
+        Angle robotDir(rad2deg(localisation->getFieldOrientation()));
+        double ballXField = robot.x + cos(robotDir) * ballXSelf - sin(robotDir) * ballYSelf;
+        double ballYField = robot.y + sin(robotDir) * ballXSelf + cos(robotDir) * ballYSelf;
+        // OPTION: Margin could be added here
+        if (std::fabs(ballXField * 100) > Constants::fieldLength/2 + Constants::borderStripWidth ||
+            std::fabs(ballYField * 100) > Constants::fieldWidth/2 + Constants::borderStripWidth) {
+          out.warning("Ignoring a ball candidate outside of the field at (%f,%f)",
+                      ballXField, ballYField);
+          continue;
+        }
       }
       // Usual code
       cv::Point2f ballPix(ballsX[k], ballsY[k]);

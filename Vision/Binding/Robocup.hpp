@@ -304,5 +304,8 @@ private:
 
   /// Was robot fallen at previous step
   bool wasFallen;
+
+  /// Are the ball outside of the field (according to localization) ignored
+  bool ignoreOutOfFieldBalls;
 };
 }
