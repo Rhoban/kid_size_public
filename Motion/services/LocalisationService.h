@@ -39,14 +39,12 @@ class LocalisationService : public Service
         rhoban_geometry::Point getLeftGoalPosSelf();
         rhoban_geometry::Point getRightGoalPosSelf();
         rhoban_geometry::Point getFieldPos();
-        double getFieldOrientation();
+        double getFieldOrientation();// Return value in [rad]
         Eigen::Vector3d goalLeftPosWorld;
         Eigen::Vector3d goalRightPosWorld;
         Eigen::Vector3d fieldCenterWorld;
         rhoban_utils::Angle getOurBallToGoalDirSelf();
 
-        /// WARNING: The name of goalQ is not appropriate at all since it has
-        ///          the semantic of the old fieldQ
         float fieldQ, fieldConsistency;
         double getGoalCap();
         double getLeftGoalCap();
