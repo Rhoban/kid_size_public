@@ -65,7 +65,6 @@
 ***** Est-ce qu'il continue à marcher sur place
 ***** Consommation d'énergie inutile?
 ***** Commencer à marcher quand le robot qui passe commence le mouvement de tir
-
 **** Réduire le délai avant que R_2 commence son approche
 - Est-ce qu'actuellement R_1 interdit à R_2 de commencer l'approche tant que la
   balle est plus proche de R_1 que de R_2

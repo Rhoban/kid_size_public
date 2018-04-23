@@ -1,0 +1,223 @@
+* Calendrier
+** W1: 04/23 - 04/27
+*** =Ludo+Patxi= Méca
+**** Finalisation achats
+**** Test premier Pitch MX-64 (Design + Fabrication et assemblage)
+**** Design poignée + corde à piano dos
+**** Tests + assemblage caches teflon pour coude
+*** Soft 
+**** =Ludo= robocup_referee/constants to json
+*** Mouvement/comportement
+**** =Ludo= Brancher walkOnKick sur commande rhio
+**** =Ludo= Débrancher la génération du tir avec IK
+*** Machine Learning
+**** =Ludo+Patxi= Code prédiction durée du pas
+**** =Patxi= Code pour prédiction de balle 1/2
+** W2: 04/30 - 05/04
+*** Méca
+**** Protection choc pour bras
+**** Fabrication caches caméras
+**** Cache LiPo + Torse
+*** Soft
+**** =Ludo= fix monitoring pour image rhio
+*** Mouvement/Comportement
+**** =Patxi= Accélérer relevage
+**** =Patxi= Améliorer/clarifier tir classic + tir latéral
+**** =Patxi= Améliorer stabilité marche
+*** Machine Learning
+**** =Ludo+Patxi= Prédiction durée du pas
+**** =Patxi= Code pour prédiction de balle 2/2
+** W3: 05/07 - 05/11
+*** Méca
+**** =ALL= Préparation nouveau terrain
+**** Intégration corde à piano
+**** Fixation NUC
+**** Intégration bipper
+**** Refaire cache LiPo
+*** Commentaires
+**** Ludo pas là le 10 et 11
+*** Mouvement/comportement
+**** Éviter le isFallen quand un robot est handled
+**** Gestion du 'finished' dans RoboCup
+*** Machine Learning
+**** =Patxi= Expérimentation prédiction de balle (Logs+Entrainement)
+** W4: 05/14 - 05/18
+*** DNN
+**** =Greg= MAJ Tagger
+**** =Patxi= Modif procédure entraînement
+*** TeamPlay
+**** =Ludo= État de jeu partagé
+**** =Ludo= Accélérer communication teamplay
+**** =Ludo= Évitement/répartition de nos robots (basée sur la loc)
+*** Machine Learning
+**** =Ludo= Modèle prédictif pour la marche
+**** =Patxi+Ludo= Intégration prédiction de balle
+** W5: 05/21 - 05/25
+*** Commentaires
+**** Dispo patxi réduite
+*** Mouvement/Comportement
+**** =???= Transition placer/approche
+**** =???= approach_potential
+**** =Ludo= Tests approches MDP
+*** Teamplay
+**** =Greg= Captain (sûrement partiellement)
+*** Machine Learning
+**** =Patxi= Accélération entraînement VCM.json
+*** Vision
+**** =Ludo= Freeze vision dépendant du referee
+**** =Patxi= Tracking de balle pendant le tir
+*** Localisation
+**** Reset position au lancement de RoboCup (montoring)
+*** Logging
+**** =Ludo= Vérifier possibilité de logger un match en entier
+**** =Ludo= Freeze des logs par rapport au referee
+**** =Ludo= Script import logs matchs
+*** Divers
+**** =Greg= Améliorer vitesse de démarrage/accès ethernet
+** W6: 05/28 - 06/01
+*** Divers:
+**** Premiers matchs à faire
+*** Commentaires
+**** Dispo patxi réduite
+*** Machine Learning
+**** =Patxi+Ludo= Application approche + prédiction de balle pour Corner
+** W7: 05/04 - 05/08
+*** Mouvement/Comportement
+**** Gestion passe R_1 à R_2
+** W8: 05/11 - 05/15
+*** Départ 15/16
+* Tâches
+** Méca
+*** Design
+**** Passage pitch au MX-64
+**** Corde à piano pour le dos
+***** Plusieurs liens sur ebay (2.5,3,4mm diamètre, jusqu'à 50mm)
+***** Vérifier longueur
+**** Fixation NUC + cache LiPo à revoir
+**** Protection choc pour bras
+*** Manufacturing
+**** Passage pitch au MX-64
+**** Corde à piano pour le dos
+**** Fixation NUC
+**** Améliorer le passage des câbles de hanches (dans le capot)
+**** Teflon intérieur coude
+**** Refaire des caches caméras
+**** Refaire cache LiPo
+***** Plus haut pour fixer sur NUC
+***** Attention collision avec cache torse haut
+**** Vérifier intégration des bipper
+** Soft
+*** Convertir robocup_referee/constants to a serializable file
+*** Fix monitoring images via rhio
+**** Commande pour vider les buffer
+**** Commande pour limiter le débit logiciellement
+** Mouvement/Comportement
+*** Ajouter le walkOnKick en commande
+*** Mettre au carré tir 
+*** Accélérer le relevage
+*** Éviter le isFallen quand un robot est handled
+*** Gestion du *finished*
+**** fin non détectée quand le robot est en train de tirer ou de faire autre chose?
+*** Stabilité à améliorer
+**** Particulièrement quand on marche sur des robots
+**** Déjà fortement améliorée en diminuant la durée des pas
+*** Transition placer/approche à étudier
+*** Améliorer approach_potential
+*** Gestion d'une passe de R_1 à R_2
+**** Positionnement de R_2 avant la passe
+***** Quel tir ferait-il si la balle était à sa position prédite
+***** Possibilité de voir la trajectoire
+***** Pas de risque d'être pris à contre-pied
+***** Est-ce qu'il continue à marcher sur place
+***** Consommation d'énergie inutile?
+***** Commencer à marcher quand le robot qui passe commence le mouvement de tir
+**** R2 lève le bras avant la passe!
+**** Réduire le délai avant que R_2 commence son approche
+- Est-ce qu'actuellement R_1 interdit à R_2 de commencer l'approche tant que la
+  balle est plus proche de R_1 que de R_2
+  - Idéalement, R_2 doit commencer son approche quand R_1 touche la balle
+**** Cible de l'approche de R_2
+- La cible doit être: position de la balle dans x secondes
+  - Si x grand, position finale de la balle
+  - Possibilité d'affiner le choix de x en fonction de ce qui semble réalisable
+  - Actuellement la cible est la position actuelle de la balle -> problème
+**** Décision de tir de R_2
+- Faciliter la décision de tir si la balle roule
+** Stratégie/teamplay
+*** Évitement/répartition de nos robots (basée sur la loc)
+*** État de jeu partagé
+**** Obstacles, positions robots, balle (supprimer candidat minoritaire)
+*** Accélérer la communication teamplay
+*** Captain
+**** Choix disposition des robots pendant 'initial'
+***** Attention besoin d'un fichier facilement éditable (changement de stratégie)
+**** Choix disposition pendant le jeu
+**** Basé sur infos communes
+**** Attribution du rôle des joueurs + planif des tirs
+**** Gestion du cas où le robot qui a la balle chute
+***** Éviter que le robot en backup ne vienne lui tomber dessus
+**** Intercepter trajectoire potentielle de balle quand dernier défenseur
+**** Couper vision de la balle (feature avancée)
+** Machine Learning + Big Data of the buzz word
+*** Accélération entraînement VCM.json
+*** Prédiction durée du pas (analyse hyperrectangle acceptable)
+*** Entraînement modèle prédictif + Approche MDP
+*** Prédiction trajectoire de balle
+**** Vision
+**** Utilisation pour approche
+***** Validation avec technical challenge
+***** Validation avec scénario de passe
+** Deep neural network
+*** Modifications du Tagger (voir brest/tagger.org)
+*** Modifications de la procédure entrainement
+**** Vider le dépôt du code inutile?
+**** Scripter plus l'apprentissage
+**** Tester des réseaux 32*32 et des réseaux avec plus de couches
+** Vision
+*** Freeze Vision pendant début match/penalized
+*** Tracking de balle pendant le tir
+**** Désactiver l'IMU pendant le tir du robot ?
+**** Désactiver temporairement la vision de la balle ?
+**** Profil de vitesse/position de balle après le tir
+**** Éventuellement bénéficier des infos de la part d'autres joueurs
+** Localisation
+*** Reset la position au lancement de RoboCup pour le monitoring
+** Logging
+*** Vérifier la possibilité de logger un match en entier
+*** Freeze log pendant début match
+*** Script pour importer tous les logs d'un match
+**** Logs robots (images + bas niveau + out.log)
+**** Logs Monitoring
+** Divers
+*** Améliorer vitesse de démarrage/accès ethernet
+* Achats
+** Terrain
+*** Commande passée le 23 avril, réception prévue début mai
+** LiPo
+*** Commande passée le 23 avril, réception prévue début mai
+** Dynamixel / genération robots
+*** MX-64/MX-106 (stocks à vérifier)
+*** Câbles 240mm, 3 brins + 4 brins (stocks à vérifier)
+*** Gaine spiralée (stocks à vérifier)
+** Corde à piano
+*** À voir sur Ebay (Robocampus)
+** T-shirts Rhoban + AMC?
+** Matière première
+*** Aluminium
+*** Cache torse
+*** Teflon
+** Visserie
+** Billets avions
+* Tâches optionnelles
+** Calibration vision
+*** Vérifier sensibilité à l'emplacement des tags aruco
+1) Continuer à enquêter sur les problèmes des nuages de points
+   - Comprendre d'où vient la structure dans les nuages de points
+2) Fausser la position de tags légèrement
+   - Observation de l'impact sur le fitting
+** Performance
+*** Flags de compil pour optimisation
+*** Pré-requis -> Voir ce qui consomme du temps
+*** Note: Possibilité d'importer des changements dans tiny-dnn pour utilisation d'avx dans fully-connected layer
+** Localisation
+*** K-means + EM pour avoir plusieurs candidats?
