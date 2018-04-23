@@ -16,35 +16,36 @@
 *** Olive
    - [X] remplacer cou pitch
    - [X] nouvelle poignée
-   - [ ] vérifier les jauges
    - [X] zéro tête
+   - [X] vérifier les jauges
    - [ ] calibration
-   - [ ] protection cou ? (Adrien)
    - [X] changer crampon
+   - ([ ] protection cou ? (Adrien))
 *** Nova
-   - [ ] remplacer tête : téflon -> alu ?
    - [X] nouvelle poignée
-   - [ ] protection cou ? (Adrien)
-   - [ ] protection pied
-   - [ ] vérifier les jauges
+   - [X] protection pied
+   - [ ] remplacer tête : téflon -> alu ?
+   - [X] vérifier les jauges
    - [ ] changer crampon
+   - ([ ] protection cou ? (Adrien))
 *** Arya
    - [X] remplacer cou pitch
    - [X] nouvelle poignée
-   - [ ] vérifier les jauges
    - [X] zéro tête
+   - [X] protection cou ? (Adrien)
+   - [X] vérifier les jauges
    - [ ] calibration
-   - [ ] protection cou ? (Adrien)
    - [ ] remplacer épaule pitch ?
       Récupérer un MX-64 sur le yaw d'un autre robot ?
    - [X] changer crampon
 *** Tom
    - [X] nouvelle poignée (on a gardé l'ancienne)
-   - [ ] vérifier les jauges
-   - [ ] protection cou ? (Adrien)
    - [X] changer crampon
+   - [X] vérifier les jauges
+   - [ ] protection cou ? (Adrien)
 
 * Mouvement
   - [X] Refaire le stand up
   - [ ] Refaire le kick latéral
   - [ ] Augmenter le pan/yaw du scan ?
+  - [ ] Accélérer relevage
