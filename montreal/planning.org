@@ -191,9 +191,9 @@
 ** Divers
 *** Améliorer vitesse de démarrage/accès ethernet
 * Achats
-** Terrain
+** DONE Terrain
 *** Commande passée le 23 avril, réception prévue début mai
-** LiPo
+** DONE LiPo
 *** Commande passée le 23 avril, réception prévue début mai
 ** LiPo protective bag
   - Stock :: 14
@@ -203,9 +203,9 @@
     + Simple :: 2
     + Avec affichage :: 5 (+5 en commande)
   - Commande
-** Dynamixel / genération robots (en attente commande robots chinois)
+** Dynamixel+connectique / genération robots (en attente commande robots chinois)
 *** MX-64/MX-106 (stocks à vérifier)
-*** Câbles (stocks à vérifier)
+*** Câbles
   - Stock [2018-04-23 lun.]
     + 3mm
       * 200mm :: 150
@@ -215,7 +215,7 @@
       * 140mm :: 10
       * 200mm :: 110
       * 240mm :: 70
-*** Gaine spiralée (stocks à vérifier)
+*** DONE Gaine spiralée
   - Stock [2018-04-23 lun.] :: 3 nouvelles poches + chute
 ** Corde à piano (en attente commande robot chinois)
 *** À voir sur Ebay (Robocampus)
