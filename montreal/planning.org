@@ -200,13 +200,23 @@
   - Commande ::
 ** Bipper
   - Stock
-    + Simple ::
-    + Avec affichage ::
+    + Simple :: 2
+    + Avec affichage :: 5 (+5 en commande)
   - Commande
 ** Dynamixel / genération robots (en attente commande robots chinois)
 *** MX-64/MX-106 (stocks à vérifier)
-*** Câbles 240mm, 3 brins + 4 brins (stocks à vérifier)
+*** Câbles (stocks à vérifier)
+  - Stock [2018-04-23 lun.]
+    + 3mm
+      * 200mm :: 150
+      * 240mm :: 0
+    + 4mm
+      * 60mm :: 30
+      * 140mm :: 10
+      * 200mm :: 110
+      * 240mm :: 70
 *** Gaine spiralée (stocks à vérifier)
+  - Stock [2018-04-23 lun.] :: 3 nouvelles poches + chute
 ** Corde à piano (en attente commande robot chinois)
 *** À voir sur Ebay (Robocampus)
 ** T-shirts Rhoban + AMC?
@@ -231,6 +241,10 @@
     + 5mm :: 0mm
   - Commande
     + 5mm ::
+** Jauge pression (en attente commande robot chinois)
+*** Jauge
+*** Gaine
+  - Stock [2018-04-23 lun.] :: grosse bobine
 
 ** Visserie (en attente commande robot chinois)
 *** M2.5
