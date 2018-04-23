@@ -54,11 +54,16 @@
 ** Achat
 *** MX-64 / MX-106
 *** Corde à piano (2.5 et 3)
-*** Terrain
-*** LiPo
+*** DONE Terrain
+*** DONE LiPo
+*** Câblage 3 brins 240
+*** Câblage gaine spiralée (à vérifier)
 ** Méca
+*** Passage pitch au MX-64
 *** Corde à piano pour le dos
-*** Intégration LiPo à vérifier
+**** Plusieurs liens sur ebay (2.5,3,4mm diamètre, jusqu'à 50mm)
+**** Vérifier longueur
+*** DONE Intégration LiPo à vérifier
 *** Fixation NUC + LiPo à revoir
 *** Améliorer le passage des câbles de hanches (dans le capot)
 *** Ajouter teflon intérieur coude
@@ -71,6 +76,7 @@
 *** Éviter le isFallen quand un robot est handled
 *** Stabilité à améliorer
 **** Particulièrement quand on marche sur des robots
+**** Déjà fortement améliorée en diminuant la durée des pas
 *** Transition placer/approche
 ** Localisation
 *** Reset la position au lancement de RoboCup pour le monitoring
