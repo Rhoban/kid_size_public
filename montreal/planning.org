@@ -191,14 +191,15 @@
 ** Divers
 *** Améliorer vitesse de démarrage/accès ethernet
 * Achats
-** Terrain
+** DONE Terrain
 *** Commande passée le 23 avril, réception prévue début mai
-** LiPo
+** DONE LiPo
 *** Commande passée le 23 avril, réception prévue début mai
+** DONE Gaine spiralée
+*** Stocks suffisants
 ** Dynamixel / genération robots
 *** MX-64/MX-106 (stocks à vérifier)
 *** Câbles 240mm, 3 brins + 4 brins (stocks à vérifier)
-*** Gaine spiralée (stocks à vérifier)
 ** Corde à piano
 *** À voir sur Ebay (Robocampus)
 ** T-shirts Rhoban + AMC?
