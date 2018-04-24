@@ -197,19 +197,81 @@
 *** Commande passée le 23 avril, réception prévue début mai
 ** DONE LiPo
 *** Commande passée le 23 avril, réception prévue début mai
-** DONE Gaine spiralée
-*** Stocks suffisants
-** Dynamixel / genération robots
+** LiPo protective bag
+  - Stock :: 14
+  - Commande ::
+** Bipper
+  - Stock
+    + Simple :: 2
+    + Avec affichage :: 5 (+5 en commande)
+  - Commande
+** Dynamixel+connectique / genération robots (en attente commande robots chinois)
 *** MX-64/MX-106 (stocks à vérifier)
-*** Câbles 240mm, 3 brins + 4 brins (stocks à vérifier)
-** Corde à piano
+*** Câbles
+  - Stock [2018-04-23 lun.]
+    + 3mm
+      * 200mm :: 150
+      * 240mm :: 0
+    + 4mm
+      * 60mm :: 30
+      * 140mm :: 10
+      * 200mm :: 110
+      * 240mm :: 70
+*** DONE Gaine spiralée
+  - Stock [2018-04-23 lun.] :: 3 nouvelles poches + chute
+** Corde à piano (en attente commande robot chinois)
 *** À voir sur Ebay (Robocampus)
 ** T-shirts Rhoban + AMC?
-** Matière première
+** Matière première (en attente commande robot chinois)
 *** Aluminium
+  - Stocks [2018-04-23 lun.]
+    + 3mm :: 1.8*demi plaques (20mmx50mm)
+    + 6mm :: 1 plaque (40mmx50mm)
+    + 6.25mm :: 2.5*plaques (40mmx50mm)
+  - Commande
+    + 3mm ::
+    + 6mm ::
 *** Cache torse
+  - Stocks [2018-04-23 lun.]
+    + 42mmx13mm + 21.5mmx20mm
 *** Teflon
-** Visserie
+  - Stocks [2018-04-23 lun.]
+    + ~5.3mm :: chutes
+    + ~8.5mm :: chutes
+    + 10.1mm :: 5mmx22mm
+    + 10.4mm :: 10mmx30mm + 5mmx22mm
+    + ~10.7mm :: 13mmx30mm
+*** Tige filtée
+  - Stock [2018-04-23 lun.]
+    + 5mm :: 0mm
+  - Commande
+    + 5mm ::
+** Jauge pression (en attente commande robot chinois)
+*** Jauge
+*** Gaine
+  - Stock [2018-04-23 lun.] :: grosse bobine
+
+** Visserie (en attente commande robot chinois)
+*** M2.5
+    + 4mm ::
+    + 5mm ::
+    + 6mm ::
+    + 8mm ::
+    + 10mm ::
+    + 12mm ::
+    + 20mm ::
+    + écrous ::
+    + rondelles ::
+*** M3
+    + 4mm ::
+    + 5mm ::
+    + 6mm ::
+    + 8mm ::
+    + 10mm ::
+    + 12mm ::
+    + 20mm ::
+    + écrous ::
+    + rondelles ::
 ** Billets avions
 * Tâches optionnelles
 ** Calibration vision
