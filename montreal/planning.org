@@ -223,8 +223,9 @@
 ** Matière première (en attente commande robot chinois)
 *** Aluminium
   - Stocks [2018-04-23 lun.]
-    + ~3mm :: 1.8*demi plaques (20mmx50mm)
-    + ~6mm :: 3.5*plaques (40mmx50mm)
+    + 3mm :: 1.8*demi plaques (20mmx50mm)
+    + 6mm :: 1 plaque (40mmx50mm)
+    + 6.25mm :: 2.5*plaques (40mmx50mm)
   - Commande
     + 3mm ::
     + 6mm ::
@@ -233,9 +234,11 @@
     + 42mmx13mm + 21.5mmx20mm
 *** Teflon
   - Stocks [2018-04-23 lun.]
-    + ~5.5mm :: chutes
+    + ~5.3mm :: chutes
     + ~8.5mm :: chutes
-    + ~10.5mm :: 13mmx30mm + 10mmx30mm + 5mmx22mm
+    + 10.1mm :: 5mmx22mm
+    + 10.4mm :: 10mmx30mm + 5mmx22mm
+    + ~10.7mm :: 13mmx30mm
 *** Tige filtée
   - Stock [2018-04-23 lun.]
     + 5mm :: 0mm
