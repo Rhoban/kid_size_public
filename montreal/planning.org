@@ -3,8 +3,8 @@
 *** =Ludo+Patxi= Méca
 **** Finalisation achats
 **** Test premier Pitch MX-64 (Design + Fabrication et assemblage)
-**** Design poignée + corde à piano dos
-**** Tests + assemblage caches teflon pour coude
+**** DONE Design poignée + corde à piano dos
+**** DONE Tests + assemblage caches teflon pour coude
 *** Soft 
 **** =Ludo= robocup_referee/constants to json
 *** Mouvement/comportement
