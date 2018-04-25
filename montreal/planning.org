@@ -79,11 +79,15 @@
 **** Premiers matchs à faire
 *** Commentaires
 **** Dispo patxi réduite
+*** Vision
+**** =Ludo= Détection des robots adverses
 *** Machine Learning
 **** =Patxi+Ludo= Application approche + prédiction de balle pour Corner
 ** W7: 05/04 - 05/08
 *** Mouvement/Comportement
 **** Gestion passe R_1 à R_2
+*** Vision
+**** =Ludo= Compas visuel à reprendre en main
 ** W8: 05/11 - 05/15
 *** Départ 15/16
 * Tâches
@@ -164,8 +168,11 @@
 *** Entraînement modèle prédictif + Approche MDP
 *** Prédiction trajectoire de balle
 **** Vision
-**** Utilisation pour approche
+**** Utilisation pour approche/tir
 ***** Validation avec technical challenge
+- Important: vérifier la chronologie du déroulement d'un tir
+  - Quel temps s'écoule entre le choix du tir et le déclenchement du mouvement
+- Accélérer le début du mouvement?
 ***** Validation avec scénario de passe
 ** Deep neural network
 *** Modifications du Tagger (voir brest/tagger.org)
@@ -174,8 +181,8 @@
 **** Scripter plus l'apprentissage
 **** Tester des réseaux 32*32 et des réseaux avec plus de couches
 ** Vision
-*** TODO Détection des robots adverses (non attribué/planifié)
-*** TODO Compas visuel à clarifier/améliorer (non attribué/planifié)
+*** Détection des robots adverses (non attribué/planifié)
+*** Compas visuel à clarifier/améliorer (non attribué/planifié)
 *** Freeze Vision pendant début match/penalized
 *** Tracking de balle pendant le tir
 **** Désactiver l'IMU pendant le tir du robot ?
@@ -290,3 +297,10 @@
 *** Note: Possibilité d'importer des changements dans tiny-dnn pour utilisation d'avx dans fully-connected layer
 ** Localisation
 *** K-means + EM pour avoir plusieurs candidats?
+** Software
+*** Améliorer HeadScan (ajouter option pour repartir de la position la plus proche)
+*** Replay de logs
+- Contrôle de la video via touches directionnelles
+  - Requiert un changement:
+    - Actuellement: map<char,Action>: short key code + action
+    - Désiré      : map<int,pair<string,Action>>: key code + pair(description + Action)
