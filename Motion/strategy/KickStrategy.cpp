@@ -15,14 +15,14 @@ KickStrategy::KickStrategy(double accuracy)
 
 KickStrategy::Action KickStrategy::actionFor(double x, double y)
 {
-    x += Constants::field.fieldLength/200.0;
-    y += Constants::field.fieldWidth/200.0;
+    x += Constants::field.fieldLength/2;
+    y += Constants::field.fieldWidth/2;
 
     // Bounding x and y
     if (x < 0) x = 0;
-    if (x > Constants::field.fieldLength/100.0) x = Constants::field.fieldLength/100.0;
+    if (x > Constants::field.fieldLength) x = Constants::field.fieldLength;
     if (y < 0) y = 0;
-    if (y > Constants::field.fieldWidth/100.0) y = Constants::field.fieldWidth/100.0;
+    if (y > Constants::field.fieldWidth) y = Constants::field.fieldWidth;
 
     int X = round(x/accuracy);
     int Y = round(y/accuracy);
