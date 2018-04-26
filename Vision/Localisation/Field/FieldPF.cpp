@@ -7,7 +7,7 @@
 
 #include "rhoban_utils/logging/logger.h"
 
-#include "robocup_referee/constants.h"
+#include <robocup_referee/constants.h>
 #include <vector>
 #include <map>
 #include <sstream>
@@ -19,8 +19,7 @@ using namespace std;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 using namespace rhoban_unsorted;
-
-using robocup_referee::Constants;
+using namespace robocup_referee;
 
 namespace Vision {
 namespace Localisation {
@@ -36,10 +35,10 @@ std::map<FieldPF::ResetType,std::string> FieldPF::resetNames =
   {ResetType::Custom, "Custom"}
 };
 
-double FieldPF::mins[3] = {-Field::Field::fieldLength / 2,
-                           -Field::Field::fieldWidth / 2, 0};
-double FieldPF::maxs[3] = {Field::Field::fieldLength / 2,
-                           Field::Field::fieldWidth / 2, 360};
+double FieldPF::mins[3] = {-Constants::field.fieldLength / 200,
+                           -Constants::field.fieldWidth / 200, 0};
+double FieldPF::maxs[3] = {Constants::field.fieldLength / 200,
+                           Constants::field.fieldWidth / 200, 360};
 
 FieldPF::FieldPF()
     : ParticleFilter(), resetType(ResetType::None),
@@ -110,13 +109,13 @@ FieldPF::FieldPF()
       ->persisted(true);
   rhioNode->newFloat("customX")
       ->defaultValue(0)
-      ->minimum(-Field::Field::fieldLength)
-      ->maximum(Field::Field::fieldLength)
+      ->minimum(-Constants::field.fieldLength / 100)
+      ->maximum(Constants::field.fieldLength / 100)
       ->comment("Position used for customReset [cm]");
   rhioNode->newFloat("customY")
       ->defaultValue(0)
-      ->minimum(-Field::Field::fieldWidth)
-      ->maximum(Field::Field::fieldWidth)
+      ->minimum(-Constants::field.fieldWidth / 100)
+      ->maximum(Constants::field.fieldWidth / 100)
       ->comment("Position used for customReset [cm]");
   rhioNode->newFloat("customTheta")
       ->defaultValue(0)
@@ -298,7 +297,7 @@ void FieldPF::resetOnLines(int side) {
     else {
       currSide = sideDistribution(engine) == 0 ? 1 : -1;
     }
-    double y = currSide * Field::Field::fieldWidth / 2;
+    double y = currSide * Constants::field.fieldWidth / 2;
     double dirNoise = dirNoiseDistribution(generator);
     double dir = -currSide * 90;
     p.first = FieldPosition(x, y, Angle(dir + dirNoise).getSignedValue());
