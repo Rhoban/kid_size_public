@@ -5,7 +5,7 @@
 namespace Vision {
 namespace Utils {
 
-double TestCameraState::hRobot = 60;
+double TestCameraState::hRobot = 0.6;
 
 void TestCameraState::_run() {
   testBasics();

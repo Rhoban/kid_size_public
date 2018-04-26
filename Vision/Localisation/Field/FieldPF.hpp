@@ -77,10 +77,11 @@ public:
   rhoban_utils::Angle getAngleToGoal();
   double angleToGoalQuality();
 
+  /// Return robot position in field [m]
   cv::Point2d getRobotPosition();
+  cv::Point2d getCenterPosition();
   cv::Point2d getLeftGoalPosition();
   cv::Point2d getRightGoalPosition();
-  cv::Point2d getCenterPosition();
   cv::Point2d getCenterPositionInSelf();
   cv::Point2d getLeftGoalPositionInSelf();
   cv::Point2d getRightGoalPositionInSelf();
@@ -94,20 +95,20 @@ public:
   double resamplingRatio;
 
   // Tolerance to error
-  double tolDist;      // cm
-  double tolDiffAngle; // deg
+  double tolDist;      // [m]
+  double tolDiffAngle; // [deg]
 
-  double fallNoise;
-  double fallNoiseTheta;
+  double fallNoise;// [m]
+  double fallNoiseTheta;// [deg]
 
-  double borderNoise;
-  double borderNoiseTheta;
+  double borderNoise;// [m]
+  double borderNoiseTheta;// [deg]
 
-  double customX;
-  double customY;
-  double customTheta;
-  double customNoise;
-  double customThetaNoise;
+  double customX;// [m]
+  double customY;// [m]
+  double customTheta;// [deg]
+  double customNoise;// [m]
+  double customThetaNoise;// [deg]
 
   void publishToRhIO();
   void importFromRhIO();

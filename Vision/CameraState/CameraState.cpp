@@ -212,7 +212,7 @@ double CameraState::getHeight() {
 
   // Changing the frame from camera to self (robot).
   pos = _model->frameInSelf("camera", pos);
-  double height = pos(2) * 100.0; // THIS IS CM
+  double height = pos(2);
   if (height < 0) {
     height = 0;
   }

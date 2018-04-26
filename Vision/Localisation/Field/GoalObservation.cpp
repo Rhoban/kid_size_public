@@ -1,7 +1,5 @@
 #include "GoalObservation.hpp"
 
-#include "../RobotBasis.hpp"
-
 #include "Field/Field.hpp"
 #include "CameraState/CameraState.hpp"
 
@@ -80,7 +78,7 @@ double GoalObservation::potential(const FieldPosition &p, bool debug) const {
     // Computing errors
     double dx = expectedPos.x - seenDir.x;
     double dy = expectedPos.y - seenDir.y;
-    double cartDiff = sqrt(dx*dx + dy*dy) / 100;// Conversion [cm] -> [m]
+    double cartDiff = sqrt(dx*dx + dy*dy);
     // aDiff is always positive (angleBetween)
     double aDiff = angleBetween(seenDir, expectedDir).getSignedValue();
     // Computing scores

@@ -166,7 +166,7 @@ void LocalisationBinding::initRhIO()
       });
   RhIO::Root.newCommand(
       "Localisation/customReset", "Reset the field particle filter at the "
-                                  "custom position with custom noise",
+                                  "custom position with custom noise [m,deg]",
       [this](const std::vector<std::string> &args) -> std::string {
         unsigned int k = 0;
 
@@ -464,13 +464,13 @@ std::vector<GoalObservation *> LocalisationBinding::extractGoalObservations()
   // Goal Observations
   for (size_t i = 0; i < goalsLocations.size(); i++) {
     cv::Point2f pos_in_self = cs->getPosInSelf(goalsLocations[i]);
-    double robotHeight = cs->getHeight() / 100;
+    double robotHeight = cs->getHeight();
 
     std::pair<Angle, Angle> panTiltToGoal;
     panTiltToGoal = cs->panTiltFromXY(pos_in_self, robotHeight);
     Angle panToGoal = panTiltToGoal.first;
     Angle tiltToGoal = panTiltToGoal.second;
-    GoalObservation * newObs = new GoalObservation(panToGoal, tiltToGoal, cs->getHeight());
+    GoalObservation * newObs = new GoalObservation(panToGoal, tiltToGoal, robotHeight);
     // Adding new observation or merging based on similarity
     bool has_similar = false;
     for (GoalObservation * goalObs : goalObservations) {
@@ -500,14 +500,14 @@ LocalisationBinding::extractArenaCornerObservations() {
   for (size_t i = 0; i < clipping_data.size(); i++) {
     if (clipping_data[i].is_obs_valid()) {
       cv::Point2f pos_in_self = cs->getPosInSelf(clipping_data[i].getCornerInWorldFrame());
-      double robotHeight = cs->getHeight() / 100;
+      double robotHeight = cs->getHeight();
       std::pair<Angle, Angle> panTiltToGoal;
       panTiltToGoal = cs->panTiltFromXY(pos_in_self, robotHeight);
       Angle panToGoal = panTiltToGoal.first;
       Angle tiltToGoal = panTiltToGoal.second;
       try {
         ArenaCornerObservation * newObs =
-          new ArenaCornerObservation(clipping_data[i], panToGoal, tiltToGoal, cs->getHeight());
+          new ArenaCornerObservation(clipping_data[i], panToGoal, tiltToGoal, robotHeight);
         arenaCornerObservations.push_back(newObs);
       } catch (const std::string msg) {
         fieldLogger.error("ArenaCornerObservation inconsistency; error at construction : %s", msg.c_str());
@@ -542,9 +542,6 @@ std::vector<TagsObservation *> LocalisationBinding::extractTagsObservations()
       err2 += diff.cwiseProduct(diff);
     }
     Eigen::Vector3d dev = (err2 / nb_obs).cwiseSqrt();
-    // Absurd conversion to cm
-    mean *= 100;
-    dev *= 100;
     cv::Point3f cv_pos = Utils::eigenToCV(mean);
     cv::Point3f cv_dev = Utils::eigenToCV(dev);
     tagsObservations.push_back(new TagsObservation(entry.first, cv_pos, cv_dev,

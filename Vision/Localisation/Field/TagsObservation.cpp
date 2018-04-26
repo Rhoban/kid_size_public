@@ -1,7 +1,5 @@
 #include "TagsObservation.hpp"
 
-#include "../RobotBasis.hpp"
-
 #include "Field/Field.hpp"
 #include "CameraState/CameraState.hpp"
 #include "Utils/Interface.h"

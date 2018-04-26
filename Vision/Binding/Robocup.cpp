@@ -36,7 +36,6 @@
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/util.h>
 
-#include "Localisation/RobotBasis.hpp"
 #include "Localisation/Field/CompassObservation.hpp"
 
 #include "services/DecisionService.h"
@@ -263,8 +262,6 @@ void Robocup::init() {
   lastTS = ::rhoban_utils::TimeStamp::fromMS(0);
 
   initRhIO();
-  // update the Legacy robotbasis
-  RobotBasis::robotHeight = cs->getHeight(); // NOTE: important to init this
 }
 
 void Robocup::initImageHandlers() {
@@ -487,9 +484,6 @@ void Robocup::step() {
     usleep(sleep_time_ms * 1000);
     return;
   }
-  // update the Legacy robotbasis
-  // TODO: is it really required?
-  RobotBasis::robotHeight = cs->getHeight();
   Benchmark::close("Pipeline");
 
   Benchmark::open("readPipeline");
@@ -1517,7 +1511,7 @@ void Robocup::robotsClear() {
 }
 
 void Robocup::ballReset(float x, float y) {
-  ballStackFilter->reset(x / 100.0, y / 100.0);
+  ballStackFilter->reset(x, y);
 }
 
 void Robocup::setLogMode(const std::string path) {

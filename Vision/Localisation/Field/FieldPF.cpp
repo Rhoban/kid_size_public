@@ -3,7 +3,6 @@
 #include "FieldPF.hpp"
 
 #include "Field/Field.hpp"
-#include "../RobotBasis.hpp"
 
 #include "rhoban_utils/logging/logger.h"
 
@@ -35,14 +34,14 @@ std::map<FieldPF::ResetType,std::string> FieldPF::resetNames =
   {ResetType::Custom, "Custom"}
 };
 
-double FieldPF::mins[3] = {-100 * Constants::field.fieldLength / 2,
-                           -100 * Constants::field.fieldWidth / 2, 0};
-double FieldPF::maxs[3] = {100 * Constants::field.fieldLength / 2,
-                           100 * Constants::field.fieldWidth / 2, 360};
+double FieldPF::mins[3] = {-Constants::field.fieldLength / 2,
+                           -Constants::field.fieldWidth / 2, 0};
+double FieldPF::maxs[3] = {Constants::field.fieldLength / 2,
+                           Constants::field.fieldWidth / 2, 360};
 
 FieldPF::FieldPF()
     : ParticleFilter(), resetType(ResetType::None),
-      errorTols({8}), resamplingRatio(0.0), tolDist(100),
+      errorTols({8}), resamplingRatio(0.0), tolDist(1),
       tolDiffAngle(15) {
   std::vector<int> goalsToTrack = {1};
   std::vector<int> postsToTrack = {-1, 0, 1};
@@ -57,8 +56,8 @@ FieldPF::FieldPF()
       }
     }
   }
-  RhIO::Root.newChild("/Localisation/Field/FieldPF");
-  rhioNode = &(RhIO::Root.child("/Localisation/Field/FieldPF"));
+  RhIO::Root.newChild("/localisation/field/fieldPF");
+  rhioNode = &(RhIO::Root.child("/localisation/field/fieldPF"));
   rhioNode->newFloat("resamplingRatio")
       ->defaultValue(0)
       ->minimum(0)
@@ -75,48 +74,41 @@ FieldPF::FieldPF()
   rhioNode->newFloat("tolDist")
       ->defaultValue(tolDist)
       ->minimum(0)
-      ->maximum(600)
-      ->persisted(true);
+      ->maximum(6);
   rhioNode->newFloat("tolDiffAngle")
       ->defaultValue(tolDiffAngle)
       ->minimum(0)
-      ->maximum(180)
-      ->persisted(true);
+      ->maximum(180);
   rhioNode->newFloat("fallNoise")
-      ->defaultValue(25)
+      ->defaultValue(0.25)
       ->minimum(0)
-      ->maximum(200)
-      ->comment("Maximal noise applied when falling [cm]")
-      ->persisted(true);
+      ->maximum(2)
+      ->comment("Maximal noise applied when falling [m]");
   rhioNode->newFloat("fallNoiseTheta")
       ->defaultValue(20)
       ->minimum(0)
       ->maximum(180)
-      ->comment("When falling, uniform noise in [-x,x] is applied [deg]")
-      ->persisted(true);
+      ->comment("When falling, uniform noise in [-x,x] is applied [deg]");
   rhioNode->newFloat("borderNoise")
-      ->defaultValue(50)
+      ->defaultValue(0.5)
       ->minimum(0)
-      ->maximum(200)
-      ->comment(
-            "Maximal noise applied in 'x' on the position of the robot [cm]")
-      ->persisted(true);
+      ->maximum(2)
+      ->comment("Maximal noise applied on 'x' coordinate on borderReset [m]");
   rhioNode->newFloat("borderNoiseTheta")
       ->defaultValue(10)
       ->minimum(0)
       ->maximum(180)
-      ->comment("Orientation noise applied at border reset in [-x,x] [deg]")
-      ->persisted(true);
+      ->comment("Orientation noise applied at border reset in [-x,x] [deg]");
   rhioNode->newFloat("customX")
       ->defaultValue(0)
-      ->minimum(-Constants::field.fieldLength * 100)
-      ->maximum(Constants::field.fieldLength * 100)
-      ->comment("Position used for customReset [cm]");
+      ->minimum(-Constants::field.fieldLength/2)
+      ->maximum(Constants::field.fieldLength/2)
+      ->comment("X-Position used for customReset [m]");
   rhioNode->newFloat("customY")
       ->defaultValue(0)
-      ->minimum(-Constants::field.fieldWidth * 100)
-      ->maximum(Constants::field.fieldWidth * 100)
-      ->comment("Position used for customReset [cm]");
+      ->minimum(-Constants::field.fieldWidth/2)
+      ->maximum(Constants::field.fieldWidth/2)
+      ->comment("Y-position used for customReset [m]");
   rhioNode->newFloat("customTheta")
       ->defaultValue(0)
       ->minimum(-180)
@@ -128,10 +120,10 @@ FieldPF::FieldPF()
       ->maximum(180)
       ->comment("Uniform noise used for custom reset [deg]");
   rhioNode->newFloat("customNoise")
-      ->defaultValue(50)
+      ->defaultValue(0.5)
       ->minimum(0)
-      ->maximum(400)
-      ->comment("Uniform noise used for custom reset [cm]");
+      ->maximum(4)
+      ->comment("Uniform noise used for custom reset [m]");
 }
 
 void FieldPF::updateToGoalQuality() {
@@ -297,7 +289,7 @@ void FieldPF::resetOnLines(int side) {
     else {
       currSide = sideDistribution(engine) == 0 ? 1 : -1;
     }
-    double y = currSide * 100 * Constants::field.fieldWidth / 2;
+    double y = currSide * Constants::field.fieldWidth / 2;
     double dirNoise = dirNoiseDistribution(generator);
     double dir = -currSide * 90;
     p.first = FieldPosition(x, y, Angle(dir + dirNoise).getSignedValue());
@@ -347,45 +339,6 @@ void FieldPF::draw(cv::Mat &img, Utils::CameraState *cs) const {
     getParticle(i).tag(img, 0.0, cv::Scalar(getParticleQ(i) * 255, 0, 0));
   }
   representativeParticle.tag(img, 0.0, cv::Scalar(0, 0, 255), 3);
-// WARNING: All of this is not so useful now that TopView is updated every n seconds
-//          Was also producing errors when robot was falling backward
-//  // Extremum points in the image referential
-//  std::vector<Point> imgCorners;
-//  imgCorners.push_back(Point(-1, -1));
-//  imgCorners.push_back(Point(1, -1));
-//  imgCorners.push_back(Point(1, 1));
-//  imgCorners.push_back(Point(-1, 1));
-//  imgCorners.push_back(Point(-1, -1));
-//  // Extremum points in the robot referential
-//  std::vector<Point> imgCornersInRobot;
-//  for (const Point &p : imgCorners) {
-//    Eigen::Vector2d pixel(p.x, p.y);
-//    Eigen::Vector3d viewVector, pos;
-//    viewVector = cs->_model->cameraPixelToViewVector(cs->_params, pixel);
-//    bool success = cs->_model->cameraViewVectorToWorld(viewVector, pos);
-//    if (!success) {
-//      std::cerr << "FieldPF::draw: failed cameraViewVectorToWorld: " << viewVector << std::endl;
-//      continue;
-//    }
-//    pos = 100 * cs->_model->frameInSelf("origin", pos); // m to cm
-//    imgCornersInRobot.push_back(Point(pos[0], pos[1]));
-//  }
-//  // Getting points in the field referential
-//  Point robotPos = Point(representativeParticle.getRobotPositionCV());
-//  Angle robotDir = representativeParticle.getOrientation();
-//  std::vector<Point> imgCornersInField;
-//  for (const Point &p : imgCornersInRobot) {
-//    imgCornersInField.push_back(robotPos + p.rotation(robotDir));
-//  }
-//  for (size_t srcPoint = 0; srcPoint < imgCornersInField.size() - 1;
-//       srcPoint++) {
-//    cv::Point srcField = imgCornersInField[srcPoint].toCV();
-//    cv::Point dstField = imgCornersInField[srcPoint + 1].toCV();
-//    cv::Point srcImg = Field::Field::fieldToImg(img, srcField);
-//    cv::Point dstImg = Field::Field::fieldToImg(img, dstField);
-//    double vecThickness = 2 * Field::Field::getScale(img);
-//    cv::line(img, srcImg, dstImg, cv::Scalar(128, 0, 0), vecThickness);
-//  }
 }
 
 void FieldPF::updateRepresentativeQuality() {
@@ -462,24 +415,20 @@ double FieldPF::angleToGoalQuality() {
 double FieldPF::getQuality() { return representativeQuality; }
 
 cv::Point2d FieldPF::getRobotPosition() {
-  return cv::Point2d(representativeParticle.x() * 0.01,
-                     representativeParticle.y() * 0.01);
+  return cv::Point2d(representativeParticle.x(), representativeParticle.y());
 }
 
 cv::Point2d FieldPF::getCenterPosition() {
-  return cv::Point2d(-representativeParticle.x() * 0.01,
-                     -representativeParticle.y() * 0.01);
+  return cv::Point2d(-representativeParticle.x(), -representativeParticle.y());
 }
 
 cv::Point2d FieldPF::getLeftGoalPosition() {
-  cv::Point2d g(Field::Field::getAdvGoal(1).x * 0.01,
-                Field::Field::getAdvGoal(1).y * 0.01); // this is cm
+  cv::Point2d g(Field::Field::getAdvGoal(1).x, Field::Field::getAdvGoal(1).y);
   return g - getRobotPosition();
 }
 
 cv::Point2d FieldPF::getRightGoalPosition() {
-  cv::Point2d g(Field::Field::getAdvGoal(-1).x * 0.01,
-                Field::Field::getAdvGoal(-1).y * 0.01); // this is cm
+  cv::Point2d g(Field::Field::getAdvGoal(-1).x, Field::Field::getAdvGoal(-1).y);
   return g - getRobotPosition();
 }
 
