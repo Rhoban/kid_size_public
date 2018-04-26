@@ -23,29 +23,35 @@ Placer::Placer(Walk *walk)
     
     bind->bindNew("path", pathJson, RhIO::Bind::PushOnly);
     bind->bindNew("pathTargetDist", pathTargetDist, RhIO::Bind::PullOnly)
-        ->defaultValue(70)->persisted(true);
+        ->defaultValue(0.7);
     bind->bindNew("tmpX", tmpX, RhIO::Bind::PushOnly);
     bind->bindNew("tmpY", tmpY, RhIO::Bind::PushOnly);
 
     bind->bindNew("targetX", targetX, RhIO::Bind::PullOnly)
+        ->comment("[m]")
         ->defaultValue(0.0);
     bind->bindNew("errorX", errorX, RhIO::Bind::PushOnly)
+        ->comment("[m]")
         ->defaultValue(0.0);
     bind->bindNew("targetY", targetY, RhIO::Bind::PullOnly)
+        ->comment("[m]")
         ->defaultValue(0.0);
-    bind->bindNew("errorY", errorY, RhIO::Bind::PushOnly);
+    bind->bindNew("errorY", errorY, RhIO::Bind::PushOnly)
+        ->comment("[m]")
+        ->defaultValue(0.0);
     bind->bindNew("targetAzimuth", targetAzimuth, RhIO::Bind::PullOnly);
     bind->bindNew("errorAzimuth", errorAzimuth, RhIO::Bind::PushOnly);
 
-    bind->bindNew("stepP", stepper.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0)->persisted(true);
-    bind->bindNew("lateralP", lateraler.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0)->persisted(true);
-    bind->bindNew("turnP", turner.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0)->persisted(true);
+    bind->bindNew("stepP", stepper.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
+    bind->bindNew("lateralP", lateraler.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
+    bind->bindNew("turnP", turner.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
 
-    bind->bindNew("marginX", marginX, RhIO::Bind::PullOnly)->defaultValue(50)->persisted(true);
-    marginX=50;
-    bind->bindNew("marginY", marginY, RhIO::Bind::PullOnly)->defaultValue(50)->persisted(true);
-    marginY=50;
-    bind->bindNew("marginAzimuth", marginAzimuth, RhIO::Bind::PullOnly)->defaultValue(20)->persisted(true);
+    bind->bindNew("marginX", marginX, RhIO::Bind::PullOnly)->defaultValue(0.5)
+        ->comment("[m]");
+    bind->bindNew("marginY", marginY, RhIO::Bind::PullOnly)->defaultValue(0.5)
+        ->comment("[m]");
+    bind->bindNew("marginAzimuth", marginAzimuth, RhIO::Bind::PullOnly)
+      ->comment("[deg]")->defaultValue(20);
     bind->bindNew("arrived", arrived, RhIO::Bind::PushOnly);
     bind->bindNew("hysteresis", hysteresis, RhIO::Bind::PullOnly)->defaultValue(1.5)->persisted(true);
 
@@ -53,35 +59,38 @@ Placer::Placer(Walk *walk)
 
     //DirectMode vars:
     bind->bindNew("lateralMode", lateralMode, RhIO::Bind::PullOnly)
-      ->defaultValue(false)->comment("using lateral step for lateral move only (with x drift control)")
-      ->persisted(false);
+      ->defaultValue(false)
+      ->comment("using lateral step for lateral move only (with x drift control)");
     bind->bindNew("lmDriftXMax", lmDriftXMax, RhIO::Bind::PullOnly)
-      ->defaultValue(20)->comment("in lateral step mode, maximum X drift allowed before correction (in cm)")
-      ->persisted(true);
+      ->defaultValue(0.2)
+      ->comment("in lateral step mode, maximum X drift allowed before correction [m]");
     bind->bindNew("lmDriftXMaxHyst", lmDriftXMax, RhIO::Bind::PullOnly)
-      ->defaultValue(10)->comment("in lateral step mode, maximum X drift allowed before correction / Hysteresis (in cm)")
-      ->persisted(true);
+      ->defaultValue(0.1)
+      ->comment("in lateral step mode, maximum X drift allowed before correction / Hysteresis [m]");
     
     bind->bindNew("directMode", directMode, RhIO::Bind::PullOnly)
-        ->defaultValue(true)->comment("Turning to target before walking target")
-        ->persisted(true);
+        ->defaultValue(true)->comment("Turning to target before walking target");
     bind->bindNew("rushDistOk", rushDistOk, RhIO::Bind::PushOnly)
         ->defaultValue(false)->comment("Is the distance to the target suggesting to rush");
     bind->bindNew("rushAngleOk", rushAngleOk, RhIO::Bind::PushOnly)
         ->defaultValue(false)->comment("Is the angle toward the target valid for rush");
     bind->bindNew("rushHysteresisLow", rushHysteresisLow, RhIO::Bind::PullOnly)
-        ->defaultValue(20)->persisted(true) ->comment("Rush starts being allowed under this threshold");
+        ->defaultValue(0.2)
+        ->comment("Rush starts being allowed under this threshold [m]");
     bind->bindNew("rushHysteresisHigh", rushHysteresisHigh, RhIO::Bind::PullOnly)
-        ->defaultValue(30)->persisted(true) ->comment("Rush stop being allowed above this threshold");
+        ->defaultValue(0.3)
+        ->comment("Rush stop being allowed above this threshold [m]");
     bind->bindNew("capToTarget", capToTarget, RhIO::Bind::PushOnly)
         ->defaultValue(0)->comment("The direction of the target in the robot referential");
     bind->bindNew("rushRadiusHigh", rushRadiusHigh, RhIO::Bind::PullOnly)
-        ->defaultValue(70)->persisted(true) ->comment("Above this threshold, rushDistOk becomes true");
+        ->defaultValue(0.7)
+      ->comment("Above this threshold, rushDistOk becomes true [m]");
     bind->bindNew("rushRadiusLow", rushRadiusLow, RhIO::Bind::PullOnly)
-        ->defaultValue(40)->persisted(true) ->comment("Under this threshold, rushDistOk becomes false");
+        ->defaultValue(0.4)
+        ->comment("Under this threshold, rushDistOk becomes false [m]");
     
     bind->bindNew("avoidOpponents", avoidOpponents, RhIO::Bind::PullOnly)
-        ->defaultValue(true)->persisted(true) ->comment("Avoid the opponents?");
+        ->defaultValue(true)->comment("Avoid the opponents?");
     bind->pull();
 }
 
@@ -158,9 +167,7 @@ void Placer::step(float elapsed)
     bind->pull();
 
     auto loc = getServices()->localisation;
-    auto pos = loc->getFieldPos();
-    pos.x *= 100;
-    pos.y *= 100;
+    auto pos = loc->getFieldPos();//[m]
     Angle cap(rad2deg(loc->getFieldOrientation()));
 
     // Target point on the field
@@ -233,14 +240,14 @@ void Placer::step(float elapsed)
     // Adding nearest opponetn
     if (avoidOpponents) {
         for (auto &opponent : loc->getOpponentsField()) {
-            avoider.addObstacle(opponent*100, loc->opponentsRadius*100);
+            avoider.addObstacle(opponent, loc->opponentsRadius);
         }
     }
 
     // Finding a path using the avoider
-    auto result  = avoider.findPath(pos, target, 40, &score, [](Point pt) {
-            return fabs(pt.x) < (Constants::field.fieldLength/2 + 50) &&
-            fabs(pt.y) < (Constants::field.fieldWidth/2 + 50);
+    auto result  = avoider.findPath(pos, target, 0.4, &score, [](Point pt) {
+            return fabs(pt.x) < (Constants::field.fieldLength/2 + 0.5) &&
+            fabs(pt.y) < (Constants::field.fieldWidth/2 + 0.5);
             });
 
     // The result is valid, using it instead of direct path
@@ -333,16 +340,16 @@ void Placer::step(float elapsed)
     if (dontWalk) {
         walk->control(false);
     } else {
-        walk->control(true, stepper.output, lateraler.output, turner.output);
+        walk->control(true, stepper.output/100, lateraler.output/100, turner.output);
     }
 
     // Sharing the target and temporary target
     auto teamPlay = getServices()->teamPlay;
     auto &info = teamPlay->selfInfo();
-    info.targetX = targetX/100.0;
-    info.targetY = targetY/100.0;
-    info.localTargetX = tmpX/100.0;
-    info.localTargetY = tmpY/100.0;
+    info.targetX = targetX;
+    info.targetY = targetY;
+    info.localTargetX = tmpX;
+    info.localTargetY = tmpY;
 
     bind->push();
 }

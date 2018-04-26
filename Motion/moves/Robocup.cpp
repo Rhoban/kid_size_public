@@ -362,7 +362,7 @@ void Robocup::enterState(std::string state)
         else {
             targetX = autoTargetX;
             targetY = autoTargetY;
-            obstacles.push_back(Circle(Point(0, 0), 120));
+            obstacles.push_back(Circle(Point(0, 0), 1.2));
         }
         logger.log("Placing to x: %f y: %f", targetX, targetY);
         placer->goTo(targetX, targetY, 0, obstacles);

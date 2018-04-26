@@ -15,8 +15,8 @@ class Placer : public Move
         void onStop();
         void step(float elapsed);
 
-        // Controlling the placer, going to x, y [cm] and azimuth [deg]
-        // The circle are obstacles [cm] to avoid
+        // Controlling the placer, going to x, y [m] and azimuth [deg]
+        // The circle are obstacles [m] to avoid
         void goTo(float x, float y, float azimuth, 
                   std::vector<rhoban_geometry::Circle> obstacles=std::vector<rhoban_geometry::Circle>());
         void setLateralMode(bool l);
@@ -36,7 +36,7 @@ class Placer : public Move
         bool dontWalk;
         float hysteresis;
 
-        // Target point on the field [cm]
+        // Target point on the field [m]
         float targetX, errorX;
         float targetY, errorY;
 
@@ -46,7 +46,7 @@ class Placer : public Move
         // Servoing classes
         rhoban_utils::Control stepper, lateraler, turner;
 
-        // Margins [cm] and [deg]
+        // Margins [m] and [deg]
         float marginX, marginY, marginAzimuth ;//, tmpMarginAzimuth;
 
         //Direct mode variables
@@ -58,7 +58,7 @@ class Placer : public Move
         float rushRadiusLow, rushRadiusHigh;
         float capToTarget;
 
-        // Obstacles to avoid [cm]
+        // Obstacles to avoid [m]
         std::vector<rhoban_geometry::Circle> obstacles;
 
         // Distance to the next point that should be considered on the path [cm]

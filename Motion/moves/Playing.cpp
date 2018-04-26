@@ -256,7 +256,7 @@ void PlayingMove::step(float elapsed)
                 if (dist < walkBallDistance) {
                     setState(STATE_APPROACH);
                 }
-                auto ballField = loc->getBallPosField()*100;
+                auto ballField = loc->getBallPosField();
                 placer->goTo(ballField.x, ballField.y, 0);
             }
 
