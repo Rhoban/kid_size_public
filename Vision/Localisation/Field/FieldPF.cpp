@@ -35,10 +35,10 @@ std::map<FieldPF::ResetType,std::string> FieldPF::resetNames =
   {ResetType::Custom, "Custom"}
 };
 
-double FieldPF::mins[3] = {-Constants::field.fieldLength / 200,
-                           -Constants::field.fieldWidth / 200, 0};
-double FieldPF::maxs[3] = {Constants::field.fieldLength / 200,
-                           Constants::field.fieldWidth / 200, 360};
+double FieldPF::mins[3] = {-100 * Constants::field.fieldLength / 2,
+                           -100 * Constants::field.fieldWidth / 2, 0};
+double FieldPF::maxs[3] = {100 * Constants::field.fieldLength / 2,
+                           100 * Constants::field.fieldWidth / 2, 360};
 
 FieldPF::FieldPF()
     : ParticleFilter(), resetType(ResetType::None),
@@ -109,13 +109,13 @@ FieldPF::FieldPF()
       ->persisted(true);
   rhioNode->newFloat("customX")
       ->defaultValue(0)
-      ->minimum(-Constants::field.fieldLength / 100)
-      ->maximum(Constants::field.fieldLength / 100)
+      ->minimum(-Constants::field.fieldLength * 100)
+      ->maximum(Constants::field.fieldLength * 100)
       ->comment("Position used for customReset [cm]");
   rhioNode->newFloat("customY")
       ->defaultValue(0)
-      ->minimum(-Constants::field.fieldWidth / 100)
-      ->maximum(Constants::field.fieldWidth / 100)
+      ->minimum(-Constants::field.fieldWidth * 100)
+      ->maximum(Constants::field.fieldWidth * 100)
       ->comment("Position used for customReset [cm]");
   rhioNode->newFloat("customTheta")
       ->defaultValue(0)
@@ -277,7 +277,7 @@ void FieldPF::step(
 void FieldPF::resetOnLines(int side) {
   auto generator = rhoban_random::getRandomEngine();
   // According to rules, robot start in its own half
-  double xOffset = Constants::field.penaltyMarkDist - Constants::field.fieldLength / 2;
+  double xOffset = 100 * (Constants::field.penaltyMarkDist - Constants::field.fieldLength / 2);
   std::uniform_real_distribution<double> xDistribution(-borderNoise,
                                                        borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta,
@@ -297,7 +297,7 @@ void FieldPF::resetOnLines(int side) {
     else {
       currSide = sideDistribution(engine) == 0 ? 1 : -1;
     }
-    double y = currSide * Constants::field.fieldWidth / 2;
+    double y = currSide * 100 * Constants::field.fieldWidth / 2;
     double dirNoise = dirNoiseDistribution(generator);
     double dir = -currSide * 90;
     p.first = FieldPosition(x, y, Angle(dir + dirNoise).getSignedValue());
