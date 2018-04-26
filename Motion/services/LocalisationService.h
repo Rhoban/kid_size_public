@@ -12,6 +12,7 @@ class Robocup;
 class LocalisationBinding;
 }
 
+/// Unless explicitely stated otherwise, units are SI
 class LocalisationService : public Service
 {
   
@@ -81,8 +82,7 @@ class LocalisationService : public Service
         float goalTargetPan;
         float goalTargetTilt;
 
-        // Units: cm / degrees
-        // applyKick(x,y, a1, a2) != applyKick(x,y, a2, a1)
+        /// x,y -> [cm]
         void applyKick(float x, float y);
 
         // How many frames were captured by the camera?
@@ -100,10 +100,12 @@ class LocalisationService : public Service
         void gameStartReset();
         void kickOffReset();
         void dropBallReset();
+        /// x in [m]
         void penaltyReset(float x);
         void penaltyGoalReset();
         void goalReset();
 
+        /// x,y, noise in meters, theta thetaNoise in deg
         void customFieldReset(double x, double y, double noise, double theta, double thetaNoise);
         void fallReset();
         void bordersReset();

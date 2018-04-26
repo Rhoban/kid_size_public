@@ -14,7 +14,6 @@ class Approach : public ApproachMove
         void onStart();
         void onStop();
         void step(float elapsed);
-        float getLetPlayRadius();
         
         // Clearing the ball
         bool clearing = false;

@@ -37,35 +37,34 @@ PlayingMove::PlayingMove(Walk *walk)
         ->comment("State of the Playing STM");
 
     bind->bindNew("localizeWalkDuration", localizeWalkDuration, RhIO::Bind::PullOnly)
-        ->defaultValue(10.0)->persisted(true)->comment("Walk forward during this duration");
+        ->defaultValue(10.0)->comment("Walk forward during this duration");
 
     bind->bindNew("useKickController", useKickController, RhIO::Bind::PullOnly)
-        ->defaultValue(true)->comment("Use the kick controller")
-        ->persisted(true);
+        ->defaultValue(true)->comment("Use the kick controller");
 
     bind->bindNew("stopOnHandle", stopOnHandle, RhIO::Bind::PullOnly)
         ->defaultValue(false)->comment("Stop playing when handled (debug handling)");
 
     bind->bindNew("teamConfidence", teamConfidence, RhIO::Bind::PullOnly)
-        ->defaultValue(true)->comment("Am I confident in my team?")->persisted(true);
+        ->defaultValue(true)->comment("Am I confident in my team?");
     
     bind->bindNew("avoidRadius", avoidRadius, RhIO::Bind::PullOnly)
-        ->defaultValue(100.0)->comment("Radius (cm) to avoid colliding the ball while placing")->persisted(true);
+        ->defaultValue(1.0)->comment("Radius [m] to avoid colliding the ball while placing");
     
     bind->bindNew("placingBallDistance", placingBallDistance, RhIO::Bind::PullOnly)
-        ->defaultValue(200.0)->comment("Distance (cm) to the ball for team play placement")->persisted(true);
+        ->defaultValue(2.0)->comment("Distance [m] to the ball for team play placement");
     
     bind->bindNew("perpendicularBallDistance", perpendicularBallDistance, RhIO::Bind::PullOnly)
-        ->defaultValue(80.0)->comment("Distance (cm) on the perpendicular to attack placement")->persisted(true);
+        ->defaultValue(0.8)->comment("Distance [m] on the perpendicular to attack placement");
 
     bind->bindNew("walkBallDistance", walkBallDistance, RhIO::Bind::PullOnly)
-        ->defaultValue(120.0)->comment("Distance to run the approach to the ball")->persisted(true);
+        ->defaultValue(1.2)->comment("Distance to run the approach to the ball [m]");
 
     bind->bindNew("passPlacingRatio", passPlacingRatio, RhIO::Bind::PullOnly)
-        ->defaultValue(0.85)->comment("Ratio to the kick vector to place")->persisted(true);
+        ->defaultValue(0.85)->comment("Ratio to the kick vector to place");
     
     bind->bindNew("passPlacingOffset", passPlacingOffset, RhIO::Bind::PullOnly)
-        ->defaultValue(35)->comment("Offset to kick vector to place [cm]")->persisted(true);
+        ->defaultValue(0.35)->comment("Offset to kick vector to place [m]")->persisted(true);
 }
 
 std::string PlayingMove::getName()
@@ -96,8 +95,8 @@ void PlayingMove::onStop()
 
 static void boundPosition(Point &point)
 {
-    double xMax = Constants::fieldLength/2 - Constants::goalAreaLength - 50;
-    double yMax = Constants::goalAreaWidth/2;
+    double xMax = Constants::field.fieldLength/2 - Constants::field.goalAreaLength - 0.5;
+    double yMax = Constants::field.goalAreaWidth/2;
 
     if (point.x > xMax) {
         point.x = xMax;
@@ -130,10 +129,10 @@ PlayingMove::Place PlayingMove::findPlacingTarget(Point pos, Point ball, Point b
     Point vect = (ballTarget-ball)*passPlacingRatio 
         - (ballTarget-ball).normalize()*passPlacingOffset;
     Point nVect = vect.perpendicular().normalize(perpendicularBallDistance);
-    bool backward = ballTarget.x-10 <= ball.x;
+    bool backward = ballTarget.x-0.1 <= ball.x;
 
     if (intention == PlacingA) {
-        corner = Point(Constants::fieldLength/2, Constants::goalWidth/2 + 25);
+        corner = Point(Constants::field.fieldLength/2, Constants::field.goalWidth/2 + 0.25);
 
         if (backward) {
             target = ball+(ballTarget-ball)*1.15;
@@ -141,7 +140,7 @@ PlayingMove::Place PlayingMove::findPlacingTarget(Point pos, Point ball, Point b
             target = ball+vect+nVect;
         }
     } else if (intention == PlacingB) {
-        corner = Point(Constants::fieldLength/2, -Constants::goalWidth/2 - 25);
+        corner = Point(Constants::field.fieldLength/2, -Constants::field.goalWidth/2 - 0.25);
 
         if (backward) {
             auto tmp1 = ball+vect+nVect;
@@ -152,10 +151,10 @@ PlayingMove::Place PlayingMove::findPlacingTarget(Point pos, Point ball, Point b
             target = ball+vect-nVect;
         }
     } else if (intention == PlacingC) {
-        corner = Point(-Constants::fieldLength/2, Constants::goalWidth/2 + 25);
+        corner = Point(-Constants::field.fieldLength/2, Constants::field.goalWidth/2 + 0.25);
         target = ball+(corner-ball).normalize(placingBallDistance);
     } else if (intention == PlacingD) {
-        corner = Point(-Constants::fieldLength/2, -Constants::goalWidth/2 - 25);
+        corner = Point(-Constants::field.fieldLength/2, -Constants::field.goalWidth/2 - 0.25);
         target = ball+(corner-ball).normalize(placingBallDistance);
     }
 
@@ -243,7 +242,7 @@ void PlayingMove::step(float elapsed)
     } else {
         // We are approaching the ball
         if (state == STATE_APPROACH || state == STATE_WALKBALL) {
-            auto ball = loc->getBallPosSelf()*100;
+            auto ball = loc->getBallPosSelf();
             auto dist = ball.getLength();
 
             if (state == STATE_APPROACH) {
@@ -256,7 +255,7 @@ void PlayingMove::step(float elapsed)
                 if (dist < walkBallDistance) {
                     setState(STATE_APPROACH);
                 }
-                auto ballField = loc->getBallPosField()*100;
+                auto ballField = loc->getBallPosField();
                 placer->goTo(ballField.x, ballField.y, 0);
             }
 
@@ -282,10 +281,10 @@ void PlayingMove::step(float elapsed)
                 float letPlayRadius = decision->letPlayRadius;
                 auto ball = loc->getBallPosField();
                 auto ballPos = loc->getBallPosSelf();
-                float ballDistance = ballPos.getLength()*100;
+                float ballDistance = ballPos.getLength();
                 float ballAzimuth = ballPos.getTheta().getSignedValue();
 
-                Point goalCenter(-Constants::fieldLength/200.0, 0);
+                Point goalCenter(-Constants::field.fieldLength/2, 0);
                 double fieldOrientation = rad2deg(loc->getFieldOrientation());
                 float defendAzimuth = (Angle(fieldOrientation) - (ball-goalCenter).getTheta()).getSignedValue();
 
@@ -308,12 +307,12 @@ void PlayingMove::step(float elapsed)
                 lateraler.min = -walk->maxLateral;
                 lateraler.max = walk->maxLateral;
                 lateraler.k_p = 1;
-                if (fabs(ballAzimuth) > 15 || fabs(ballDistance-letPlayRadius) > 35) {
+                if (fabs(ballAzimuth) > 15 || fabs(ballDistance-letPlayRadius) > 0.35) {
                     defendAzimuth = 0;
                 }
                 lateraler.update(defendAzimuth);
 
-                walk->control(true, stepper.output, lateraler.output, aligner.output);
+                walk->control(true, stepper.output/100, lateraler.output/100, aligner.output);
                 
                 if (placer->isRunning()) {
                     placer->stop();
@@ -321,11 +320,11 @@ void PlayingMove::step(float elapsed)
             } else {
                 // XXX: Some values should be Rhiozed here
                 Point ball, ballTarget;
-                ball = Point(decision->shareX, decision->shareY)*100;
-                ballTarget = Point(decision->ballTargetX, decision->ballTargetY)*100;
+                ball = Point(decision->shareX, decision->shareY);
+                ballTarget = Point(decision->ballTargetX, decision->ballTargetY);
 
                 // My position
-                auto pos = loc->getFieldPos()*100;
+                auto pos = loc->getFieldPos();
                 
                 // My info
                 auto &info = teamPlay->selfInfo();
@@ -362,7 +361,7 @@ void PlayingMove::step(float elapsed)
                 std::vector<Circle> obstacles;
                 obstacles.push_back(Circle(ball.x, ball.y, avoidRadius));
                 if (handlerFound) {
-                    obstacles.push_back(Circle(handler.fieldX*100, handler.fieldY*100, avoidRadius));
+                    obstacles.push_back(Circle(handler.fieldX, handler.fieldY, avoidRadius));
                 }
                 placer->goTo(target.position.x, target.position.y, target.orientation.getSignedValue(),
                         obstacles);

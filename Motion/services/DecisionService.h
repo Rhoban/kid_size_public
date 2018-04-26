@@ -105,11 +105,6 @@ class DecisionService : public Service
          * What is the side of the last seen ball?
          */
         bool lastSeenBallRight;
-        
-        /**
-         * Is self attacking
-         */
-        bool isSelfAttacking;
 
         /// Filtered direction of the fall
         FallDirection fallDirection;

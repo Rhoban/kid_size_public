@@ -119,9 +119,9 @@ void MDPKickController::step(float elapsed)
   /// If ball is outside of bound use simple custom actions
   double ball_x = state(0);
   double ball_y = state(1);
-  if (ball_x > Constants::fieldLength / 200) {
+  if (ball_x > Constants::field.fieldLength / 2) {
     // Ball is outside of opponent line
-    double y_limit = (Constants::goalWidth / 2) / 100;// half-width + cm -> m
+    double y_limit = (Constants::field.goalWidth / 2);
     if (std::fabs(ball_y) < y_limit) {
       // Ball is roughly centered -> shoot toward goal
       kick_dir = 0;

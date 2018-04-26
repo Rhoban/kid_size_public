@@ -1,13 +1,13 @@
 * Calendrier
 ** W1: 04/23 - 04/27
 *** =Ludo+Patxi= Méca
-  -  Finalisation achats
-  -  Test premier Pitch MX-64 (Design + Fabrication et assemblage)
+**** Finalisation achats
+**** Test premier Pitch MX-64 (Design + Fabrication et assemblage)
      NOTE : les trous des gabarits sont trop grands (2.5mm -> 2mm)
-  -  Design poignée + corde à piano dos
-  -  Tests + assemblage caches teflon pour coude
-*** Soft
-  -  =Ludo= robocup_referee/constants to json
+**** DONE Design poignée + corde à piano dos
+**** DONE Tests + assemblage caches teflon pour coude
+*** Soft 
+**** =Ludo= robocup_referee/constants to json
 *** Mouvement/comportement
   -  =Ludo= Brancher walkOnKick sur commande rhio
   -  =Ludo= Débrancher la génération du tir avec IK
@@ -80,11 +80,15 @@
 **** Premiers matchs à faire
 *** Commentaires
 **** Dispo patxi réduite
+*** Vision
+**** =Ludo= Détection des robots adverses
 *** Machine Learning
 **** =Patxi+Ludo= Application approche + prédiction de balle pour Corner
 ** W7: 05/04 - 05/08
 *** Mouvement/Comportement
 **** Gestion passe R_1 à R_2
+*** Vision
+**** =Ludo= Compas visuel à reprendre en main
 ** W8: 05/11 - 05/15
 *** Départ 15/16
 * Tâches
@@ -165,8 +169,11 @@
 *** Entraînement modèle prédictif + Approche MDP
 *** Prédiction trajectoire de balle
 **** Vision
-**** Utilisation pour approche
+**** Utilisation pour approche/tir
 ***** Validation avec technical challenge
+- Important: vérifier la chronologie du déroulement d'un tir
+  - Quel temps s'écoule entre le choix du tir et le déclenchement du mouvement
+- Accélérer le début du mouvement?
 ***** Validation avec scénario de passe
 ** Deep neural network
 *** Modifications du Tagger (voir brest/tagger.org)
@@ -175,6 +182,8 @@
 **** Scripter plus l'apprentissage
 **** Tester des réseaux 32*32 et des réseaux avec plus de couches
 ** Vision
+*** Détection des robots adverses (non attribué/planifié)
+*** Compas visuel à clarifier/améliorer (non attribué/planifié)
 *** Freeze Vision pendant début match/penalized
 *** Tracking de balle pendant le tir
 **** Désactiver l'IMU pendant le tir du robot ?
@@ -196,61 +205,65 @@
 *** Commande passée le 23 avril, réception prévue début mai
 ** DONE LiPo
 *** Commande passée le 23 avril, réception prévue début mai
-** LiPo protective bag
-  - Stock :: 14
-  - Commande ::
-** Bipper
+** TODO LiPo protective bag
+  - Stock :: 15
+  - Commande :: 15
+** DONE Bipper
   - Stock
     + Simple :: 2
-    + Avec affichage :: 5 (+5 en commande)
-  - Commande
+    + Avec affichage :: 20 (+5 en commande)
 ** Dynamixel+connectique / genération robots (en attente commande robots chinois)
-*** MX-64/MX-106 (stocks à vérifier)
-*** Câbles
+*** TODO MX-64/MX-106 (stocks à vérifier)
+*** TODO Câbles
   - Stock [2018-04-23 lun.]
-    + 3mm
+    + 3 brins
       * 200mm :: 150
       * 240mm :: 0
-    + 4mm
+    + 4 brins
       * 60mm :: 30
       * 140mm :: 10
       * 200mm :: 110
       * 240mm :: 70
 *** DONE Gaine spiralée
   - Stock [2018-04-23 lun.] :: 3 nouvelles poches + chute
-** Corde à piano (en attente commande robot chinois)
-*** À voir sur Ebay (Robocampus)
-** T-shirts Rhoban + AMC?
+** TODO Corde à piano (en attente commande robot chinois)
+*** À voir sur Ebay (RoboCampus)
+  - Commande à effectuer après design protection
+** TODO T-shirts Rhoban + AMC?
+  - Requiert approvisionnement RoboCampus
 ** Matière première (en attente commande robot chinois)
-*** Aluminium
+*** DONE Aluminium
   - Stocks [2018-04-23 lun.]
-    + 3mm :: 1.8*demi plaques (20mmx50mm)
-    + 6mm :: 1 plaque (40mmx50mm)
-    + 6.25mm :: 2.5*plaques (40mmx50mm)
+    + 3mm :: 1.8*demi plaques (200mmx500mm)
+    + 6mm :: 1 plaque (400mmx500mm)
+    + 6.25mm :: 2.5*plaques (400mmx500mm)
   - Commande
-    + 3mm ::
-    + 6mm ::
-*** Cache torse
+    + 3mm :: 24 plaques commandées (500mm x 333 mm)
+    + 6mm :: 12 plaques commandées (500mm x 333 mm)
+*** DONE Cache torse
   - Stocks [2018-04-23 lun.]
-    + 42mmx13mm + 21.5mmx20mm
-*** Teflon
+    + 420mmx130mm + 215mmx200mm
+    + 1.5 * 420mm x 275 mm
+*** DONE Teflon
   - Stocks [2018-04-23 lun.]
     + ~5.3mm :: chutes
     + ~8.5mm :: chutes
-    + 10.1mm :: 5mmx22mm
-    + 10.4mm :: 10mmx30mm + 5mmx22mm
-    + ~10.7mm :: 13mmx30mm
-*** Tige filtée
+    + 10.1mm :: 50mmx220mm
+    + 10.4mm :: 100mmx300mm + 50mmx220mm
+    + ~10.7mm :: 130mmx300mm
+  - Commande
+    + 5mm :: 2 plaques 300mm x 300mm
+*** TODO Tige filetée
   - Stock [2018-04-23 lun.]
     + 5mm :: 0mm
-  - Commande
+  - Commande (pour le spare)
     + 5mm ::
-** Jauge pression (en attente commande robot chinois)
-*** Jauge
-*** Gaine
+** DONE Jauge pression (en attente commande robot chinois)
+*** DONE Jauge
+*** DONE Gaine
   - Stock [2018-04-23 lun.] :: grosse bobine
-
-** Visserie (en attente commande robot chinois)
+** DONE Visserie (en attente commande robot chinois)
+*** En commande par Greg
 *** M2.5
     + 4mm ::
     + 5mm ::
@@ -285,3 +298,10 @@
 *** Note: Possibilité d'importer des changements dans tiny-dnn pour utilisation d'avx dans fully-connected layer
 ** Localisation
 *** K-means + EM pour avoir plusieurs candidats?
+** Software
+*** Améliorer HeadScan (ajouter option pour repartir de la position la plus proche)
+*** Replay de logs
+- Contrôle de la video via touches directionnelles
+  - Requiert un changement:
+    - Actuellement: map<char,Action>: short key code + action
+    - Désiré      : map<int,pair<string,Action>>: key code + pair(description + Action)

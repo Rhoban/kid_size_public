@@ -8,8 +8,8 @@
 
 #include "Utils/Interface.h"
 
-#define IMG_WIDTH (2 * Constants::borderStrip + Constants::fieldLength)
-#define IMG_HEIGHT (2 * Constants::borderStrip + Constants::fieldWidth)
+#define IMG_WIDTH (2 * Constants::field.borderStripWidth + Constants::field.fieldLength)
+#define IMG_HEIGHT (2 * Constants::field.borderStripWidth + Constants::field.fieldWidth)
 
 #define FIELD_COLOR cv::Scalar(0, 128, 0)
 #define LINES_COLOR cv::Scalar(255, 255, 255)
@@ -24,17 +24,6 @@ namespace Field {
 
 Field *Field::singleton = NULL;
 
-cv::Point Field::offset() { return cv::Point(borderStrip, borderStrip); }
-
-const double Field::centerRadius = Constants::centerRadius;
-const double Field::fieldLength = Constants::fieldLength;
-const double Field::fieldWidth = Constants::fieldWidth;
-const double Field::goalWidth = Constants::goalWidth;
-const double Field::goalAreaLength = Constants::goalAreaLength;
-const double Field::goalAreaWidth = Constants::goalAreaWidth;
-const double Field::penaltyMarkDist = Constants::penaltyMarkDist;
-const double Field::borderStrip = Constants::borderStripWidth;
-
 double Field::getScale(const cv::Mat &img) {
   double scaleX = img.cols / (float)totalWidth();
   double scaleY = img.rows / (float)totalHeight();
@@ -45,7 +34,9 @@ Field::Field() : fieldLines(), fieldMarks() {
   initBorders();
   initCenter();
   for (auto dir : {-1, 1}) {
-    initGoalZone(cv::Point(dir * fieldLength / 2, -goalAreaWidth / 2), -dir);
+    initGoalZone(cv::Point2f(dir * Constants::field.fieldLength / 2,
+                           -Constants::field.goalAreaWidth / 2),
+                 -dir);
   }
   initMarks();
   initGoals();
@@ -54,50 +45,50 @@ Field::Field() : fieldLines(), fieldMarks() {
 }
 
 void Field::initBorders() {
-  int dx = fieldLength / 2;
-  int dy = fieldWidth / 2;
+  int dx = Constants::field.fieldLength / 2;
+  int dy = Constants::field.fieldWidth / 2;
   auto dirs = {-1, 1};
   for (auto &dir : dirs) {
-    cv::Point start(dx * dir, dy * dir);
-    cv::Point end1(dx * -dir, dy * dir);
-    cv::Point end2(dx * dir, dy * -dir);
+    cv::Point2f start(dx * dir, dy * dir);
+    cv::Point2f end1(dx * -dir, dy * dir);
+    cv::Point2f end2(dx * dir, dy * -dir);
     fieldLines.push_back(Segment(start, end1));
     fieldLines.push_back(Segment(start, end2));
   }
 }
 
 void Field::initCenter() {
-  cv::Point centerTop(0, -fieldWidth / 2);
-  cv::Point centerBot(0, fieldWidth / 2);
+  cv::Point2f centerTop(0, -Constants::field.fieldWidth / 2);
+  cv::Point2f centerBot(0, Constants::field.fieldWidth / 2);
   fieldLines.push_back(Segment(centerTop, centerBot));
 }
 
-void Field::initGoalZone(const cv::Point &init, int dir) {
-  cv::Point p2 = init + cv::Point(dir * goalAreaLength, 0);
-  cv::Point p3 = p2 + cv::Point(0, goalAreaWidth);
-  cv::Point p4 = init + cv::Point(0, goalAreaWidth);
+void Field::initGoalZone(const cv::Point2f &init, int dir) {
+  cv::Point2f p2 = init + cv::Point2f(dir * Constants::field.goalAreaLength, 0);
+  cv::Point2f p3 = p2 + cv::Point2f(0, Constants::field.goalAreaWidth);
+  cv::Point2f p4 = init + cv::Point2f(0, Constants::field.goalAreaWidth);
   fieldLines.push_back(Segment(init, p2));
   fieldLines.push_back(Segment(p2, p3));
   fieldLines.push_back(Segment(p3, p4));
   //// Lines behind goals : Outdated
-  // cv::Point p5 = init + cv::Point(-dir * GOAL_DEPTH,
-  //                        (Constants::goalAreaWidth - Constants::goalWidth) /
+  // cv::Point2f p5 = init + cv::Point2f(-dir * GOAL_DEPTH,
+  //                        (Constants::field.goalAreaWidth - Constants::field.goalWidth) /
   //                        2);
-  // cv::Point p6 = p5 + cv::Point(0, Constants::goalWidth);
+  // cv::Point2f p6 = p5 + cv::Point2f(0, Constants::field.goalWidth);
   // fieldLines.push_back(Segment(p5  , p6));
 }
 
 void Field::initMarks() {
-  cv::Point delta(fieldLength / 2 - penaltyMarkDist, 0);
-  fieldMarks.push_back(cv::Point(0, 0));
-  fieldMarks.push_back(cv::Point(delta));
-  fieldMarks.push_back(cv::Point(-delta));
+  cv::Point2f delta(Constants::field.fieldLength / 2 - Constants::field.penaltyMarkDist, 0);
+  fieldMarks.push_back(cv::Point2f(0, 0));
+  fieldMarks.push_back(cv::Point2f(delta));
+  fieldMarks.push_back(cv::Point2f(-delta));
 }
 
 void Field::initGoals() {
   for (auto i : {-1, 1}) { // 2 Goals
-    cv::Point center = cv::Point(i * fieldLength / 2, 0);
-    cv::Point delta(0, goalWidth / 2);
+    cv::Point2f center = cv::Point2f(i * Constants::field.fieldLength / 2, 0);
+    cv::Point2f delta(0, Constants::field.goalWidth / 2);
     goals.push_back(Segment(center - delta, center + delta));
   }
 }
@@ -106,9 +97,9 @@ void Field::initArena() {
   arenaCorners.clear();
   for (int dirX : {-1, 1}) {
     for (int dirY : {-1, 1}) {
-      double distX = fieldLength / 2 + borderStrip;
-      double distY = fieldWidth / 2 + borderStrip;
-      arenaCorners.push_back(cv::Point(distX * dirX, distY * dirY));
+      double distX = Constants::field.fieldLength / 2 + Constants::field.borderStripWidth;
+      double distY = Constants::field.fieldWidth / 2 + Constants::field.borderStripWidth;
+      arenaCorners.push_back(cv::Point2f(distX * dirX, distY * dirY));
     }
   }
   arenaBorders.clear();
@@ -124,8 +115,8 @@ Field *Field::getField() {
   return singleton;
 }
 
-cv::Point Field::getGoal(int goalNo, int postNo) {
-  cv::Point offset(0, postNo * goalWidth / 2);
+cv::Point2f Field::getGoal(int goalNo, int postNo) {
+  cv::Point2f offset(0, postNo * Constants::field.goalWidth / 2);
   return getField()->goals[goalNo].center() + offset;
 }
 
@@ -151,6 +142,11 @@ void Field::initTags()
    *                     /\
    *              Quarter of the field
    */
+  double fieldLength = Constants::field.fieldLength;
+  double fieldWidth = Constants::field.fieldWidth;
+  double penaltyMarkDist = Constants::field.penaltyMarkDist;
+  double goalAreaLength = Constants::field.goalAreaLength;
+  double goalAreaWidth = Constants::field.goalAreaWidth;
   cv::Point3f penaltyMark(fieldLength / 2 - penaltyMarkDist, 0, tagHeight);
   cv::Point3f goalAreaCorner1(fieldLength / 2 - goalAreaLength, goalAreaWidth/2, tagHeight);
   tags[ 29] = penaltyMark;
@@ -167,24 +163,28 @@ const std::map<int,cv::Point3f> & Field::getTags()
   return getField()->tags;
 }
 
-cv::Point Field::getMyGoal(int postNo) { return getGoal(0, postNo); }
+cv::Point2f Field::getMyGoal(int postNo) { return getGoal(0, postNo); }
 
-cv::Point Field::getAdvGoal(int postNo) { return getGoal(1, postNo); }
+cv::Point2f Field::getAdvGoal(int postNo) { return getGoal(1, postNo); }
 
-int Field::totalHeight() { return (int)(2 * borderStrip + fieldWidth); }
+int Field::totalHeight() {
+  return (int)(2 * Constants::field.borderStripWidth + Constants::field.fieldWidth);
+}
 
-int Field::totalWidth() { return (int)(2 * borderStrip + fieldLength); }
+int Field::totalWidth() {
+  return (int)(2 * Constants::field.borderStripWidth + Constants::field.fieldLength);
+}
 
 int Field::lineWidth(const cv::Mat &img) {
-  return (int)(Constants::lineWidth * getScale(img));
+  return (int)(Constants::field.lineWidth * getScale(img));
 }
 
 int Field::markWidth(const cv::Mat &img) {
-  return (int)(Constants::penaltyMarkLength * getScale(img));
+  return (int)(Constants::field.penaltyMarkLength * getScale(img));
 }
 
 int Field::centerDiameter(const cv::Mat &img) {
-  return (int)(2 * Constants::centerRadius * getScale(img));
+  return (int)(2 * Constants::field.centerRadius * getScale(img));
 }
 
 cv::Point2f Field::fieldToImg(const cv::Mat &img, const cv::Point2f &p) {
@@ -209,15 +209,15 @@ void Field::drawField(cv::Mat &img, const cv::Scalar &bgColor) {
   // Drawing white lines
   for (unsigned int i = 0; i < f->fieldLines.size(); i++) {
     const Segment &s = f->fieldLines[i];
-    cv::Point src = fieldToImg(img, s.first);
-    cv::Point dst = fieldToImg(img, s.second);
+    cv::Point2i src = fieldToImg(img, s.first);
+    cv::Point2i dst = fieldToImg(img, s.second);
     line(img, src, dst, LINES_COLOR, lineWidth(img));
   }
   // Drawing penalty marks
   for (unsigned int i = 0; i < f->fieldMarks.size(); i++) {
-    cv::Point markCenter = f->fieldMarks[i];
-    cv::Point dx(markWidth(img) / 2, 0);
-    cv::Point dy(0, markWidth(img) / 2);
+    cv::Point2i markCenter = f->fieldMarks[i];
+    cv::Point2i dx(markWidth(img) / 2, 0);
+    cv::Point2i dy(0, markWidth(img) / 2);
     line(img, fieldToImg(img, markCenter - dx),
          fieldToImg(img, markCenter + dx), LINES_COLOR, markWidth(img));
     line(img, fieldToImg(img, markCenter - dy),
@@ -229,8 +229,8 @@ void Field::drawField(cv::Mat &img, const cv::Scalar &bgColor) {
   // Drawing Goals
   for (unsigned int i = 0; i < f->goals.size(); i++) {
     Segment &s = f->goals[i];
-    cv::Point src = s.first;
-    cv::Point dst = s.second;
+    cv::Point2f src = s.first;
+    cv::Point2f dst = s.second;
     line(img, fieldToImg(img, src), fieldToImg(img, dst), GOAL_COLOR,
          3 * lineWidth(img));
   }
@@ -251,8 +251,8 @@ const std::vector<ParametricLine> &Field::getArenaBorders() {
   return getField()->arenaBorders;
 }
 
-std::vector<cv::Point> Field::getGoalPosts() {
-  std::vector<cv::Point> goalPosts;
+std::vector<cv::Point2f> Field::getGoalPosts() {
+  std::vector<cv::Point2f> goalPosts;
   std::vector<Segment> goals = getGoals();
   for (unsigned int i = 0; i < goals.size(); i++) {
     goalPosts.push_back(goals[i].first);
@@ -261,14 +261,14 @@ std::vector<cv::Point> Field::getGoalPosts() {
   return goalPosts;
 }
 
-std::vector<cv::Point> Field::getArenaCorners() {
+std::vector<cv::Point2f> Field::getArenaCorners() {
   return getField()->arenaCorners;
-  std::vector<cv::Point> corners;
+  std::vector<cv::Point2f> corners;
   for (int dirX : {-1, 1}) {
     for (int dirY : {-1, 1}) {
-      double distX = fieldLength / 2 + borderStrip;
-      double distY = fieldWidth / 2 + borderStrip;
-      corners.push_back(cv::Point(distX * dirX, distY * dirY));
+      double distX = Constants::field.fieldLength / 2 + Constants::field.borderStripWidth;
+      double distY = Constants::field.fieldWidth / 2 + Constants::field.borderStripWidth;
+      corners.push_back(cv::Point2f(distX * dirX, distY * dirY));
     }
   }
   return corners;

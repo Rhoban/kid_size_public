@@ -924,8 +924,8 @@ void Robocup::updateBallInformations() {
         double ballXField = robot.x + cos(robotDir) * ballXSelf - sin(robotDir) * ballYSelf;
         double ballYField = robot.y + sin(robotDir) * ballXSelf + cos(robotDir) * ballYSelf;
         // OPTION: Margin could be added here
-        if (std::fabs(ballXField * 100) > Constants::fieldLength/2 + Constants::borderStripWidth ||
-            std::fabs(ballYField * 100) > Constants::fieldWidth/2 + Constants::borderStripWidth) {
+        if (std::fabs(ballXField) > Constants::field.fieldLength/2 + Constants::field.borderStripWidth ||
+            std::fabs(ballYField) > Constants::field.fieldWidth/2 + Constants::field.borderStripWidth) {
           out.warning("Ignoring a ball candidate outside of the field at (%f,%f)",
                       ballXField, ballYField);
           continue;
@@ -1176,10 +1176,11 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
 
   std::vector<cv::Point2f> freshObservations;
   std::vector<int> delete_me;
-  float scale_factor = width * 100 / (2 * Constants::fieldLength);
-  int ball_radius = 5;
+  // scale_factor -> conversion [m] -> [px]
+  float scale_factor = width / (2 * Constants::field.fieldLength);
+  int ball_radius = 5;//px
   cv::Scalar ball_color = cv::Scalar(0, 0, 200);
-  int goal_size = 8;
+  int goal_size = 8;//px
   cv::Scalar goal_color = cv::Scalar(200, 0, 0);
   //int robot_size = 20;
   //cv::Scalar robot_color = cv::Scalar(255, 0, 255);
@@ -1188,7 +1189,7 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
                           // angular condition instead
 
   // Drawing satic distance marquers each meter (light circles are 0.5 meters)
-  for (int i = 1; i < (1 + 2 * Constants::fieldLength / 100); i++) {
+  for (int i = 1; i < (1 + 2 * Constants::field.fieldLength); i++) {
     cv::circle(img, cv::Point2i(width / 2, height / 2),
                (i / 2.0) * scale_factor, cv::Scalar(0, 150, 0), 2 - (i % 2));
   }

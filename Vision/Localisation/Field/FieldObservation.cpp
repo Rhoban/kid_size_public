@@ -2,7 +2,10 @@
 
 #include "Field/Field.hpp"
 
+#include <robocup_referee/constants.h>
+
 using namespace rhoban_geometry;
+using namespace robocup_referee;
 
 namespace Vision {
 namespace Localisation {
@@ -16,17 +19,13 @@ double FieldObservation::potential(const FieldPosition &p) const {
   Point pos = p.getRobotPosition();
   // Refusing entirely to be behind the goal because it can cause weird
   // approaches
-  double dx = abs(pos.x) - Field::Field::fieldLength / 2;
+  double dx = abs(pos.x) - 100 * Constants::field.fieldLength / 2;
   // Accepting to go slightly out of the field laterally
   double dy =
-      abs(pos.y) - Field::Field::fieldWidth / 2 - Field::Field::borderStrip;
+    abs(pos.y) - (Constants::field.fieldWidth / 2 - Constants::field.borderStripWidth) * 100;
   if (dx > 0 || dy > 0) {
-    // std::cout << "FieldObservation: score = 0: " << pos.x << "," << pos.y <<
-    // std::endl;
     return pError;
   }
-  //  if ((isGoalKeeper) && (pos.x>0)) should not be done here...
-  //return pError;
   return 1;
 }
 

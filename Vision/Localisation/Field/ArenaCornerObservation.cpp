@@ -25,8 +25,8 @@ double ArenaCornerObservation::maxAngleError = 30;
 double ArenaCornerObservation::sigmoidOffset = 0.6;
 double ArenaCornerObservation::sigmoidLambda = 5;
 
-static double arenaLength = Constants::fieldLength + 2*Constants::borderStripWidth;
-static double arenaWidth = Constants::fieldWidth + 2*Constants::borderStripWidth;
+static double arenaLength = 100 * (Constants::field.fieldLength + 2*Constants::field.borderStripWidth);
+static double arenaWidth = 100 * (Constants::field.fieldWidth + 2*Constants::field.borderStripWidth);
 
   
 bool ArenaCornerObservation::debug = false;

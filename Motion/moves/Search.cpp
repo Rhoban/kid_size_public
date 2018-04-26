@@ -43,8 +43,7 @@ Search::Search(Walk *walk, Placer *placer)
     bind->bindNew("beginX", beginX, RhIO::Bind::PullOnly)
         ->comment("Begin X")->defaultValue(0)->persisted(true);
     bind->bindNew("beginY", beginY, RhIO::Bind::PullOnly)
-
-      ->comment("Begin Y")->defaultValue(0)->persisted(true);
+        ->comment("Begin Y")->defaultValue(0)->persisted(true);
     bind->bindNew("beginAzimuth", beginAzimuth, RhIO::Bind::PullOnly)
         ->comment("Begin Azimuth")->defaultValue(0)->persisted(true);
 
@@ -140,13 +139,13 @@ void Search::step(float elapsed)
     }
     if (state == STATE_BEGIN) {
         if (referee->isBegining()) {
-            placer->goTo(beginX, beginY, beginAzimuth);
+            placer->goTo(beginX/100, beginY/100, beginAzimuth);
         } else {
             setState(STATE_WAIT);
         }
     }
     if (state == STATE_SHARED) {
-        placer->goTo(100*decision->shareX, 100*decision->shareY, 0);
+        placer->goTo(decision->shareX, decision->shareY, 0);
         if (placer->arrived) {
             setState(STATE_PATROL);
         }
@@ -162,9 +161,9 @@ void Search::step(float elapsed)
         }
     
         if (patrolTarget == 0) {
-            placer->goTo(P1X, P1Y, P1Azimuth);
+            placer->goTo(P1X/100, P1Y/100, P1Azimuth);
         } else {
-            placer->goTo(P2X, P2Y, P2Azimuth);
+            placer->goTo(P2X/100, P2Y/100, P2Azimuth);
         }
     }
 

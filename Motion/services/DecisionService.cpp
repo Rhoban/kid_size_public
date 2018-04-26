@@ -65,7 +65,7 @@ DecisionService::DecisionService()
 
     // Let play radius
     bind.bindNew("letPlayRadius", letPlayRadius, RhIO::Bind::PushOnly)
-        ->comment("Let play radius");
+        ->comment("Let play radius [m]");
 
     // Shared infos
     bind.bindNew("enableShare", enableShare, RhIO::Bind::PullOnly)
@@ -110,10 +110,6 @@ DecisionService::DecisionService()
     bind.bindNew("goalId", goalId, RhIO::Bind::PullOnly)
         ->comment("Id of the goal")->defaultValue(2);
     
-    // Am I attacking my own team ?
-    bind.bindNew("isSelfAttacking", isSelfAttacking, RhIO::Bind::PushOnly)
-        ->comment("I am attacking my own team ?")->defaultValue(false);
-
     selfAttackingT = 0;
     freeKickT = 99;
     handledT = 0;
@@ -175,7 +171,7 @@ bool DecisionService::tick(double elapsed)
         } else {
             shouldLetPlay = true;
             freeKickT = 0;
-            double clearRadius = 65;
+            double clearRadius = 0.65;//[m]
             if (letPlayRadius < clearRadius) {
                 letPlayRadius = clearRadius;
             }
@@ -186,53 +182,10 @@ bool DecisionService::tick(double elapsed)
         // https://github.com/RoboCup-Humanoid-TC/GameController/issues/19
         freeKickT += elapsed;
         shouldLetPlay = true;
-        if (letPlayRadius < 75) {
-            letPlayRadius = 75;
+        if (letPlayRadius < 0.75) {
+            letPlayRadius = 0.75;
         }
     }
-
-    // XXX: Suspended, to test
-    isSelfAttacking = false;
-    /*
-    // We know where is the ball and where we are on the field
-    if (isBallQualityGood && isFieldQualityGood && !isFallen) {
-        bool selfAttacking = false;
-        auto ball = loc->getBallPosField();
-        auto ballSelf = loc->getBallPosSelf();
-        // The ball is in the 1/3 opponent field, and nearest than 1m
-        if (ball.x > Constants::fieldWidth/600.0 && ballSelf.getLength() < 1) {
-            auto infos = teamPlay->allInfo();
-            for (auto &entry : infos) {
-                auto info = entry.second;
-                // The player is another one and is valid
-                if (info.id != teamPlay->myId() && !info.isOutdated() && !referee->isPenalized(info.id) &&
-                    info.id == goalId && info.fieldOk && info.ballOk && info.state != Inactive) {
-                    float a = info.fieldYaw;
-                    float X = info.fieldX + cos(a)*info.ballX - sin(a)*info.ballY;
-                    float Y = info.fieldY + sin(a)*info.ballX + cos(a)*info.ballY;
-                    float dist = sqrt(pow(info.ballX, 2) + pow(info.ballY, 2));
-
-                    // The ball is in our 1/3 field, and nearest than 3m
-                    if (dist < 3 && X < -Constants::fieldWidth/600.0) {
-                        selfAttacking = true;
-                    }
-                }
-            }
-        }
-
-        // This condition should holds for 10s before we confirm the decision
-        if (selfAttacking) {
-            selfAttackingT += elapsed;
-        } else {
-            selfAttackingT = 0;
-        }
-
-        isSelfAttacking = (selfAttackingT > 10);
-    } else {
-        isSelfAttacking = false;
-        selfAttackingT = 0;
-    }
-    */
 
     bind.pull();
     if (Helpers::isFakeMode()) {

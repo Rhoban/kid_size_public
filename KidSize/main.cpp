@@ -14,6 +14,8 @@
 #include "scheduler/MoveScheduler.h"
 #include "buildinfos.h"
 
+#include <robocup_referee/constants.h>
+
 #ifdef VISION_COMPONENT
 #include <Binding/Robocup.hpp>
 #include <Binding/LocalisationBinding.hpp>
@@ -82,6 +84,9 @@ int main(int argc, char **argv)
         std::cout << "Starting RhIO with port " << port.getValue() << std::endl;
         RhIO::start(port.getValue());
     }
+
+
+    robocup_referee::Constants::field.loadFile("field.json");
 
     // Enabling exception, for pedantic debugging
     feenableexcept(FE_DIVBYZERO| FE_INVALID | FE_OVERFLOW);
