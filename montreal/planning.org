@@ -1,18 +1,19 @@
 * Calendrier
 ** W1: 04/23 - 04/27
 *** =Ludo+Patxi= Méca
-**** Finalisation achats
-**** Test premier Pitch MX-64 (Design + Fabrication et assemblage)
-**** Design poignée + corde à piano dos
-**** Tests + assemblage caches teflon pour coude
-*** Soft 
-**** =Ludo= robocup_referee/constants to json
+  -  Finalisation achats
+  -  Test premier Pitch MX-64 (Design + Fabrication et assemblage)
+     NOTE : les trous des gabarits sont trop grands (2.5mm -> 2mm)
+  -  Design poignée + corde à piano dos
+  -  Tests + assemblage caches teflon pour coude
+*** Soft
+  -  =Ludo= robocup_referee/constants to json
 *** Mouvement/comportement
-**** =Ludo= Brancher walkOnKick sur commande rhio
-**** =Ludo= Débrancher la génération du tir avec IK
+  -  =Ludo= Brancher walkOnKick sur commande rhio
+  -  =Ludo= Débrancher la génération du tir avec IK
 *** Machine Learning
-**** =Ludo+Patxi= Code prédiction durée du pas
-**** =Patxi= Code pour prédiction de balle 1/2
+  -  =Ludo+Patxi= Code prédiction durée du pas
+  -  =Patxi= Code pour prédiction de balle 1/2
 ** W2: 04/30 - 05/04
 *** Méca
 **** Protection choc pour bras
