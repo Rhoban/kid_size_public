@@ -1,3 +1,5 @@
+* Mot de pass ordinateur salle Kuka
+- password: pass
 * Définitions
 ** Job
 - Une tâche élémentaire (perçage des trous, découpe contour)
