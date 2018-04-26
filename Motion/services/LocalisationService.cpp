@@ -263,12 +263,12 @@ Point LocalisationService::getRightGoalPosSelf()
 
 Point LocalisationService::getGoalPosField()
 {
-    return Point(Constants::fieldLength/200.0, 0);
+    return Point(Constants::field.fieldLength/200.0, 0);
 }
         
 Angle LocalisationService::getOurBallToGoalDirSelf()
 {
-    Point goalField(-Constants::fieldLength/200.0, 0);
+    Point goalField(-Constants::field.fieldLength/200.0, 0);
     auto ball = getBallPosField();
     auto orientationRad = getFieldOrientation();
 
@@ -590,7 +590,7 @@ void LocalisationService::penaltyReset(float x)
 void LocalisationService::penaltyGoalReset()
 {
 #ifdef VISION_COMPONENT
-    customFieldReset(Field::fieldLength/2, 0, 5, 180, 3);
+  customFieldReset(Constants::field.fieldLength/2, 0, 5, 180, 3);
     robocup->robotsClear();
 #endif
 }
@@ -600,7 +600,7 @@ void LocalisationService::goalReset()
 #ifdef VISION_COMPONENT
     RhIO::Root.setFloat("/Localisation/Field/RobotController/angleExploration", 0.5);
     RhIO::Root.setFloat("/Localisation/Field/RobotController/posExploration", 0.5);
-    customFieldReset(-Field::fieldLength/2, 0, 1, 0, 1);
+    customFieldReset(-Constants::field.fieldLength/2, 0, 1, 0, 1);
     robocup->robotsClear();
 #endif
 }
@@ -625,8 +625,8 @@ void LocalisationService::gameStartReset()
 void LocalisationService::kickOffReset()
 {
 #ifdef VISION_COMPONENT
-  robocup->ballReset(Field::centerRadius, 0);
-  customFieldReset(-Field::centerRadius, 0, 30, 0, 5);
+  robocup->ballReset(Constants::field.centerRadius, 0);
+  customFieldReset(-Constants::field.centerRadius, 0, 30, 0, 5);
   robocup->robotsClear();
 #endif  
 }

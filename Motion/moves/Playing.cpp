@@ -96,8 +96,8 @@ void PlayingMove::onStop()
 
 static void boundPosition(Point &point)
 {
-    double xMax = Constants::fieldLength/2 - Constants::goalAreaLength - 50;
-    double yMax = Constants::goalAreaWidth/2;
+    double xMax = Constants::field.fieldLength/2 - Constants::field.goalAreaLength - 50;
+    double yMax = Constants::field.goalAreaWidth/2;
 
     if (point.x > xMax) {
         point.x = xMax;
@@ -133,7 +133,7 @@ PlayingMove::Place PlayingMove::findPlacingTarget(Point pos, Point ball, Point b
     bool backward = ballTarget.x-10 <= ball.x;
 
     if (intention == PlacingA) {
-        corner = Point(Constants::fieldLength/2, Constants::goalWidth/2 + 25);
+        corner = Point(Constants::field.fieldLength/2, Constants::field.goalWidth/2 + 25);
 
         if (backward) {
             target = ball+(ballTarget-ball)*1.15;
@@ -141,7 +141,7 @@ PlayingMove::Place PlayingMove::findPlacingTarget(Point pos, Point ball, Point b
             target = ball+vect+nVect;
         }
     } else if (intention == PlacingB) {
-        corner = Point(Constants::fieldLength/2, -Constants::goalWidth/2 - 25);
+        corner = Point(Constants::field.fieldLength/2, -Constants::field.goalWidth/2 - 25);
 
         if (backward) {
             auto tmp1 = ball+vect+nVect;
@@ -152,10 +152,10 @@ PlayingMove::Place PlayingMove::findPlacingTarget(Point pos, Point ball, Point b
             target = ball+vect-nVect;
         }
     } else if (intention == PlacingC) {
-        corner = Point(-Constants::fieldLength/2, Constants::goalWidth/2 + 25);
+        corner = Point(-Constants::field.fieldLength/2, Constants::field.goalWidth/2 + 25);
         target = ball+(corner-ball).normalize(placingBallDistance);
     } else if (intention == PlacingD) {
-        corner = Point(-Constants::fieldLength/2, -Constants::goalWidth/2 - 25);
+        corner = Point(-Constants::field.fieldLength/2, -Constants::field.goalWidth/2 - 25);
         target = ball+(corner-ball).normalize(placingBallDistance);
     }
 
@@ -285,7 +285,7 @@ void PlayingMove::step(float elapsed)
                 float ballDistance = ballPos.getLength()*100;
                 float ballAzimuth = ballPos.getTheta().getSignedValue();
 
-                Point goalCenter(-Constants::fieldLength/200.0, 0);
+                Point goalCenter(-Constants::field.fieldLength/200.0, 0);
                 double fieldOrientation = rad2deg(loc->getFieldOrientation());
                 float defendAzimuth = (Angle(fieldOrientation) - (ball-goalCenter).getTheta()).getSignedValue();
 

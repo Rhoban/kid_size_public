@@ -54,25 +54,25 @@ double KickQLearning::rewardFor(State *from, State *state)
     double Y = accuracy*state->y;
     double multiplier = corridorProfile.getWeight(X,Y);
 
-    if (X > (Constants::fieldLength-Constants::goalAreaLength)/100.0 &&
-            fabs(Y-Constants::fieldWidth/200.0) < Constants::goalAreaWidth/100.0) {
+    if (X > (Constants::field.fieldLength-Constants::field.goalAreaLength)/100.0 &&
+            fabs(Y-Constants::field.fieldWidth/200.0) < Constants::field.goalAreaWidth/100.0) {
         multiplier = penaltyMultiplier;
     }
 
     if (enableExcentric) {
         bool ok = false;
-        double limitA = Constants::fieldLength*0.5/100.0;
-        double yOff = fabs(Y-Constants::fieldWidth/200.0);
+        double limitA = Constants::field.fieldLength*0.5/100.0;
+        double yOff = fabs(Y-Constants::field.fieldWidth/200.0);
         if (X < limitA) {
-            ok = (yOff < Constants::goalWidth/200.0);
+            ok = (yOff < Constants::field.goalWidth/200.0);
         } else {
             /*
             double dX = X - limitA;
-            ok = (yOff < Constants::goalWidth/200.0 - dX*1.5);
+            ok = (yOff < Constants::field.goalWidth/200.0 - dX*1.5);
             */
         }
         /*
-        if (yOff > Constants::fieldWidth/200.0 - 0.25) {
+        if (yOff > Constants::field.fieldWidth/200.0 - 0.25) {
             ok = true;
         }
         */
@@ -137,7 +137,7 @@ KickStrategy KickQLearning::generate()
                 }
 
                 double tmpTol = tolerance;
-                if (X < Constants::fieldLength/200.0) tmpTol *= 2;
+                if (X < Constants::field.fieldLength/200.0) tmpTol *= 2;
                 if (fabs(actionScore - states[x][y].score) < tmpTol) {
                     possibleKicks.insert(tmpAction.kick);
                     possibleOrientations.insert(round(tmpAction.orientation*1000));
@@ -184,8 +184,8 @@ KickStrategy KickQLearning::generate()
 
 void KickQLearning::generateStates()
 {
-    xSteps = 1+Constants::fieldLength/(100.0*accuracy);
-    ySteps = 1+Constants::fieldWidth/(100.0*accuracy);
+    xSteps = 1+Constants::field.fieldLength/(100.0*accuracy);
+    ySteps = 1+Constants::field.fieldWidth/(100.0*accuracy);
     aSteps = 360/angleAccuracy;
 
     successState.score = 0;
@@ -260,24 +260,24 @@ void KickQLearning::generateModels()
                     if (state != NULL) {
                         count[state] += p;
                     } else {
-                        if (kickX > Constants::fieldLength/100.0) {
+                        if (kickX > Constants::field.fieldLength/100.0) {
                             double dY = (kickY-Y)/(kickX-X);
-                            double yIntersect = Y + (Constants::fieldLength/100.0-X)*dY;
-                            yIntersect -= Constants::fieldWidth/200.0;
+                            double yIntersect = Y + (Constants::field.fieldLength/100.0-X)*dY;
+                            yIntersect -= Constants::field.fieldWidth/200.0;
 
                             // Goal
                             if (fabs(yIntersect) < goalieWidth/2.0) {
                                 double goalProbability = 0.25;
 
-                                auto goalFeet = stateFor(Constants::fieldLength/100.0 - 0.1,
-                                        Constants::fieldWidth/200.0 + yIntersect);
+                                auto goalFeet = stateFor(Constants::field.fieldLength/100.0 - 0.1,
+                                        Constants::field.fieldWidth/200.0 + yIntersect);
 
                                 count[goalFeet]
                                     += p*goalProbability;
 
                                 count[&successState] += p*(1-goalProbability);
 
-                            } else if (fabs(yIntersect) < (Constants::goalWidth*0.95)/200.0) {
+                            } else if (fabs(yIntersect) < (Constants::field.goalWidth*0.95)/200.0) {
                                 count[&successState] += p;
                             } else {
                                 count[&failState] += p;

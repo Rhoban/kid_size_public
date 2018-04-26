@@ -278,7 +278,7 @@ void FieldPF::step(
 void FieldPF::resetOnLines(int side) {
   auto generator = rhoban_random::getRandomEngine();
   // According to rules, robot start in its own half
-  double xOffset = Constants::penaltyMarkDist - Constants::fieldLength / 2;
+  double xOffset = Constants::field.penaltyMarkDist - Constants::field.fieldLength / 2;
   std::uniform_real_distribution<double> xDistribution(-borderNoise,
                                                        borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta,

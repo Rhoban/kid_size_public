@@ -8,8 +8,8 @@
 
 #include "Utils/Interface.h"
 
-#define IMG_WIDTH (2 * Constants::borderStrip + Constants::fieldLength)
-#define IMG_HEIGHT (2 * Constants::borderStrip + Constants::fieldWidth)
+#define IMG_WIDTH (2 * Constants::borderStrip + Constants::field.fieldLength)
+#define IMG_HEIGHT (2 * Constants::borderStrip + Constants::field.fieldWidth)
 
 #define FIELD_COLOR cv::Scalar(0, 128, 0)
 #define LINES_COLOR cv::Scalar(255, 255, 255)
@@ -26,14 +26,14 @@ Field *Field::singleton = NULL;
 
 cv::Point Field::offset() { return cv::Point(borderStrip, borderStrip); }
 
-const double Field::centerRadius = Constants::centerRadius;
-const double Field::fieldLength = Constants::fieldLength;
-const double Field::fieldWidth = Constants::fieldWidth;
-const double Field::goalWidth = Constants::goalWidth;
-const double Field::goalAreaLength = Constants::goalAreaLength;
-const double Field::goalAreaWidth = Constants::goalAreaWidth;
-const double Field::penaltyMarkDist = Constants::penaltyMarkDist;
-const double Field::borderStrip = Constants::borderStripWidth;
+const double Field::centerRadius = Constants::field.centerRadius;
+const double Field::fieldLength = Constants::field.fieldLength;
+const double Field::fieldWidth = Constants::field.fieldWidth;
+const double Field::goalWidth = Constants::field.goalWidth;
+const double Field::goalAreaLength = Constants::field.goalAreaLength;
+const double Field::goalAreaWidth = Constants::field.goalAreaWidth;
+const double Field::penaltyMarkDist = Constants::field.penaltyMarkDist;
+const double Field::borderStrip = Constants::field.borderStripWidth;
 
 double Field::getScale(const cv::Mat &img) {
   double scaleX = img.cols / (float)totalWidth();
@@ -81,9 +81,9 @@ void Field::initGoalZone(const cv::Point &init, int dir) {
   fieldLines.push_back(Segment(p3, p4));
   //// Lines behind goals : Outdated
   // cv::Point p5 = init + cv::Point(-dir * GOAL_DEPTH,
-  //                        (Constants::goalAreaWidth - Constants::goalWidth) /
+  //                        (Constants::field.goalAreaWidth - Constants::field.goalWidth) /
   //                        2);
-  // cv::Point p6 = p5 + cv::Point(0, Constants::goalWidth);
+  // cv::Point p6 = p5 + cv::Point(0, Constants::field.goalWidth);
   // fieldLines.push_back(Segment(p5  , p6));
 }
 
@@ -176,15 +176,15 @@ int Field::totalHeight() { return (int)(2 * borderStrip + fieldWidth); }
 int Field::totalWidth() { return (int)(2 * borderStrip + fieldLength); }
 
 int Field::lineWidth(const cv::Mat &img) {
-  return (int)(Constants::lineWidth * getScale(img));
+  return (int)(Constants::field.lineWidth * getScale(img));
 }
 
 int Field::markWidth(const cv::Mat &img) {
-  return (int)(Constants::penaltyMarkLength * getScale(img));
+  return (int)(Constants::field.penaltyMarkLength * getScale(img));
 }
 
 int Field::centerDiameter(const cv::Mat &img) {
-  return (int)(2 * Constants::centerRadius * getScale(img));
+  return (int)(2 * Constants::field.centerRadius * getScale(img));
 }
 
 cv::Point2f Field::fieldToImg(const cv::Mat &img, const cv::Point2f &p) {

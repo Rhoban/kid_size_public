@@ -200,7 +200,7 @@ bool DecisionService::tick(double elapsed)
         auto ball = loc->getBallPosField();
         auto ballSelf = loc->getBallPosSelf();
         // The ball is in the 1/3 opponent field, and nearest than 1m
-        if (ball.x > Constants::fieldWidth/600.0 && ballSelf.getLength() < 1) {
+        if (ball.x > Constants::field.fieldWidth/600.0 && ballSelf.getLength() < 1) {
             auto infos = teamPlay->allInfo();
             for (auto &entry : infos) {
                 auto info = entry.second;
@@ -213,7 +213,7 @@ bool DecisionService::tick(double elapsed)
                     float dist = sqrt(pow(info.ballX, 2) + pow(info.ballY, 2));
 
                     // The ball is in our 1/3 field, and nearest than 3m
-                    if (dist < 3 && X < -Constants::fieldWidth/600.0) {
+                    if (dist < 3 && X < -Constants::field.fieldWidth/600.0) {
                         selfAttacking = true;
                     }
                 }

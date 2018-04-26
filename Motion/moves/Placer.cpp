@@ -239,8 +239,8 @@ void Placer::step(float elapsed)
 
     // Finding a path using the avoider
     auto result  = avoider.findPath(pos, target, 40, &score, [](Point pt) {
-            return fabs(pt.x) < (Constants::fieldLength/2 + 50) &&
-            fabs(pt.y) < (Constants::fieldWidth/2 + 50);
+            return fabs(pt.x) < (Constants::field.fieldLength/2 + 50) &&
+            fabs(pt.y) < (Constants::field.fieldWidth/2 + 50);
             });
 
     // The result is valid, using it instead of direct path

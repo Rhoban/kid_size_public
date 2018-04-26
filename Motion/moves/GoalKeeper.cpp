@@ -176,8 +176,8 @@ bool GoalKeeper::ballInZone(float xd, float yd) {
   auto loc = getServices()->localisation;
   auto ball = loc->getBallPosField() * 100;
   auto decision = getServices()->decision;
-  float lineX = -Constants::fieldLength / 2 + Constants::goalAreaLength + xd;
-  float lineY = Constants::goalAreaWidth / 2 + yd;
+  float lineX = -Constants::field.fieldLength / 2 + Constants::field.goalAreaLength + xd;
+  float lineY = Constants::field.goalAreaWidth / 2 + yd;
 
   //    logger.log("Current ball: %f %f", ball.x, ball.y);
   //    logger.log("Limits: %f %f", lineX, lineY);
@@ -201,47 +201,47 @@ bool GoalKeeper::ignoreBall() {
   auto ball = loc->getBallPosField() * 100;
   auto decision = getServices()->decision;
   
-  return !(decision->isBallQualityGood && (ball.x < (-Constants::fieldLength/2 + xIgnoreBall)));
+  return !(decision->isBallQualityGood && (ball.x < (-Constants::field.fieldLength/2 + xIgnoreBall)));
 }
 
 bool GoalKeeper::ignoreBallHys() {
   auto loc = getServices()->localisation;
   auto ball = loc->getBallPosField() * 100;
   auto decision = getServices()->decision;
-  return !(decision->isBallQualityGood && (ball.x < (-Constants::fieldLength/2 + xIgnoreBall + xIgnoreBallHys)));
+  return !(decision->isBallQualityGood && (ball.x < (-Constants::field.fieldLength/2 + xIgnoreBall + xIgnoreBallHys)));
 }
 
 Point GoalKeeper::home(){
-  return Point(-(Constants::fieldLength/2)+homeX,0);
+  return Point(-(Constants::field.fieldLength/2)+homeX,0);
 }
 
 Point GoalKeeper::shootLineCenter(){
   auto loc = getServices()->localisation;
   auto ball = loc->getBallPosField() * 100;
-  float dx=ball.x - (-(Constants::fieldLength/2.0f));
+  float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
   if ((dx-maxShootDist) > -5) {// ball is too far
     //logger.log("ball is too far %f %f",dx,dx-maxShootDist);
-    return Point(-Constants::fieldLength/2.0f,ball.y); // go in front
+    return Point(-Constants::field.fieldLength/2.0f,ball.y); // go in front
   }
   float dy=maxShootDist*maxShootDist - dx*dx;
   if (dy<0){
     logger.log("error shootLineCenter: %f %f(%f) %f",maxShootDist,dx,ball.x,dy);
-    return Point(-Constants::fieldLength/2.0f,0); // go in front
+    return Point(-Constants::field.fieldLength/2.0f,0); // go in front
   }
   dy=sqrtf(maxShootDist*maxShootDist - dx*dx);
   float up=ball.y+dy;
   float down=ball.y-dy;
-  up=std::min(up,(float)(Constants::goalWidth/2.0f));
-  down=std::max(down,(float)(-Constants::goalWidth/2.0f));
-  return Point(-Constants::fieldLength/2.0f,(up+down)/2.0f);
+  up=std::min(up,(float)(Constants::field.goalWidth/2.0f));
+  down=std::max(down,(float)(-Constants::field.goalWidth/2.0f));
+  return Point(-Constants::field.fieldLength/2.0f,(up+down)/2.0f);
 }
 
 bool GoalKeeper::isNearHome(){  
     auto loc = getServices()->localisation;
     auto pos = loc->getFieldPos()*100;
-    //logger.log("is Near Home ?  %f > %f && %f <= %f  >>> %d ",pos.x , (-(Constants::fieldLength/2)+homeX) , distToHome , maxHomeDistance,(((pos.x > (-(Constants::fieldLength/2)+homeX)) && (distToHome<=maxHomeDistance))));
+    //logger.log("is Near Home ?  %f > %f && %f <= %f  >>> %d ",pos.x , (-(Constants::field.fieldLength/2)+homeX) , distToHome , maxHomeDistance,(((pos.x > (-(Constants::field.fieldLength/2)+homeX)) && (distToHome<=maxHomeDistance))));
     //logger.log("field orientation: %f",loc->getFieldOrientation());
-    return ( (pos.x > (-(Constants::fieldLength/2)+homeX))
+    return ( (pos.x > (-(Constants::field.fieldLength/2)+homeX))
 	     && (home().getDist(pos)<=maxHomeDistance)
 	     && (fabs(loc->getFieldOrientation()*180.0/3.14)<20)
 	     );
@@ -253,7 +253,7 @@ bool GoalKeeper::isNearHomeHys(){
 
 
     return (
-	    (pos.x > (-(Constants::fieldLength/2)+homeX))
+	    (pos.x > (-(Constants::field.fieldLength/2)+homeX))
 	    && (home().getDist(pos)<=(maxHomeDistance+maxHomeDistanceHys))
 	    //&& (fabs(loc->getFieldOrientation()*180.0/3.14)<25)
 	    );
@@ -266,7 +266,7 @@ Point intersect(const Point  &a, const Point &b, float x){
 }
 
 Point securePoint(const Point &p){
-  return Point(p.x,std::max(std::min(p.y,Constants::goalWidth/2.0f),-Constants::goalWidth/2.0f));
+  return Point(p.x,std::max(std::min(p.y,Constants::field.goalWidth/2.0f),-Constants::field.goalWidth/2.0f));
 }
 
 Point GoalKeeper::getAlignPoint(const Point &ref,float &theta){
@@ -275,21 +275,21 @@ Point GoalKeeper::getAlignPoint(const Point &ref,float &theta){
   auto pos = loc->getFieldPos()*100;
 
 
-  if ((ball.x) < -Constants::fieldLength) { // ball is in the goal ? go back to home
+  if ((ball.x) < -Constants::field.fieldLength) { // ball is in the goal ? go back to home
     theta=0;
     return securePoint(ref);
   }
 
   
-  float a=-Constants::fieldLength/2+homeX;
-  float b=-Constants::fieldLength/2+homeX+maxHomeDistance;
+  float a=-Constants::field.fieldLength/2+homeX;
+  float b=-Constants::field.fieldLength/2+homeX+maxHomeDistance;
   float x=pos.x;
   if ((x<a) ||(x>b)) // correct x value
     x=(a+b)/2;
 
   //compute  y value on x coordinate using line: ref / ball
   Point d=intersect(ref,ball,x);
-  float v=fabs(d.y)/(Constants::goalWidth/2.0);
+  float v=fabs(d.y)/(Constants::field.goalWidth/2.0);
   v=std::min(v,1.0f);
   float corFactor= (-(2*v-1)*(2*v-1)+1 ) * 15;
   //float tmp=d.y;
@@ -306,7 +306,7 @@ bool GoalKeeper::isAligned(){
   float t;
 
   auto ball = loc->getBallPosField() * 100;
-  float dx=ball.x - (-(Constants::fieldLength/2.0f));
+  float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
   if (dx < 0) {
     return true;
   }
@@ -328,12 +328,12 @@ void GoalKeeper::getFieldTarget(Point &wishedPos, Angle &wishedAzimuth) {
 
   // Activate placing if ballQ is high enough and ball is close enough
   if (loc->ballQ > 0.6 &&
-      ballInField.x < -Constants::fieldLength / 2 + placeMinX) {
+      ballInField.x < -Constants::field.fieldLength / 2 + placeMinX) {
     isPlacing = true;
   }
   // Back to home position if ball is lost or far enough from goal line
   if (loc->ballQ < 0.2 ||
-      ballInField.x > -Constants::fieldLength / 2 + placeMaxX) {
+      ballInField.x > -Constants::field.fieldLength / 2 + placeMaxX) {
     isPlacing = false;
   }
 
@@ -341,14 +341,14 @@ void GoalKeeper::getFieldTarget(Point &wishedPos, Angle &wishedAzimuth) {
   if (isPlacing) {
     // Aling along the Y axis but don't go further away than the goal posts.
     // We could change this to integrate an arc
-    double maxY = Constants::goalWidth / 2;
+    double maxY = Constants::field.goalWidth / 2;
     double wishedY = std::min(maxY, std::max(-maxY, ballInField.y));
-    wishedPos = Point(-Constants::fieldLength / 2 + waitX, wishedY);
+    wishedPos = Point(-Constants::field.fieldLength / 2 + waitX, wishedY);
     wishedAzimuth = (ballInField - wishedPos).getTheta();
   }
   // If ball is far from goal line or lost, stay centered
   else {
-    wishedPos = Point(-Constants::fieldLength / 2 + waitX, 0);
+    wishedPos = Point(-Constants::field.fieldLength / 2 + waitX, 0);
     wishedAzimuth = Angle(0);
   }
   */
@@ -438,7 +438,7 @@ void GoalKeeper::step(float elapsed) {
       }
       float t;
       auto ball = loc->getBallPosField() * 100;
-      float dx=ball.x - (-(Constants::fieldLength/2.0f));
+      float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
       if (dx > 0) {
         auto p=getAlignPoint(shootLineCenter(),t);
         placer->goTo(p.x,p.y,t);
