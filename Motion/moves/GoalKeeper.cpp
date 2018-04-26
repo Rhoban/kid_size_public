@@ -39,44 +39,36 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
   initializeBinding();
 
   bind->bindNew("xAttack", xAttack, RhIO::Bind::PullOnly)
-      ->comment("if ball in x margin regarding to goal area, attack")
-      ->defaultValue(50)
-      ->persisted(true);
+      ->comment("if ball in x margin regarding to goal area, attack [m]")
+      ->defaultValue(0.5);
   bind->bindNew("yAttack", yAttack, RhIO::Bind::PullOnly)
-      ->comment("if ball in y margin regarding to goal area, attack")
-      ->defaultValue(50)
-      ->persisted(true);
+      ->comment("if ball in y margin regarding to goal area, attack [m]")
+      ->defaultValue(0.5);
 
   bind->bindNew("xAttackHys", xAttackHys, RhIO::Bind::PullOnly)
-      ->comment("xAttack hysteresis (value added to xAttack)")
-      ->defaultValue(25)
-      ->persisted(true);
+      ->comment("xAttack hysteresis (value added to xAttack) [m]")
+      ->defaultValue(0.25);
   bind->bindNew("yAttackHys", yAttackHys, RhIO::Bind::PullOnly)
-      ->comment("yAttack hysteresis (value added to yAttack)")
-      ->defaultValue(15)
-      ->persisted(true);
+      ->comment("yAttack hysteresis (value added to yAttack) [m]")
+      ->defaultValue(0.15);
 
   
   
   bind->bindNew("homeX", homeX, RhIO::Bind::PullOnly)
-      ->comment("Distance to goal line in cm")
-      ->defaultValue(50)
-      ->persisted(true);
+      ->comment("Distance to goal line in meters")
+      ->defaultValue(0.5);
 
   bind->bindNew("maxHomeDistance", maxHomeDistance, RhIO::Bind::PullOnly)
-      ->comment("Distance to home position acceptable to wait (in front of homeX line)")
-      ->defaultValue(30)
-      ->persisted(true);
+      ->comment("Distance to home position acceptable to wait (in front of homeX line) [m]")
+      ->defaultValue(0.3);
   
   bind->bindNew("maxHomeDistanceHys", maxHomeDistanceHys, RhIO::Bind::PullOnly)
-      ->comment("Distance to home position acceptable to wait (in front of homeX line) hysteresis")
-      ->defaultValue(10)
-      ->persisted(true);
+      ->comment("Distance to home position acceptable to wait (in front of homeX line) hysteresis [m]")
+      ->defaultValue(0.1);
   
   bind->bindNew("nextStateSize", nextStateSize, RhIO::Bind::PullOnly)
     ->comment("length of the buffer used to smooth next state change")
-    ->defaultValue(5)
-    ->persisted(true);
+    ->defaultValue(5);
   
   //bind->bindNew("isPlacing", isPlacing, RhIO::Bind::PushOnly)
   //    ->comment("Is the robot performing an accurate placement")
@@ -84,28 +76,23 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
   //    ->persisted(true);
   
   bind->bindNew("xIgnoreBall", xIgnoreBall, RhIO::Bind::PullOnly)
-      ->comment("Ignore ball if ball is out of xIgnoreBall"
-                "position")
-      ->defaultValue(350)
-      ->persisted(true);
+      ->comment("Ignore ball if ball is out of xIgnoreBall position [m]")
+      ->defaultValue(3.5);
   bind->bindNew("xIgnoreBallHys", xIgnoreBallHys, RhIO::Bind::PullOnly)
-      ->comment("xIgnoreBallHys Hys"
-                "position")
-      ->defaultValue(50)
-      ->persisted(true);
+      ->comment("xIgnoreBallHys Hys position [m]")
+      ->defaultValue(0.5);
   
   bind->bindNew("alignTolerance", alignTolerance, RhIO::Bind::PullOnly)
-      ->comment("consider is align is distance with optimal point is below this value (is added to placer tolerance)")
-      ->defaultValue(10)
-      ->persisted(true);
+      ->comment("consider is align is distance with optimal point is below"
+                " this value (is added to placer tolerance) [deg]")
+      ->defaultValue(10);
   
   bind->bindNew("maxShootDist", maxShootDist, RhIO::Bind::PullOnly)
-      ->comment("adversary maximum shoot distance")
-      ->defaultValue(200)
-      ->persisted(true);
+      ->comment("adversary maximum shoot distance [m]")
+      ->defaultValue(2);
 
-  bind->bindNew("targetX", targetX, RhIO::Bind::PushOnly)->comment("Target X");
-  bind->bindNew("targetY", targetY, RhIO::Bind::PushOnly)->comment("Target Y");
+  bind->bindNew("targetX", targetX, RhIO::Bind::PushOnly)->comment("Target X [m]");
+  bind->bindNew("targetY", targetY, RhIO::Bind::PushOnly)->comment("Target Y [m]");
 
   bind->bindNew("targetSmoothing", targetSmoothing, RhIO::Bind::PullOnly)
       ->comment("Target smoothing")
@@ -174,7 +161,7 @@ TeamPlayState GoalKeeper::teamState() {
 // check that the ball is in the goalAreaLength +xd +yd
 bool GoalKeeper::ballInZone(float xd, float yd) {
   auto loc = getServices()->localisation;
-  auto ball = loc->getBallPosField() * 100;
+  auto ball = loc->getBallPosField();
   auto decision = getServices()->decision;
   float lineX = -Constants::field.fieldLength / 2 + Constants::field.goalAreaLength + xd;
   float lineY = Constants::field.goalAreaWidth / 2 + yd;
@@ -187,9 +174,9 @@ bool GoalKeeper::ballInZone(float xd, float yd) {
 
 bool GoalKeeper::ballInAttackZone() {  
   auto loc = getServices()->localisation;
-  auto pos = loc->getFieldPos()*100;
-  auto ball = loc->getBallPosField() * 100;
-  return ballInZone(xAttack, -yAttack) || (pos.getDist(ball)<50);
+  auto pos = loc->getFieldPos();
+  auto ball = loc->getBallPosField();
+  return ballInZone(xAttack, -yAttack) || (pos.getDist(ball)<0.5);
 }
 
 bool GoalKeeper::ballInAttackZoneHysteresis() {
@@ -198,7 +185,7 @@ bool GoalKeeper::ballInAttackZoneHysteresis() {
 
 bool GoalKeeper::ignoreBall() {
   auto loc = getServices()->localisation;
-  auto ball = loc->getBallPosField() * 100;
+  auto ball = loc->getBallPosField();
   auto decision = getServices()->decision;
   
   return !(decision->isBallQualityGood && (ball.x < (-Constants::field.fieldLength/2 + xIgnoreBall)));
@@ -206,7 +193,7 @@ bool GoalKeeper::ignoreBall() {
 
 bool GoalKeeper::ignoreBallHys() {
   auto loc = getServices()->localisation;
-  auto ball = loc->getBallPosField() * 100;
+  auto ball = loc->getBallPosField();
   auto decision = getServices()->decision;
   return !(decision->isBallQualityGood && (ball.x < (-Constants::field.fieldLength/2 + xIgnoreBall + xIgnoreBallHys)));
 }
@@ -217,9 +204,9 @@ Point GoalKeeper::home(){
 
 Point GoalKeeper::shootLineCenter(){
   auto loc = getServices()->localisation;
-  auto ball = loc->getBallPosField() * 100;
+  auto ball = loc->getBallPosField();
   float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
-  if ((dx-maxShootDist) > -5) {// ball is too far
+  if ((dx-maxShootDist) > -0.05) {// ball is too far
     //logger.log("ball is too far %f %f",dx,dx-maxShootDist);
     return Point(-Constants::field.fieldLength/2.0f,ball.y); // go in front
   }
@@ -238,7 +225,7 @@ Point GoalKeeper::shootLineCenter(){
 
 bool GoalKeeper::isNearHome(){  
     auto loc = getServices()->localisation;
-    auto pos = loc->getFieldPos()*100;
+    auto pos = loc->getFieldPos();
     //logger.log("is Near Home ?  %f > %f && %f <= %f  >>> %d ",pos.x , (-(Constants::field.fieldLength/2)+homeX) , distToHome , maxHomeDistance,(((pos.x > (-(Constants::field.fieldLength/2)+homeX)) && (distToHome<=maxHomeDistance))));
     //logger.log("field orientation: %f",loc->getFieldOrientation());
     return ( (pos.x > (-(Constants::field.fieldLength/2)+homeX))
@@ -249,7 +236,7 @@ bool GoalKeeper::isNearHome(){
 
 bool GoalKeeper::isNearHomeHys(){  
     auto loc = getServices()->localisation;
-    auto pos = loc->getFieldPos()*100;
+    auto pos = loc->getFieldPos();
 
 
     return (
@@ -271,8 +258,8 @@ Point securePoint(const Point &p){
 
 Point GoalKeeper::getAlignPoint(const Point &ref,float &theta){
   auto loc = getServices()->localisation;
-  auto ball = loc->getBallPosField() * 100;
-  auto pos = loc->getFieldPos()*100;
+  auto ball = loc->getBallPosField();
+  auto pos = loc->getFieldPos();
 
 
   if ((ball.x) < -Constants::field.fieldLength) { // ball is in the goal ? go back to home
@@ -302,10 +289,10 @@ Point GoalKeeper::getAlignPoint(const Point &ref,float &theta){
 
 bool GoalKeeper::isAligned(){
   auto loc = getServices()->localisation;
-  auto pos = loc->getFieldPos()*100;
+  auto pos = loc->getFieldPos();
   float t;
 
-  auto ball = loc->getBallPosField() * 100;
+  auto ball = loc->getBallPosField();
   float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
   if (dx < 0) {
     return true;
@@ -416,28 +403,28 @@ void GoalKeeper::step(float elapsed) {
   if (ignoreBall()){ // ball is not visible or out
     if (state==STATE_GOHOME){      
       if (placer->arrived){
-	logger.log("step: arrived to home : stop!");
-	bufferedSetState(STATE_STOP);
-	return;
+        logger.log("step: arrived to home : stop!");
+        bufferedSetState(STATE_STOP);
+        return;
       }
     } else
       if (state!=STATE_STOP)
-	bufferedSetState(STATE_GOHOME);
+        bufferedSetState(STATE_GOHOME);
   } else { // ball is visible but not close enought to attack => align wih it
     if (state==STATE_STOP){
       if (isAligned()==false)
-	bufferedSetState(STATE_ALIGNBALL);
+        bufferedSetState(STATE_ALIGNBALL);
       // else stay stopped!
     } else {
       if (state!=STATE_ALIGNBALL){
-	logger.log("step: ball is visible and we are not align: align with it!");
-	bufferedSetState(STATE_ALIGNBALL);
+        logger.log("step: ball is visible and we are not align: align with it!");
+        bufferedSetState(STATE_ALIGNBALL);
       } else {
-	if ((placer->arrived) && (state!=STATE_STOP))
-	  bufferedSetState(STATE_STOP);
+        if ((placer->arrived) && (state!=STATE_STOP))
+          bufferedSetState(STATE_STOP);
       }
       float t;
-      auto ball = loc->getBallPosField() * 100;
+      auto ball = loc->getBallPosField();
       float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
       if (dx > 0) {
         auto p=getAlignPoint(shootLineCenter(),t);
@@ -471,9 +458,9 @@ void GoalKeeper::enterState(std::string state) {
       placer->setDirectMode(false);      
     }
     auto loc = getServices()->localisation;
-    auto pos = loc->getFieldPos()*100;
+    auto pos = loc->getFieldPos();
 
-    if (neverWalked && home().getDist(pos)<10) {
+    if (neverWalked && home().getDist(pos)<0.1) {
         setState(STATE_STOP);
     } else {
       startMove("placer", 0.0);
@@ -498,11 +485,11 @@ void GoalKeeper::exitState(std::string state) {
 
   if (state==STATE_STARTWAIT){
     auto loc = getServices()->localisation;
-    auto pos = loc->getFieldPos()*100;
+    auto pos = loc->getFieldPos();
     neverWalked=true;
     logger.log("home().x, home().y, pos.x, pos.y, home().getDist(pos)");
     logger.log("Start wait : %f %f %f %f %f", home().x, home().y, pos.x, pos.y, home().getDist(pos));
-    if (home().getDist(pos)<10){
+    if (home().getDist(pos)<0.1){
       placedByHand=true;
     } else {
       placedByHand=false;
