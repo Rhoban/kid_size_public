@@ -1,7 +1,5 @@
 #include "ArenaBorderObservation.hpp"
 
-#include "../RobotBasis.hpp"
-
 #include "Field/Field.hpp"
 #include "CameraState/CameraState.hpp"
 

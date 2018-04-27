@@ -9,13 +9,12 @@
 namespace Vision {
 namespace Localisation {
 
-/* values[0] -> position X
- * values[1] -> position Y
- * values[2] -> orientation (in degrees, corresponding to the description in
- *                           class Angle)
- *              top   ->  0
- *              right -> 90
- */
+/// values[0] -> position X [m]
+/// values[1] -> position Y [m]
+/// values[2] -> orientation (in degrees, corresponding to the description in
+///                           class Angle)
+///              top   ->  0
+///              right -> 90
 class FieldPosition : public rhoban_unsorted::Particle<3> {
 public:
   FieldPosition() : Particle() {}

@@ -13,13 +13,13 @@ public:
   //Id of the marker
   int id;
 
-  //Position of the marker observation
+  //Position of the marker observation [m]
   cv::Point3f seenPos;
 
-  //Position of the marker observation
+  //Deviation on the marker observation [m]
   cv::Point3f stdDev;
 
-  /// Robot height at the given time [cm]
+  /// Robot height at the given time [m]
   double robotHeight;
 
   // Weight of the observation

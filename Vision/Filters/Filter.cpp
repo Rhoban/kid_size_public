@@ -20,8 +20,6 @@
 
 #include "rhoban_utils/logging/logger.h"
 
-#include "Localisation/RobotBasis.hpp"
-
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 

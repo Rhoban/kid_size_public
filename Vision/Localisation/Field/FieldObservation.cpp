@@ -19,10 +19,10 @@ double FieldObservation::potential(const FieldPosition &p) const {
   Point pos = p.getRobotPosition();
   // Refusing entirely to be behind the goal because it can cause weird
   // approaches
-  double dx = abs(pos.x) - 100 * Constants::field.fieldLength / 2;
+  double dx = abs(pos.x) - Constants::field.fieldLength / 2;
   // Accepting to go slightly out of the field laterally
   double dy =
-    abs(pos.y) - (Constants::field.fieldWidth / 2 - Constants::field.borderStripWidth) * 100;
+    abs(pos.y) - (Constants::field.fieldWidth / 2 - Constants::field.borderStripWidth);
   if (dx > 0 || dy > 0) {
     return pError;
   }

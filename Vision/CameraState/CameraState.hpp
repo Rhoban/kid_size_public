@@ -22,15 +22,12 @@ public:
   
   CameraState(MoveScheduler *moveScheduler, const std::string& CameraParametersYAML="./camera_calib.yml");
 
-  /**
-   * Asks the model to update itself to the state the robot had at timeStamp
-   */
+  /// Asks the model to update itself to the state the robot had at timeStamp
   void updateInternalModel(double timeStamp);
 
-  /**
-   * Return the [x,y] position of the ground point seen at imgX, imgY [0,1]
-   * throws a runtime_error if the point requested is above horizon
-   */
+  /// Return the [x,y] position of the ground point seen at imgX, imgY [0,1]
+  /// Return value is in [m]
+  /// throws a runtime_error if the point requested is above horizon
   cv::Point2f robotPosFromImg(double imgX, double imgY, double imgWidth,
                               double imgHeight, bool self = true);
 
@@ -40,9 +37,7 @@ public:
   /// Return the position in the robot basis from a position in origin basis
   cv::Point2f getPosInSelf(const cv::Point2f & pos_in_origin);
 
-  /**
-   * Return the [pan, tilt] pair of the ground point seen at imgX, imgY
-   */
+  /// Return the [pan, tilt] pair of the ground point seen at imgX, imgY
   PanTilt robotPanTiltFromImg(double imgX, double imgY,
                               double imgWidth,
                               double imgHeight);
@@ -94,9 +89,7 @@ public:
                                     double height, int *radiusMin, int *radiusMax,
                                     double angularPitchError = -1.0);
 
-  /**
-   * Distance to ground in centimeters
-   */
+  /// Distance to ground [m]
   double getHeight();
 
   /**

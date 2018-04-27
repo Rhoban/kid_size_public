@@ -140,27 +140,19 @@ public:
   std::string getCameraStatus() const;
   double getLastUpdate() const;
 
+  /// (x,y) is the position of the ball in robot referential [m]
   void ballReset(float x, float y);
 
-  /**
-   * Clears the ball filter (no ball in it)
-   */
+  /// Clears the ball filter (no ball in it)
   void ballClear();
   void robotsClear();
 
-  /**
-   * Asks the model to start a logging session with given path as a target
-   */
+  /// Asks the model to start a logging session with given path as a target
   void startLoggingLowLevel(const std::string & path);
-  /**
-   * Asks the model to end and save a session with given path
-   */
+  /// Asks the model to end and save a session with given path
   void stopLoggingLowLevel(const std::string & path);
-  /**
-   * Tells the model to read the low level values from a log file instead than
-   * from the
-   * actual low level
-   */
+  /// Tells the model to read the low level values from a log file instead than
+  /// from the actual low level
   void setLogMode(const std::string path);
 
   void readPipeline();

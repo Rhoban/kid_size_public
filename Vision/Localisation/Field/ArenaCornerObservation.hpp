@@ -13,6 +13,7 @@ private:
   rhoban_utils::Angle tilt;
   double weight;
 
+  /// [m]
   double robotHeight;
 
   std::vector<FieldPosition> candidates;

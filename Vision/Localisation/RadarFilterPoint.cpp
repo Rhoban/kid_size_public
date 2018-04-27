@@ -70,7 +70,7 @@ bool RadarFilterPoint::isSimilar(const Eigen::Vector3d &pt1, const Eigen::Vector
     // We need the position in robot referential, c1 and c2 are in world referential
     Eigen::Vector3d c1_robot = cameraState->_model->frameInSelf("origin", pt1);
     Eigen::Vector3d c2_robot = cameraState->_model->frameInSelf("origin", pt2);
-    double robotHeight = cameraState->getHeight() / 100;//cs->getHeight is in cm
+    double robotHeight = cameraState->getHeight();
 
     // Converting to Point3f
     cv::Point3f candidateDir, seenDir;

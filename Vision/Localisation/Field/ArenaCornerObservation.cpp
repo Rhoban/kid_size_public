@@ -1,6 +1,5 @@
 #include "ArenaCornerObservation.hpp"
 #include <math.h>
-#include "../RobotBasis.hpp"
 #include "robocup_referee/constants.h"
 #include "Field/Field.hpp"
 #include "CameraState/CameraState.hpp"
@@ -25,8 +24,8 @@ double ArenaCornerObservation::maxAngleError = 30;
 double ArenaCornerObservation::sigmoidOffset = 0.6;
 double ArenaCornerObservation::sigmoidLambda = 5;
 
-static double arenaLength = 100 * (Constants::field.fieldLength + 2*Constants::field.borderStripWidth);
-static double arenaWidth = 100 * (Constants::field.fieldWidth + 2*Constants::field.borderStripWidth);
+static double arenaLength = Constants::field.fieldLength + 2*Constants::field.borderStripWidth;
+static double arenaWidth = Constants::field.fieldWidth + 2*Constants::field.borderStripWidth;
 
   
 bool ArenaCornerObservation::debug = false;
@@ -34,10 +33,10 @@ bool ArenaCornerObservation::debug = false;
 ArenaCornerObservation::ArenaCornerObservation() {}
 
 ArenaCornerObservation::ArenaCornerObservation(const Vision::Filters::FieldBorderData & brut_data_,
-					       const Angle &panToArenaCorner,
+                                               const Angle &panToArenaCorner,
                                                const Angle &tiltToArenaCorner,
                                                double robotHeight_,
-					       double weight_) {
+                                               double weight_) {
   brut_data = brut_data_;
   pan = panToArenaCorner;
   tilt = tiltToArenaCorner;
@@ -54,10 +53,10 @@ ArenaCornerObservation::ArenaCornerObservation(const Vision::Filters::FieldBorde
   }
 
   if (brut_data.hasCorner) {
-    auto C = 100 * brut_data.getCornerInSelf(); /* passage en cm */
+    auto C = brut_data.getCornerInSelf();
     auto lines = brut_data.getLinesInSelf(); 
-    auto A = 100 * lines[0].first;
-    auto B = 100 * lines[1].second;
+    auto A = lines[0].first;
+    auto B = lines[1].second;
     cv::Point2f e1 = A-C;
     double e1_len = cv::norm(e1);
     if (e1_len==0)
@@ -101,7 +100,7 @@ ArenaCornerObservation::ArenaCornerObservation(const Vision::Filters::FieldBorde
       throw std::string("ArenaCornerObservation dist_AB = 0");
     cv::Point2f AB_unit = (1.0 / dist_AB) * AB;
     cv::Point2f AB_ortho_unit(-AB_unit.y, AB_unit.x);
-    double dot_bot_seg = 100 * AB_ortho_unit.dot(A); /* en cm */
+    double dot_bot_seg = AB_ortho_unit.dot(A);//[m]
     double dist_bot_seg = fabs(dot_bot_seg);
     sign_dot = (dot_bot_seg >= 0) ? 1 : -1;
     seg_dir = rad2deg(atan2(AB.y, AB.x));
@@ -128,7 +127,7 @@ Vision::Filters::FieldBorderData ArenaCornerObservation::getBrutData() {
 }
 
 double ArenaCornerObservation::pError = 0.3;
-double ArenaCornerObservation::potential_pos50 = 10;
+double ArenaCornerObservation::potential_pos50 = 0.1;//[m]
 double ArenaCornerObservation::potential_angle50 = 30;
 double ArenaCornerObservation::potential_exp = 1;
   
@@ -137,8 +136,8 @@ double ArenaCornerObservation::basic_pot(double x, double x_half) const {
 }
 
 double ArenaCornerObservation::potential(const FieldPosition & candidate,
-					 const FieldPosition & p) const {
-  double pos_error =(p.getRobotPosition()- candidate.getRobotPosition()).getLength(); /* cm */
+                                         const FieldPosition & p) const {
+  double pos_error =(p.getRobotPosition()- candidate.getRobotPosition()).getLength();// [m]
   double angle_error = fabs((candidate.getOrientation() -
                              p.getOrientation()).getSignedValue()); /* deg */
   double pos_pot = basic_pot(pos_error, potential_pos50);

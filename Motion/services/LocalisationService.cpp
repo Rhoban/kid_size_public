@@ -542,7 +542,8 @@ void LocalisationService::setPosSelf(const Eigen::Vector3d &left,
 void LocalisationService::applyKick(float x_, float y_)
 {
 #ifdef VISION_COMPONENT
-    robocup->applyKick(x_, y_);
+  /// Currently has no effect on ballStackFilter
+  robocup->applyKick(x_, y_);
 #endif
 
     if (Helpers::isFakeMode()) {

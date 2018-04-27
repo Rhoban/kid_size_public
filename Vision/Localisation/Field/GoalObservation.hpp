@@ -11,6 +11,7 @@ public:
   rhoban_utils::Angle pan;
   rhoban_utils::Angle tilt;
 
+  /// [m]
   double robotHeight;
 
   /// Several goal observations can be merged into a single one,

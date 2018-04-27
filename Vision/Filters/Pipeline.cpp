@@ -7,7 +7,6 @@
 #include "Filters/FilterFactory.hpp"
 #include "CameraState/CameraState.hpp"
 
-#include "Localisation/RobotBasis.hpp"
 #include "rhoban_utils/timing/benchmark.h"
 
 using Vision::Utils::CameraState;
