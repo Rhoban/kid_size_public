@@ -44,7 +44,7 @@ Placer::Placer(Walk *walk)
 
     bind->bindNew("stepP", stepper.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
     bind->bindNew("lateralP", lateraler.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
-    bind->bindNew("turnP", turner.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
+    bind->bindNew("turnP", turner.k_p, RhIO::Bind::PullOnly)->defaultValue(0.25);
 
     bind->bindNew("marginX", marginX, RhIO::Bind::PullOnly)->defaultValue(0.5)
         ->comment("[m]");
@@ -53,7 +53,7 @@ Placer::Placer(Walk *walk)
     bind->bindNew("marginAzimuth", marginAzimuth, RhIO::Bind::PullOnly)
       ->comment("[deg]")->defaultValue(20);
     bind->bindNew("arrived", arrived, RhIO::Bind::PushOnly);
-    bind->bindNew("hysteresis", hysteresis, RhIO::Bind::PullOnly)->defaultValue(1.5)->persisted(true);
+    bind->bindNew("hysteresis", hysteresis, RhIO::Bind::PullOnly)->defaultValue(1.5);
 
     bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly);
 
@@ -75,18 +75,18 @@ Placer::Placer(Walk *walk)
     bind->bindNew("rushAngleOk", rushAngleOk, RhIO::Bind::PushOnly)
         ->defaultValue(false)->comment("Is the angle toward the target valid for rush");
     bind->bindNew("rushHysteresisLow", rushHysteresisLow, RhIO::Bind::PullOnly)
-        ->defaultValue(0.2)
-        ->comment("Rush starts being allowed under this threshold [m]");
+        ->defaultValue(20)
+        ->comment("Rush starts being allowed under this threshold [deg]");
     bind->bindNew("rushHysteresisHigh", rushHysteresisHigh, RhIO::Bind::PullOnly)
-        ->defaultValue(0.3)
-        ->comment("Rush stop being allowed above this threshold [m]");
+        ->defaultValue(30)
+        ->comment("Rush stop being allowed above this threshold [deg]");
     bind->bindNew("capToTarget", capToTarget, RhIO::Bind::PushOnly)
         ->defaultValue(0)->comment("The direction of the target in the robot referential");
     bind->bindNew("rushRadiusHigh", rushRadiusHigh, RhIO::Bind::PullOnly)
-        ->defaultValue(0.7)
+        ->defaultValue(1.0)
       ->comment("Above this threshold, rushDistOk becomes true [m]");
     bind->bindNew("rushRadiusLow", rushRadiusLow, RhIO::Bind::PullOnly)
-        ->defaultValue(0.4)
+        ->defaultValue(0.6)
         ->comment("Under this threshold, rushDistOk becomes false [m]");
     
     bind->bindNew("avoidOpponents", avoidOpponents, RhIO::Bind::PullOnly)
@@ -206,11 +206,11 @@ void Placer::step(float elapsed)
 
     if (arrived) dontWalk = true;
 
-    // Updating stepper properties
-    stepper.min = -walk->maxStepBackward;
-    stepper.max = walk->maxStep;
-    lateraler.min = -walk->maxLateral;
-    lateraler.max = walk->maxLateral;
+    // Updating stepper properties (maxValues are in mm for walk)
+    stepper.min = -walk->maxStepBackward / 1000;
+    stepper.max = walk->maxStep / 1000;
+    lateraler.min = -walk->maxLateral / 1000;
+    lateraler.max = walk->maxLateral / 1000;
     turner.min = -walk->maxRotation;
     turner.max = walk->maxRotation;
 
@@ -340,7 +340,8 @@ void Placer::step(float elapsed)
     if (dontWalk) {
         walk->control(false);
     } else {
-        walk->control(true, stepper.output/100, lateraler.output/100, turner.output);
+        // Using mm to control walk
+        walk->control(true, 1000 * stepper.output, 1000 * lateraler.output, turner.output);
     }
 
     // Sharing the target and temporary target

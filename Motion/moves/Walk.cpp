@@ -339,11 +339,11 @@ Walk::Walk(Kick *kickMove)
     bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)
             ->comment("Walk control Enable")->defaultValue(false);
     bind->bindNew("walkStep", walkStep, RhIO::Bind::PullOnly)
-            ->comment("Walk control Step")->defaultValue(0.0);
+            ->comment("Walk control Step [mm/step]")->defaultValue(0.0);
     bind->bindNew("walkLateral", walkLateral, RhIO::Bind::PullOnly)
-            ->comment("Walk control Lateral")->defaultValue(0.0);
+            ->comment("Walk control Lateral [mm/step]")->defaultValue(0.0);
     bind->bindNew("walkTurn", walkTurn, RhIO::Bind::PullOnly)
-            ->comment("Walk control Turn")->defaultValue(0.0);
+            ->comment("Walk control Turn [deg/step]")->defaultValue(0.0);
 
     // Kicks
     bind->bindNew("walkKickLeft", walkKickLeft, RhIO::Bind::PullOnly)
@@ -355,9 +355,9 @@ Walk::Walk(Kick *kickMove)
 
     // Shoot warmup and cool down
     bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)
-        ->defaultValue(1)->comment("Cooldown duration")->persisted(true);
+        ->defaultValue(1)->comment("Cooldown duration [s]")->persisted(true);
     bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)
-        ->defaultValue(1)->comment("Warmup")->persisted(true);
+        ->defaultValue(1)->comment("Warmup [s]")->persisted(true);
         
 #ifndef USE_QUINTICWALK
     bind->bindNew("paramsStepGain", params.stepGain, RhIO::Bind::PushOnly)
@@ -379,24 +379,26 @@ Walk::Walk(Kick *kickMove)
     
     // Speed limits
     bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)
-        ->defaultValue(20.0)->persisted(true);
+        ->defaultValue(20.0);
 
-    bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)
-        ->defaultValue(45.0)->persisted(true);
+    bind->bindNew("maxStep [mm/step]", maxStep, RhIO::Bind::PullOnly)
+        ->defaultValue(45.0);
 
-    bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)
-        ->defaultValue(20.0)->persisted(true);
+    bind->bindNew("maxStepBackward [mm/step]", maxStepBackward, RhIO::Bind::PullOnly)
+        ->defaultValue(20.0);
 
-    bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)
-        ->defaultValue(20.0)->persisted(true);
+    bind->bindNew("maxLateral [mm/step]", maxLateral, RhIO::Bind::PullOnly)
+        ->defaultValue(30.0);
 
-    // Limits for delta orders in noSmoothingMode
     bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(10)->persisted(true)->comment("For noSmoothing mode [mm]");
+      ->defaultValue(10)
+      ->comment("Maximal difference between two steps [mm/step^2]");
     bind->bindNew("maxDLatByCycle", maxDLatByCycle, RhIO::Bind::PullOnly)
-        ->defaultValue(5)->persisted(true)->comment("For noSmoothing mode [mm]");
+        ->defaultValue(5)
+        ->comment("Maximal difference between two steps [mm/step^2]");
     bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
-        ->defaultValue(3)->persisted(true)->comment("For noSmoothing mode [deg]");
+        ->defaultValue(3)
+        ->comment("Maximal difference between two steps [deg/step^2]");
 
     // Dont walk flag
     bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)

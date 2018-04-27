@@ -31,19 +31,16 @@ Robocup::Robocup(Walk *walk, StandUp *standup, Placer *placer)
     initializeBinding();
     // State
     bind->bindNew("state", STM::state, RhIO::Bind::PushOnly)
-        ->comment("State of the Robocup STM")
-        ;
+        ->comment("State of the Robocup STM");
     bind->bindNew("goalKeeper", goalKeeper, RhIO::Bind::PullOnly)
         ->comment("Am I a goal keeper?")
-        ->defaultValue(false)->persisted(true)
-        ;
+        ->defaultValue(false);
     bind->bindNew("freeKicker", freeKicker, RhIO::Bind::PullOnly)
         ->comment("Am I the free kicker performer?")
-        ->defaultValue(false)->persisted(true)
-        ;
+        ->defaultValue(false);
     bind->bindNew("autoKickOff", autoKickOff, RhIO::Bind::PullOnly)
         ->comment("Are the kickOff performed autonomously?")
-        ->defaultValue(false)->persisted(true);
+        ->defaultValue(true);
     // Initial locations for autoPlacing (Position at which the robot is dropped)
     bind->bindNew("autoStartX", autoStartX, RhIO::Bind::PullOnly)
         ->comment("Start of the robot during ready phase [m]")

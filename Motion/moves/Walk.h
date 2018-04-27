@@ -33,9 +33,7 @@ class Walk : public Move
         void updateParams(double factor, float step=0.0, float lateral=0.0, float turn=0.0);
         void step(float elapsed);
 
-        /** 
-         * Controls the robot
-         */
+        /// Control the robot using [mm] and [deg]
         void control(bool enable, double step=0, double lateral=0, double turn=0);
 
         /**
@@ -103,13 +101,13 @@ class Walk : public Move
         Eigen::Vector3d getMinDeltaOrders() const;
         Eigen::Vector3d getMaxDeltaOrders() const;
         
-        // Maximum rotation speed
+        // Maximum rotation speed [deg/step]
         float maxRotation;
 
-        // Maximum stepping
+        // Maximum stepping [mm/step]
         float maxStep, maxStepBackward;
 
-        // Maximum lateral
+        // Maximum lateral [mm/step]
         float maxLateral;
         
         // Stops the walk (to debug the order received)
@@ -163,7 +161,7 @@ class Walk : public Move
         double compensateRoll;
         double leftRoll, rightRoll;
 
-        // Limits for delta orders 
+        /// Limits for delta orders [mm/step^2]
         double maxDStepByCycle, maxDLatByCycle, maxDTurnByCycle;
 
         /**
