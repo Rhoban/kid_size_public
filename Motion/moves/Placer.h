@@ -61,7 +61,7 @@ class Placer : public Move
         // Obstacles to avoid [m]
         std::vector<rhoban_geometry::Circle> obstacles;
 
-        // Distance to the next point that should be considered on the path [cm]
+        // Distance to the next point that should be considered on the path [m]
         float pathTargetDist;
 
         // Avoid the opponents ?

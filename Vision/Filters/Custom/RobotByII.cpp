@@ -6,6 +6,9 @@
 #include "Utils/ROITools.hpp"
 #include "Utils/RotatedRectUtils.hpp"
 #include "CameraState/CameraState.hpp"
+
+#include <robocup_referee/constants.h>
+
 #include <set>
 
 /* TODO
@@ -18,6 +21,7 @@ precision
 using rhoban_utils::Benchmark;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
+using namespace robocup_referee;
 
 namespace Vision {
 namespace Filters {
@@ -36,22 +40,22 @@ std::string RobotByII::getClassName() const { return "RobotByII"; }
 int RobotByII::expectedDependencies() const { return 7; }
 
 void RobotByII::setParameters() {
-  robotWidth = ParamInt(30, 1, 100);
-  actualRobotHeight = ParamInt(60, 1, 200);
-  actualRobotWidth = ParamInt(30, 1, 100);
+  actualRobotHeight = ParamFloat(0.6, 0.01, 2);
+  actualRobotWidth = ParamFloat(0.3, 0.01, 1);
   widthScale = ParamFloat(2.0, 0.1, 10.0);
   aboveRatio = ParamFloat(2.0, 0.1, 10.0);
   belowRatio = ParamFloat(2.0, 0.1, 10.0);
   roiRatio = ParamFloat(2.0, 1.0, 10.0);
   belowCoeff = ParamFloat(1.0, 0.0, 10.0);
   sideCoeff = ParamFloat(1.0, 0.0, 10.0);
+  robotWidth = ParamFloat(0.3, 0.01, 1);
   boundaryWidthRatio = ParamFloat(3.0, 1.0, 5.0);
   greenThreshold = ParamFloat(100, 0, 255);
   whiteThreshold = ParamFloat(100, 0, 255);
   minWidth = ParamFloat(2.0, 0.5, 20.0);
   minScore = ParamFloat(255.0, 0.0, 510.);
   darkMatters = ParamFloat(2.0, 0.0, 10.0);
-  tooCloseToBeTrue = ParamFloat(40.0, 0.0, 200.0);
+  tooCloseToBeTrue = ParamFloat(0.4, 0.0, 2.0);
   maxRois = ParamInt(4, 1, 100);
   decimationRate = ParamInt(1, 1, 20);
   tagLevel = ParamInt(0, 0, 2);
@@ -69,9 +73,9 @@ void RobotByII::setParameters() {
   params()->define<ParamFloat>("greenThreshold", &greenThreshold);
   params()->define<ParamFloat>("whiteThreshold", &whiteThreshold);
   params()->define<ParamFloat>("tooCloseToBeTrue", &tooCloseToBeTrue);
-  params()->define<ParamInt>("robotWidth", &robotWidth);
-  params()->define<ParamInt>("actualRobotHeight", &actualRobotHeight);
-  params()->define<ParamInt>("actualRobotWidth", &actualRobotWidth);
+  params()->define<ParamFloat>("robotWidth", &robotWidth);
+  params()->define<ParamFloat>("actualRobotHeight", &actualRobotHeight);
+  params()->define<ParamFloat>("actualRobotWidth", &actualRobotWidth);
   params()->define<ParamInt>("maxRois", &maxRois);
   params()->define<ParamInt>("decimationRate", &decimationRate);
   params()->define<ParamInt>("tagLevel", &tagLevel);
@@ -196,9 +200,9 @@ void RobotByII::process() {
       // Gettting the size of the ball at the current point and deducing the expected
       // robot width
       float ballRadius = widthImg.at<float>(center_y, center_x);
-      float ballRadiusCm = getCS().ballRadius;
-      float cm2pixels = ballRadius / ballRadiusCm;
-      float width = robotWidth * cm2pixels;
+      float ballRadiusM = Constants::field.ballRadius;
+      float m2pixels = ballRadius / ballRadiusM;
+      float width = robotWidth * m2pixels;
       cv::Rect boundary_patch = getBoundaryPatch(center_x, center_y, width);
       // Skip ROI if it doesn't fit entirely in the image and use a '0' score
       if (!Utils::isContained(boundary_patch, srcSize) ||
@@ -612,13 +616,13 @@ void RobotByII::fillScore(cv::Mat &img, int score, int start_x, int end_x, int s
     // PLEASE
     cv::Point2f temp(center.x*fakeSizeWidth, center.y*fakeSizeHeight);
     getCS().ballInfoFromPixel(temp, fakeSizeWidth, fakeSizeHeight, &radiusMin, &radiusMax, 1.0);
-    // Using the ball size to convert from pixels to cm
-    float CM2PIXEL = ((radiusMax + radiusMin)/2)/(getCS().ballRadius*fakeSizeHeight);
+    // Using the ball size to convert from pixels to m
+    float M2PIXEL = ((radiusMax + radiusMin)/2)/(Constants::field.ballRadius*fakeSizeHeight);
     
-    if ((center.x - CM2PIXEL*actualRobotWidth/2) > p.x || (center.x + CM2PIXEL*actualRobotWidth/2) < p.x) {
+    if ((center.x - M2PIXEL*actualRobotWidth/2) > p.x || (center.x + M2PIXEL*actualRobotWidth/2) < p.x) {
       return false;
     }
-    if ((center.y - CM2PIXEL*actualRobotHeight) > p.y) {
+    if ((center.y - M2PIXEL*actualRobotHeight) > p.y) {
       return false;
     }
 

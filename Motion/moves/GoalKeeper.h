@@ -42,7 +42,7 @@ protected:
 
 	void bufferedSetState(const std::string &);
 	
-  /// pos[cm] and azimuth[deg] are output parameters
+  /// pos[m] and azimuth[deg] are output parameters
   void getFieldTarget(rhoban_geometry::Point & wishedPos, rhoban_utils::Angle & wishedAzimuth);
   void setTeamPlayState(rhoban_team_play::TeamPlayState state);
         

@@ -46,28 +46,28 @@ Robocup::Robocup(Walk *walk, StandUp *standup, Placer *placer)
         ->defaultValue(false)->persisted(true);
     // Initial locations for autoPlacing (Position at which the robot is dropped)
     bind->bindNew("autoStartX", autoStartX, RhIO::Bind::PullOnly)
-        ->comment("Start of the robot during ready phase [cm]")
-        ->defaultValue(-150)->persisted(true);
+        ->comment("Start of the robot during ready phase [m]")
+        ->defaultValue(-1.5);
     bind->bindNew("autoStartY", autoStartY, RhIO::Bind::PullOnly)
-        ->comment("Start of the robot during ready phase [cm]")
-        ->defaultValue(300)->persisted(true);
+        ->comment("Start of the robot during ready phase [m]")
+        ->defaultValue(3);
     bind->bindNew("autoStartAzimuth", autoStartAzimuth, RhIO::Bind::PullOnly)
-        ->comment("Initial orientation of the robot during ready phase [cm]")
-        ->defaultValue(-90)->persisted(true);
+        ->comment("Initial orientation of the robot during ready phase [deg]")
+        ->defaultValue(-90);
     // Target for autoPlacing
     bind->bindNew("autoTargetX", autoTargetX, RhIO::Bind::PullOnly)
-        ->comment("Target of the robot during ready phase [cm]")
-        ->defaultValue(-150)->persisted(true);
+        ->comment("Target of the robot during ready phase [m]")
+        ->defaultValue(-1.5);
     bind->bindNew("autoTargetY", autoTargetY, RhIO::Bind::PullOnly)
-        ->comment("Target of the robot during ready phase [cm]")
-        ->defaultValue(0)->persisted(true);
+        ->comment("Target of the robot during ready phase [m]")
+        ->defaultValue(0);
     // Target location for the kicker
     bind->bindNew("freeKickX", freeKickX, RhIO::Bind::PullOnly)
-        ->comment("Target of the robot performing freeKick during ready phase [cm]")
-        ->defaultValue(-50)->persisted(true);
+        ->comment("Target of the robot performing freeKick during ready phase [m]")
+        ->defaultValue(-0.5);
     bind->bindNew("freeKickY", freeKickY, RhIO::Bind::PullOnly)
-        ->comment("Target of the robot performing freeKick during ready phase [cm]")
-        ->defaultValue(0)->persisted(true);
+        ->comment("Target of the robot performing freeKick during ready phase [m]")
+        ->defaultValue(0);
     // Time since vision
     bind->bindNew("timeSinceVisionInactive", timeSinceVisionInactive, RhIO::Bind::PushOnly);
 }

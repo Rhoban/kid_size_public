@@ -284,9 +284,6 @@ void Robocup::initRhIO() {
   RhIO::Root.newFloat("/Vision/lastUpdate")
       ->defaultValue(-1)
       ->comment("Time since last update [ms]");
-  if (RhIO::Root.commandExist("Localisation/resetFilters")) {
-    return;
-  }
   // Init interface with RhIO
   if (isFakeMode()) {/// Highgui is not available on robot
     RhIO::Root.newCommand(

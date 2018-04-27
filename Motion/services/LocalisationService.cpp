@@ -609,8 +609,7 @@ void LocalisationService::goalReset()
 void LocalisationService::customFieldReset(double x, double y, double noise, double theta, double thetaNoise)
 {
 #ifdef VISION_COMPONENT
-  // Note: currenty, locBinding receives [cm]
-  locBinding->fieldReset(FieldPF::ResetType::Custom, 100*x, 100*y, 100*noise, theta, thetaNoise);
+  locBinding->fieldReset(FieldPF::ResetType::Custom, x, y, noise, theta, thetaNoise);
 #endif
 }
 

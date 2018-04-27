@@ -51,7 +51,7 @@ private:
   ParamFloat maxSize;
   ParamInt minSize_pix;
   ParamInt subpix_wsize;
-  /// Size of the markers in [cm]
+  /// Size of the markers in [m]
   ParamFloat markerSize;
 
   /// 0 -> no output and no copy of the image

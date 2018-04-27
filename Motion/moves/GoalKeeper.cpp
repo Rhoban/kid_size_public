@@ -311,7 +311,7 @@ void GoalKeeper::getFieldTarget(Point &wishedPos, Angle &wishedAzimuth) {
   /*
   // Retrieving informations
   auto loc = getServices()->localisation;
-  Point ballInField = loc->getBallPosField() * 100; // in cm
+  Point ballInField = loc->getBallPosField();
 
   // Activate placing if ballQ is high enough and ball is close enough
   if (loc->ballQ > 0.6 &&

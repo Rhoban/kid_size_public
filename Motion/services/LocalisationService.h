@@ -82,7 +82,7 @@ class LocalisationService : public Service
         float goalTargetPan;
         float goalTargetTilt;
 
-        /// x,y -> [cm]
+        /// x,y -> [m]
         void applyKick(float x, float y);
 
         // How many frames were captured by the camera?

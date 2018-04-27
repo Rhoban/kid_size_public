@@ -28,7 +28,7 @@ public:
 
   rhoban_utils::Angle getOrientation() const;
   rhoban_geometry::Point getRobotPosition() const;
-  cv::Point getRobotPositionCV() const;
+  cv::Point2f getRobotPositionCV() const;
 
   /// Return the position of 'pos_in_field' in robot referential
   rhoban_geometry::Point getFieldPosInSelf(const rhoban_geometry::Point & pos_in_field) const;

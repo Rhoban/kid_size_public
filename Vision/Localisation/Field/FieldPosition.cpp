@@ -25,8 +25,8 @@ Point FieldPosition::getRobotPosition() const {
   return Point(values[0], values[1]);
 }
 
-cv::Point FieldPosition::getRobotPositionCV() const {
-  return cv::Point((int)values[0], (int)values[1]);
+cv::Point2f FieldPosition::getRobotPositionCV() const {
+  return cv::Point2f(values[0], values[1]);
 }
 
 Point FieldPosition::getFieldPosInSelf(const Point & pos_in_field) const {
@@ -49,20 +49,22 @@ void FieldPosition::rotate(const Angle &rotation) {
 
 void FieldPosition::tag(cv::Mat &img, Angle pan, const cv::Scalar &color,
                         int thickness) const {
-  double scaledThickness = thickness * Field::Field::getScale(img) * 2;
-  double vecLength = scaledThickness * 10;
-  cv::Point src = getRobotPositionCV();
+  double vecLength = 0.2;/// [m]
+  cv::Point2f src = getRobotPositionCV();
   Angle orientation = getOrientation() + pan;
   double dx = cos(orientation);
   double dy = sin(orientation);
-  cv::Point delta = cv::Point(dx * vecLength, dy * vecLength);
-  double radius = 3 * scaledThickness;
-  cv::Point srcImg = Field::Field::fieldToImg(img, src);
-  cv::Point endImg = Field::Field::fieldToImg(img, src + delta);
+  cv::Point2f delta(dx * vecLength, dy * vecLength);
+  double radius = 3;
+  cv::Point2f srcImg = Field::Field::fieldToImg(img, src);
+  cv::Point2f endImg = Field::Field::fieldToImg(img, src + delta);
+
+//  std::cout << "src: " << src.x << ", " << src.y << std::endl;
+//  std::cout << "dst: " << src.x << ", " << src.y << std::endl;
 
   // circle(img, srcImg, radius, color, CV_FILLED);
-  circle(img, srcImg, radius, color, scaledThickness);
-  line(img, srcImg, endImg, color, scaledThickness);
+  circle(img, srcImg, radius, color, thickness);
+  line(img, srcImg, endImg, color, thickness);
 }
 
 }

@@ -88,7 +88,7 @@ double TagsObservation::potential(const FieldPosition &p) const {
     }
     // Compute norm score
     double deltaNorm = std::fabs(cv::norm(seen_dir) -
-                                 cv::norm(expected_dir)) / 100;//cm -> m
+                                 cv::norm(expected_dir));
     double normScore = 1;
     if (deltaNorm > normMaxErr) {
       normScore = pError;
@@ -105,7 +105,7 @@ double TagsObservation::potential(const FieldPosition &p) const {
     double dy = seenPos.y - pos_in_self.y;
     double dz = seenPos.z - pos_in_self.z;
 
-    double dist=sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2)) / 100;// conversion cm to m
+    double dist=sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2));
     double score = pow(1.0/(1.0+ dist/ distFactor), weight);
     return score;
   }
@@ -114,41 +114,35 @@ double TagsObservation::potential(const FieldPosition &p) const {
 
 
 void TagsObservation::bindWithRhIO() {
-  RhIO::Root.newFloat("/Localisation/Field/TagsObservation/angleFlatTol")
+  RhIO::Root.newFloat("/localisation/field/TagsObservation/angleFlatTol")
     ->defaultValue(angleFlatTol)
     ->minimum(0.0)
     ->maximum(10.0)
-    ->comment("[deg] Until which angle error the angleScore is 1")
-    ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/TagsObservation/angleMaxErr")
+    ->comment("[deg] Until which angle error the angleScore is 1");
+  RhIO::Root.newFloat("/localisation/field/TagsObservation/angleMaxErr")
     ->defaultValue(angleMaxErr)
     ->minimum(0.0)
     ->maximum(10.0)
-    ->comment("[deg] From which angle error the angleScore is pError")
-    ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/TagsObservation/normFlatTol")
+    ->comment("[deg] From which angle error the angleScore is pError");
+  RhIO::Root.newFloat("/localisation/field/TagsObservation/normFlatTol")
     ->defaultValue(normFlatTol)
     ->minimum(0.0)
     ->maximum(0.5)
-    ->comment("[m] Until which norm error the normScore is 1")
-    ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/TagsObservation/normMaxErr")
+    ->comment("[m] Until which norm error the normScore is 1");
+  RhIO::Root.newFloat("/localisation/field/TagsObservation/normMaxErr")
     ->defaultValue(normMaxErr)
     ->minimum(0.05)
     ->maximum(1.0)
-    ->comment("[m] From which norm error the normScore is pError")
-    ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/TagsObservation/distFactor")
+    ->comment("[m] From which norm error the normScore is pError");
+  RhIO::Root.newFloat("/localisation/field/TagsObservation/distFactor")
     ->defaultValue(distFactor)
     ->minimum(0.0)
     ->maximum(10)
-    ->comment("[m] The position difference at which disScore is 0.5")
-    ->persisted(true);
-  RhIO::Root.newBool("/Localisation/Field/TagsObservation/angleMode")
+    ->comment("[m] The position difference at which disScore is 0.5");
+  RhIO::Root.newBool("/localisation/field/TagsObservation/angleMode")
     ->defaultValue(angleMode)
-    ->comment("Is angle mode used ? (false -> distMode)")
-    ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/TagsObservation/pError")
+    ->comment("Is angle mode used ? (false -> distMode)");
+  RhIO::Root.newFloat("/localisation/field/TagsObservation/pError")
     ->defaultValue(pError)
     ->minimum(std::pow(10,-10))
     ->maximum(1.0)
@@ -156,7 +150,7 @@ void TagsObservation::bindWithRhIO() {
 }
 
 void TagsObservation::importFromRhIO() {
-  RhIO::IONode &node = RhIO::Root.child("Localisation/Field/TagsObservation");
+  RhIO::IONode &node = RhIO::Root.child("localisation/field/TagsObservation");
   angleFlatTol = node.getValueFloat("angleFlatTol").value;
   angleMaxErr = node.getValueFloat("angleMaxErr").value;
   normFlatTol = node.getValueFloat("normFlatTol").value;

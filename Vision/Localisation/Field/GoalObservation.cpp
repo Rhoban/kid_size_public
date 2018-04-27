@@ -127,58 +127,50 @@ bool GoalObservation::isSimilar(const GoalObservation & o1,
 }
 
 void GoalObservation::bindWithRhIO() {
-  RhIO::Root.newFloat("/Localisation/Field/GoalObservation/pError")
+  RhIO::Root.newFloat("/localisation/field/GoalObservation/pError")
       ->defaultValue(pError)
       ->minimum(0.0)
       ->maximum(1.0)
-      ->comment("The false positive probability")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/GoalObservation/maxAngleError")
+      ->comment("The false positive probability");
+  RhIO::Root.newFloat("/localisation/field/GoalObservation/maxAngleError")
       ->defaultValue(maxAngleError)
       ->minimum(0.0)
       ->maximum(180)
-      ->comment("The maximum difference between expectation and observation [deg]")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/GoalObservation/tolAngleError")
+      ->comment("The maximum difference between expectation and observation [deg]");
+  RhIO::Root.newFloat("/localisation/field/GoalObservation/tolAngleError")
       ->defaultValue(tolAngleError)
       ->minimum(0.0)
       ->maximum(10)
-      ->comment("The tolerance between expectation and observation [deg]")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/GoalObservation/similarAngleLimit")
+      ->comment("The tolerance between expectation and observation [deg]");
+  RhIO::Root.newFloat("/localisation/field/GoalObservation/similarAngleLimit")
       ->defaultValue(similarAngleLimit)
       ->minimum(0.0)
       ->maximum(90.0)
-      ->comment("Maximal angular difference for similar observations (merge) [deg]")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/GoalObservation/maxCartError")
+      ->comment("Maximal angular difference for similar observations (merge) [deg]");
+  RhIO::Root.newFloat("/localisation/field/GoalObservation/maxCartError")
       ->defaultValue(maxCartError)
       ->minimum(0.0)
       ->maximum(180)
-      ->comment("The maximum difference between expectation and observation [m]")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/GoalObservation/tolCartError")
+      ->comment("The maximum difference between expectation and observation [m]");
+  RhIO::Root.newFloat("/localisation/field/GoalObservation/tolCartError")
       ->defaultValue(tolCartError)
       ->minimum(0.0)
       ->maximum(10)
-      ->comment("The tolerance between expectation and observation [m]")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/GoalObservation/similarCartLimit")
+      ->comment("The tolerance between expectation and observation [m]");
+  RhIO::Root.newFloat("/localisation/field/GoalObservation/similarCartLimit")
       ->defaultValue(similarPosLimit)
       ->minimum(0.0)
       ->maximum(90.0)
-      ->comment("Maximal position difference for similar observations (merge) [m]")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/GoalObservation/weightRatio")
+      ->comment("Maximal position difference for similar observations (merge) [m]");
+  RhIO::Root.newFloat("/localisation/field/GoalObservation/weightRatio")
       ->defaultValue(weightRatio)
       ->minimum(0.0)
       ->maximum(90.0)
-      ->comment("How is score growing with several particles? pow(score,1+weight*weightRatio)")
-      ->persisted(true);
+      ->comment("How is score growing with several particles? pow(score,1+weight*weightRatio)");
 }
 
 void GoalObservation::importFromRhIO() {
-  RhIO::IONode &node = RhIO::Root.child("Localisation/Field/GoalObservation");
+  RhIO::IONode &node = RhIO::Root.child("localisation/field/GoalObservation");
   pError = node.getValueFloat("pError").value;
   maxAngleError = node.getValueFloat("maxAngleError").value;
   similarAngleLimit = node.getValueFloat("similarAngleLimit").value;

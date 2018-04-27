@@ -111,6 +111,9 @@ public:
   /// Elapsed time since last uniform reset [s]
   double elapsedSinceUniformReset;
 
+  /// Elapsed time since last convergence of the filter [s]
+  double elapsedSinceConvergence;
+
   /// Is consistency enabled ?
   bool consistencyEnabled;
   /// Current consistence score (reset filters when it reaches zero)
@@ -182,6 +185,9 @@ public:
   int debugLevel;
 
 private:
+  /// The binding for RhIO variables
+  RhIO::Bind* bind;
+
   /// Main thread running
   std::thread *_runThread;
 

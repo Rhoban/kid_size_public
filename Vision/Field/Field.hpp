@@ -24,6 +24,7 @@ public:
   // Creates the singleton if needed
   static Field *getField();
 
+  /// Number of pixels per meter
   static double getScale(const cv::Mat &img);
 
   static const std::vector<Utils::Segment> &getLines();

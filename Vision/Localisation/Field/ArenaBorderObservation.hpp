@@ -17,7 +17,7 @@ private:
   rhoban_geometry::Point robotClosestPoint;
   double robotHeight;
 
-  static double minDist; // in centimeters
+  static double minDist;// [m]
   static int maxTries;
 
   static double pError;

@@ -34,7 +34,7 @@ double ArenaBorderObservation::cpSigmoidLambda = 5;
 bool ArenaBorderObservation::debug = false;
 
 int ArenaBorderObservation::maxTries = 10;
-double ArenaBorderObservation::minDist = 20; //[cm]
+double ArenaBorderObservation::minDist = 0.2; //[m]
 
 ArenaBorderObservation::ArenaBorderObservation() {}
 
@@ -168,69 +168,59 @@ double ArenaBorderObservation::potential(const FieldPosition &p) const {
 }
 
 void ArenaBorderObservation::bindWithRhIO() {
-  RhIO::Root.newFloat("/Localisation/Field/ArenaBorderObservation/pError")
+  RhIO::Root.newFloat("/localisation/field/ArenaBorderObservation/pError")
       ->defaultValue(pError)
       ->minimum(0.0)
       ->maximum(1.0)
-      ->comment("The false positive probability")
-      ->persisted(true);
+      ->comment("The false positive probability");
   RhIO::Root.newFloat(
-                 "/Localisation/Field/ArenaBorderObservation/lAngleMaxError")
+                 "/localisation/field/ArenaBorderObservation/lAngleMaxError")
       ->defaultValue(lAngleMaxError)
       ->minimum(0.0)
-      ->maximum(180)
-      ->persisted(true);
+      ->maximum(180);
   RhIO::Root.newFloat(
-                 "/Localisation/Field/ArenaBorderObservation/lSigmoidOffset")
+                 "/localisation/field/ArenaBorderObservation/lSigmoidOffset")
       ->defaultValue(lSigmoidOffset)
       ->minimum(0.0)
-      ->maximum(1.0)
-      ->persisted(true);
+      ->maximum(1.0);
   RhIO::Root.newFloat(
-                 "/Localisation/Field/ArenaBorderObservation/lSigmoidLambda")
+                 "/localisation/field/ArenaBorderObservation/lSigmoidLambda")
       ->defaultValue(lSigmoidLambda)
       ->minimum(0.0)
       ->maximum(1000.0)
-      ->comment("Cf. sigmoidOffset")
-      ->persisted(true);
+      ->comment("Cf. sigmoidOffset");
   RhIO::Root.newFloat(
-                 "/Localisation/Field/ArenaBorderObservation/cpAngleMaxError")
+                 "/localisation/field/ArenaBorderObservation/cpAngleMaxError")
       ->defaultValue(cpAngleMaxError)
       ->minimum(0.0)
-      ->maximum(180)
-      ->persisted(true);
+      ->maximum(180);
   RhIO::Root.newFloat(
-                 "/Localisation/Field/ArenaBorderObservation/cpSigmoidOffset")
+                 "/localisation/field/ArenaBorderObservation/cpSigmoidOffset")
       ->defaultValue(lSigmoidOffset)
       ->minimum(0.0)
-      ->maximum(1.0)
-      ->persisted(true);
+      ->maximum(1.0);
   RhIO::Root.newFloat(
-                 "/Localisation/Field/ArenaBorderObservation/cpSigmoidLambda")
+                 "/localisation/field/ArenaBorderObservation/cpSigmoidLambda")
       ->defaultValue(lSigmoidLambda)
       ->minimum(0.0)
-      ->maximum(1000.0)
-      ->persisted(true);
-  RhIO::Root.newInt("/Localisation/Field/ArenaBorderObservation/maxTries")
+      ->maximum(1000.0);
+  RhIO::Root.newInt("/localisation/field/ArenaBorderObservation/maxTries")
       ->defaultValue(maxTries)
       ->minimum(0)
-      ->maximum(1000)
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/ArenaBorderObservation/minDist")
+      ->maximum(1000);
+  RhIO::Root.newFloat("/localisation/field/ArenaBorderObservation/minDist")
       ->defaultValue(minDist)
       ->minimum(0.0)
-      ->maximum(1000.0)
-      ->comment(
-            "The minimal distance between two points to consider the line [m]")
-      ->persisted(true);
-  RhIO::Root.newBool("/Localisation/Field/ArenaBorderObservation/debug")
+      ->maximum(5.0)
+      ->comment("The minimal distance between two points to consider the line [m]");
+  RhIO::Root.newBool("/localisation/field/ArenaBorderObservation/debug")
       ->defaultValue(debug)
       ->comment("Print message on observation creation");
 }
 
 void ArenaBorderObservation::importFromRhIO() {
   RhIO::IONode &node =
-      RhIO::Root.child("Localisation/Field/ArenaBorderObservation");
+      RhIO::Root.child("localisation/field/ArenaBorderObservation");
   pError = node.getValueFloat("pError").value;
   lAngleMaxError = node.getValueFloat("lAngleMaxError").value;
   lSigmoidOffset = node.getValueFloat("lSigmoidOffset").value;

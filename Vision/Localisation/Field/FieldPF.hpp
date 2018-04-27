@@ -38,9 +38,6 @@ private:
   virtual void updateInternalValues() override;
   void updateToGoalQuality();
 
-  static double mins[3];
-  static double maxs[3];
-
 protected:
   virtual void updateRepresentativeQuality();
   virtual void updateRepresentativeParticle();
@@ -55,10 +52,6 @@ public:
   void cancelPendingReset(ResetType t);
 
   ResetType getPendingReset();
-
-  void initializeAtUniformRandom(unsigned int particlesNb) {
-    ParticleFilter::initializeAtUniformRandom(mins, maxs, particlesNb);
-  }
 
   // side: -1 for right, 1 for left, 0 for unknownside
   void resetOnLines(int side);
@@ -91,6 +84,8 @@ public:
   bool isResetPending() const;
 
   static std::string getName(ResetType t);
+
+  void initializeAtUniformRandom(unsigned int particlesNb);
 
   double resamplingRatio;
 

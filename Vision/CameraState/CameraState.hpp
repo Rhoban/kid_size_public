@@ -154,9 +154,6 @@ public:
    */
   void distortPoint(double pixelX, double pixelY, double imgWidth, double imgHeight, cv::Point2f &out);
 
-  // Parameters which shouldn't be here but...
-  static double ballRadius; // In cm
-
   MoveScheduler *_moveScheduler;
   Leph::HumanoidFixedPressureModel _pastReadModel;
   Leph::HumanoidModel *_model;

@@ -23,6 +23,7 @@
 #include "unistd.h"
 
 #include <rhoban_utils/logging/logger.h>
+#include <rhoban_utils/util.h>
 #include <utility>
 #include <string>
 #include <vector>
@@ -62,7 +63,8 @@ LocalisationBinding::LocalisationBinding(MoveScheduler * scheduler_,
     nbVCObs(0),
     minVCObs(1),
     isForbidden(false),
-    _runThread(nullptr)
+    _runThread(nullptr),
+    bind(nullptr)
 {
   scheduler->getServices()->localisation->setLocBinding(this);
   field_filter = new Localisation::FieldPF();
@@ -131,13 +133,16 @@ void LocalisationBinding::init()
 void LocalisationBinding::initRhIO()
 {
   // Only bind once
-  if (RhIO::Root.commandExist("Localisation/resetFilters")) {
+  if (bind != nullptr) {
     return;
   }
+
+  bind = new RhIO::Bind("localisation");
+
   // Init interface with RhIO
-  RhIO::Root.newCommand("Localisation/resetFilters",
-                        "Reset all particle filters to an uniform distribution",
-                        [this](const std::vector<std::string> &args)
+  RhIO::Root.newCommand("localisation/resetFilters",
+                 "Reset all particle filters to an uniform distribution",
+                 [this](const std::vector<std::string> &args)
                             -> std::string {
                               lastFieldReset = getNowTS();
                               currTS = lastFieldReset;
@@ -150,120 +155,110 @@ void LocalisationBinding::initRhIO()
                               field_filter->askForReset();
                               vcCounterMutex.unlock();
                               return "Field have been reset";
-                            });
+                 });
   RhIO::Root.newCommand(
-      "Localisation/bordersReset",
-      "Reset on the borders",
-      [this](const std::vector<std::string> &args) -> std::string {
-        fieldReset(FieldPF::ResetType::Borders);
-        return "Field have been reset";
-      });
+    "localisation/bordersReset",
+    "Reset on the borders",
+    [this](const std::vector<std::string> &args) -> std::string {
+      fieldReset(FieldPF::ResetType::Borders);
+      return "Field have been reset";
+    });
   RhIO::Root.newCommand(
-      "Localisation/fallReset", "Apply a fall event on field particle filter",
-      [this](const std::vector<std::string> &args) -> std::string {
-        fieldReset(FieldPF::ResetType::Fall);
-        return "Field have been reset";
-      });
+    "localisation/fallReset", "Apply a fall event on field particle filter",
+    [this](const std::vector<std::string> &args) -> std::string {
+      fieldReset(FieldPF::ResetType::Fall);
+      return "Field have been reset";
+    });
   RhIO::Root.newCommand(
-      "Localisation/customReset", "Reset the field particle filter at the "
-                                  "custom position with custom noise [m,deg]",
-      [this](const std::vector<std::string> &args) -> std::string {
-        unsigned int k = 0;
-
-        auto rhioNode = &(RhIO::Root.child("/Localisation/Field/FieldPF"));
-        for (string item : {"customX", "customY", "customTheta", "customNoise", "customThetaNoise"}) {
-          if (args.size() > k) {
-            rhioNode->setFloat(item, atof(args[k].c_str()));
-          }
-          k++;
+    "localisation/customReset",
+    "Reset the field particle filter at the custom position with custom noise [m,deg]",
+    [this](const std::vector<std::string> &args) -> std::string {
+      unsigned int k = 0;
+      
+      auto rhioNode = &(RhIO::Root.child("/localisation/field/fieldPF"));
+      for (string item : {"customX", "customY", "customTheta", "customNoise", "customThetaNoise"}) {
+        if (args.size() > k) {
+          rhioNode->setFloat(item, atof(args[k].c_str()));
         }
-        lastFieldReset = getNowTS();
-        currTS = lastFieldReset;
-        vcCounterMutex.lock();
-        nbVCObs = minVCObs;
-        consistencyScore = 1;
-        field_filter->askForReset(FieldPF::ResetType::Custom);
-        vcCounterMutex.unlock();
-        return "Field have been reset";
-      });
+        k++;
+      }
+      lastFieldReset = getNowTS();
+      currTS = lastFieldReset;
+      vcCounterMutex.lock();
+      nbVCObs = minVCObs;
+      consistencyScore = 1;
+      field_filter->askForReset(FieldPF::ResetType::Custom);
+      vcCounterMutex.unlock();
+      return "Field have been reset";
+    });
   // Number of particles in the field filter
-  RhIO::Root.newInt("/Localisation/Field/nbParticles")
+  bind->bindNew("field/nbParticles", nb_particles_ff, RhIO::Bind::PullOnly)
       ->defaultValue(nb_particles_ff)
-      ->comment("Number of particles in the localisation filter")
-      ->persisted(true);
-  // Consistency
-  RhIO::Root.newBool("/Localisation/Consistency/enabled")
+      ->comment("Number of particles in the localisation filter");
+  // consistency
+  bind->bindNew("consistency/enabled", consistencyEnabled, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyEnabled)
-      ->comment("Is consistency check enabled? (If disable, consistencyScore is not updated)")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Consistency/elapsedSinceReset")
+      ->comment("Is consistency check enabled? (If disable, consistencyScore is not updated)");
+  bind->bindNew("consistency/elapsedSinceReset", elapsedSinceReset,
+                RhIO::Bind::PushOnly)
       ->defaultValue(0)
       ->comment("Elapsed time since last reset (from any source) [s]");
-  RhIO::Root.newFloat("/Localisation/Consistency/elapsedSinceUniformReset")
+  bind->bindNew("consistency/elapsedSinceUniformReset", elapsedSinceUniformReset,
+                RhIO::Bind::PushOnly)
       ->defaultValue(0)
       ->comment("Elapsed time since last uniform reset (from any source) [s]");
-  RhIO::Root.newFloat("/Localisation/Consistency/score")
+  bind->bindNew("consistency/score", consistencyScore, RhIO::Bind::PushOnly)
       ->defaultValue(consistencyScore)
       ->maximum(1.0)
       ->minimum(0.0)
       ->comment("Current consistency quality");
-  RhIO::Root.newFloat("/Localisation/Consistency/stepCost")
+  bind->bindNew("consistency/stepCost", consistencyStepCost, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyStepCost)
-      ->comment("The reduction of consistencyScore at each step")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Consistency/badObsCost")
+      ->comment("The reduction of consistencyScore at each step");
+  bind->bindNew("consistency/badObsCost", consistencyBadObsCost, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyBadObsCost)
-      ->comment("The reduction of consistencyScore for each bad observation")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Consistency/goodObsGain")
+      ->comment("The reduction of consistencyScore for each bad observation");
+  bind->bindNew("/localisation/consistency/goodObsGain", consistencyGoodObsGain, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyGoodObsGain)
-      ->comment("The increase of consistencyScore for each 'good' observation")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Consistency/resetInterval")
+      ->comment("The increase of consistencyScore for each 'good' observation");
+  bind->bindNew("/localisation/consistency/resetInterval", consistencyResetInterval, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyResetInterval)
-      ->comment("The minimal time to wait between two consistency resets [s]")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Consistency/maxNoise")
+      ->comment("The minimal time to wait between two consistency resets [s]");
+  bind->bindNew("/localisation/consistency/maxNoise", consistencyMaxNoise, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyMaxNoise)
-      ->comment("Noise factor at 0 consistencyScore")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/period")
+      ->comment("Noise factor at 0 consistencyScore");
+  bind->bindNew("/localisation/period", period, RhIO::Bind::PullOnly)
       ->defaultValue(period)
       ->maximum(30.0)
       ->minimum(0.0)
-      ->comment("Period between two ticks from the particle filter")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Consistency/elapsedSinceConvergence")
+      ->comment("Period between two ticks from the particle filter");
+  bind->bindNew("/localisation/consistency/elapsedSinceConvergence", elapsedSinceConvergence, RhIO::Bind::PushOnly)
       ->defaultValue(0)
       ->comment("Elapsed time since last convergence or reset [s]");
-  RhIO::Root.newFloat("/Localisation/Field/maxNoiseBoost")
+  bind->bindNew("/localisation/field/maxNoiseBoost", maxNoiseBoost, RhIO::Bind::PullOnly)
       ->defaultValue(maxNoiseBoost)
       ->maximum(30.0)
       ->minimum(1.0)
-      ->comment("Maximal multiplier for exploration in boost mode")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/noiseBoostDuration")
+      ->comment("Maximal multiplier for exploration in boost mode");
+  bind->bindNew("/localisation/field/noiseBoostDuration",noiseBoostDuration, RhIO::Bind::PullOnly)
       ->defaultValue(noiseBoostDuration)
       ->maximum(30.0)
       ->minimum(0.0)
-      ->comment("Duration of the noise boost after global reset [s]")
-      ->persisted(true);
-  RhIO::Root.newInt("/Localisation/Field/nbVCObs")
+      ->comment("Duration of the noise boost after global reset [s]");
+  bind->bindNew("/localisation/field/nbVCObs", nbVCObs, RhIO::Bind::PushOnly)
       ->defaultValue(nbVCObs)
       ->comment("Number of compass observations used since last uniform reset");
-  RhIO::Root.newInt("/Localisation/Field/minVCObs")
+  bind->bindNew("/localisation/field/minVCObs", minVCObs, RhIO::Bind::PullOnly)
       ->defaultValue(minVCObs)
-      ->comment("Number of compass observations necessary to disable VC")
-      ->persisted(true);
-  RhIO::Root.newBool("/Localisation/Field/isUsingVisualCompass")
+      ->comment("Number of compass observations necessary to disable VC");
+  bind->bindNew("/localisation/field/isUsingVisualCompass", isUsingVisualCompass, RhIO::Bind::PushOnly)
       ->defaultValue(isUsingVisualCompass)
       ->comment("Is the localisation currently using the visual compass");
-  RhIO::Root.newInt("/Localisation/debugLevel")
+  bind->bindNew("/localisation/debugLevel", debugLevel, RhIO::Bind::PullOnly)
       ->defaultValue(1)
-      ->comment("Verbosity level for Localisation: 0 -> silent")
-      ->persisted(true);
+      ->comment("Verbosity level for Localisation: 0 -> silent");
 
-  RhIO::Root.newFrame("Localisation/TopView", "", RhIO::FrameFormat::BGR);
+  RhIO::Root.newFrame("localisation/TopView", "", RhIO::FrameFormat::BGR);
 
   // Binding Localisation items
   RobotController::bindWithRhIO();
@@ -279,50 +274,21 @@ void LocalisationBinding::importFromRhIO() {
   TagsObservation::importFromRhIO();
   CompassObservation::importFromRhIO();
   field_filter->importFromRhIO();
-  nb_particles_ff =
-      RhIO::Root.getValueInt("/Localisation/Field/nbParticles").value;
-  // Noise boost
-  maxNoiseBoost =
-      RhIO::Root.getValueFloat("/Localisation/Field/maxNoiseBoost").value;
-  noiseBoostDuration =
-      RhIO::Root.getValueFloat("/Localisation/Field/noiseBoostDuration").value;
-  // Visual compass
-  minVCObs = RhIO::Root.getValueInt("/Localisation/Field/minVCObs").value;
-  // Consistency import
-  consistencyEnabled =
-      RhIO::Root.getValueBool("/Localisation/Consistency/enabled").value;
-  consistencyStepCost =
-      RhIO::Root.getValueFloat("/Localisation/Consistency/stepCost").value;
-  consistencyBadObsCost =
-      RhIO::Root.getValueFloat("/Localisation/Consistency/badObsCost").value;
-  consistencyGoodObsGain =
-      RhIO::Root.getValueFloat("/Localisation/Consistency/goodObsGain").value;
-  consistencyResetInterval =
-      RhIO::Root.getValueFloat("/Localisation/Consistency/resetInterval").value;
-  consistencyMaxNoise =
-      RhIO::Root.getValueFloat("/Localisation/Consistency/maxNoise").value;
-  period = RhIO::Root.getValueFloat("/Localisation/period").value;
-  debugLevel = RhIO::Root.getValueInt("/Localisation/debugLevel").value;
+
+  bind->pull();
 }
 
 void LocalisationBinding::publishToRhIO() {
-  RhIO::Root.setFloat("/Localisation/Consistency/elapsedSinceReset",
-                      elapsedSinceReset);
-  RhIO::Root.setFloat("/Localisation/Consistency/elapsedSinceUniformReset",
-                      elapsedSinceUniformReset);
-  RhIO::Root.setFloat("/Localisation/Consistency/score", consistencyScore);
-  RhIO::Root.setBool("/Localisation/Field/isUsingVisualCompass",
-                     isUsingVisualCompass);
-  RhIO::Root.setInt("/Localisation/Field/nbVCObs", nbVCObs);
+  bind->push();
 
   field_filter->publishToRhIO();
 
-  bool isStreaming = RhIO::Root.frameIsStreaming("/Localisation/TopView");
+  bool isStreaming = RhIO::Root.frameIsStreaming("/localisation/TopView");
   if (isStreaming) {
     int width = 1040;
     int height = 740;
     cv::Mat topView = getTopView(width, height);
-    RhIO::Root.framePush("/Localisation/TopView", width, height, topView.data,
+    RhIO::Root.framePush("/localisation/TopView", width, height, topView.data,
                          width * height * 3);
   }
 }
@@ -670,15 +636,17 @@ void LocalisationBinding::updateFilter(
     // Specific case for resets, we don't want to integrate motion before reset
     odom_start = lastFieldReset.getTimeMS() / 1000.0;
   }
+
   Eigen::Vector3d odo = model_service->odometryDiff(odom_start, odom_end);
   cv::Point2f robotMove;
-  robotMove.x = odo(0) * 100;
-  robotMove.y = odo(1) * 100;
+  robotMove.x = odo(0);
+  robotMove.y = odo(1);
   double orientationChange = rad2deg(odo(2));
   if (std::fabs(orientationChange) > 90) {
     fieldLogger.warning("unlikely orientation change received from odometry: %f deg",
                         orientationChange);
   }
+
   // Use a boost of noise after an uniformReset
   double noiseGain = 1;
   if (elapsedSinceUniformReset < noiseBoostDuration) {
@@ -841,7 +809,7 @@ void LocalisationBinding::fieldReset(Localisation::FieldPF::ResetType type, floa
   lastFieldReset = getNowTS();
 
   if (type == Localisation::FieldPF::ResetType::Custom) {
-    auto rhioNode = &(RhIO::Root.child("/Localisation/Field/FieldPF"));
+    auto rhioNode = &(RhIO::Root.child("/localisation/field/fieldPF"));
     rhioNode->setFloat("customX", x);
     rhioNode->setFloat("customY", y);
     rhioNode->setFloat("customNoise", noise);

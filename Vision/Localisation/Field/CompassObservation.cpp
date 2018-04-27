@@ -56,36 +56,31 @@ double CompassObservation::potential(const FieldPosition & p) const {
 
 void CompassObservation::bindWithRhIO()
 {
-  RhIO::Root.newFloat("/Localisation/Field/CompassObservation/offset")
+  RhIO::Root.newFloat("/localisation/field/CompassObservation/offset")
     ->defaultValue(offset.getSignedValue())
     ->minimum(-180.0)->maximum(180.0)
-    ->comment("The magneto azimuth value when facing the adversary goal")
-    ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/CompassObservation/pError")
+    ->comment("The magneto azimuth value when facing the adversary goal");
+  RhIO::Root.newFloat("/localisation/field/CompassObservation/pError")
     ->defaultValue(pError)
     ->minimum(0.0)->maximum(1.0)
-    ->comment("The false positive probability")
-    ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/CompassObservation/maxError")
+    ->comment("The false positive probability");
+  RhIO::Root.newFloat("/localisation/field/CompassObservation/maxError")
     ->defaultValue(maxError)
     ->minimum(0.0)->maximum(180)
-    ->comment("The maximum angle difference between expectation and observation")
-    ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/CompassObservation/sigmoidOffset")
+    ->comment("The maximum angle difference between expectation and observation");
+  RhIO::Root.newFloat("/localisation/field/CompassObservation/sigmoidOffset")
     ->defaultValue(sigmoidOffset)
     ->minimum(0.0)->maximum(1.0)
-    ->comment("The value at which dScore/dx is lambda, with dx = dAngle/maxAngle")
-    ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/CompassObservation/sigmoidLambda")
+    ->comment("The value at which dScore/dx is lambda, with dx = dAngle/maxAngle");
+  RhIO::Root.newFloat("/localisation/field/CompassObservation/sigmoidLambda")
     ->defaultValue(sigmoidLambda)
     ->minimum(0.0)->maximum(1000.0)
-    ->comment("Cf. sigmoidOffset")
-    ->persisted(true);
+    ->comment("Cf. sigmoidOffset");
 }
 
 void CompassObservation::importFromRhIO()
 {
-  RhIO::IONode & node = RhIO::Root.child("Localisation/Field/CompassObservation");
+  RhIO::IONode & node = RhIO::Root.child("localisation/field/CompassObservation");
   offset = node.getValueFloat("offset").value;
   pError  = node.getValueFloat("pError").value;
   maxError  = node.getValueFloat("maxError").value;
@@ -95,9 +90,9 @@ void CompassObservation::importFromRhIO()
 
 void CompassObservation::exportToRhIO()
 {
-  RhIO::IONode & node = RhIO::Root.child("Localisation/Field/CompassObservation");
+  RhIO::IONode & node = RhIO::Root.child("localisation/field/CompassObservation");
   node.setFloat("offset", offset.getSignedValue());
-  node.save("rhio/Localisation/Field/CompassObservation/");
+  node.save("rhio/localisation/field/CompassObservation/");
 }
 
 Angle CompassObservation::getOffset()

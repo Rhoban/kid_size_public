@@ -35,7 +35,7 @@ Field::Field() : fieldLines(), fieldMarks() {
   initCenter();
   for (auto dir : {-1, 1}) {
     initGoalZone(cv::Point2f(dir * Constants::field.fieldLength / 2,
-                           -Constants::field.goalAreaWidth / 2),
+                             -Constants::field.goalAreaWidth / 2),
                  -dir);
   }
   initMarks();
@@ -45,8 +45,8 @@ Field::Field() : fieldLines(), fieldMarks() {
 }
 
 void Field::initBorders() {
-  int dx = Constants::field.fieldLength / 2;
-  int dy = Constants::field.fieldWidth / 2;
+  double dx = Constants::field.fieldLength / 2;
+  double dy = Constants::field.fieldWidth / 2;
   auto dirs = {-1, 1};
   for (auto &dir : dirs) {
     cv::Point2f start(dx * dir, dy * dir);
@@ -123,7 +123,7 @@ cv::Point2f Field::getGoal(int goalNo, int postNo) {
 
 void Field::initTags()
 {
-  double tagHeight = 15;// cm
+  double tagHeight = 0.15;//m
   /**
    *  CONFIG:                                 <- Middle of the goal
    *  141 -------------------------------------
@@ -215,9 +215,9 @@ void Field::drawField(cv::Mat &img, const cv::Scalar &bgColor) {
   }
   // Drawing penalty marks
   for (unsigned int i = 0; i < f->fieldMarks.size(); i++) {
-    cv::Point2i markCenter = f->fieldMarks[i];
-    cv::Point2i dx(markWidth(img) / 2, 0);
-    cv::Point2i dy(0, markWidth(img) / 2);
+    cv::Point2f markCenter = f->fieldMarks[i];
+    cv::Point2f dx(Constants::field.penaltyMarkLength / 2, 0);
+    cv::Point2f dy(0, Constants::field.penaltyMarkLength / 2);
     line(img, fieldToImg(img, markCenter - dx),
          fieldToImg(img, markCenter + dx), LINES_COLOR, markWidth(img));
     line(img, fieldToImg(img, markCenter - dy),

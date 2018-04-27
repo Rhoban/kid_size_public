@@ -34,11 +34,6 @@ std::map<FieldPF::ResetType,std::string> FieldPF::resetNames =
   {ResetType::Custom, "Custom"}
 };
 
-double FieldPF::mins[3] = {-Constants::field.fieldLength / 2,
-                           -Constants::field.fieldWidth / 2, 0};
-double FieldPF::maxs[3] = {Constants::field.fieldLength / 2,
-                           Constants::field.fieldWidth / 2, 360};
-
 FieldPF::FieldPF()
     : ParticleFilter(), resetType(ResetType::None),
       errorTols({8}), resamplingRatio(0.0), tolDist(1),
@@ -228,6 +223,11 @@ void FieldPF::step(
     logger.log("Applying a reset of type: '%s'", reset_name.c_str());
   }
 
+  double mins[3] = {-Constants::field.fieldLength / 2,
+                    -Constants::field.fieldWidth / 2, 0};
+  double maxs[3] = {Constants::field.fieldLength / 2,
+                    Constants::field.fieldWidth / 2, 360};
+
   switch (stepReset) {
   case None: {
     // If no reset is planned, apply observations, resampling if required and return
@@ -236,7 +236,7 @@ void FieldPF::step(
     return;
   }
   case Uniform: {
-    initializeAtUniformRandom(particles.size());
+    ParticleFilter::initializeAtUniformRandom(mins, maxs, particles.size());
     break;
   }
   case BordersRight:
@@ -269,7 +269,7 @@ void FieldPF::step(
 void FieldPF::resetOnLines(int side) {
   auto generator = rhoban_random::getRandomEngine();
   // According to rules, robot start in its own half
-  double xOffset = 100 * (Constants::field.penaltyMarkDist - Constants::field.fieldLength / 2);
+  double xOffset = Constants::field.penaltyMarkDist - Constants::field.fieldLength / 2;
   std::uniform_real_distribution<double> xDistribution(-borderNoise,
                                                        borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta,
@@ -334,10 +334,13 @@ void FieldPF::draw(cv::Mat &img, Utils::CameraState *cs) const {
     logger.error("%s", msg.c_str());
     throw std::logic_error(msg);
   }
+  std::cout << "Drawing field" << std::endl;
   Field::Field::drawField(img);
+  std::cout << "Drawing particles" << std::endl;
   for (unsigned int i = 0; i < nbParticles(); i++) {
     getParticle(i).tag(img, 0.0, cv::Scalar(getParticleQ(i) * 255, 0, 0));
   }
+  std::cout << "Drawing representative particles" << std::endl;
   representativeParticle.tag(img, 0.0, cv::Scalar(0, 0, 255), 3);
 }
 
@@ -505,6 +508,14 @@ std::string FieldPF::getName(ResetType t) {
     logger.log("Failed to get name for type: %d", t);
     throw;
   }
+}
+
+void FieldPF::initializeAtUniformRandom(unsigned int particlesNb) {
+  double mins[3] = {-Constants::field.fieldLength / 2,
+                    -Constants::field.fieldWidth / 2, 0};
+  double maxs[3] = {Constants::field.fieldLength / 2,
+                    Constants::field.fieldWidth / 2, 360};
+  ParticleFilter::initializeAtUniformRandom(mins, maxs, particlesNb);
 }
 
 }

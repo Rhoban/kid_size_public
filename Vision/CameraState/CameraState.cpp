@@ -13,6 +13,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include <robocup_referee/constants.h>
+
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/imgproc/imgproc.hpp> //undistortPoints
 #include <string>
@@ -25,14 +27,12 @@
 #endif
 
 using namespace rhoban_utils;
+using namespace robocup_referee;
 
 static rhoban_utils::Logger logger("CameraState");
 
 namespace Vision {
 namespace Utils {
-
-// Actually this class became a helper that could be 100% static
-double CameraState::ballRadius(5);
 
 /*
  *TODO :
@@ -362,7 +362,7 @@ Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
   Eigen::Vector3d ballCenterUp;
   Eigen::Vector2d ballCenterPixelUp;
   std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> bordersPixelUp;
-  _model->cameraViewVectorToBallWorld(_params, viewVectorUp, ballRadius / 100.0,
+  _model->cameraViewVectorToBallWorld(_params, viewVectorUp, Constants::field.ballRadius,
                                       ballCenterUp, &ballCenterPixelUp,
                                       &bordersPixelUp);
   // Middle
@@ -370,14 +370,14 @@ Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
   Eigen::Vector2d ballCenterPixelMiddle;
   std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> bordersPixelMiddle;
   _model->cameraViewVectorToBallWorld(
-    _params, viewVectorMiddle, ballRadius / 100.0, ballCenterMiddle,
+    _params, viewVectorMiddle, Constants::field.ballRadius, ballCenterMiddle,
     &ballCenterPixelMiddle, &bordersPixelMiddle);
   // Down
   Eigen::Vector3d ballCenterDown;
   Eigen::Vector2d ballCenterPixelDown;
   std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> bordersPixelDown;
   _model->cameraViewVectorToBallWorld(_params, viewVectorDown,
-                                      ballRadius / 100.0, ballCenterDown,
+                                      Constants::field.ballRadius, ballCenterDown,
                                       &ballCenterPixelDown, &bordersPixelDown);
 
   //TODO: Pff should we really distort all these?
@@ -458,7 +458,7 @@ Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
   Eigen::Vector3d ballCenter;
   _model->cameraViewVectorToBallWorld(
       _params, _model->cameraPixelToViewVector(_params, pixel),
-      ballRadius / 100.0, ballCenter);
+      Constants::field.ballRadius, ballCenter);
 
   return ballCenter;
 }

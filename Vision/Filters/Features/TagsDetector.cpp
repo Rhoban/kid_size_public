@@ -60,8 +60,6 @@ void TagsDetector::setParameters() {
   
   subpix_wsize = ParamInt(1, 1, 25);
   params()->define<ParamInt>("subpix_wsize", &subpix_wsize);
-
-  //marker size in m
   
   debugLevel = ParamInt(0, 0, 2);
   params()->define<ParamInt>("debugLevel", &debugLevel);

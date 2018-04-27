@@ -223,43 +223,39 @@ double ArenaCornerObservation::potential(const FieldPosition &p) const {
 }
 
 void ArenaCornerObservation::bindWithRhIO() {
-  RhIO::Root.newFloat("/Localisation/Field/ArenaCornerObservation/pError")
+  RhIO::Root.newFloat("/localisation/field/ArenaCornerObservation/pError")
       ->defaultValue(pError)
       ->minimum(0.0)
       ->maximum(1.0)
-      ->comment("The false positive probability")
-      ->persisted(true);
+      ->comment("The false positive probability");
   RhIO::Root.newFloat(
-                 "/Localisation/Field/ArenaCornerObservation/maxAngleError")
+                 "/localisation/field/ArenaCornerObservation/maxAngleError")
       ->defaultValue(maxAngleError)
       ->minimum(0.0)
       ->maximum(180)
       ->comment(
-            "The maximum angle difference between expectation and observation")
-      ->persisted(true);
+            "The maximum angle difference between expectation and observation");
   RhIO::Root.newFloat(
-                 "/Localisation/Field/ArenaCornerObservation/sigmoidOffset")
+                 "/localisation/field/ArenaCornerObservation/sigmoidOffset")
       ->defaultValue(sigmoidOffset)
       ->minimum(0.0)
       ->maximum(1.0)
       ->comment(
-            "The value at which dScore/dx is lambda, with dx = dAngle/maxAngle")
-      ->persisted(true);
+            "The value at which dScore/dx is lambda, with dx = dAngle/maxAngle");
   RhIO::Root.newFloat(
-                 "/Localisation/Field/ArenaCornerObservation/sigmoidLambda")
+                 "/localisation/field/ArenaCornerObservation/sigmoidLambda")
       ->defaultValue(sigmoidLambda)
       ->minimum(0.0)
       ->maximum(1000.0)
-      ->comment("Cf. sigmoidOffset")
-      ->persisted(true);
-  RhIO::Root.newBool("/Localisation/Field/ArenaCornerObservation/debug")
+      ->comment("Cf. sigmoidOffset");
+  RhIO::Root.newBool("/localisation/field/ArenaCornerObservation/debug")
       ->defaultValue(debug)
       ->comment("Print message on observation creation");
 }
 
 void ArenaCornerObservation::importFromRhIO() {
   RhIO::IONode &node =
-      RhIO::Root.child("Localisation/Field/ArenaCornerObservation");
+      RhIO::Root.child("localisation/field/ArenaCornerObservation");
   pError = node.getValueFloat("pError").value;
   maxAngleError = node.getValueFloat("maxAngleError").value;
   sigmoidOffset = node.getValueFloat("sigmoidOffset").value;

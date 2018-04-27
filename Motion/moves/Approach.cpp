@@ -47,7 +47,7 @@ Approach::Approach(Walk *walk, Head *head)
         ->comment("Approach STM state");
     // Align
     bind->bindNew("farAlignerP", farAlignerP, RhIO::Bind::PullOnly)
-        ->defaultValue(0.2)->persisted(true);
+        ->defaultValue(0.4)->persisted(true);
     bind->bindNew("rotateAlignerP", rotateAlignerP, RhIO::Bind::PullOnly)
         ->defaultValue(0.4)->persisted(true);
     bind->bindNew("nearAlignerP", nearAlignerP, RhIO::Bind::PullOnly)
@@ -62,15 +62,14 @@ Approach::Approach(Walk *walk, Head *head)
         ->defaultValue(1)->persisted(true);
     // Radius
     bind->bindNew("radius", radius)
-        ->defaultValue(45)->minimum(0.0)->maximum(1000.0)
-        ->persisted(true);
+      ->defaultValue(0.45)->minimum(0.0)->maximum(1.0);
     // Time interval between shoots
     bind->bindNew("shootInterval", shootInterval, RhIO::Bind::PullOnly)
         ->defaultValue(3)->persisted(true);
     
     // Centering corner distance
     bind->bindNew("centeringCorner", centeringCorner, RhIO::Bind::PullOnly)
-        ->defaultValue(250.0)->persisted(true);
+        ->defaultValue(2.50)->persisted(true);
 
     bind->bindNew("elapsedLastShoot", elapsedLastShoot, RhIO::Bind::PushOnly);
     bind->bindNew("timeSinceNear", timeSinceNear, RhIO::Bind::PushOnly);
@@ -99,8 +98,8 @@ Approach::Approach(Walk *walk, Head *head)
     bind->bindNew("enableLateralKick", enableLateralKick, RhIO::Bind::PullOnly)
         ->comment("Enable the lateral kicks")->defaultValue(true)->persisted(true);
     bind->bindNew("placementMargin", placementMargin, RhIO::Bind::PullOnly)
-        ->comment("Distance (cm) to the target to enter rotate")
-        ->defaultValue(10)->persisted(true);
+        ->comment("Distance (m) to the target to enter rotate")
+        ->defaultValue(0.3)->persisted(true);
 
     bind->bindNew("theta", theta, RhIO::Bind::PushOnly);
     bind->bindNew("targetPX", targetPX, RhIO::Bind::PushOnly);
@@ -160,9 +159,9 @@ void Approach::step(float elapsed)
     goalLeftAzimuth = loc->getLeftGoalCap();
     goalRightAzimuth = loc->getRightGoalCap();
     ballAzimuth = ballPos.getTheta().getSignedValue();
-    ballDistance = ballPos.getLength()*100;
-    ballX = ballPos.x*100;
-    ballY = ballPos.y*100;
+    ballDistance = ballPos.getLength();
+    ballX = ballPos.x;
+    ballY = ballPos.y;
 
     // Setting min & max from parameters
     aligner.min = -walk->maxRotation;
@@ -201,11 +200,11 @@ void Approach::step(float elapsed)
 
     const KickZone & kick_zone = kmc.getKickModel(expectedKick).getKickZone();
     Eigen::Vector3d wishedPos = kick_zone.getWishedPos(kickRight);
-    double targetX     = 100 * wishedPos(0);//[m] to [cm]
-    double footTargetY = 100 * wishedPos(1);//[m] to [cm]
+    double targetX     = wishedPos(0);
+    double footTargetY = wishedPos(1);
     double wished_dir = rhoban_utils::rad2deg(wishedPos(2));
-    double xRange =  100 * kick_zone.getXRange();//[m] to [cm]
-    double yRange =  100 * kick_zone.getYRange();//[m] to [cm]
+    double xRange =  kick_zone.getXRange();
+    double yRange =  kick_zone.getYRange();
     targetAzimuth += wished_dir;
 
     bool goodAlignGoalCenter = (fabs(targetAzimuth) < 15);

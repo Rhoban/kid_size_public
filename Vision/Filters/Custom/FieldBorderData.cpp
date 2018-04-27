@@ -125,7 +125,8 @@ void FieldBorderData::define_segment(bool debug_info) {
   double min_len = 0.50;
   double max_dist = 4.0;
 
-  if (len > min_len && dist_bot_seg < max_dist) { // Note: parametre on ne regarde pas les segments en dessous de 50cm
+  // Note: parametre on ne regarde pas les segments en dessous de 'min_len'
+  if (len > min_len && dist_bot_seg < max_dist) {
     if (debug_info) {
       FBPRINT_DEBUG("Found Segment (%0.2f,%0.2f) -> (%0.2f,%0.2f) (len = %0.2f)\n",
                     self_segment.first.x,

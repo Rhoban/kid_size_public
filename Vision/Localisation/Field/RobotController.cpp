@@ -8,7 +8,7 @@ using namespace rhoban_utils;
 namespace Vision {
 namespace Localisation {
 
-double RobotController::posExploration = 5;
+double RobotController::posExploration = 0.05;
 double RobotController::angleExploration = 1;
 
 Eigen::MatrixXd RobotController::posLimits(2, 2);
@@ -35,29 +35,29 @@ void RobotController::setPosExploration(double newPosE) {
 }
 
 void RobotController::bindWithRhIO() {
-  RhIO::Root.newFloat("/Localisation/Field/RobotController/angleExploration")
+  RhIO::Root.newChild("/localisation/field/RobotController");
+  std::cout << "TOTO2" << std::endl;
+  RhIO::Root.newFloat("/localisation/field/RobotController/angleExploration")
       ->defaultValue(angleExploration)
       ->minimum(0.0)
       ->maximum(360.0)
-      ->comment("StdDev of angular exploration for azimuth in degrees/second")
-      ->persisted(true);
-  RhIO::Root.newFloat("/Localisation/Field/RobotController/posExploration")
+      ->comment("StdDev of angular exploration for azimuth in degrees/second");
+  RhIO::Root.newFloat("/localisation/field/RobotController/posExploration")
       ->defaultValue(posExploration)
       ->minimum(0.0)
-      ->maximum(1000.0)
-      ->comment("StdDev of position exploration in cm/second")
-      ->persisted(true);
+      ->maximum(1.0)
+      ->comment("StdDev of position exploration in m/second");
 }
 
 void RobotController::importFromRhIO() {
   double oldPosExpl(posExploration);
   angleExploration =
       RhIO::Root.getValueFloat(
-                     "/Localisation/Field/RobotController/angleExploration")
+                     "/localisation/field/RobotController/angleExploration")
           .value;
   posExploration =
       RhIO::Root.getValueFloat(
-                     "/Localisation/Field/RobotController/posExploration")
+                     "/localisation/field/RobotController/posExploration")
           .value;
   if (oldPosExpl != posExploration) {
     setPosExploration(posExploration);
