@@ -97,6 +97,21 @@ Walk::Walk(Kick *kickMove)
     nominal.loadJson("nominal.json");
 #endif
 
+    RhIO::Root.newCommand("moves/walk/walkKick",
+                          "request the walk to perform a kick",
+                          [this](const std::vector<std::string> & args) -> std::string {
+                            bool rightFoot = true;
+                            std::string kickName = "classic";
+                            if (args.size() >= 1 && args[0] == "left") {
+                              rightFoot = false;
+                            }
+                            if (args.size() >= 2) {
+                              kickName = args[1];
+                            }
+                            kick(rightFoot, kickName);
+                            return "Performing a kick";
+                          });
+
 #ifndef USE_QUINTICWALK
     bind->bindNew("freq", params.freq, RhIO::Bind::PullOnly)
         ->comment("Walk frequency")->persisted(true)
