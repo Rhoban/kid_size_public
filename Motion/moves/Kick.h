@@ -1,8 +1,6 @@
 #pragma once
 
 #include <rhoban_utils/spline/function.h>
-#include <Model/HumanoidFloatingModel.hpp>
-#include <Model/InverseKinematics.hpp>
 #include "Move.h"
 
 #include "kick_model/kick_model_collection.h"
@@ -42,12 +40,6 @@ protected:
 
   // Name of the kick which should be used
   std::string kickName;
-
-  // This floating model is used for inverse kinematics
-  Leph::HumanoidFloatingModel kickModel;
-
-  // Inverse kinematics
-  Leph::InverseKinematics inv;
 
   // Splines
   std::map<std::string, rhoban_utils::Function> splines;

@@ -1,15 +1,14 @@
 #include <math.h>
-#include <services/ModelService.h>
 #include <services/LocalisationService.h>
 #include <services/StrategyService.h>
 #include <rhoban_utils/angle.h>
 #include <rhoban_utils/logging/logger.h>
-#include <Utils/Euler.h>
 #include <rhoban_utils/util.h>
 #include "Kick.h"
 
+#include <set>
+
 static rhoban_utils::Logger logger("kick");
-using namespace Leph;
 using namespace rhoban_utils;
 
 // DOFs
@@ -19,8 +18,6 @@ static std::vector<std::string> dofs = {
 };
 
 Kick::Kick()
-    : kickModel(Leph::SigmabanModel), 
-    inv(kickModel)
 {
     initializeBinding();
 
@@ -54,19 +51,6 @@ Kick::Kick()
 
     bind->bindNew("t", t, RhIO::Bind::PushOnly)
         ->defaultValue(0.0);
-
-    // Initializing inverse kinematics
-    for (auto dof : dofs) {
-        inv.addDOF(dof);
-    }
-    inv.setLowerBound("left_knee", 0.0);
-    inv.setLowerBound("right_knee", 0.0);
-
-    inv.addTargetPosition("right_foot", "right_foot_tip");
-    inv.addTargetPosition("left_foot", "left_foot_tip");
-
-    inv.addTargetOrientation("right_foot", "right_foot_tip");
-    inv.addTargetOrientation("left_foot", "left_foot_tip");
 
     // Load available kicks
     kmc.loadFile();
@@ -125,27 +109,28 @@ void Kick::loadKick(std::string filename)
 
     logger.log("Generating kick");
 
+    /// Previously, kick could use specific orders based on IK, this has been
+    /// discontinued because the gap between theoric motion and real motion is
+    /// too high
+    std::set<std::string> unsupportedEntries = {
+      "shoot_x", "shoot_y", "shoot_z", "shoot_yaw", "shoot_pitch", "shoot_roll", 
+      "support_x", "support_y", "support_z","support_yaw", "support_pitch", "support_roll"
+    };
+
     // Loading spline
     std::map<std::string, Function> kickSplines = Function::fromFile(filename);
     for (auto &entry : kickSplines) {
+      const std::string & entryName = entry.first;
+      if (unsupportedEntries.count(entryName) > 0) {
+        logger.warning("%s in file %s: '%s' is not supported anymore",
+                       DEBUG_INFO.c_str(), filename.c_str(), entryName.c_str());
+      }
         double duration = entry.second.getXMax();
         if (duration > xMax) {
             xMax = duration;
         }
     }
     logger.log("Maximum time: %f", xMax);
-
-    // Retrieving degrees of freedom
-    auto &goal = getServices()->model->goalModel().get();
-    for (auto dof : dofs) {
-        kickModel.setDOF(dof, goal.getDOF(dof));
-    }
-
-    // Retrieving feet positions at the begining
-    auto leftPosition = kickModel.position("left_foot_tip", "origin");
-    auto rightPosition = kickModel.position("right_foot_tip", "origin");
-    auto leftOrientation = MatrixToEuler(kickModel.orientation("left_foot_tip", "origin").transpose(), EulerYawPitchRoll);
-    auto rightOrientation = MatrixToEuler(kickModel.orientation("right_foot_tip", "origin").transpose(), EulerYawPitchRoll);
 
     // Generating 
     double T = 0;
@@ -155,45 +140,11 @@ void Kick::loadKick(std::string filename)
         if (remap < 1e-6) remap = 1;
         t += dt*remap;
 
-        // Updating the position
-        inv.targetPosition("right_foot").x() = rightPosition.x()+kickSplines["shoot_x"].get(t);
-        inv.targetPosition("right_foot").y() = rightPosition.y()+kickSplines["shoot_y"].get(t);
-        inv.targetPosition("right_foot").z() = rightPosition.z()+kickSplines["shoot_z"].get(t);
-        
-        inv.targetPosition("left_foot").x() = leftPosition.x()+kickSplines["support_x"].get(t);
-        inv.targetPosition("left_foot").y() = leftPosition.y()+kickSplines["support_y"].get(t);
-        inv.targetPosition("left_foot").z() = leftPosition.z()+kickSplines["support_z"].get(t);
-
-        Eigen::Vector3d shootTargetOrientation;
-        Eigen::Vector3d supportTargetOrientation;
-
-        shootTargetOrientation.x() = rightOrientation.x() + deg2rad(kickSplines["shoot_yaw"].get(t));
-        shootTargetOrientation.y() = rightOrientation.y() + deg2rad(kickSplines["shoot_pitch"].get(t));
-        shootTargetOrientation.z() = rightOrientation.z() + deg2rad(kickSplines["shoot_roll"].get(t));
-        
-        supportTargetOrientation.x() = leftOrientation.x() + deg2rad(kickSplines["support_yaw"].get(t));
-        supportTargetOrientation.y() = leftOrientation.y() + deg2rad(kickSplines["support_pitch"].get(t));
-        supportTargetOrientation.z() = leftOrientation.z() + deg2rad(kickSplines["support_roll"].get(t));
-
-        inv.targetOrientation("right_foot") = EulerToMatrix(shootTargetOrientation, EulerYawPitchRoll);
-        inv.targetOrientation("left_foot") = EulerToMatrix(supportTargetOrientation, EulerYawPitchRoll);
-
-        if (kickModel.getDOF("left_knee") < 0.01) kickModel.setDOF("left_knee", 0.01);
-        if (kickModel.getDOF("right_knee") < 0.01) kickModel.setDOF("right_knee", 0.01);
-        inv.run(0.0001, 100);
-
-        // Adding orientations target
-        auto tmpModel = kickModel;
         for (auto dof : dofs) {
-            double delta = rad2deg(tmpModel.getDOF(dof)-goal.getDOF(dof));
-
-            // Adding the extra angles
-            auto name = dof;
-            replaceAll(name, "right", "shoot");
-            replaceAll(name, "left", "support");
-            delta += kickSplines[name].get(t);
-  
-            splines[dof].addPoint(T, delta);
+          auto name = dof;
+          replaceAll(name, "right", "shoot");
+          replaceAll(name, "left", "support");
+          splines[dof].addPoint(T, kickSplines[name].get(t));
         }
     }
 
