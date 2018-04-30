@@ -465,7 +465,7 @@ void Robocup::step() {
     Benchmark::close("Pipeline");
     Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);
     activeSource = false;
-    out.log("Failed vision step: '%s'", exc.what());
+    out.warning("Failed vision step: '%s'", exc.what());
     publishToRhIO();
     int sleep_time_ms = 100;
     usleep(sleep_time_ms * 1000);
@@ -475,7 +475,7 @@ void Robocup::step() {
     Benchmark::close("Pipeline");
     Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);
     activeSource = false;
-    out.log("Failed to connect to camera: '%s'", exc.what());
+    out.warning("Failed to connect to camera: '%s'", exc.what());
     publishToRhIO();
     int sleep_time_ms = 500;
     usleep(sleep_time_ms * 1000);

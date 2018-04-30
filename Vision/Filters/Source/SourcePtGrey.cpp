@@ -5,8 +5,8 @@
 #include "RhIO.hpp"
 
 #include "rhoban_utils/timing/benchmark.h"
-
 #include <rhoban_utils/logging/logger.h>
+#include <rhoban_utils/util.h>
 
 #include <opencv2/highgui/highgui.hpp>
 
@@ -30,6 +30,23 @@ std::map<std::string, FlyCapture2::PropertyType> SourcePtGrey::names_to_types =
      {"FrameRate", FlyCapture2::FRAME_RATE},
      {"Gain", FlyCapture2::GAIN},
      {"WhiteBalance", FlyCapture2::WHITE_BALANCE}
+};
+
+std::map<unsigned int, std::string> pixel_format_names = {
+  {FlyCapture2::PIXEL_FORMAT_MONO8        , "Mono 8"},
+  {FlyCapture2::PIXEL_FORMAT_MONO12       , "Mono 12"},
+  {FlyCapture2::PIXEL_FORMAT_MONO16       , "Mono 16"},
+  {FlyCapture2::PIXEL_FORMAT_RAW8         , "Raw 8"},
+  {FlyCapture2::PIXEL_FORMAT_RAW12        , "Raw 12"},
+  {FlyCapture2::PIXEL_FORMAT_RAW16        , "Raw 16"},
+  {FlyCapture2::PIXEL_FORMAT_411YUV8      , "YUV 411"},
+  {FlyCapture2::PIXEL_FORMAT_422YUV8      , "YUV 422"},
+  {FlyCapture2::PIXEL_FORMAT_444YUV8      , "YUV 444"},
+  {FlyCapture2::PIXEL_FORMAT_RGB8         , "RGB 8"},
+  {FlyCapture2::PIXEL_FORMAT_RGB16        , "RGB 16"},
+  {FlyCapture2::PIXEL_FORMAT_S_MONO16     , "Signed Mono 16"},
+  {FlyCapture2::PIXEL_FORMAT_S_RGB16      , "Signed RGB 16"}
+  // Ignoring vendor pixel format 422YUV8_JPEG
 };
 
 PtGreyException::PtGreyException(const std::string & msg)
@@ -124,62 +141,32 @@ Source::Type SourcePtGrey::getType() const {
 
 void SourcePtGrey::updateImageSettings() {
   // Error variable
-  FlyCapture2::Error error;
-  // Setting Imaging Mode
-  error = camera.SetGigEImagingMode(FlyCapture2::Mode::MODE_1);
-  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw PtGreyException(
-        "SourcePtGrey::updateImageSettings: Error setting imaging mode");
-  }
-  // Preparing binning
-  unsigned int h_binning = 2;
-  unsigned int v_binning = 2;
-  // Setting binning
-  error = camera.SetGigEImageBinningSettings(h_binning, v_binning);
-  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw PtGreyException(
-        "SourcePtGrey::updateImageSettings: Error setting binning settings");
-  }
-  // Preparing properties
-  struct FlyCapture2::GigEImageSettings image_settings;
-  image_settings.offsetX = 0;
-  image_settings.offsetY = 0;
-  image_settings.width = 640;
-  image_settings.height = 480;
-  image_settings.pixelFormat = FlyCapture2::PixelFormat::PIXEL_FORMAT_444YUV8;
-  // Setting properties
-  error = camera.SetGigEImageSettings(&image_settings);
-  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw PtGreyException(
-        "SourcePtGrey::updateImageSettings: Error setting image settings");
-  }
+  setImagingMode(FlyCapture2::Mode::MODE_1);
+  updateBinning(2,2);
+  setPixelFormat(FlyCapture2::PixelFormat::PIXEL_FORMAT_444YUV8);
 }
 
 void SourcePtGrey::updatePacketProperties() {
   // Prepare packets
+  // Using larger packets reduces the number of CPU interruptions
   FlyCapture2::GigEProperty packet_size_prop;
   packet_size_prop.propType = FlyCapture2::PACKET_SIZE;
-  packet_size_prop.value =
-      9000; // Using larger packets reduces the number of CPU interruptions
+  packet_size_prop.value = 9000;
   FlyCapture2::GigEProperty packet_delay_prop;
   packet_delay_prop.propType = FlyCapture2::PACKET_DELAY;
-  // In 640*480, at 50 fps, with 3 bytes per pixel, the required bandwidth is:
-  // 640 * 480 * 50 * 3 ~= 46 * 10^6 <- 46 MB/s
+  // In 640*480, at 25 fps, with 3 bytes per pixel, the required bandwidth is:
+  // 640 * 480 * 25 * 3 ~= 24 * 10^6 <- 23 MB/s
   // Some examples of combinations packet_delay, packet_size and bandwidth are
   // provided in the Technical reference guide of blackfly:
   // section:  "Determining Bandwidth requirements"
   // 55 MB: (9000,1800) or (1400,255)
   // 25 MB: (9000,5900) or (1400,900)
   //
-  // There is no direct linear relationship between packet_delay and bandwidth
-  // Since we use around 10 FPS, bandwidth is below 5 MB: Therefore, we can
-  // Safely use values of packet_delay seriously above 5900
-  //
   // Since no obvious relationships between Baudrate and value is exhibited,
   // setting this value is subjet to extreme caution
   // - If the value is too low: Risk of 'dropping frames'
   // - If the value is too high: Unknown consequences
-  packet_delay_prop.value = 20000;
+  packet_delay_prop.value = 6000;
 
   // Send packets
   FlyCapture2::Error error;
@@ -344,6 +331,41 @@ void SourcePtGrey::updatePropertiesInformation() {
     }
     // Write Property inside local map
     properties_information[property_name] = property_info;
+  }
+}
+
+void SourcePtGrey::dump(const FlyCapture2::Format7ImageSettings & s,
+                        std::ostream & out) {
+  out << "----------------" << std::endl;
+  out << "F7 Image Settings" << std::endl;
+  out << "----------------" << std::endl;
+  out << "mode: " << s.mode << std::endl;
+  out << "offset: (" << s.offsetX << "," << s.offsetY << ")" << std::endl;
+  out << "size: (" << s.width << "x" << s.height << ")" << std::endl;
+  out << "pixelFormat: " << pixel_format_names.at(s.pixelFormat) << std::endl;
+}
+
+void SourcePtGrey::dump(const FlyCapture2::GigEImageSettings & s,
+                        std::ostream & out) {
+  out << "--------------" << std::endl;
+  out << "Image Settings" << std::endl;
+  out << "--------------" << std::endl;
+  out << "offset: (" << s.offsetX << "," << s.offsetY << ")" << std::endl;
+  out << "size: (" << s.width << "x" << s.height << ")" << std::endl;
+  out << "pixelFormat: " << pixel_format_names.at(s.pixelFormat) << std::endl;
+}
+
+void SourcePtGrey::dump(const FlyCapture2::GigEImageSettingsInfo & image_settings_info,
+                        std::ostream & out) {
+  out << "-------------------" << std::endl;
+  out << "Image Settings Info" << std::endl;
+  out << "-------------------" << std::endl;
+  for (const auto &entry : pixel_format_names) {
+    unsigned int format_mask = entry.first;
+    const std::string & format_name = entry.second;
+    if ((format_mask & image_settings_info.pixelFormatBitField) != 0) {
+      out << "\t" << format_name << std::endl;
+    }
   }
 }
 
@@ -676,7 +698,7 @@ void SourcePtGrey::process() {
   }
   else if (error != FlyCapture2::PGRERROR_OK) {
     std::ostringstream oss;
-    oss << "Failed buffer retrieval";
+    oss << "Failed buffer retrieval: '" << error.GetDescription() << "'";
     // Detailed error
     //oss << "Failed to retrieve buffer from PtGrey: | "
     //    << "Error description: " << error.GetDescription() << " | "
@@ -776,22 +798,87 @@ bool SourcePtGrey::isEquivalent(const FlyCapture2::Property &prop1,
           std::fabs(prop1.absValue - prop2.absValue) <= abs_value_tol);
 }
 
-  double SourcePtGrey::timestamp2MS(FlyCapture2::TimeStamp ts) {
-    // Second_count increments from 0 to 127, counting the number of seconds.
-    // Encoded on 7 bits.
-    // Cycle_count increments from 0 to 7999, which equals one second. Encoded on
-    // 13 bits, but resets after 7999.
-    // Cycle offset is encoded on 12 bits. It's the most accurate
-    // portion of the timestamp, reseting every 125us. However, the Timestamp Tick
-    // Frequency is by default 125MHz, which would give a reset of the 12 last bits every 62.5us.
-    unsigned int second_count = ts.cycleSeconds;
-    unsigned int cycle_count = ts.cycleCount;
-    unsigned int cycle_offset = ts.cycleOffset;
-    double ms = 1000*((double)second_count + (double)cycle_count/8000.0 + (double)cycle_offset*0.000000030517578125);
+double SourcePtGrey::timestamp2MS(FlyCapture2::TimeStamp ts) {
+  // Second_count increments from 0 to 127, counting the number of seconds.
+  // Encoded on 7 bits.
+  // Cycle_count increments from 0 to 7999, which equals one second. Encoded on
+  // 13 bits, but resets after 7999.
+  // Cycle offset is encoded on 12 bits. It's the most accurate
+  // portion of the timestamp, reseting every 125us. However, the Timestamp Tick
+  // Frequency is by default 125MHz, which would give a reset of the 12 last bits every 62.5us.
+  unsigned int second_count = ts.cycleSeconds;
+  unsigned int cycle_count = ts.cycleCount;
+  unsigned int cycle_offset = ts.cycleOffset;
+  double ms = 1000*((double)second_count + (double)cycle_count/8000.0 + (double)cycle_offset*0.000000030517578125);
 
-    return ms;
+  return ms;
 }
 
-  
+FlyCapture2::Mode SourcePtGrey::getMode() {
+  FlyCapture2::Mode image_mode;
+  FlyCapture2::Error error = camera.GetGigEImagingMode(&image_mode);
+  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
+    throw PtGreyException(DEBUG_INFO + error.GetDescription());
+  }
+  return image_mode;
+}
+
+FlyCapture2::GigEImageSettings SourcePtGrey::getImageSettings() {
+  FlyCapture2::GigEImageSettings settings;
+  FlyCapture2::Error error = camera.GetGigEImageSettings(&settings);
+  if ( error != FlyCapture2::ErrorType::PGRERROR_OK ) {
+    throw PtGreyException(DEBUG_INFO + error.GetDescription());
+  }
+  return settings;
+}
+
+FlyCapture2::GigEImageSettingsInfo SourcePtGrey::getImageSettingsInfo() {
+  FlyCapture2::GigEImageSettingsInfo infos;
+  FlyCapture2::Error error = camera.GetGigEImageSettingsInfo(&infos);
+  if ( error != FlyCapture2::ErrorType::PGRERROR_OK ) {
+    throw PtGreyException(DEBUG_INFO + error.GetDescription());
+  }
+  return infos;
+}
+
+void SourcePtGrey::setImagingMode(FlyCapture2::Mode mode) {
+  FlyCapture2::Error error = camera.SetGigEImagingMode(mode);
+  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
+    throw PtGreyException(DEBUG_INFO + error.GetDescription());
+  }
+}
+
+void SourcePtGrey::updateBinning(unsigned int h_binning, unsigned int v_binning) {
+  // Retrieving current binning properties
+  unsigned int current_h_binning = 0;
+  unsigned int current_v_binning = 0;
+  FlyCapture2::Error error;
+  error = camera.GetGigEImageBinningSettings(&current_h_binning,
+                                             &current_v_binning);
+  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
+    throw PtGreyException(DEBUG_INFO + "Error getting current binning settings"
+                          + error.GetDescription());
+  }
+
+  // Setting binning
+  if (h_binning != current_h_binning || v_binning != current_v_binning) {
+    error = camera.SetGigEImageBinningSettings(h_binning, v_binning);
+    if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
+      throw PtGreyException(DEBUG_INFO + "Error setting binning settings"
+                            + error.GetDescription());
+    }
+  }
+}
+
+void SourcePtGrey::setPixelFormat(FlyCapture2::PixelFormat pixel_format) {
+  struct FlyCapture2::GigEImageSettings image_settings = getImageSettings();
+  image_settings.pixelFormat = pixel_format;
+  FlyCapture2::Error error = camera.SetGigEImageSettings(&image_settings);
+  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
+    throw PtGreyException(DEBUG_INFO + "Error setting image settings: "
+                          + error.GetDescription());
+  }
+}
+
 }
 }
