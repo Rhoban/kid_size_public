@@ -6,10 +6,10 @@
      NOTE : les trous des gabarits sont trop grands (2.5mm -> 2mm)
 **** DONE Design poignée + corde à piano dos
 **** DONE Tests + assemblage caches teflon pour coude
-*** Soft 
+*** DONE Soft 
 **** DONE =Ludo= robocup_referee/constants to json
 - Passage des unités en mètre + débug
-*** Mouvement/comportement
+*** DONE Mouvement/comportement
   - =Ludo= Brancher walkOnKick sur commande rhio (OK)
   - =Ludo= Débrancher la génération du tir avec IK
 *** Machine Learning
