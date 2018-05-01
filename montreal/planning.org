@@ -8,7 +8,7 @@
 **** DONE Tests + assemblage caches teflon pour coude
 *** Soft 
 **** DONE =Ludo= robocup_referee/constants to json
-- Passage des unités en mètre + débug
+  - Passage des unités en mètre + débug
 *** Mouvement/comportement
   - =Ludo= Brancher walkOnKick sur commande rhio (OK)
   - =Ludo= Débrancher la génération du tir avec IK

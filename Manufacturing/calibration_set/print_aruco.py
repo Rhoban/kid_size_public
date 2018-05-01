@@ -25,8 +25,8 @@ else:
     \usepackage[absolute]{textpos}
     \usepackage{graphicx}
 
-    \setlength{\TPHorizModule}{1mm}
-    \setlength{\TPVertModule}{\TPHorizModule}
+    \setlength{\TPHorizModule}{1mm} %unit
+    \setlength{\TPVertModule}{\TPHorizModule}%unit
     \\textblockorigin{0pt}{0pt}
     \setlength{\parindent}{0pt}
 
@@ -40,14 +40,17 @@ else:
             \end{textblock}"""%(float((210-size)/2),float((297-size)/2),size,n.zfill(5))
     else:
         size=90
+        border=9
+        total=size+border
+        horizontal_margin=(210-2*total)/2.0
         for i in range(len(args[2:])):
-            latex_file+="""\\begin{textblock}{3}(%d,%d)
-                \setlength{\\fboxsep}{5.05mm}%%
+            latex_file+="""\\begin{textblock}{0}(%d,%d)
+                \setlength{\\fboxsep}{%dmm}%%
                 \setlength{\\fboxrule}{.1mm}%%
                 \\fbox{%%
                     \includegraphics[width=%smm]{tmp/aruco_mip_36h12_%s.png}%%
                 }%%
-            \end{textblock}"""%(i%2*100+5,i//2*100+5,size,args[2+i].zfill(5))
+            \end{textblock}"""%(i%2*total+horizontal_margin,i//2*total,border/2.0,size,args[2+i].zfill(5))
     latex_file+="""\end{document}
     \endinput"""
 
@@ -65,7 +68,7 @@ else:
 
     import time
     bash_command('mkdir tmp')
-    bash_command('./aruco_print_dictionary ./tmp ARUCO_MIP_36h12 > /dev/null')
+    bash_command('../../../../../devel_release/lib/aruco/aruco_print_dictionary ./tmp ARUCO_MIP_36h12 > /dev/null')
     bash_command('pdflatex -output-directory=tmp %s'%filenametex)
     bash_command('mv tmp/%s .'%filenamepdf)
     bash_command('mv %s tmp'%filenametex)
