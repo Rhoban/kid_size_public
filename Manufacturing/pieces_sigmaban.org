@@ -47,18 +47,17 @@ Légende :
 |   1 | Objectif | obj               |              |
   
 * Robotis
-| Qty | Pièce       | Nom autodesk                  | Prix   | Commentaires                                             | Contient également (Génération Robots) |
-|-----+-------------+-------------------------------+--------+----------------------------------------------------------+----------------------------------------|
-| 10  | MX-64AT     |                               | 309.00 | Hanches(2) + Épaules(2*2) + Coudes(2) + Tête(2)          |                                        |
-| 10  | MX-106T     |                               | 485.00 | Chevilles(2*2) + Genoux(2*2) + Hanche(2)                 |                                        |
-| ?   | HN05
-| 10  | HN05-T1     | 64_106_fake_bearing           | 22.73  | T101 avec rondelle usinée                                |                                        |
-| 15  | HN05-I101   |                               | 16.65  | blocs moteurs(4*2) + genoux(2) + bras(4) + head_pitch(1) |                                        |
-| 7   | FR08-B101   | original_plaque_fixatiox_rx64 | 32.90  | Hanche(2)+Cou(1)+Bloc106(4)                              |                                        |
-| 4   | FR05-F101   |                               | 42.14  | blocs moteurs                                            | 1xHN05-I101 + 1xFR05-S101              |
-| 4   | * FR05-S1   | NA                            | 18.50  | Épaules(2) + Coudes(2)                                   |                                        |
-| 12  | * FR05-S101 | FR05-S101                     | 14.65  | Épaules(2) + Genoux(2) + blocs moteurs(2*4)              |                                        |
-| 2   | FR05-H101   | NA                            | 28.09  | Coudes(2)                                                | 1xHN05-I101                            |
+| Qty | Pièce           | Nom autodesk                  |   Prix | Commentaires                                             | Commentaire achat (Génération Robots) |
+|-----+-----------------+-------------------------------+--------+----------------------------------------------------------+---------------------------------------|
+|  10 | MX-64AT         |                               | 309.00 | Hanches(2) + Épaules(2*2) + Coudes(2) + Tête(2)          | Moins cher par pack de 6              |
+|  10 | MX-106T         |                               | 485.00 | Chevilles(2*2) + Genoux(2*2) + Hanche(2)                 | Moins cher par pack de 6              |
+|  20 | HN05-N102       |                               |  10.50 |                                                          |                                       |
+|  15 | HN05-I101       |                               |  16.65 | blocs moteurs(4*2) + genoux(2) + bras(4) + head_pitch(1) |                                       |
+|   7 | FR08-B101       | original_plaque_fixatiox_rx64 |  32.90 | Hanche(2)+Cou(1)+Bloc106(4)                              |                                       |
+|   4 | FR05-F101       |                               |  42.14 | blocs moteurs                                            | 1xHN05-I101 + 1xFR05-S101             |
+|  16 | FR05-S101       | FR05-S101                     |  14.65 | Épaules(4) + Genoux(2) + blocs moteurs(2*4) + Coudes(2)  |                                       |
+|   2 | FR05-H101       | NA                            |  28.09 | Coudes(2)                                                | 1xHN05-I101                           |
+|   3 | Cable TTL 200mm |                               |  15.50 | Pack de 10 câbles                                        |                                       |
 
 Légende :
   * Replace S1 with S101 ?

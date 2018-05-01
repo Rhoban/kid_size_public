@@ -9,22 +9,32 @@ if (length(args) < 1) {
     quit(status=1)
 }
 
+unitsCol <- "units"
+priceCol <- "price"
+nbRobots <- 3
+
 data <- read.csv(file)
 
-mec_entries <- which(data$prix < 200)
-motor_entries <- which(data$prix > 200)
+print(data)
 
-price_mec_per_robot   <- sum(data[mec_entries, "prix"] * data[mec_entries, "parRobot"])
-price_motor_per_robot <- sum(data[motor_entries, "prix"] * data[motor_entries, "parRobot"])
+mec_entries <- which(data[,priceCol] < 200)
+motor_entries <- which(data[priceCol] > 200)
 
-print(data[mec_entries, "prix"])
-print(data[mec_entries, "parRobot"])
-print(price_mec_per_robot)
-print(price_motor_per_robot)
+price_mec_per_robot   <- sum(data[mec_entries, priceCol] * data[mec_entries, unitsCol])
+price_motor_per_robot <- sum(data[motor_entries, priceCol] * data[motor_entries, unitsCol])
 
-data$nbUnits = data$parRobot + data$upgradeNuc + data$marge -data$stock
+#print(data[mec_entries, priceCol])
+#print(data[mec_entries, unitsCol])
+print(paste("prix meca par robot:", price_mec_per_robot))
+print(paste("prix moteurs par robot:", price_motor_per_robot))
+print(paste("prix total par robot:", price_mec_per_robot + price_motor_per_robot))
+
+data$nbUnits = nbRobots * data[,unitsCol] + data$upgrade -data$stock
 
 negativeUnitsIdx = which(data$nbUnits < 0)
+
+print(negativeUnitsIdx)
+
 data[negativeUnitsIdx, "nbUnits"] = 0
 
 # Adjust nbUnits with package
@@ -37,11 +47,14 @@ data[HN05I101Idx, "nbUnits"] = data[HN05I101Idx, "nbUnits"] - data[FR05F101Idx, 
 data[HN05I101Idx, "nbUnits"] = data[HN05I101Idx, "nbUnits"] - data[FR05H101Idx, "nbUnits"]
 
 negativeUnitsIdx = which(data$nbUnits < 0)
+
+print(negativeUnitsIdx)
+
 data[negativeUnitsIdx, "nbUnits"] = 0
 
 print(data$nbUnits)
 
-data$totalPrice = data$prix * data$nbUnits 
+data$totalPrice = data[,priceCol] * data$nbUnits 
 
 totalPrice = sum(data$totalPrice)
 

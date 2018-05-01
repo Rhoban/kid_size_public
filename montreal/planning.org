@@ -1,8 +1,8 @@
 * Calendrier
 ** W1: 04/23 - 04/27
 *** =Ludo+Patxi= Méca
-**** Finalisation achats
-**** Test premier Pitch MX-64 (Design + Fabrication et assemblage)
+**** TODO Finalisation achats
+**** TODO Test premier Pitch MX-64 (Design + Fabrication et assemblage)
      NOTE : les trous des gabarits sont trop grands (2.5mm -> 2mm)
 **** DONE Design poignée + corde à piano dos
 **** DONE Tests + assemblage caches teflon pour coude
@@ -12,7 +12,7 @@
 *** DONE Mouvement/comportement
   - =Ludo= Brancher walkOnKick sur commande rhio (OK)
   - =Ludo= Débrancher la génération du tir avec IK
-*** Machine Learning
+*** TODO Machine Learning
   - =Ludo+Patxi= Code prédiction durée du pas
   - =Patxi= Code pour prédiction de balle 1/2
 ** W2: 04/30 - 05/04
@@ -207,14 +207,14 @@
 *** Commande passée le 23 avril, réception prévue début mai
 ** DONE LiPo
 *** Commande passée le 23 avril, réception prévue début mai
-** TODO LiPo protective bag
+** DONE LiPo protective bag
   - Stock :: 15
   - Commande :: 15
 ** DONE Bipper
   - Stock
     + Simple :: 2
     + Avec affichage :: 20 (+5 en commande)
-** Dynamixel+connectique / genération robots (en attente commande robots chinois)
+** TODO Dynamixel+connectique / genération robots (en attente commande robots chinois)
 *** TODO MX-64/MX-106 (stocks à vérifier)
 *** TODO Câbles
   - Stock [2018-04-23 lun.]
@@ -228,12 +228,11 @@
       * 240mm :: 70
 *** DONE Gaine spiralée
   - Stock [2018-04-23 lun.] :: 3 nouvelles poches + chute
-** TODO Corde à piano (en attente commande robot chinois)
-*** À voir sur Ebay (RoboCampus)
-  - Commande à effectuer après design protection
+** DONE Corde à piano
+*** HobbyKing via Labri
 ** TODO T-shirts Rhoban + AMC?
   - Requiert approvisionnement RoboCampus
-** Matière première (en attente commande robot chinois)
+** TODO Matière première (en attente commande robot chinois)
 *** DONE Aluminium
   - Stocks [2018-04-23 lun.]
     + 3mm :: 1.8*demi plaques (200mmx500mm)
@@ -286,7 +285,7 @@
     + 20mm ::
     + écrous ::
     + rondelles ::
-** Billets avions
+** DONE Billets avions
 * Tâches optionnelles
 ** Calibration vision
 *** Vérifier sensibilité à l'emplacement des tags aruco

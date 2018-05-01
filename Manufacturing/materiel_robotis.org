@@ -1,16 +1,15 @@
 * Par robot
-
-| part      | prix   | parRobot | upgradeMX64                | stock | marge |
-|-----------+--------+----------+----------------------------+-------+-------|
-| MX-64AT   | 309.00 | 10       | 5(2[tom]+2[olive]+1[arya]) | 0     | ?     |
-| MX-106T   | 485.00 | 10       | 0                          | 0     | ?     |
-| HN05-T1   | 22.73  | 10       | 3                          | 0     | ?     |
-| HN05-I101 | 16.65  | 15       | 3                          | 0     | ?     |
-| FR08-B101 | 32.90  | 7        | 2(tom+olive)               | 0     | ?     |
-| FR05-F101 | 42.14  | 4        | ?                          | 0     | ?     |
-| FR05-H101 | 28.09  | 2        | ?                          | 0     | ?     |
-| FR05-S1   | 18.50  | 4        | ?                          | 0     | ?     |
-| FR05-S101 | 14.65  | 12       | ?                          | 0     | ?     |
+| part            |  price | units | upgrade | stock | comments                          |
+|-----------------+--------+-------+---------+-------+-----------------------------------|
+| MX-64AT         | 260.00 |    10 |       5 |     0 | par 6 (2[tom]+2[olive]+1[arya])   |
+| MX-106T         | 416.00 |    10 |       0 |     0 | par 6                             |
+| HN05-N102       |  10.50 |    20 |       2 |     7 | (tom+olive)                       |
+| HN05-I101       |  16.65 |    15 |       3 |     0 | (tom+olive+nova)                  |
+| FR08-B101       |  32.90 |     7 |       2 |     2 | (tom+olive)                       |
+| FR05-F101       |  42.14 |     4 |       0 |     0 |                                   |
+| FR05-H101       |  28.09 |     2 |       0 |     0 |                                   |
+| FR05-S101       |  14.65 |    16 |       0 |     0 |                                   |
+| Cable TTL 200mm |  15.50 |     3 |       0 |    15 | (25 par robots, mais arrondi sup) |
 
 NB les MX-64AT/106T sont moins chères par pack de 6
 
@@ -33,3 +32,25 @@ Total commande: 7516.3
 Commentaire: erreur sur HN05-I101, en vrai, il en faut 14 par robot
 
 * Commande robots pour chinois
+** Pièce par pièce commentée
+| part      |   prix | units | commentaires                                |
+|-----------+--------+-------+---------------------------------------------|
+| MX-64AT   | 260.00 |    42 | Par pack de 6 (260 au lieu de 309), 7 spare |
+| MX-106T   | 416.00 |    36 | Par pack de 6 (416 au lieu de 495), 6 spare |
+| HN05-N102 |  10.50 |    55 |                                             |
+| HN05-I101 |  16.65 |    30 | 48 - 12 - 6 (cf F101 et H101)               |
+| FR08-B101 |  32.90 |    21 |                                             |
+| FR05-F101 |  42.14 |    12 | (contient 12 I101 et 12 S101)               |
+| FR05-H101 |  28.09 |     6 | (contient 6 I101)                           |
+| FR05-S101 |  14.65 |    36 | 48 - 12 (cf F101)                           |
+** Pour génération robot
+| part              | prix unitaire | units |
+|-------------------+---------------+-------|
+| Pack de 6 MX-64AT |       1560.00 |     7 |
+| Pack de 6 MX-106T |       2500.00 |     6 |
+| HN05-N102         |         10.50 |    55 |
+| HN05-I101         |         16.65 |    30 |
+| FR08-B101         |         32.90 |    21 |
+| FR05-F101         |         42.14 |    12 |
+| FR05-H101         |         28.09 |     6 |
+| FR05-S101         |         14.65 |    36 |
