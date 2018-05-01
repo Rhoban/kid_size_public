@@ -85,6 +85,18 @@ protected:
    */
   void updatePropertiesInformation();
 
+  /// Debug readable info
+  void dump(const FlyCapture2::Format7ImageSettings & image_settings,
+            std::ostream & out);
+
+  /// Debug readable info
+  void dump(const FlyCapture2::GigEImageSettings & image_settings,
+            std::ostream & out);
+
+  /// Debug readable info
+  void dump(const FlyCapture2::GigEImageSettingsInfo & image_settings_info,
+            std::ostream & out);
+
   /**
    * Dump all the current properties on the provided stream
    */
@@ -151,7 +163,26 @@ protected:
   /// Returns a number of ms from a flycapture timestamp
   /// Value is always in [0,128]
   double timestamp2MS(FlyCapture2::TimeStamp ts);
-  
+
+  /// Retrieve current mode with the current 
+  FlyCapture2::Mode getMode();
+
+  /// Retrieve current image format
+  FlyCapture2::GigEImageSettings getImageSettings();
+
+  /// Retrieve available formats
+  FlyCapture2::GigEImageSettingsInfo getImageSettingsInfo();
+
+  void setImagingMode(FlyCapture2::Mode mode);
+
+  /// Update binning properties if required
+  /// WARNING: updating binning can change the current imaging mode
+  void updateBinning(unsigned int h_binning, unsigned int v_binning);
+
+  /// Set current pixel format without changing other properties
+  /// Note: dump(getImageSettingsInfo(), std::cout) to see available formats
+  void setPixelFormat(FlyCapture2::PixelFormat pixel_format);
+
 private:
   /**
    * PtGrey camera
@@ -165,9 +196,7 @@ private:
    */
   FlyCapture2::PGRGuid camera_id;
 
-  /**
-   * Has the camera started to capture images
-   */
+  /// Is the image stream starrted
   bool is_capturing;
 
   /// Number of success on RetrieveBuffer
