@@ -1,37 +1,55 @@
 * Pièces CNC
-| Qty | Pièce            | Nom autodesk                   | Commentaires                                    |
-|-----+------------------+--------------------------------+-------------------------------------------------|
-|   1 | Torse bas        | SigmaBan_torsebas64            |#                                                |
-|   1 | Torse milieu     | new_torso_middleplate_nuc      |#Usinage à refaire                               |
-|   1 | Torse haut       | new_torso_topplate_nuc         |#                                                |
-|   1 | Poignée          | folded_handle_nuc              |#(À plier?)                                      |
-|   1 | Fixation NUC     | nuc_fix                        |#                                                |
-|   2 | Plaque pied      | foot_jauges_acier              |                                                 |
-|   4 | Tibia            | Sigma106_tibiaplate_design     |                                                 |
-|   1 | Séparation torse | fitPlate                       | Pièce pliée?                                    |
-|   8 | Côté U64         | new_side_u64                   | Épaule(2*2) + Hanches(2) + Chevilles(2)         |
-|   4 | Côté U64 (Face)  | new_side_u64_head              | WARNING: À checker!!! Hanches(2) + Chevilles(2) |
-|   1 | Base U64 Cou     | new_base_u64_neck              |#                                                |
-|   2 | Côté U28 to U64  | new_U28_to_64_side_neck        |#                                                |
-|   2 | Base U64 Long    | new_base_u64_long              | Épaule(2)                                       |
-|   4 | Base U64         | new_base_u64                   | Hanche(2) + Cheville(2)                         |
-|   2 | Base U106 long   | new_base_u106_long             | Fémur(2)                                        |
-|   4 | Côté U106 long   | new_side_u106_long_design      | Fémur(2*2)                                      |
-|   2 | Protection tête  | ptgrey_protect2_base_eye_hair1 | Pas sûr CNC                                     |
-|   1 | Fixation Caméra  | ptgrey_fix2                    |                                                 |
-|   2 | Bras             | NA                             | À voir avec Loïc                                |
-|   2 | Avant-Bras       | NA                             | À voir avec Loïc                                |
-
+| Qty | Pièce                      | Nom autodesk                  | Commentaires                           |
+|-----+----------------------------+-------------------------------+----------------------------------------|
+|   1 | Torse bas                  | SigmaBan_torsebas64           | #                                      |
+|   1 | Torse milieu               | new_torso_middleplate_nuc     | #Usinage à refaire                     |
+|   1 | Torse haut                 | new_torso_topplate_nuc        | #                                      |
+|   1 | Fixation NUC               | nuc_fixv2                     | # À tester                             |
+|   2 | Plaque pied                | foot_sigmaban_plus            |                                        |
+|   4 | Tibia                      | Sigma106_tibiaplate_design    |                                        |
+|   1 | Séparation torse           | fitPlate                      | Pièce pliée                            |
+|   4 | Côté U64                   | new_side_u64                  | Hanches(2) + Chevilles(2)              |
+|   4 | Côté U64 (Face)            | new_side_u64_head             | Hanches(2) + Chevilles(2)              |
+|   2 | Côté U28 to U64            | new_U28_to_64_side_neck       | #                                      |
+|   3 | Base U64 Long              | new_base_u64_long             | Épaule(2) + Cou(1)                     |
+|   4 | Base U64                   | new_base_u64                  | Hanche(2) + Cheville(2)                |
+|   2 | Base U106 long             | new_base_u106_long_newbearing | Fémur(2)                               |
+|   4 | Côté U106 long             | new_side_u106_long_design     | Fémur(2*2)                             |
+|   2 | Protection tête            | base_head                     |                                        |
+|   1 | Fixation Caméra            | ptgrey_fix2                   |                                        |
+|   4 | Fix Protection épaule      | shoulder_piano_wire_fix       | À tester                               |
+|   2 | Fix protection arrière     | piano_wire_back_fixation      | À tester                               |
+|   2 | Côté U64 droit             | test_side_U64                 | Similaire à new_side_u64?              |
+|   2 | Protection coude           | elbow_protection              | Teflon                                 |
+|   2 | Humerus                    | humerus                       | Pièce pliée                            |
+|   2 | Radius                     | radius                        | Pièce pliée                            |
+|   2 | U64 épaule (1)             | new_side_u64_shoulder         | Épaule                                 |
+|   2 | U64 épaule (2)             | new_side_u64_shoulder_MIR     | Épaule                                 |
+|   1 | protec teflon droite       | high_leg_teflon               | Teflon                                 |
+|   1 | protec teflon gauche       | high_leg_teflon_left          | Teflon                                 |
+|   2 | Fix corde à piano avant(1) | piano_wire_front_fixation     | À changer si tests arrière convaincant |
+|   2 | Fix corde à piano avant(2) | front_protection              | À changer si tests arrière convaincant |
 Légende :
   # Pièces pour l'upgrade
 
+* Pièces 3D
+| Qty | Pièce                | Nom autodesk        | Commentaires                           |
+|-----+----------------------+---------------------+----------------------------------------|
+|   8 | crampon              | cleat               | À vérifier avec d'autres imprimantes   |
+|   2 | corde à piano épaule | shoulder_piano_wire | Diamètre à tester                      |
+|   1 | corde à piano dos    | back_piano_wire     | Diamètre à tester                      |
+|   1 | corde à piano face   | piano_wire_fixation | À changer si tests arrière convaincant |
+
 * Misc
-| Qty | Pièce           | Nom autodesk     | Commentaires            |
-|-----+-----------------+------------------+-------------------------|
-|   4 | Pilier torse    | pillar_tube      | Cylindre alu vide coupé |
-|   1 | Capôt torse sup | torso_bent_piece |                         |
-|   8 | Jauges pression | NA               | AliExpress              |
-|   8 | Crampons        | NA               | Cleat.ipt dans Sigmaban |
+| Qty | Pièce             | Nom autodesk     | Commentaires            |
+|-----+-------------------+------------------+-------------------------|
+|   4 | Pilier torse      | pillar_tube      | Cylindre alu vide coupé |
+|   1 | Capôt torse sup   | torso_bent_piece |                         |
+|   1 | Capôt torse inf   | NA               | À désigner              |
+|   8 | Jauges pression   | gauge            | AliExpress              |
+|   8 | Bague pour jauges | gauge_ring       |                         |
+|   1 | Bipper Lipo       | beeper           | HobbyKing               |
+|   1 | Batterie          | battery          | HobbyKing               |
 
 * Informatique
 | Qty | Pièce     | Commentaires    |
@@ -41,10 +59,10 @@ Légende :
 |   1 | DDR       | Commande amazon |
 
 * Vision
-| Qty | Pièce    | Nom autodesk      | Commentaires |
-|-----+----------+-------------------+--------------|
-|   1 | Caméra   | PtGreyCamera_full |              |
-|   1 | Objectif | obj               |              |
+| Qty | Pièce    | Nom autodesk      | Commentaires         |
+|-----+----------+-------------------+----------------------|
+|   1 | Caméra   | PtGreyCamera_full | FLIR: BFLY-PGE-13S2C |
+|   1 | Objectif | obj               | Lensation: BM3516NDC |
   
 * Robotis
 | Qty | Pièce           | Nom autodesk                  |   Prix | Commentaires                                             | Commentaire achat (Génération Robots) |
@@ -58,9 +76,6 @@ Légende :
 |  16 | FR05-S101       | FR05-S101                     |  14.65 | Épaules(4) + Genoux(2) + blocs moteurs(2*4) + Coudes(2)  |                                       |
 |   2 | FR05-H101       | NA                            |  28.09 | Coudes(2)                                                | 1xHN05-I101                           |
 |   3 | Cable TTL 200mm |                               |  15.50 | Pack de 10 câbles                                        |                                       |
-
-Légende :
-  * Replace S1 with S101 ?
 
 * Électronique
 | Qty | Nom           |
