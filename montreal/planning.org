@@ -96,12 +96,14 @@
 * Tâches
 ** Méca
 *** Design
-**** Passage pitch au MX-64
-**** Corde à piano pour le dos
+**** DONE Passage pitch au MX-64
+**** DONE Corde à piano pour le dos
 ***** Plusieurs liens sur ebay (2.5,3,4mm diamètre, jusqu'à 50mm)
 ***** Vérifier longueur
 **** Fixation NUC + cache LiPo à revoir
-**** Protection choc pour bras
+**** DONE Protection choc pour bras
+**** Convertir FR05-S101 en FR05-S1
+**** Modifier l'espacement des U à cause du passe HN05-T101 -> HN05-N102
 *** Manufacturing
 **** Passage pitch au MX-64
 **** Corde à piano pour le dos
