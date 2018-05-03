@@ -1,5 +1,7 @@
 #include "Field.hpp"
 
+#include "Tags/CalibrationSet.hpp"
+
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "robocup_referee/constants.h"
@@ -123,39 +125,13 @@ cv::Point2f Field::getGoal(int goalNo, int postNo) {
 
 void Field::initTags()
 {
-  double tagHeight = 0.15;//m
-  /**
-   *  CONFIG:                                 <- Middle of the goal
-   *  141 -------------------------------------
-   *  |               |                       
-   *  |               |                       
-   *  |              173-----------------------
-   *  |                                        
-   *  |                                        
-   * 132                                        
-   *  |                                      29 <- Penalty mark
-   *  |                                        
-   *  |                                   -------
-   *  |                                  /       \
-   *  |                                 /         \
-   *  67-----------------62------------------55----
-   *                     /\
-   *              Quarter of the field
-   */
-  double fieldLength = Constants::field.fieldLength;
-  double fieldWidth = Constants::field.fieldWidth;
-  double penaltyMarkDist = Constants::field.penaltyMarkDist;
-  double goalAreaLength = Constants::field.goalAreaLength;
-  double goalAreaWidth = Constants::field.goalAreaWidth;
-  cv::Point3f penaltyMark(fieldLength / 2 - penaltyMarkDist, 0, tagHeight);
-  cv::Point3f goalAreaCorner1(fieldLength / 2 - goalAreaLength, goalAreaWidth/2, tagHeight);
-  tags[ 29] = penaltyMark;
-  tags[ 55] = cv::Point3f(0,0, tagHeight);
-  tags[ 62] = cv::Point3f(0, fieldWidth/4, tagHeight);
-  tags[ 67] = cv::Point3f(0, fieldWidth/2, tagHeight);
-  tags[132] = cv::Point3f(fieldLength/4, fieldWidth/2, tagHeight);
-  tags[141] = cv::Point3f(fieldLength/2, fieldWidth/2, tagHeight);
-  tags[173] = goalAreaCorner1;
+  tags.clear();
+  CalibrationSet cs;
+  std::map<int,ArucoTag> tags_dictionary = cs.getMarkers();
+  for (const auto & entry : tags_dictionary) {
+    Eigen::Vector3d center = entry.second.marker_center;
+    tags[entry.first] = cv::Point3f(center.x(), center.y(), center.z());
+  }
 }
 
 const std::map<int,cv::Point3f> & Field::getTags()

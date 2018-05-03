@@ -129,6 +129,7 @@ if (BUILD_KID_SIZE_VISION)
     Vision/Localisation/Ball
     Vision/Localisation/Robot
     Vision/Localisation/Field
+    Vision/Tags
     Vision/Utils
     )
 endif(BUILD_KID_SIZE_VISION)
