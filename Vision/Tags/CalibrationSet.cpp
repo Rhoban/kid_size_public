@@ -3,11 +3,13 @@
 #include <rhoban_utils/util.h>
 
 CalibrationSet::CalibrationSet()
-  : marker_size(0.09), robot_pos(0,0),
+  : marker_size(0.09), robot_pos(-0.14,0.065),
     panel_size(0.63,0.315), panel_thickness(0.003),
-    border_to_center_1(0.19), border_to_center_2(0.15),
-    sheet_dx(0.1), sheet_dy(0.1), sheets_spacing(0.3)
+    border_to_center_1(0.185), border_to_center_2(0.15),
+    sheet_dx(0.099), sheet_dy(0.099), sheets_spacing(0.3)
 {
+  updateSheets();
+  getMarkers();
 }
 
 void CalibrationSet::updateSheets() {
@@ -22,7 +24,7 @@ void CalibrationSet::updateSheets() {
     if (panel_idx != 9) {
       Eigen::Vector3d sheet2 = sheet2Center(panel_idx);
       std::vector<int> markers2 = getMarkersIndices(panel_idx, 1);
-      sheets.push_back(TagsSheet(marker_size, dx, dy, sheet2, markers1));
+      sheets.push_back(TagsSheet(marker_size, dx, dy, sheet2, markers2));
     }
   }
 }
@@ -95,7 +97,7 @@ Eigen::Vector3d CalibrationSet::getYDir(int panel_idx) const {
 
 Eigen::Vector3d CalibrationSet::sheet1Center(int panel_idx) const {
   // Explicit naming
-  double panel_length = panel_size(1);
+  double panel_length = panel_size(0);
   double panel_width = panel_size(1);
   // Non obvious positions
   double x_horizontal = panel_length / 2 - border_to_center_1;
@@ -148,7 +150,8 @@ Eigen::Vector3d CalibrationSet::sheet2Center(int panel_idx) const {
 std::vector<int> CalibrationSet::getMarkersIndices(int panel_idx, int sheet_idx) {
   std::vector<int> indices;
   for (int i = 0; i < 6; i++) {
-    indices.push_back(panel_idx * 12 + sheet_idx * 6 + i);
+    int marker_id = panel_idx * 12 + sheet_idx * 6 + i;
+    indices.push_back(marker_id);
   }
   return indices;
 }

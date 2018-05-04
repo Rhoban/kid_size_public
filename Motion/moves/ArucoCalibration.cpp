@@ -9,6 +9,9 @@
 #include <Model/NamesModel.h>
 #include <cmath>
 #include <rhoban_utils/angle.h>
+
+#include "Tags/CalibrationSet.hpp"
+
 #include <string>
 
 static rhoban_utils::Logger logger("ArucoCalibration");
@@ -84,81 +87,16 @@ void ArucoCalibration::onStart() {
   _t = 0;
   logger.log("Starting ArucoCalibration");
 
-  // rectangle :
-  // [*]
-  float rectangleX = 0.2995;
-  float rectangleY = 0.4395;
+  CalibrationSet cs;
+  std::map<int,ArucoTag> tags = cs.getMarkers();
 
-  // distance between two rectangles (it is the same in X and Y). Symbols - and |
-  float edge = 0.21;
-
-  // position of little arucos from the origin of its rectangle
-  float littleArucoX = rectangleX-0.1/2;
-  float littleArucoY = (rectangleY-0.1)/2;
-
-  // distance to panel (it is the same in X and Y). Symbols : and ..
-  float spaceToPanel = 0.053;
-
-  // position of big aruco, in front of the robot, from the origin of its rectangle
-  float frontBigArucoX = rectangleX + spaceToPanel;
-  float bigArucoZ = 0.153;
-
-  // position of sides big aruco from the origin of its rectangle
-  float sideBigArucoX = rectangleX/2;
-  float sideBigArucoY = rectangleY/2 + spaceToPanel;
-
-  // Robot left foot offset
-  double offsetx=0.094;
-  double offsety=0.08;
-
-  //   x
-  // y_|
-  //   . Z
-  //
-  //        103  104   105
-  //         :    :     :
-  //  102 ..[0]-[1,4 ]-[5]..106
-  //         |    |     |
-  //  101 ..[6]-[2,3 ]-[7]..107
-  //         |    |     |
-  //  100 ..[8]-[9,10]-[11]..108
-  //              ↑
-  //            robot
-
-  _mapOfTagPositions[0] = std::vector<double>{littleArucoX+2*(rectangleX+edge), rectangleY+edge-littleArucoY, 0.003};
-  _mapOfTagPositions[1] = std::vector<double>{littleArucoX+2*(rectangleX+edge), littleArucoY, 0.003};
-  _mapOfTagPositions[4] = std::vector<double>{littleArucoX+2*(rectangleX+edge), -littleArucoY, 0.003};
-  _mapOfTagPositions[5] = std::vector<double>{littleArucoX+2*(rectangleX+edge), -(rectangleY+edge)+littleArucoY, 0.003};
-
-  _mapOfTagPositions[6] = std::vector<double>{littleArucoX+(rectangleX+edge), rectangleY+edge-littleArucoY, 0.003};
-  _mapOfTagPositions[2] = std::vector<double>{littleArucoX+(rectangleX+edge), littleArucoY, 0.003};
-  _mapOfTagPositions[3] = std::vector<double>{littleArucoX+(rectangleX+edge), -littleArucoY, 0.003};
-  _mapOfTagPositions[7] = std::vector<double>{littleArucoX+(rectangleX+edge), -(rectangleY+edge)+littleArucoY, 0.003};
-
-  _mapOfTagPositions[8] = std::vector<double>{littleArucoX, rectangleY+edge-littleArucoY, 0.003};
-  _mapOfTagPositions[9] = std::vector<double>{littleArucoX, littleArucoY, 0.003};
-  _mapOfTagPositions[10] = std::vector<double>{littleArucoX, -littleArucoY, 0.003};
-  _mapOfTagPositions[11] = std::vector<double>{littleArucoX, -(rectangleY+edge)+littleArucoY, 0.003};
-
-  _mapOfTagPositions[100] = std::vector<double>{sideBigArucoX, rectangleY+edge+sideBigArucoY, bigArucoZ};
-  _mapOfTagPositions[101] = std::vector<double>{rectangleX+edge+sideBigArucoX, rectangleY+edge+sideBigArucoY, bigArucoZ};
-  _mapOfTagPositions[102] = std::vector<double>{2*(rectangleX+edge)+sideBigArucoX, rectangleY+edge+sideBigArucoY, bigArucoZ};
-
-  _mapOfTagPositions[103] = std::vector<double>{2*(rectangleX+edge)+frontBigArucoX, rectangleY+edge, bigArucoZ};
-  _mapOfTagPositions[104] = std::vector<double>{2*(rectangleX+edge)+frontBigArucoX, 0, bigArucoZ};
-  _mapOfTagPositions[105] = std::vector<double>{2*(rectangleX+edge)+frontBigArucoX, -(rectangleY+edge), bigArucoZ};
-
-  _mapOfTagPositions[106] = std::vector<double>{2*(rectangleX+edge)+sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
-  _mapOfTagPositions[107] = std::vector<double>{rectangleX+edge+sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
-  _mapOfTagPositions[108] = std::vector<double>{sideBigArucoX, -(rectangleY+edge+sideBigArucoY), bigArucoZ};
-
+  // Creating an entry for each known id tag and retriving its position
   _container.clear();
-
-  // Creating an entry for each known id tag
-  for (auto & pair : _mapOfTagPositions) {
+  _mapOfTagPositions.clear();
+  for (auto & pair : tags) {
     int index = pair.first;
-    pair.second[0]-=offsetx;
-    pair.second[1]-=offsety;
+    Eigen::Vector3d center= pair.second.marker_center;
+    _mapOfTagPositions[index] = {center.x(), center.y(), center.z()};
     _container[index] = (std::vector<std::vector<double> >());
   }
 }
