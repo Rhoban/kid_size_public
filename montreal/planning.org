@@ -2,8 +2,7 @@
 ** W1: 04/23 - 04/27
 *** =Ludo+Patxi= Méca
 **** TODO Finalisation achats
-**** TODO Test premier Pitch MX-64 (Design + Fabrication et assemblage)
-     NOTE : les trous des gabarits sont trop grands (2.5mm -> 2mm)
+**** DONE Test premier Pitch MX-64 (Design + Fabrication et assemblage)
 **** DONE Design poignée + corde à piano dos
 **** DONE Tests + assemblage caches teflon pour coude
 *** DONE Soft 
@@ -16,21 +15,21 @@
   - =Ludo+Patxi= Code prédiction durée du pas
   - =Patxi= Code pour prédiction de balle 1/2
 ** W2: 04/30 - 05/04
-*** Design
+*** DONE Design
 **** Convertir FR05-S101 en FR05-S1
 **** Modifier l'espacement des U à cause du passe HN05-T101 -> HN05-N102
-*** Méca
-**** Protection choc pour bras
-**** Fabrication caches caméras
-**** Cache LiPo + Torse
+*** TODO Méca
+**** TODO Protection choc pour bras
+**** TODO Fabrication caches caméras
+**** TODO Cache LiPo + Torse
 **** =Patxi=
-*** Soft
+*** TODO Soft
 **** =Ludo= fix monitoring pour image rhio
-*** Mouvement/Comportement
+*** TODO Mouvement/Comportement
 **** =Patxi= Accélérer relevage
 **** =Patxi= Améliorer/clarifier tir classic + tir latéral
 **** =Patxi= Améliorer stabilité marche
-*** Machine Learning
+*** TODO Machine Learning
 **** =Ludo+Patxi= Prédiction durée du pas
 **** =Patxi= Code pour prédiction de balle 2/2
 ** W3: 05/07 - 05/11
@@ -97,45 +96,74 @@
 ** W8: 05/11 - 05/15
 *** Départ 15/16
 * Tâches
-** Méca
-*** Design
+** TODO Méca
+*** TODO Design
 **** DONE Passage pitch au MX-64
 **** DONE Corde à piano pour le dos
 ***** Plusieurs liens sur ebay (2.5,3,4mm diamètre, jusqu'à 50mm)
 ***** Vérifier longueur
-**** Fixation NUC + cache LiPo à revoir
+**** TODO Fixation NUC + cache LiPo à revoir
+- Cache bas:
+  - Tout le tour du bas (couvre entièrement hip_yaw)
+  - Dépasse un peu en haut à l'arrière pour se fixer sur le NUC
+    - Permet d'avoir un plus grand chiffre aussi
+- Cache haut
+  - Pas de problème finalement
 **** DONE Protection choc pour bras
-**** Convertir FR05-S101 en FR05-S1
-**** Modifier l'espacement des U à cause du passe HN05-T101 -> HN05-N102
-*** Manufacturing
-**** Passage pitch au MX-64
-**** Corde à piano pour le dos
-**** Fixation NUC
-**** Améliorer le passage des câbles de hanches (dans le capot)
-**** Teflon intérieur coude
-**** Refaire des caches caméras
-**** Refaire cache LiPo
+**** DONE Convertir FR05-S1 en FR05-S101
+**** DONE Modifier l'espacement des U à cause du passe HN05-T101 -> HN05-N102
+*** TODO Manufacturing
+**** TODO Passage pitch au MX-64
+- Nova OK
+- Autres robots:
+  - =Patxi= CNC
+    - Head side fix * 6
+    - U side * 6
+  - =Ludo= Perçage + taraudage
+    - Base U
+    - CameraFix
+  - Configurer moteurs + maj zeros
+**** TODO Fixation NUC
+- Préparation test
+  - CNC: 1 élément
+- Aucun robot OK
+**** TODO Corde à piano pour le dos
+- Préparation test
+  - CNC: 2 éléments
+- Attente livraison Corde à piano
+**** TODO Corde à piano pour les épaules
+- Préparation test
+  - CNC: 2 éléments
+- Attente livraison Corde à piano
+**** TODO Améliorer le passage des câbles de hanches (dans le capot)
+- Manque design
+**** TODO Teflon intérieur coude
+- Nova OK
+- Autres robots
+  - CNC: 6 pièces
+**** TODO Refaire des caches caméras
+**** TODO Refaire cache LiPo
 ***** Plus haut pour fixer sur NUC
 ***** Attention collision avec cache torse haut
-**** Vérifier intégration des bipper
-** Soft
-*** Convertir robocup_referee/constants to a serializable file
-*** Fix monitoring images via rhio
+**** TODO Vérifier intégration des bipper
+** TODO Soft
+*** DONE Convertir robocup_referee/constants to a serializable file
+*** TODO Fix monitoring images via rhio
 **** Commande pour vider les buffer
 **** Commande pour limiter le débit logiciellement
-** Mouvement/Comportement
-*** Ajouter le walkOnKick en commande
-*** Mettre au carré tir 
-*** Accélérer le relevage
-*** Éviter le isFallen quand un robot est handled
-*** Gestion du *finished*
+** TODO Mouvement/Comportement
+*** DONE Ajouter le walkOnKick en commande
+*** TODO Mettre au carré tir 
+*** TODO Accélérer le relevage
+*** TODO Éviter le isFallen quand un robot est handled
+*** TODO Gestion du *finished*
 **** fin non détectée quand le robot est en train de tirer ou de faire autre chose?
-*** Stabilité à améliorer
+*** TODO Stabilité à améliorer
 **** Particulièrement quand on marche sur des robots
 **** Déjà fortement améliorée en diminuant la durée des pas
-*** Transition placer/approche à étudier
-*** Améliorer approach_potential
-*** Gestion d'une passe de R_1 à R_2
+*** TODO Transition placer/approche à étudier
+*** TODO Améliorer approach_potential
+*** TODO Gestion d'une passe de R_1 à R_2
 **** Positionnement de R_2 avant la passe
 ***** Quel tir ferait-il si la balle était à sa position prédite
 ***** Possibilité de voir la trajectoire
@@ -155,12 +183,12 @@
   - Actuellement la cible est la position actuelle de la balle -> problème
 **** Décision de tir de R_2
 - Faciliter la décision de tir si la balle roule
-** Stratégie/teamplay
-*** Évitement/répartition de nos robots (basée sur la loc)
-*** État de jeu partagé
+** TODO Stratégie/teamplay
+*** TODO Évitement/répartition de nos robots (basée sur la loc)
+*** TODO État de jeu partagé
 **** Obstacles, positions robots, balle (supprimer candidat minoritaire)
-*** Accélérer la communication teamplay
-*** Captain
+*** TODO Accélérer la communication teamplay
+*** TODO Captain
 **** Choix disposition des robots pendant 'initial'
 ***** Attention besoin d'un fichier facilement éditable (changement de stratégie)
 **** Choix disposition pendant le jeu
@@ -170,11 +198,11 @@
 ***** Éviter que le robot en backup ne vienne lui tomber dessus
 **** Intercepter trajectoire potentielle de balle quand dernier défenseur
 **** Couper vision de la balle (feature avancée)
-** Machine Learning + Big Data of the buzz word
-*** Accélération entraînement VCM.json
-*** Prédiction durée du pas (analyse hyperrectangle acceptable)
-*** Entraînement modèle prédictif + Approche MDP
-*** Prédiction trajectoire de balle
+** TODO Machine Learning + Big Data of the buzz word
+*** TODO Accélération entraînement VCM.json
+*** TODO Prédiction durée du pas (analyse hyperrectangle acceptable)
+*** TODO Entraînement modèle prédictif + Approche MDP
+*** TODO Prédiction trajectoire de balle
 **** Vision
 **** Utilisation pour approche/tir
 ***** Validation avec technical challenge
@@ -182,31 +210,31 @@
   - Quel temps s'écoule entre le choix du tir et le déclenchement du mouvement
 - Accélérer le début du mouvement?
 ***** Validation avec scénario de passe
-** Deep neural network
-*** Modifications du Tagger (voir brest/tagger.org)
-*** Modifications de la procédure entrainement
+** TODO Deep neural network
+*** DONE Modifications du Tagger (voir brest/tagger.org)
+*** TODO Modifications de la procédure entrainement
 **** Vider le dépôt du code inutile?
 **** Scripter plus l'apprentissage
 **** Tester des réseaux 32*32 et des réseaux avec plus de couches
-** Vision
-*** Détection des robots adverses (non attribué/planifié)
-*** Compas visuel à clarifier/améliorer (non attribué/planifié)
-*** Freeze Vision pendant début match/penalized
-*** Tracking de balle pendant le tir
+** TODO Vision
+*** TODO Détection des robots adverses (non attribué/planifié)
+*** TODO Compas visuel à clarifier/améliorer (non attribué/planifié)
+*** TODO Freeze Vision pendant début match/penalized
+*** TODO Tracking de balle pendant le tir
 **** Désactiver l'IMU pendant le tir du robot ?
 **** Désactiver temporairement la vision de la balle ?
 **** Profil de vitesse/position de balle après le tir
 **** Éventuellement bénéficier des infos de la part d'autres joueurs
-** Localisation
-*** Reset la position au lancement de RoboCup pour le monitoring
-** Logging
-*** Vérifier la possibilité de logger un match en entier
-*** Freeze log pendant début match
-*** Script pour importer tous les logs d'un match
+** TODO Localisation
+*** TODO Reset la position au lancement de RoboCup pour le monitoring
+** TODO Logging
+*** TODO Vérifier la possibilité de logger un match en entier
+*** TODO Freeze log pendant début match
+*** TODO Script pour importer tous les logs d'un match
 **** Logs robots (images + bas niveau + out.log)
 **** Logs Monitoring
-** Divers
-*** Améliorer vitesse de démarrage/accès ethernet
+** TODO Divers
+*** TODO Améliorer vitesse de démarrage/accès ethernet
 * Achats
 ** DONE Terrain
 *** Commande passée le 23 avril, réception prévue début mai
@@ -221,7 +249,7 @@
     + Avec affichage :: 20 (+5 en commande)
 ** TODO Dynamixel+connectique / genération robots (en attente commande robots chinois)
 *** TODO MX-64/MX-106 (stocks à vérifier)
-*** TODO Câbles
+*** DONE Câbles
   - Stock [2018-04-23 lun.]
     + 3 brins
       * 200mm :: 150
@@ -291,6 +319,8 @@
     + écrous ::
     + rondelles ::
 ** DONE Billets avions
+** TODO Caméras PtGrey
+- Commande en cours, à valider avec Emmanuelle Lundi 7 mai
 * Tâches optionnelles
 ** Calibration vision
 *** Vérifier sensibilité à l'emplacement des tags aruco
