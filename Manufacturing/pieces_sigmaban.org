@@ -1,36 +1,33 @@
 * Pièces CNC
 | Qty | Pièce                         | Nom autodesk                  | Emplacements                    | Commentaires                           |
 |-----+-------------------------------+-------------------------------+---------------------------------+----------------------------------------|
-| 2   | Protection tête               | base_head                     |                                 |                                        |
-| 1   | Fixation Caméra               | ptgrey_fix2                   |                                 |                                        |
-| 6   | Côté U64 droit                | test_side_U64                 | Tête(2)+Hanches(2)+Chevilles(2) |                                        |
-| 3   | Base U64 Long                 | new_base_u64_long             | Épaules(2) + Cou(1)             |                                        |
-| 1   | Fixation NUC                  | nuc_fix_v2                    |                                 | À tester                               |
-| 2   | Fix protection arrière        | piano_wire_back_fixation      |                                 | À tester                               |
-| 4   | Fix Protection épaule         | shoulder_piano_wire_fix       |                                 | À tester                               |
-| 2   | Fix corde à piano avant(1)    | piano_wire_front_fixation     |                                 | À changer si tests arrière convaincant |
-| 2   | Fix corde à piano avant(2)    | front_protection              |                                 | À changer si tests arrière convaincant |
-| 2   | U64 épaule (1)                | new_side_u64_shoulder         | Épules(2)                       | Épaule                                 |
-| 2   | U64 épaule (2)                | new_side_u64_shoulder_MIR     | Épules(2)                       | Épaule                                 |
-| 1   | Torse haut                    | new_torso_topplate_nuc        |                                 |                                        |
-| 1   | Torse milieu                  | new_torso_middleplate_nuc     |                                 |                                        |
-| 1   | Torse bas                     | SigmaBan_torsebas64           |                                 |                                        |
-| 4   | Côté U64 droit avec surfaçage | test_side_U64                 | Hanches(2)+Chevilles(2)         |                                        |
-| 4   | Base U64                      | new_base_u64                  | Hanche(2) + Cheville(2)         |                                        |
-| 2   | Protections coudes            | elbow_protection              |                                 | Teflon                                 |
-| 1   | protec teflon droite          | high_leg_teflon               |                                 | Teflon                                 |
-| 1   | protec teflon gauche          | high_leg_teflon_left          |                                 | Teflon                                 |
-| 4   | Côté U106 long                | new_side_u106_long_design     | Fémurs(2*2)                     |                                        |
-| 2   | Base U106 long                | new_base_u106_long_newbearing | Fémurs(2)                       |                                        |
-| 4   | Tibia                         | Sigma106_tibiaplate_design    | Tibiats(2*2)                    |                                        |
-| 2   | Plaque pied                   | foot_sigmaban_plus            |                                 |                                        |
-| 1   | Séparation torse              | fitPlate                      |                                 | Pièce pliée                            |
-| 2   | Humerus                       | humerus                       |                                 | Pièce pliée                            |
-| 2   | Radius                        | radius                        |                                 | Pièce pliée                            |
-|-----+-------------------------------+-------------------------------+---------------------------------+----------------------------------------|
-| 4   | Côté U64                      | new_side_u64                  |                                 |                                        |
-| 4   | Côté U64 (Face)               | new_side_u64_head             | Hanches(2) + Chevilles(2)       |                                        |
-| 2   | Côté U28 to U64               | new_U28_to_64_side_neck       |                                 |                                        |
+|   2 | Protection tête               | base_head                     |                                 |                                        |
+|   1 | Fixation Caméra               | ptgrey_fix2                   |                                 |                                        |
+|   6 | Côté U64 droit                | test_side_U64                 | Tête(2)+Hanches(2)+Chevilles(2) |                                        |
+|   3 | Base U64 Long                 | new_base_u64_long             | Épaules(2) + Cou(1)             |                                        |
+|   1 | Fixation NUC                  | nuc_fix_v2                    |                                 | À tester                               |
+|   2 | Fix protection arrière        | piano_wire_back_fixation      |                                 | À tester                               |
+|   4 | Fix Protection épaule         | shoulder_piano_wire_fix       |                                 | À tester                               |
+|   2 | Fix corde à piano avant(1)    | piano_wire_front_fixation     |                                 | À changer si tests arrière convaincant |
+|   2 | Fix corde à piano avant(2)    | front_protection              |                                 | À changer si tests arrière convaincant |
+|   2 | U64 épaule (1)                | new_side_u64_shoulder         | Épaules(2)                      | Épaule                                 |
+|   2 | U64 épaule (2)                | new_side_u64_shoulder_MIR     | Épaules(2)                      | Épaule                                 |
+|   1 | Torse haut                    | new_torso_topplate_nuc        |                                 | À vérifier                             |
+|   1 | Torse milieu                  | new_torso_middleplate_nuc     |                                 | À vérifier                             |
+|   1 | Torse bas                     | SigmaBan_torsebas64           |                                 | À vérifier                             |
+|   4 | Côté U64 droit avec surfaçage | test_side_U64                 | Hanches(2)+Chevilles(2)         |                                        |
+|   4 | Base U64                      | new_base_u64                  | Hanche(2) + Cheville(2)         |                                        |
+|   2 | Protections coudes            | elbow_protection              |                                 | Teflon                                 |
+|   1 | protec teflon droite          | high_leg_teflon               |                                 | Teflon                                 |
+|   1 | protec teflon gauche          | high_leg_teflon_left          |                                 | Teflon                                 |
+|   4 | Côté U106 long                | new_side_u106_long_design     | Fémurs(2*2)                     |                                        |
+|   2 | Base U106 long                | new_base_u106_long_newbearing | Fémurs(2)                       |                                        |
+|   4 | Tibia                         | Sigma106_tibiaplate_design    | Tibiats(2*2)                    |                                        |
+|   2 | Plaque pied                   | foot_sigmaban_plus            |                                 |                                        |
+|   1 | Séparation torse              | fitPlate                      |                                 | Pièce pliée                            |
+|   2 | Humerus                       | humerus                       |                                 | Pièce pliée                            |
+|   2 | Radius                        | radius                        |                                 | Pièce pliée                            |
+|   1 | Poignée                       | handle_v2                     |                                 | Pièce pliée                            |
 
 * Pièces 3D
 | Qty | Pièce                | Nom autodesk        | Commentaires                           |

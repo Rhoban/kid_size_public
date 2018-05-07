@@ -102,7 +102,7 @@
 **** DONE Corde à piano pour le dos
 ***** Plusieurs liens sur ebay (2.5,3,4mm diamètre, jusqu'à 50mm)
 ***** Vérifier longueur
-**** TODO Fixation NUC + cache LiPo à revoir
+**** DONE Fixation NUC + cache LiPo à revoir
 - Cache bas:
   - Tout le tour du bas (couvre entièrement hip_yaw)
   - Dépasse un peu en haut à l'arrière pour se fixer sur le NUC
@@ -323,6 +323,8 @@
 - Commande en cours, à valider avec Emmanuelle Lundi 7 mai
 * Tâches optionnelles
 ** Calibration vision
+*** Ajouter paramètres distortion caméra au model learning
+- Dépendances à OpenCV requises
 *** Vérifier sensibilité à l'emplacement des tags aruco
 1) Continuer à enquêter sur les problèmes des nuages de points
    - Comprendre d'où vient la structure dans les nuages de points
