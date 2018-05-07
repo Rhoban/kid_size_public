@@ -1,27 +1,33 @@
-Pièces pour 1 robot et 2 upgrades (une upgrade a déjà été faite).
 Dossier autodesk pour l'usinage : SigmabanV2.1
 
-| Quantity | Done | Pièce            | Nom autodesk                   | Surfaçage | Vérification | Affectation |
-|----------+------+------------------+--------------------------------+-----------+--------------|-------------|
-|        4 |    0 | Base U64         | new_base_u64                   | Oui       |              | Olivier     |
-|        2 |    0 | Bras             | NA                             | Non       | @Loic        |             |
-|        2 |    0 | Avant-Bras       | NA                             | Non       | @Loic        |             |
-|        2 |    0 | Cale Hip pitch   | (à voir) (pièce teflon)        | Oui       | @Ludo        |             |
-|----------+------+------------------+--------------------------------+-----------+--------------+-------------|
-|        1 |    1 | Séparation torse | fitPlate                       | Non       | @Steve       | Adrien      |
-|        2 |    2 | Base U64 Long    | new_base_u64_long              | Oui       |              | Patxi       |
-|        2 |    2 | Base U106 long   | new_base_u106_long             | Oui       |              | Patxi       |
-|        1 |    1 | Fixation Caméra  | ptgrey_fix2                    | Oui       |              | Patxi       |
-|        6 |    6 | Côté U28 to U64  | new_U28_to_64_side_neck        | Oui       |              | Patxi       |
-|        4 |    4 | Côté U106 long   | new_side_u106_long_design      | Oui       |              | Patxi       |
-|        4 |    4 | Côté U64 (Face)  | new_side_u64_head              | Oui       |              |             |
-|        8 |    8 | Côté U64         | new_side_u64                   | Oui       |              |             |
-|        2 |    2 | Protection tête  | ptgrey_protect2_base_eye_hair1 | Non       |              |             |
-|        1 |    1 | Torse bas        | SigmaBan_torsebas64            | Non       |              |             |
-|        3 |    3 | Torse milieu     | new_torso_middleplate_nuc      | Oui       |              |             |
-|        3 |    3 | Torse haut       | new_torso_topplate_nuc         | Oui       |              |             |
-|        3 |    3 | Poignée          | folded_handle_nuc              | Non       |              |             |
-|        3 |    4 | Fixation NUC     | nuc_fix                        | Non       |              |             |
-|        2 |    2 | Plaque pied      | foot_jauges_acier              | Non       |              |             |
-|        4 |    4 | Tibia            | Sigma106_tibiaplate_design     | Non       |              |             |
-|        3 |    3 | Base U64 Cou     | new_base_u64_neck              | Oui       |              |             |
+Quantity for 3 Robots :
+
+|-----+------+-------------------------------+-------------------------------+---------------------------------+-------------|
+| Qty | Done | Pièce                         | Nom autodesk                  | Emplacements                    | Affectation |
+|-----+------+-------------------------------+-------------------------------+---------------------------------+-------------|
+| 9   | 3    | Base U64 Long                 | new_base_u64_long             | Épaules(2) + Cou(1)             |             |
+| 3   | 0    | Fixation NUC                  | nuc_fix_v2                    |                                 |             |
+| 6   | 0    | U64 épaule (1)                | new_side_u64_shoulder         | Épules(2)                       |             |
+| 6   | 0    | U64 épaule (2)                | new_side_u64_shoulder_MIR     | Épules(2)                       |             |
+| 3   | 0    | Torse haut                    | new_torso_topplate_nuc        |                                 |             |
+| 3   | 0    | Torse milieu                  | new_torso_middleplate_nuc     |                                 |             |
+| 3   | 0    | Torse bas                     | SigmaBan_torsebas64           |                                 |             |
+| 12  | 0    | Côté U64 droit avec surfaçage | test_side_U64                 | Hanches(2)+Chevilles(2)         |             |
+| 12  | 0    | Base U64                      | new_base_u64                  | Hanche(2) + Cheville(2)         |             |
+| 6   | 0    | protec teflon coudes          | elbow_protection              |                                 |             |
+| 3   | 0    | protec teflon droite          | high_leg_teflon               |                                 |             |
+| 3   | 0    | protec teflon gauche          | high_leg_teflon_left          |                                 |             |
+| 12  | 0    | Côté U106 long                | new_side_u106_long_design     | Fémurs(2*2)                     |             |
+| 6   | 0    | Base U106 long                | new_base_u106_long_newbearing | Fémurs(2)                       |             |
+| 12  | 0    | Tibia                         | Sigma106_tibiaplate_design    | Tibiats(2*2)                    |             |
+| 6   | 0    | Plaque pied                   | foot_sigmaban_plus            |                                 | Patxi       |
+| 3   | 0    | Séparation torse              | fitPlate                      |                                 |             |
+| 6   | 0    | Humerus                       | humerus                       |                                 |             |
+| 6   | 0    | Radius                        | radius                        |                                 |             |
+|-----+------+-------------------------------+-------------------------------+---------------------------------+-------------|
+| 6   | 6    | Protection tête               | base_head                     |                                 |             |
+| 3   | 3    | Fixation Caméra               | ptgrey_fix2                   |                                 |             |
+| 18  | 18   | Côté U64 droit                | test_side_U64                 | Tête(2)+Hanches(2)+Chevilles(2) |             |
+|-----+------+-------------------------------+-------------------------------+---------------------------------+-------------|
+
+
