@@ -5,42 +5,51 @@ Dossier autodesk pour l'usinage : SigmabanV2.1
 
 * Pièces Design OK
 
-|-------+------+------+-------------------------------+-------------------------------+---------------------------------+-------------+----------------------------|
-| Total | Qty2 | Done | Pièce                         | Nom autodesk                  | Emplacements                    | Affectation | Timing grossier [min/unit] |
-|-------+------+------+-------------------------------+-------------------------------+---------------------------------+-------------+----------------------------|
-|     9 |    6 |    3 | Base U64 Long                 | new_base_u64_long             | Épaules(2) + Cou(1)             |             |                         45 |
-|     3 |    2 |    0 | Fixation NUC                  | nuc_fix_v2                    |                                 |             |                       *30* |
-|     6 |    4 |    0 | U64 épaule (1)                | new_side_u64_shoulder         | Épaules(2)                      |             |                         20 |
-|     6 |    4 |    0 | U64 épaule (2)                | new_side_u64_shoulder_MIR     | Épaules(2)                      |             |                         20 |
-|    12 |    8 |    0 | Côté U64 droit avec surfaçage | test_side_U64                 | Hanches(2)+Chevilles(2)         |             |                            |
-|    12 |    8 |    0 | Base U64                      | new_base_u64                  | Hanche(2) + Cheville(2)         |             |                            |
-|     6 |    4 |    0 | protec teflon coudes          | elbow_protection              |                                 |             |                            |
-|     3 |    2 |    0 | protec teflon droite          | high_leg_teflon               |                                 |             |                            |
-|     3 |    2 |    0 | protec teflon gauche          | high_leg_teflon_left          |                                 |             |                            |
-|    12 |    8 |    0 | Côté U106 long                | new_side_u106_long_design     | Fémurs(2*2)                     |             |                            |
-|     6 |    4 |    0 | Base U106 long                | new_base_u106_long_newbearing | Fémurs(2)                       |             |                            |
-|    12 |    8 |    0 | Tibia                         | Sigma106_tibiaplate_design    | Tibias(2*2)                     |             |                            |
-|     6 |    4 |    0 | Plaque pied                   | foot_sigmaban_plus            |                                 | Patxi       |                            |
-|     3 |    2 |    0 | Séparation torse              | fitPlate                      |                                 |             |                            |
-|     6 |    4 |    0 | Humerus                       | humerus                       |                                 |             |                            |
-|     6 |    4 |    0 | Radius                        | radius                        |                                 |             |                            |
-|-------+------+------+-------------------------------+-------------------------------+---------------------------------+-------------+----------------------------|
-|    12 |    4 |    6 | Protection tête               | base_head                     |                                 |             |                            |
-|     6 |    2 |    3 | Fixation Caméra               | ptgrey_fix2                   |                                 |             |                            |
-|    24 |   12 |   18 | Côté U64 droit                | test_side_U64                 | Tête(2)+Hanches(2)+Chevilles(2) |             |                            |
-|-------+------+------+-------------------------------+-------------------------------+---------------------------------+-------------+----------------------------|
+|-------+------+------+----------------------+-------------------------------+---------------------------------+-------------+---------------------+-------------------------+--------------|
+| Total | Qty2 | Done | Pièce                | Nom autodesk                  | Emplacements                    | Affectation | Timing [min/unit]   | Total Timing (2 robots) | Total Timing |
+|-------+------+------+----------------------+-------------------------------+---------------------------------+-------------+---------------------+-------------------------+--------------|
+| 9     | 6    | 3    | Base U64 Long        | new_base_u64_long             | Épaules(2) + Cou(1)             |             | 39                  | 117.0                   | 234.0        |
+| 12    | 8    | 0    | Base U64             | new_base_u64                  | Hanche(2) + Cheville(2)         |             | 42                  | 336.0                   | 504.0        |
+| 6     | 4    | 0    | Base U106 long       | new_base_u106_long_newbearing | Fémurs(2)                       |             | 43                  | 172.0                   | 258.0        |
+| 12    | 4    | 0    | protec teflon coudes | elbow_protection              |                                 |             | 4                   | 16.0                    | 48.0         |
+| 3     | 2    | 0    | protec teflon droite | high_leg_teflon               |                                 |             | 6                   | 12.0                    | 18.0         |
+| 3     | 2    | 0    | protec teflon gauche | high_leg_teflon_left          |                                 |             | 6                   | 12.0                    | 18.0         |
+| 3     | 2    | 0    | Séparation torse     | fitPlate                      |                                 |             |                     | 0.0                     | 0.0          |
+| 12    | 8    | 0    | Tibia                | Sigma106_tibiaplate_design    | Tibias(2*2)                     | Loic        |                     | 0.0                     | 0.0          |
+| 6     | 4    | 0    | Humerus              | humerus                       |                                 | Loic        |                     | 0.0                     | 0.0          |
+| 6     | 4    | 0    | Radius               | radius                        |                                 | Loic        |                     | 0.0                     | 0.0          |
+|-------+------+------+----------------------+-------------------------------+---------------------------------+-------------+---------------------+-------------------------+--------------|
+| 12    | 4    | 6    | Protection tête      | base_head                     |                                 |             | 5                   |                         |              |
+| 6     | 2    | 3    | Fixation Caméra      | ptgrey_fix2                   |                                 |             |                     |                         |              |
+| 24    | 12   | 18   | Côté U64 droit       | test_side_U64                 | Tête(2)+Hanches(2)+Chevilles(2) |             |                     |                         |              |
+|-------+------+------+----------------------+-------------------------------+---------------------------------+-------------+---------------------+-------------------------+--------------|
+|       |      |      |                      |                               |                                 |             | Remaining time  (h) | 15.083333               | 25.2         |
+|-------+------+------+----------------------+-------------------------------+---------------------------------+-------------+---------------------+-------------------------+--------------|
+#  tmf: $9=($2-$3)*$8; $10=($1-$3)*$8; $-1,9=Sum(1,9:-2,9)/60; $-1,10=Sum(1,10:-2,10)/60
+
+* Pièces Design Done
+|-------+------+------+-------------------------------+---------------------------+-------------------------+-------------+-------------------+-------------------------+--------------|
+| Total | Qty2 | Done | Pièce                         | Nom autodesk              | Emplacements            | Affectation | Timing [min/unit] | Total Timing (2 robots) | Total Timing |
+|-------+------+------+-------------------------------+---------------------------+-------------------------+-------------+-------------------+-------------------------+--------------|
+| 12    | 8    | 12   | Côté U64 droit avec surfaçage | test_side_U64_with_trace  | Hanches(2)+Chevilles(2) |             | 24                | 48.0                    | 144.0        |
+| 6     | 4    | 6    | Plaque pied                   | foot_sigmaban_plus        |                         |             |                   |                         |              |
+| 6     | 4    | 6    | U64 épaule (1)                | new_side_u64_shoulder     | Épaules(2)              | Patxi       | 18                |                         |              |
+| 6     | 4    | 6    | U64 épaule (2)                | new_side_u64_shoulder_MIR | Épaules(2)              | Patxi       | 18                |                         |              |
+|-------+------+------+-------------------------------+---------------------------+-------------------------+-------------+-------------------+-------------------------+--------------|
 
 * Pièces Design à vérifier
 
 |-------+------+------+----------------------------+---------------------------+--------------+-------------+----------------------------|
 | Total | Qty2 | Done | Pièce                      | Nom autodesk              | Emplacements | Affectation | Timing grossier [min/unit] |
 |-------+------+------+----------------------------+---------------------------+--------------+-------------+----------------------------|
-|     7 |    2 |    0 | Fixation NUC               | nuc_fix_v2                |              |             |                            |
-|    14 |    4 |    0 | Fix protection arrière     | piano_wire_back_fixation  |              |             |                            |
-|    28 |    8 |    0 | Fix Protection épaule      | shoulder_piano_wire_fix   |              |             |                            |
-|     6 |    4 |    0 | Fix corde à piano avant(1) | piano_wire_front_fixation |              |             |                            |
-|     6 |    4 |    0 | Fix corde à piano avant(2) | front_protection          |              |             |                            |
-|     3 |    2 |    0 | Torse haut                 | new_torso_topplate_nuc    |              |             |                            |
-|     3 |    2 |    0 | Torse milieu               | new_torso_middleplate_nuc |              |             |                            |
-|     3 |    2 |    0 | Torse bas                  | SigmaBan_torsebas64       |              |             |                         30 |
-|     7 |    2 |    0 | Poignée                    | handle_v2                 |              |             |                            |
+| 12    | 8    | 0    | Côté U106 long             | new_side_u106_long_design | Fémurs(2*2)  |             | 24                         |
+| 7     | 2    | 0    | Fixation NUC               | nuc_fix_v2                |              |             |                            |
+| 14    | 4    | 0    | Fix protection arrière     | piano_wire_back_fixation  |              |             |                            |
+| 28    | 8    | 0    | Fix Protection épaule      | shoulder_piano_wire_fix   |              |             |                            |
+| 6     | 4    | 0    | Fix corde à piano avant(1) | piano_wire_front_fixation |              |             |                            |
+| 6     | 4    | 0    | Fix corde à piano avant(2) | front_protection          |              |             |                            |
+| 3     | 2    | 0    | Torse haut                 | new_torso_topplate_nuc    |              |             |                            |
+| 3     | 2    | 0    | Torse milieu               | new_torso_middleplate_nuc |              |             |                            |
+| 3     | 2    | 0    | Torse bas                  | SigmaBan_torsebas64       |              |             | 30                         |
+| 7     | 2    | 0    | Poignée                    | handle_v2                 |              |             |                            |
+|-------+------+------+----------------------------+---------------------------+--------------+-------------+----------------------------|
