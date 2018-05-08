@@ -321,6 +321,8 @@
 ** DONE Billets avions
 ** TODO Caméras PtGrey
 - Commande en cours
+** TODO Lensation
+- Commande en cours
 * Tâches optionnelles
 ** Calibration vision
 *** Ajouter paramètres distortion caméra au model learning
