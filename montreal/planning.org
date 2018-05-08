@@ -237,9 +237,9 @@
 *** TODO Améliorer vitesse de démarrage/accès ethernet
 * Achats
 ** DONE Terrain
-*** Commande passée le 23 avril, réception prévue début mai
+*** Commande passée le 23 avril, réceptionné 7 mai
 ** DONE LiPo
-*** Commande passée le 23 avril, réception prévue début mai
+*** Commande passée le 23 avril, réceptionné début mai
 ** DONE LiPo protective bag
   - Stock :: 15
   - Commande :: 15
@@ -247,8 +247,8 @@
   - Stock
     + Simple :: 2
     + Avec affichage :: 20 (+5 en commande)
-** TODO Dynamixel+connectique / genération robots (en attente commande robots chinois)
-*** TODO MX-64/MX-106 (stocks à vérifier)
+** DONE Dynamixel+connectique / genération robots (commandé)
+*** DONE MX-64/MX-106 (stocks à vérifier)
 *** DONE Câbles
   - Stock [2018-04-23 lun.]
     + 3 brins
@@ -320,7 +320,9 @@
     + rondelles ::
 ** DONE Billets avions
 ** TODO Caméras PtGrey
-- Commande en cours, à valider avec Emmanuelle Lundi 7 mai
+- Commande en cours
+** TODO Lensation
+- Commande en cours
 * Tâches optionnelles
 ** Calibration vision
 *** Ajouter paramètres distortion caméra au model learning
