@@ -229,6 +229,10 @@
 *** TODO Reset la position au lancement de RoboCup pour le monitoring
 ** TODO Logging
 *** TODO Vérifier la possibilité de logger un match en entier
+*** TODO Vérifier ce qu'on veut logger
+- Referee pour synchro?
+- Localisation à plus haute fréquence?
+- TeamPlayInfo à plus haute fréquence?
 *** TODO Freeze log pendant début match
 *** TODO Script pour importer tous les logs d'un match
 **** Logs robots (images + bas niveau + out.log)
