@@ -44,11 +44,13 @@ public:
    */
   ~Pipeline();
 
-  /**
-   * Register a filter into the pipeline
-   * The Filter deallocation is handle by the Pipeline
-   */
+  /// Register a filter into the pipeline
+  /// Ownership of 'filter' is given to the Pipeline
   void add(Filter *filter);
+
+  /// Register all the filters from the provided vector
+  /// Throws logic_error if a "null" filter is found or if there is a duplicated name
+  void add(std::vector<std::unique_ptr<Filter>> * filters);
 
   /**
    * Return the Filter with given name
@@ -94,6 +96,12 @@ public:
   void setTimestamp(const ::rhoban_utils::TimeStamp & ts);
   /// Retrieve the timeStamp of the pipeline: not thread safe
   const ::rhoban_utils::TimeStamp& getTimestamp() const;
+
+  /// Read a vector of filters from a Json value and add them to pipeline
+  /// 1st format: value is an array of filters
+  /// 2nd format: { "filters" : [f1,f2,...], "paths" : [relPath1,relPath2,...]}
+  /// In second format, each path contains a list of filters
+  void addFiltersFromJson(const Json::Value & v, const std::string & dir_name);
 
   // Json stuff
   virtual void fromJson(const Json::Value & v, const std::string & dir_name);

@@ -52,6 +52,12 @@ void Pipeline::add(Filter *filter) {
   }
 }
 
+void Pipeline::add(std::vector<std::unique_ptr<Filter>> * filters) {
+  for (size_t idx = 0; idx < filters->size(); idx++) {
+    add((*filters)[idx].release());
+  }
+}
+
 const Filter &Pipeline::get(const std::string &name) const {
   try {
     return *(_filters.at(name));
@@ -182,11 +188,51 @@ Json::Value Pipeline::toJson() const {
   }
   return v;
 }
-void Pipeline::fromJson(const Json::Value & v, const std::string & dir_name) {
+
+void Pipeline::addFiltersFromJson(const Json::Value & v, const std::string & dir_name) {
   Filters::FilterFactory ff;
-  for (Json::ArrayIndex idx = 0; idx < v.size(); idx++) {
-    add(ff.build(v[idx], dir_name).release());
+  std::vector<std::unique_ptr<Filter>> result;
+  if (v.isArray()) {
+    for (Json::ArrayIndex idx = 0; idx < v.size(); idx++) {
+      add(ff.build(v[idx], dir_name).release());
+    }
+  } else if (v.isObject()) {
+    if (!v.isMember("filters") && ! v.isMember("paths")) {
+      throw JsonParsingError(DEBUG_INFO +
+                             " pipeline should contain either 'filters' or 'paths'");
+    }
+    if (v.isMember("filters")) {
+      if (!v["filters"].isArray()) {
+        throw JsonParsingError(DEBUG_INFO + " expecting an array for 'filters'");
+      }
+      try {
+        addFiltersFromJson(v["filters"], dir_name);
+      } catch (const JsonParsingError & err) {
+        throw JsonParsingError(std::string(err.what()) + " in 'filters'");
+      }
+    }
+    std::vector<std::string> paths;
+    rhoban_utils::tryReadVector(v, "paths", &paths);
+    for (const std::string & path : paths) {
+      std::string file_path = dir_name + path;
+      std::string read_dir_path = rhoban_utils::getDirName(file_path);
+      Json::Value path_value =  file2Json(file_path);
+      try {
+        std::cout << "adding from " << file_path << std::endl;
+        addFiltersFromJson(path_value, read_dir_path);
+      } catch (const JsonParsingError & err) {
+        throw JsonParsingError(std::string(err.what()) + " in '" + file_path + "'");
+      }
+    }
+  } else {
+    throw rhoban_utils::JsonParsingError(DEBUG_INFO +
+                                         " pipeline is not an array neither an object");
   }
+}
+                                                     
+
+void Pipeline::fromJson(const Json::Value & v, const std::string & dir_name) {
+  addFiltersFromJson(v, dir_name);
   std::cout << "There is now " << _filters.size() << " filters." << std::endl;
 }
 
