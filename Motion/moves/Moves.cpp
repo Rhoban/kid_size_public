@@ -3,7 +3,7 @@
 
 #include "Walk.h"
 #include "Kick.h"
-#include "LateralStep.hpp"
+// #include "LateralStep.hpp"
 #include "StandUp.h"
 #include "IMUTest.h"
 #include "StaticLearner.hpp"
@@ -17,7 +17,9 @@
 #include "TrajectoriesPlayer.hpp"
 #include "KickPhilipp.hpp"
 #include "CameraCalibration.hpp"
+#ifdef VISION_COMPONENT
 #include "ArucoCalibration.h"
+#endif
 #include "OdometryCalibration.hpp"
 #include "ModelCalibration.hpp"
 #include "GoalKeeper.h"
@@ -50,12 +52,12 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(kick);
     // Forcing generation of kick motions at kick creation
     kick->cmdKickGen();
-    
+
     Walk *walk = new Walk(kick);
     Head *head = new Head;
     Placer *placer = new Placer(walk);
     StandUp *standup = new StandUp;
-    LateralStep *lateralStep = new LateralStep();
+    // LateralStep *lateralStep = new LateralStep();
     add(walk);
     add(standup);
     add(head);
@@ -64,7 +66,7 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(approach);
     add(new ApproachPotential(walk));
     add(placer);
-    add(lateralStep);
+    // add(lateralStep);
 
     add(new GoalKeeper(walk, placer));
     add(new Robocup(walk, standup, placer));
@@ -72,7 +74,9 @@ Moves::Moves(MoveScheduler* scheduler) :
 
     // Dev moves
     add(new CameraCalibration);
+#ifdef VISION_COMPONENT
     add(new ArucoCalibration);
+#endif
     add(new OdometryCalibration(walk));
     add(new ModelCalibration);
     add(new TrajectoriesPlayer);
@@ -88,7 +92,7 @@ Moves::Moves(MoveScheduler* scheduler) :
 
     // add(new KickCalibration(approach));
     add(new GoalKick());
-    
+
     // Requires additionnal dependencies
     csa_mdp::PolicyFactory::registerExtraBuilder("ExpertApproach",
                                                  []() {return std::unique_ptr<csa_mdp::Policy>(new csa_mdp::ExpertApproach);});
