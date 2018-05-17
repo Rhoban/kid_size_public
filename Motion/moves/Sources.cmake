@@ -24,8 +24,7 @@ set (SOURCES
     Placer.cpp
     Kick.cpp
     LateralStep.cpp
-    ArucoCalibration.cpp
-    
+
     LogMachine.cpp
     KickPhilipp.cpp
 
@@ -33,6 +32,13 @@ set (SOURCES
 
     ReactiveKicker.cpp
 )
+
+if (BUILD_KID_SIZE_VISION)
+set (SOURCES
+    ${SOURCES}
+    ArucoCalibration.cpp
+)
+endif ()
 
 if (csa_mdp_experiments_FOUND)
   set(SOURCES
