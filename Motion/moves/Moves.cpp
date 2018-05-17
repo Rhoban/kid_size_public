@@ -3,7 +3,7 @@
 
 #include "Walk.h"
 #include "Kick.h"
-#include "LateralStep.hpp"
+// #include "LateralStep.hpp"
 #include "StandUp.h"
 #include "IMUTest.h"
 #include "StaticLearner.hpp"
@@ -57,7 +57,7 @@ Moves::Moves(MoveScheduler* scheduler) :
     Head *head = new Head;
     Placer *placer = new Placer(walk);
     StandUp *standup = new StandUp;
-    LateralStep *lateralStep = new LateralStep();
+    // LateralStep *lateralStep = new LateralStep();
     add(walk);
     add(standup);
     add(head);
@@ -66,7 +66,7 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(approach);
     add(new ApproachPotential(walk));
     add(placer);
-    add(lateralStep);
+    // add(lateralStep);
 
     add(new GoalKeeper(walk, placer));
     add(new Robocup(walk, standup, placer));

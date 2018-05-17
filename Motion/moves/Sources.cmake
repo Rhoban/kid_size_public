@@ -23,7 +23,7 @@ set (SOURCES
     GoalKeeper.cpp
     Placer.cpp
     Kick.cpp
-    LateralStep.cpp
+    # LateralStep.cpp
 
     LogMachine.cpp
     KickPhilipp.cpp
