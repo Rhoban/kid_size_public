@@ -63,8 +63,8 @@ LocalisationBinding::LocalisationBinding(MoveScheduler * scheduler_,
     nbVCObs(0),
     minVCObs(1),
     isForbidden(false),
-    _runThread(nullptr),
-    bind(nullptr)
+    bind(nullptr),
+    _runThread(nullptr)
 {
   scheduler->getServices()->localisation->setLocBinding(this);
   field_filter = new Localisation::FieldPF();
