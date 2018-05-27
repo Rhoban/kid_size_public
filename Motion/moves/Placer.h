@@ -67,6 +67,12 @@ class Placer : public Move
         // Avoid the opponents ?
         bool avoidOpponents;
 
+        /// Avoiding teamMates
+        bool avoidMates;
+
+        /// Avoiding shared opponents
+        bool avoidSharedOpponents;
+
         // Json that represent the path like [[x1, y1], [x2, y2] ...]
         std::string pathJson;
 };

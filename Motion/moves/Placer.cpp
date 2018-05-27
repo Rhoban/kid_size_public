@@ -91,6 +91,10 @@ Placer::Placer(Walk *walk)
     
     bind->bindNew("avoidOpponents", avoidOpponents, RhIO::Bind::PullOnly)
         ->defaultValue(true)->comment("Avoid the opponents?");
+    bind->bindNew("avoidMates", avoidOpponents, RhIO::Bind::PullOnly)
+        ->defaultValue(true)->comment("Avoid the team mates based on localisation?");
+    bind->bindNew("avoidSharedOpponents", avoidSharedOpponents, RhIO::Bind::PullOnly)
+        ->defaultValue(false)->comment("Avoid the shared opponents?");
     bind->pull();
 }
 
@@ -239,9 +243,22 @@ void Placer::step(float elapsed)
 
     // Adding nearest opponetn
     if (avoidOpponents) {
-        for (auto &opponent : loc->getOpponentsField()) {
+        for (const auto &opponent : loc->getOpponentsField()) {
             avoider.addObstacle(opponent, loc->opponentsRadius);
         }
+    }
+
+    if (avoidMates) {
+      for (const auto & mate_entry : loc->getTeamMatesField()) {
+        rhoban_geometry::Point pos(mate_entry.second(0),mate_entry.second(1));
+        avoider.addObstacle(pos, loc->teamMatesRadius);
+      }
+    }
+
+    if (avoidSharedOpponents) {
+      for (const Eigen::Vector2d & opp :loc->getSharedOpponents()) {
+        avoider.addObstacle(Point(opp(0), opp(1)), loc->opponentsRadius);
+      }
     }
 
     // Finding a path using the avoider

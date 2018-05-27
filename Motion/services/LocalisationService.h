@@ -77,6 +77,9 @@ class LocalisationService : public Service
        /// Remove the mate from the list of localized mates if present
        void removeTeamMate(int id);
 
+       /// Return the list of opponents seen by other mates
+       std::vector<Eigen::Vector2d>  getSharedOpponents();
+
        /// robot_id is the robot providing the opponent Positions
        void updateSharedOpponents(int robot_id,
                                   const std::vector<Eigen::Vector2d> & opponentPos);

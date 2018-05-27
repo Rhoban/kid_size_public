@@ -519,6 +519,19 @@ void LocalisationService::updateMatesPos()
     mutex.unlock();
 }
 
+std::vector<Eigen::Vector2d> LocalisationService::getSharedOpponents()
+{
+  std::vector<Eigen::Vector2d> opponents;
+  std::lock_guard<std::mutex> lock(mutex);
+  for (const auto & opp_entry : sharedOpponentsField) {
+    for (const auto & opp : opp_entry.second) {
+      opponents.push_back(opp);
+    }
+  }
+  return opponents;
+  // TODO: eventually merge obstacles
+}
+
 void LocalisationService::updateSharedOpponentsPos()
 {
     std::stringstream ss;
