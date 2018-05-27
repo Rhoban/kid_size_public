@@ -1,5 +1,6 @@
 #include <rhoban_utils/logging/logger.h>
 #include "DecisionService.h"
+#include "LocalisationService.h"
 #include "RefereeService.h"
 #include <RhIO.hpp>
 
@@ -76,10 +77,25 @@ bool RefereeService::tick(double elapsed)
         timeSinceGamePlaying = 0;
     }
 
+    // Removing penalized robots from shared localization
+    const GameState & gs = getGameState();
+    auto loc = getServices()->localisation;
+    for (int k=0; k<gs.getNbTeam(); k++) {
+        auto team = gs.getTeam(k);
+        if (team.getTeamNumber() == teamId) {
+          for (int robot_id = 0; robot_id < team.getNbRobots(); robot_id++) {
+            if (robot_id != id &&
+                team.getRobot(robot_id).getPenalty() != Constants::PENALTY_NONE) {
+              loc->removeTeamMate(robot_id);
+            }
+          }
+        }
+    }
+
+
     setState(teamId, id, alive);
 
     if (dumpGameState) {
-        const GameState & gs = getGameState();
         std::cout << &gs << std::endl;
     }
 

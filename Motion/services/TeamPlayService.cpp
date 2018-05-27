@@ -9,6 +9,8 @@
 #include "RefereeService.h"
 #include "TeamPlayService.h"
 
+static rhoban_utils::Logger logger("teamplay_service");
+
 using namespace rhoban_utils;
 using namespace rhoban_geometry;
 using namespace rhoban_team_play;
@@ -72,6 +74,7 @@ TeamPlayService::TeamPlayService() :
     memset(_selfInfo.statePlaying , '\0', sizeof(_selfInfo.statePlaying ));
     memset(_selfInfo.stateSearch  , '\0', sizeof(_selfInfo.stateSearch  ));
     memset(_selfInfo.hardwareWarnings, '\0', sizeof(_selfInfo.hardwareWarnings));
+    _selfInfo.nbObstacles = 0;
     _selfInfo.timestamp = 0.0;
 }
 
@@ -278,6 +281,16 @@ void TeamPlayService::messageSend()
         _selfInfo.statePlaying[sizeof(_selfInfo.statePlaying)-1] = '\0';
         _selfInfo.stateSearch[sizeof(_selfInfo.stateSearch)-1] = '\0';
         _selfInfo.hardwareWarnings[sizeof(_selfInfo.hardwareWarnings)-1] = '\0';
+        // Adding obstacles to message
+        std::vector<rhoban_geometry::Point> opponents = loc->getOpponentsField();
+        _selfInfo.nbObstacles = std::min(opponents.size(), (size_t)MAX_OBSTACLES);
+        if (opponents.size() > MAX_OBSTACLES) {
+          logger.warning("Too many obstacles to broadcast");
+        }
+        for (int oppIdx  = 0; oppIdx < _selfInfo.nbObstacles; oppIdx++) {
+          _selfInfo.obstaclesX[oppIdx] = opponents[oppIdx].getX();
+          _selfInfo.obstaclesY[oppIdx] = opponents[oppIdx].getY();
+        }
 
         //Send UDP broadcast
         _broadcaster->broadcastMessage(
@@ -287,7 +300,19 @@ void TeamPlayService::messageSend()
 
 void TeamPlayService::processInfo(TeamPlayInfo info)
 {
+    // Updates stored informations
     _allInfo[info.id] = info;
+    // Update team mates position;
+    auto loc = getServices()->localisation;
+    // TODO: handle localization quality
+    if (info.id != myId()) {
+      loc->updateTeamMate(info.id, Eigen::Vector3d(info.fieldX, info.fieldY, info.fieldYaw));
+      std::vector<Eigen::Vector2d> opponents_seen(info.nbObstacles);
+      for (int idx = 0; idx < info.nbObstacles; idx++) {
+        opponents_seen[idx] = Eigen::Vector2d(info.obstaclesX[idx], info.obstaclesY[idx]);
+      }
+      loc->updateSharedOpponents(info.id, opponents_seen);
+    }
 }
 
 std::string TeamPlayService::cmdTeam()

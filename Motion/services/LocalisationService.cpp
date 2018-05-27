@@ -97,7 +97,14 @@ LocalisationService::LocalisationService()
     bind.bindNew("opponents", opponents, RhIO::Bind::PushOnly)
         ->comment("Opponent field position as string [m]");
     bind.bindNew("opponentsRadius", opponentsRadius, RhIO::Bind::PullOnly)
-        ->comment("Opponent radius [m]")->defaultValue(0.65)->persisted(true);
+        ->comment("Opponent radius [m]")->defaultValue(0.65);
+
+    bind.bindNew("mates", mates, RhIO::Bind::PushOnly)
+        ->comment("Team Mates positions as string [m] and [deg]");
+    bind.bindNew("teamMatesRadius", teamMatesRadius, RhIO::Bind::PullOnly)
+        ->comment("TeamMates radius [m]")->defaultValue(1.5);
+    bind.bindNew("sharedOpponents", sharedOpponents, RhIO::Bind::PushOnly)
+        ->comment("Opponent positions in field according to mates (as string) [m]");
     
     bind.bindNew("worldBallX", ballPosWorld.x(), RhIO::Bind::PushOnly);
     bind.bindNew("worldBallY", ballPosWorld.y(), RhIO::Bind::PushOnly);
@@ -417,6 +424,37 @@ std::vector<Point> LocalisationService::getOpponentsField()
 
     return result;
 }
+
+std::map<int, Eigen::Vector3d> LocalisationService::getTeamMatesField()
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  return teamMatesField;
+}
+
+void LocalisationService::updateTeamMate(int id, const Eigen::Vector3d & poseInField)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  teamMatesField[id] = poseInField;
+}
+
+void LocalisationService::removeTeamMate(int id)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  teamMatesField.erase(id);
+}
+
+void LocalisationService::updateSharedOpponents(int id,
+                                                const std::vector<Eigen::Vector2d> & opponents)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  sharedOpponentsField[id] = opponents;
+}
+
+void LocalisationService::removeSharedOpponentProvider(int id)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  sharedOpponentsField.erase(id);
+}
        
 void LocalisationService::updateBallPos()
 {
@@ -461,6 +499,43 @@ void LocalisationService::setOpponentsWorld(const std::vector<Eigen::Vector3d> &
     mutex.unlock();
     
     updateOpponentsPos();
+}
+
+void LocalisationService::updateMatesPos()
+{
+    std::stringstream ss;
+    ss << "{";
+    for (const auto & mateEntry : teamMatesField) {
+      int robot_id = mateEntry.first;
+      Eigen::Vector3d robot_pose = mateEntry.second;
+      ss << robot_id << ": "
+         << "[" << robot_pose(0) << ", " << robot_pose(1) << ", "
+         << rhoban_utils::rad2deg(robot_pose(2)) << "°], ";
+    }
+    ss << "}";
+
+    mutex.lock();
+    mates = ss.str();
+    mutex.unlock();
+}
+
+void LocalisationService::updateSharedOpponentsPos()
+{
+    std::stringstream ss;
+    ss << "{";
+    for (const auto & mateEntry : sharedOpponentsField) {
+      int robot_id = mateEntry.first;
+      ss << robot_id << ": [";
+      for (const Eigen::Vector2d pos : mateEntry.second) {
+        ss << "[" << pos(0) << ", " << pos(1) << "], ";
+      }
+      ss << "],";
+    }
+    ss << "}";
+
+    mutex.lock();
+    sharedOpponents = ss.str();
+    mutex.unlock();
 }
         
 void LocalisationService::setBallWorld(const Eigen::Vector3d &pos,
@@ -827,6 +902,8 @@ bool LocalisationService::tick(double elapsed)
         updatePosSelf();
         updateBallPos();
         updateOpponentsPos();
+        updateMatesPos();
+        updateSharedOpponentsPos();
     }
 
     return true;

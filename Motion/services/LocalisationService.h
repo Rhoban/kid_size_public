@@ -62,6 +62,39 @@ class LocalisationService : public Service
         void updateOpponentsPos();
         void setOpponentsWorld(const std::vector<Eigen::Vector3d> &pos);
 
+        /// Update the string representing mates
+        void updateMatesPos();
+
+        /// Update the string representing shared_opponents
+        void updateSharedOpponentsPos();
+
+       /// Return a thread safe copy of the team mates positions by Id
+       std::map<int, Eigen::Vector3d> getTeamMatesField();
+
+       /// Update the given team mate, add it if it was not present before
+       void updateTeamMate(int id, const Eigen::Vector3d & poseInField);
+
+       /// Remove the mate from the list of localized mates if present
+       void removeTeamMate(int id);
+
+       /// robot_id is the robot providing the opponent Positions
+       void updateSharedOpponents(int robot_id,
+                                  const std::vector<Eigen::Vector2d> & opponentPos);
+
+       /// Remove all obstacles provided by this robot
+       void removeSharedOpponentProvider(int id);
+
+       /// Occupation of a teamMate for obstacle avoidance [m]
+       double teamMatesRadius;
+
+       /// Stored position of the team mates currently playing
+       /// values: (x[m], y[m], dir[rad])
+       std::map<int, Eigen::Vector3d>  teamMatesField;
+
+       /// Key: id of robot providing the information
+       /// Value: List of opponents currently seen by the robot
+       std::map<int, std::vector<Eigen::Vector2d>>  sharedOpponentsField;
+
         // Tell the localisation service we see the ball
         void setBallWorld(const Eigen::Vector3d &pos,
                           const Eigen::Vector3d &lookPos,
@@ -144,6 +177,8 @@ class LocalisationService : public Service
         float goalPosX, goalPosY, goalCap, goalLeftCap, goalRightCap;
         float fieldPosX, fieldPosY, fieldOrientation, fieldOrientationWorld;
         std::string opponents;
+        std::string mates;
+        std::string sharedOpponents;
 
         rhoban_geometry::Point worldToField(Eigen::Vector3d world);
         
