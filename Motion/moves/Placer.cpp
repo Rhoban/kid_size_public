@@ -256,6 +256,9 @@ void Placer::step(float elapsed)
     }
 
     if (avoidSharedOpponents) {
+      //TODO: before using this option, a mechanism should get rid of nearby
+      //shared opponents because there is a high risk that teammates see us as
+      //an obstacle
       for (const Eigen::Vector2d & opp :loc->getSharedOpponents()) {
         avoider.addObstacle(Point(opp(0), opp(1)), loc->opponentsRadius);
       }
