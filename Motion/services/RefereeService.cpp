@@ -87,6 +87,7 @@ bool RefereeService::tick(double elapsed)
             if (robot_id != id &&
                 team.getRobot(robot_id).getPenalty() != Constants::PENALTY_NONE) {
               loc->removeTeamMate(robot_id);
+              loc->removeSharedOpponentProvider(robot_id);
             }
           }
         }
