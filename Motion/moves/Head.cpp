@@ -380,7 +380,6 @@ void Head::updateScanners()
   scanner.setMinOverlap(min_overlap);
   scanner.setControlLaw(max_speed, max_acc);
   // Update localisation scanner
-  double loc_max_speed = loc_max_speed; 
   localize_scanner.setFOV(rad2deg(cam_params.widthAperture),
                           rad2deg(cam_params.heightAperture));
   localize_scanner.setMinTilt(localize_min_tilt);
