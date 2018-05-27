@@ -6,17 +6,12 @@
 #include <opencv2/opencv.hpp>
 #include "opencv2/core/core.hpp"
 #include "opencv2/features2d/features2d.hpp"
-// #include "opencv2/nonfree/features2d.hpp"
 #include "Features/nonfree/features2d.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 #include <string>
 #include <vector>
 #include <aruco.h> //FIXME annoying to include that juste to access the cameraparam struct
-
-#define SIFT_MODE 0
-#define BRISK_MODE 1
-
 
 namespace Vision {
 namespace Filters {
@@ -47,9 +42,7 @@ public:
   void cameraPoseFromHomography(const cv::Mat& H, cv::Mat& pose);
 
   void sanitizeCoordinates(const std::vector<cv::Point2f> &in, std::vector<cv::Point2f> &out);
-  void initBRISK();
   void initSIFT();
-  void matchBRISK(std::vector<cv::KeyPoint> &keypoints,  std::vector<cv::DMatch>& good_matches );
   void matchSIFT(std::vector<cv::KeyPoint> &keypoints,  std::vector<cv::DMatch>& good_matches );
 
   void updateField();
@@ -64,10 +57,6 @@ protected:
 
 
 private:
-
-  /// Currently enabled mode
-  int active_mode;
-
   /// Should we update the field
   int active_field;
 
@@ -76,16 +65,12 @@ private:
   cv::Ptr<cv::DescriptorExtractor> descriptor_extractor;
 
 
-  ParamFloat thresholdParam;
-  ParamFloat octavesParam;
-  ParamFloat patternScalesParam;
   ParamFloat nndrRatio;
   ParamFloat panoScale;
 
   ParamInt knn_K;
 
   ParamInt debugLevel;
-  ParamInt mode;
   ParamInt enabled;
 
   ParamInt fieldNumber;

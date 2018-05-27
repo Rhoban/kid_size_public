@@ -1,5 +1,5 @@
 set(SOURCES
-    brisk.cpp
+#    brisk.cpp
     agast/agast5_8.cc
     agast/agast5_8_nms.cc
     agast/agast7_12d.cc

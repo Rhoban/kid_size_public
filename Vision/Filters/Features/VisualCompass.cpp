@@ -1,9 +1,6 @@
 #include <stdexcept>
 #include "Filters/Features/VisualCompass.hpp"
 
-// Patched version of brisk cf. https://github.com/clemenscorny/brisk
-#include "Features/brisk/brisk.h"
-
 #include <opencv2/legacy/legacy.hpp>
 #include "rhoban_utils/timing/time_stamp.h"
 #include "Utils/RotatedRectUtils.hpp"
@@ -34,47 +31,11 @@ static rhoban_utils::Logger out("VisualCompass");
 namespace Vision {
 namespace Filters {
 
-VisualCompass::VisualCompass() : CompassProvider("VisualCompass"), active_mode(-1), active_field(-1) {
+VisualCompass::VisualCompass() : CompassProvider("VisualCompass"), active_field(-1) {
   CamParam.readFromXMLFile("camera_calib.yml");
   cameraparamsdone = false;
   prev_maskBelow=0;
   prev_maskAbove=1;
-}
-
-void VisualCompass::initBRISK() {
-  Benchmark::open("VisualCompass create BRISK");
-  // initialize algoritm
-  detector = new brisk::BriskFeatureDetector(thresholdParam, octavesParam);
-  descriptor_extractor = new brisk::BriskDescriptorExtractor();
-
-  // Matcher
-  // descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING); //Brute force
-  descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20, 10, 2));  // FLANN KNN FIXME params
-  // descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(12,20,2)); //FLANN KNN FIXME params
-  // //seems to be table_number, key_size, multi_probe_level
-
-  Benchmark::close("VisualCompass create BRISK");
-
-  // load the pano
-  Benchmark::open("VisualCompass init pano BRISK");
-
-  // Compute the features of the pano
-  detector->detect(field, keypoints_pano,field_mask);
-  descriptor_extractor->compute(field, keypoints_pano, descriptors_pano);
-  // flannIndex = new cv::flann::Index(descriptors_pano, cv::flann::LshIndexParams(12, 20, 2),
-  // cvflann::FLANN_DIST_HAMMING);
-
-  // flannIndex = new cv::flann::Index(descriptors_pano, cv::flann::LshIndexParams(20,12,2),
-  // cvflann::FLANN_DIST_HAMMING);
-  // flannIndex = new cv::flann::Index(descriptors_pano, cv::flann::LshIndexParams(20,12,2));
-
-  //???
-  // descriptorMatcher->add(descriptors_pano);
-  // descriptorMatcher->train();
-
-
-
-  Benchmark::close("VisualCompass init pano BRISK");
 }
 
 void VisualCompass::initSIFT() {
@@ -110,23 +71,12 @@ void VisualCompass::setParameters() {
   debugLevel = ParamInt(0, 0, 2);
   params()->define<ParamInt>("debugLevel", &debugLevel);
 
-  thresholdParam = ParamFloat(60, 0, 100);
-  params()->define<ParamFloat>("threshold", &thresholdParam);  // BRISK Threshold
-  octavesParam = ParamFloat(4, 0, 10);
-  params()->define<ParamFloat>("octaves", &octavesParam);  // BRISK (pyramid layer)
-
-  patternScalesParam = ParamFloat(1, 0, 10);
-  params()->define<ParamFloat>("patternScales", &patternScalesParam);  // BRISK ?? useless
-
   nndrRatio = ParamFloat(0.85, 0, 1);
   params()->define<ParamFloat>(
       "nndrRatio", &nndrRatio);  // Matching. Distance ratio for correct matching. Higher values=less restrictive match
 
   knn_K = ParamInt(2, 0, 10);
   params()->define<ParamInt>("knn_K", &knn_K);  // number of neigbors
-
-  mode = ParamInt(0, 0, 1);
-  params()->define<ParamInt>("mode", &mode);  // BRISK=1 or SIFT=0
 
   panoScale = ParamFloat(1, 0.1, 2);
   params()->define<ParamFloat>("panoScale", &panoScale);  // scale ratio for the pano img
@@ -303,103 +253,6 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
     }
 }
 
-void VisualCompass::matchBRISK(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::DMatch>& good_matches) {
-  cv::Mat descriptors;
-
-  // detection
-  Benchmark::open("VisualCompass BRISK detect");
-
-  detector->detect(img(), keypoints, img_mask);
-
-  Benchmark::close("VisualCompass BRISK detect");
-
-  // Compute features
-  Benchmark::open("VisualCompass BRISK compute");
-
-  descriptor_extractor->compute(img(), keypoints, descriptors);
-
-  Benchmark::close("VisualCompass BRISK compute");
-
-  // TODO debug level
-  if (debugLevel >= 2) {
-    Benchmark::open("VisualCompass BRISK draw");
-    cv::drawKeypoints(img(), keypoints, img());
-    Benchmark::close("VisualCompass BRISK draw");
-  }
-
-  // std::vector<cv::DMatch> matches;
-  std::vector<std::vector<cv::DMatch> > matches;
-
-  cv::Mat results, dists;
-
-  Benchmark::open("VisualCompass BRISK match");
-
-  // flannIndex->knnSearch(descriptors, results, dists, knn_K, cv::flann::SearchParams() );
-
-  // Don't know the difference...
-  descriptorMatcher->knnMatch(descriptors, descriptors_pano, matches, 2);
-  if (debugLevel >= 1) {
-    out.log("Matches: %d", matches.size());
-  }
-
-  Benchmark::close("VisualCompass BRISK match");
-
-  std::vector<cv::Point2f> pts_train;
-  std::vector<cv::Point2f> pts_query;
-
-  // matches2points(matches, keypoints_pano,keypoints, pts_train, pts_query,good_matches);
-
-  /*
-    std::vector<cv::Point2f> mpts_1, mpts_2; // Used for homography
-    std::vector<int> indexes_1, indexes_2; // Used for homography
-    std::vector<uchar> outlier_mask;  // Used for homography
-
-
-    for (int i = 0; i < dists.rows; i++)
-    {
-      if(results.at<int>(i,0) >= 0 && results.at<int>(i,1) >= 0 &&  dists.at<float>(i,0) <= nndrRatio *
-    dists.at<float>(i,1))
-      {
-        cv::DMatch dm(i,results.at<int>(i,0),dists.at<float>(i,0));
-        good_matches.push_back(dm);
-
-        //Useless now
-        mpts_1.push_back(keypoints.at(i).pt);
-        indexes_1.push_back(i);
-        mpts_2.push_back(keypoints_pano.at(results.at<int>(i,0)).pt);
-        indexes_2.push_back(results.at<int>(i,0));
-      }
-    }
-  */
-
-  for (int k = 0; k < (int)matches.size(); k++) {
-    if ((matches[k][0].distance < nndrRatio * (matches[k][1].distance)))  // &&
-    //  ((int)matches[k].size() <= 2 && (int)matches[k].size()>0) ) //TODO param
-    {
-      // take the first result only if its distance is smaller than 0.6*second_best_dist
-      // that means this descriptor is ignored if the second distance is bigger or of similar
-      good_matches.push_back(matches[k][0]);
-    }
-  }
-
-  if (debugLevel >= 1) {
-    out.log("Good matches: %d", good_matches.size());
-  }
-
-  cv::Mat img_goodmatches;
-
-  // if(good_matches.size()>0)
-  {
-    if (debugLevel >= 2) {
-      cv::drawMatches(img(), keypoints, field, keypoints_pano, good_matches, img_goodmatches, cv::Scalar(0, 0, 255),
-                      cv::Scalar(255, 0, 0), std::vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-      cv::resize(img_goodmatches, img_goodmatches, cv::Size(), 0.5, 0.5);
-      //cv::imshow("VisualCompass BRISK debug", img_goodmatches);
-      //////
-    }
-  }
-}
-
 void VisualCompass::process() {
   // First clean memory
   clearCompassData();
@@ -413,13 +266,8 @@ void VisualCompass::process() {
     shouldUpdate=true;
   }
 
-  if (active_mode != mode || shouldUpdate) {
-    if (mode == 0) {
-      initSIFT();
-    } else if (mode == 1) {
-      initBRISK();
-    }
-    active_mode = mode;
+  if (shouldUpdate) {
+    initSIFT();
   }
 
 
@@ -484,10 +332,7 @@ void VisualCompass::process() {
     std::vector<cv::KeyPoint> keypoints;
     std::vector<cv::DMatch> good_matches;
 
-    if (mode == 0)
-      matchSIFT(keypoints, good_matches);
-    else if (mode == 1)
-      matchBRISK(keypoints, good_matches);
+    matchSIFT(keypoints, good_matches);
 
     if (good_matches.size() > 0) {
       Benchmark::open("VisualCompass compute angle");
