@@ -114,7 +114,7 @@ void Robocup::applyGameState()
         logger.log("Jumping to Placing Phase");
         // If we were previously in initial state, reset particle filters
         if (state == STATE_INITIAL) {
-            double locationNoise = 30;
+            double locationNoise = 0.3;
             double azimuthNoise = 10;
             loc->customFieldReset(autoStartX, autoStartY, locationNoise,
                                   autoStartAzimuth, azimuthNoise);
