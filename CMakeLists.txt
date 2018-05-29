@@ -121,6 +121,7 @@ if (BUILD_KID_SIZE_VISION)
     Vision/Filters/Custom
     Vision/Filters/Features
     Vision/Filters/Goal
+    Vision/Filters/Obstacles
     Vision/Filters/Patches
     Vision/Filters/Source
     Vision/Features

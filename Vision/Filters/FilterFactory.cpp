@@ -6,6 +6,7 @@
 #include "Custom/CustomFactory.hpp"
 #include "Features/FeaturesFactory.hpp"
 #include "Goal/GoalFactory.hpp"
+#include "Obstacles/ObstacleFactory.hpp"
 #include "Patches/PatchFactory.hpp"
 #include "Source/SourceFactory.hpp"
 
@@ -23,6 +24,7 @@ FilterFactory::FilterFactory() {
   registerCustomFilters(this);
   registerFeaturesFilters(this);
   registerGoalFilters(this);
+  registerObstacleFilters(this);
   registerPatchFilters(this);
   registerSourceFilters(this);
 }
