@@ -428,8 +428,10 @@ void Head::applyProtection()
     }
     Move::setAngle("head_pitch", tilt_deg);
     setTorqueLimit("head_pitch", 0.5);
+    setTorqueLimit("head_yaw", 0.5);
   } else if ( fall_status == FallStatus::Fallen) {
     setTorqueLimit("head_pitch", 0.0);
+    setTorqueLimit("head_yaw", 0.0);
   }
-  Move::setAngle("head_yaw"  , pan_deg );
+  Move::setAngle("head_yaw"  , 0);
 }
