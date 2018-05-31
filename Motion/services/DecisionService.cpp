@@ -98,6 +98,10 @@ DecisionService::DecisionService()
         ->comment("Is the robot handled?")
         ->defaultValue(false);
 
+    bind.bindNew("handledDelay", handledDelay)
+        ->comment("Time before robot goes to `handled` state")
+        ->defaultValue(0.5);
+
     // Freeze the kick
     bind.bindNew("freezeKick", freezeKick, RhIO::Bind::PushOnly)
         ->comment("Freezing the kick")->defaultValue(false);
@@ -305,7 +309,7 @@ bool DecisionService::tick(double elapsed)
         // Detecting robot handling
         if (!isFallen && getPressureWeight() < lowPressureThreshold) {
             handledT += elapsed;
-            if (handledT > 0.5) {
+            if (handledT > handledDelay) {
                 handled = true;
             }
         } else {

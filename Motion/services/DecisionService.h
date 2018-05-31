@@ -168,5 +168,9 @@ class DecisionService : public Service
 
         /// When has ball been flagged as moving for the last time
         rhoban_utils::TimeStamp lastBallMoving;
+
+        /// In order for a robot to be considered as handled, it has to see a
+        /// pressure inferior to lowPressureThreshold for more than handledDelay
+        double handledDelay;
 };
 
