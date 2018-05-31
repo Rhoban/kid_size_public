@@ -295,7 +295,8 @@ bool Head::shouldTrackBall()
   // For some cases, tracking is forced to stay active
   if (force_track ||
       ball_dist < force_track_dist ||
-      getServices()->decision->isBallMoving) {
+      getServices()->decision->isBallMoving||
+      getServices()->decision->isMateKicking) {
     return true;
   }
 
