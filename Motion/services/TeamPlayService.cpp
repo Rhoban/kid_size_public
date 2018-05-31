@@ -15,8 +15,8 @@ using namespace rhoban_utils;
 using namespace rhoban_geometry;
 using namespace rhoban_team_play;
 
-TeamPlayService::TeamPlayService() : 
-    _bind(nullptr), 
+TeamPlayService::TeamPlayService() :
+    _bind(nullptr),
     _broadcaster(nullptr),
     _selfInfo(),
     _allInfo(),
@@ -32,13 +32,6 @@ TeamPlayService::TeamPlayService() :
     _bind->bindNew("broadcastPeriod", _broadcastPeriod, RhIO::Bind::PullOnly)
         ->comment("UDP broadcast period in seconds")
         ->defaultValue(0.3)->persisted(true);
-// TODO: solve issue with RhIO and enums
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-    _bind->bindNew("priority", (int&)_selfInfo.priority, RhIO::Bind::PullOnly)
-        ->comment("0: low; 1: normal; 2: high Priority")
-        ->defaultValue(1)->persisted(true);
-#pragma GCC diagnostic pop
     _bind->bindFunc("team", "Display information about teamplay",
         &TeamPlayService::cmdTeam, *this);
     _bind->bindNew("teamRadius", teamRadius)
@@ -54,13 +47,12 @@ TeamPlayService::TeamPlayService() :
         ->persisted(true);
 
     //Initialize UDP communication
-    _broadcaster = new rhoban_utils::UDPBroadcast(27645, 27645);
+    _broadcaster = new rhoban_utils::UDPBroadcast(28645, 28645);
     _t = 0;
 
     //Initialize self info
     _selfInfo.id = 0;
-    _selfInfo.state = Inactive;
-    _selfInfo.priority = NormalPriority;
+    _selfInfo.state = Unknown;
     _selfInfo.ballX = 0.0;
     _selfInfo.ballY = 0.0;
     _selfInfo.ballQ = 0.0;
@@ -88,7 +80,7 @@ int TeamPlayService::myId()
 {
     return Helpers::getServices()->referee->id;
 }
-        
+
 const TeamPlayInfo& TeamPlayService::selfInfo() const
 {
     return _selfInfo;
@@ -97,12 +89,12 @@ TeamPlayInfo& TeamPlayService::selfInfo()
 {
     return _selfInfo;
 }
-        
+
 const std::map<int, TeamPlayInfo>& TeamPlayService::allInfo() const
 {
     return _allInfo;
 }
-        
+
 TeamPlayState TeamPlayService::myRole()
 {
     std::map<int, TeamPlayInfo> robots;
@@ -111,7 +103,7 @@ TeamPlayState TeamPlayService::myRole()
     auto referee =  Helpers::getServices()->referee;
     for (auto &entry : _allInfo) {
         auto info = entry.second;
-        if ((info.state == PlacingA || info.state == PlacingB || 
+        if ((info.state == PlacingA || info.state == PlacingB ||
              info.state == PlacingC || info.state == PlacingD)
                 && !info.isOutdated()
                 && !referee->isPenalized(info.id)) {
@@ -227,6 +219,11 @@ bool TeamPlayService::tick(double elapsed)
     return true;
 }
 
+bool TeamPlayService::isEnabled()
+{
+    return _isEnabled;    
+}
+
 void TeamPlayService::messageSend()
 {
     _selfInfo.id = myId();
@@ -256,19 +253,19 @@ void TeamPlayService::messageSend()
         _selfInfo.fieldOk = decision->isFieldQualityGood;
         //Playing state
         strncpy(
-            _selfInfo.stateReferee, 
+            _selfInfo.stateReferee,
             RhIO::Root.getStr("referee/state").c_str(),
             sizeof(_selfInfo.stateReferee));
         strncpy(
-            _selfInfo.stateRobocup, 
+            _selfInfo.stateRobocup,
             RhIO::Root.getStr("moves/robocup/state").c_str(),
             sizeof(_selfInfo.stateRobocup));
         strncpy(
-            _selfInfo.statePlaying, 
+            _selfInfo.statePlaying,
             RhIO::Root.getStr("moves/playing/state").c_str(),
             sizeof(_selfInfo.statePlaying));
         strncpy(
-            _selfInfo.stateSearch, 
+            _selfInfo.stateSearch,
             RhIO::Root.getStr("moves/search/state").c_str(),
             sizeof(_selfInfo.stateSearch));
         strncpy(
@@ -335,6 +332,8 @@ std::string TeamPlayService::cmdTeam()
             ss << "- Is handling the ball" << std::endl;
         } else if (info.state == Playing) {
             ss << "- Is playing" << std::endl;
+        } else if (info.state == Unknown) {
+            ss << "- Unknown" << std::endl;
         } else if (info.state == Inactive) {
             ss << "- Is not active" << std::endl;
         } else if (info.state == PlacingA) {
@@ -348,10 +347,10 @@ std::string TeamPlayService::cmdTeam()
         } else {
             ss << "- Unknown state (?)" << std::endl;
         }
-        ss << "- Ball distance: " << info.getBallDistance() 
-            << ", X=" << info.ballX << " Y=" << info.ballY 
+        ss << "- Ball distance: " << info.getBallDistance()
+            << ", X=" << info.ballX << " Y=" << info.ballY
             << ", quality: " << info.ballQ << std::endl;
-        ss << "- Field X: " << info.fieldX << ", Y: " << info.fieldY 
+        ss << "- Field X: " << info.fieldX << ", Y: " << info.fieldY
             << ", quality: " << info.fieldQ << std::endl;
         ss << "- State Referee: " << info.stateReferee << std::endl;
         ss << "- State RoboCup: " << info.stateRobocup << std::endl;
@@ -363,9 +362,3 @@ std::string TeamPlayService::cmdTeam()
 
     return ss.str();
 }
-
-TeamPlayPriority TeamPlayService::myPriority()
-{
-    return selfInfo().priority;
-}
-

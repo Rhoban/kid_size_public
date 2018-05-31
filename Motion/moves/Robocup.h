@@ -2,6 +2,7 @@
 
 #include "STM.h"
 #include <string>
+#include <services/TeamPlayService.h>
 
 class Placer;
 class StandUp;
@@ -49,4 +50,6 @@ class Robocup : public STM
 
         void enterState(std::string state);
         void exitState(std::string state);
+        
+        void setTeamPlayState(rhoban_team_play::TeamPlayState state);
 };

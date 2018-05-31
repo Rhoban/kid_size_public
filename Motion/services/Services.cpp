@@ -9,6 +9,7 @@
 #include "DecisionService.h"
 #include "MaintenanceService.h"
 #include "StrategyService.h"
+#include "CaptainService.h"
 
 Services::Services(MoveScheduler* scheduler) : 
     _scheduler(scheduler)
@@ -32,6 +33,8 @@ Services::Services(MoveScheduler* scheduler) :
     add("maintenance", maintenance);
     strategy = new StrategyService;
     add("strategy", strategy);
+    captain = new CaptainService;
+    add("captain", captain);
 }
 
 Services::~Services()

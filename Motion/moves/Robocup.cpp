@@ -6,6 +6,7 @@
 #include <services/LocalisationService.h>
 #include <services/DecisionService.h>
 #include <scheduler/MoveScheduler.h>
+#include <services/CaptainService.h>
 #include "StandUp.h"
 #include "Head.h"
 #include "Walk.h"
@@ -24,6 +25,7 @@
 static rhoban_utils::Logger logger("RobocupSTM");
 
 using namespace rhoban_geometry;
+using namespace rhoban_team_play;
 
 Robocup::Robocup(Walk *walk, StandUp *standup, Placer *placer)
     : walk(walk), standup(standup), placer(placer)
@@ -77,6 +79,7 @@ std::string Robocup::getName()
 void Robocup::onStart()
 {
     bind->pull();
+    
     standup_try = 0;
     setState(STATE_WAITING);
     startMove("head", 0.5);
@@ -84,12 +87,16 @@ void Robocup::onStart()
     rememberStart = false;
     wasHandled = true;
     walk->control(false);
+    
+    setTeamPlayState(Inactive);
 }
 
 void Robocup::onStop()
 {
     stopMove("head");
     setState(STATE_STOPPING);
+    
+    setTeamPlayState(Unknown);
 }
 
 void Robocup::applyGameState()
@@ -264,6 +271,12 @@ void Robocup::step(float elapsed)
     if (state == STATE_PLACING) {
         if (decision->handled) {
             setState(STATE_WAITING);
+        } else {
+            // Forwarding the captain order to the target
+            auto captain = getServices()->captain;
+            auto instruction = captain->getInstruction();
+            placer->goTo(instruction.targetPosition.x, instruction.targetPosition.y, 
+                instruction.targetOrientation); 
         }
     }
 
@@ -348,21 +361,7 @@ void Robocup::enterState(std::string state)
 
     if (state == STATE_PLACING) {
         startMove("placer");
-        double targetX, targetY;
-        std::vector<Circle> obstacles;
-        // Special for freeKicker
-        if (freeKicker && referee->myTeamKickOff() && !referee->isDroppedBall()) {
-            targetX = freeKickX;
-            targetY = freeKickY;
-        }
-        // Classic Target
-        else {
-            targetX = autoTargetX;
-            targetY = autoTargetY;
-            obstacles.push_back(Circle(Point(0, 0), 1.2));
-        }
-        logger.log("Placing to x: %f y: %f", targetX, targetY);
-        placer->goTo(targetX, targetY, 0, obstacles);
+        logger.log("Starting placer");
     }
 }
 
@@ -409,4 +408,9 @@ void Robocup::exitState(std::string state)
             stopMove("playing", 0.0);
         }
     }
+}
+
+void Robocup::setTeamPlayState(TeamPlayState state)
+{
+    getServices()->teamPlay->selfInfo().state = state;
 }

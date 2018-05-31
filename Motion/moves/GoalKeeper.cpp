@@ -52,8 +52,8 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
       ->comment("yAttack hysteresis (value added to yAttack) [m]")
       ->defaultValue(0.15);
 
-  
-  
+
+
   bind->bindNew("homeX", homeX, RhIO::Bind::PullOnly)
       ->comment("Distance to goal line in meters")
       ->defaultValue(0.5);
@@ -61,32 +61,32 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
   bind->bindNew("maxHomeDistance", maxHomeDistance, RhIO::Bind::PullOnly)
       ->comment("Distance to home position acceptable to wait (in front of homeX line) [m]")
       ->defaultValue(0.3);
-  
+
   bind->bindNew("maxHomeDistanceHys", maxHomeDistanceHys, RhIO::Bind::PullOnly)
       ->comment("Distance to home position acceptable to wait (in front of homeX line) hysteresis [m]")
       ->defaultValue(0.1);
-  
+
   bind->bindNew("nextStateSize", nextStateSize, RhIO::Bind::PullOnly)
     ->comment("length of the buffer used to smooth next state change")
     ->defaultValue(5);
-  
+
   //bind->bindNew("isPlacing", isPlacing, RhIO::Bind::PushOnly)
   //    ->comment("Is the robot performing an accurate placement")
   //    ->defaultValue(false)
   //    ->persisted(true);
-  
+
   bind->bindNew("xIgnoreBall", xIgnoreBall, RhIO::Bind::PullOnly)
       ->comment("Ignore ball if ball is out of xIgnoreBall position [m]")
       ->defaultValue(3.5);
   bind->bindNew("xIgnoreBallHys", xIgnoreBallHys, RhIO::Bind::PullOnly)
       ->comment("xIgnoreBallHys Hys position [m]")
       ->defaultValue(0.5);
-  
+
   bind->bindNew("alignTolerance", alignTolerance, RhIO::Bind::PullOnly)
       ->comment("consider is align is distance with optimal point is below"
                 " this value (is added to placer tolerance) [deg]")
       ->defaultValue(10);
-  
+
   bind->bindNew("maxShootDist", maxShootDist, RhIO::Bind::PullOnly)
       ->comment("adversary maximum shoot distance [m]")
       ->defaultValue(2);
@@ -115,7 +115,7 @@ void GoalKeeper::onStart() {
   setState(STATE_STARTWAIT);
   nextState.resize(nextStateSize);
   nextStateIndice=0;
-  RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);  
+  RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);
   RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);
   auto loc = getServices()->localisation;
   loc->isGoalKeeper(true);
@@ -145,13 +145,9 @@ void GoalKeeper::onStop() {
   stopMove("clearing_kick_controler", 0.0);
   //loc->enableFieldFilter(true);
   setState(STATE_STOP);
-  RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);  
+  RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);
   RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);
-  RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.02); 
-}
-
-void GoalKeeper::setTeamPlayPriority(TeamPlayPriority priority) {
-  getServices()->teamPlay->selfInfo().priority = priority;
+  RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.02);
 }
 
 TeamPlayState GoalKeeper::teamState() {
@@ -172,7 +168,7 @@ bool GoalKeeper::ballInZone(float xd, float yd) {
   return decision->isBallQualityGood && ball.x < lineX && fabs(ball.y) < lineY;
 }
 
-bool GoalKeeper::ballInAttackZone() {  
+bool GoalKeeper::ballInAttackZone() {
   auto loc = getServices()->localisation;
   auto pos = loc->getFieldPos();
   auto ball = loc->getBallPosField();
@@ -187,7 +183,7 @@ bool GoalKeeper::ignoreBall() {
   auto loc = getServices()->localisation;
   auto ball = loc->getBallPosField();
   auto decision = getServices()->decision;
-  
+
   return !(decision->isBallQualityGood && (ball.x < (-Constants::field.fieldLength/2 + xIgnoreBall)));
 }
 
@@ -223,7 +219,7 @@ Point GoalKeeper::shootLineCenter(){
   return Point(-Constants::field.fieldLength/2.0f,(up+down)/2.0f);
 }
 
-bool GoalKeeper::isNearHome(){  
+bool GoalKeeper::isNearHome(){
     auto loc = getServices()->localisation;
     auto pos = loc->getFieldPos();
     //logger.log("is Near Home ?  %f > %f && %f <= %f  >>> %d ",pos.x , (-(Constants::field.fieldLength/2)+homeX) , distToHome , maxHomeDistance,(((pos.x > (-(Constants::field.fieldLength/2)+homeX)) && (distToHome<=maxHomeDistance))));
@@ -234,7 +230,7 @@ bool GoalKeeper::isNearHome(){
 	     );
 }
 
-bool GoalKeeper::isNearHomeHys(){  
+bool GoalKeeper::isNearHomeHys(){
     auto loc = getServices()->localisation;
     auto pos = loc->getFieldPos();
 
@@ -267,7 +263,7 @@ Point GoalKeeper::getAlignPoint(const Point &ref,float &theta){
     return securePoint(ref);
   }
 
-  
+
   float a=-Constants::field.fieldLength/2+homeX;
   float b=-Constants::field.fieldLength/2+homeX+maxHomeDistance;
   float x=pos.x;
@@ -356,19 +352,19 @@ void GoalKeeper::step(float elapsed) {
 
   /*
   if (neverWalked)
-    loc->enableFieldFilter(false);    
+    loc->enableFieldFilter(false);
   else
     loc->enableFieldFilter(true);
   */
   // TODO Unknown difference between the 2 rolls
   setAngle("left_shoulder_roll", 25);
-  setAngle("right_shoulder_roll", -21);  
-  
-  if (state==STATE_STOP){    
+  setAngle("right_shoulder_roll", -21);
+
+  if (state==STATE_STOP){
     RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.095);
     if (t>0.8){
-      RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", false);  
-      RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", false);      
+      RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", false);
+      RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", false);
     }
   } else {
     float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
@@ -377,7 +373,7 @@ void GoalKeeper::step(float elapsed) {
       RhIO::Root.setFloat("/moves/walk/trunkZOffset", z);
     }
   }
-  
+
   // first, attack ball if necessary
   if (ballInAttackZone() && decision->isBallQualityGood){
     if (state!=STATE_ATTACK){
@@ -386,7 +382,7 @@ void GoalKeeper::step(float elapsed) {
     }
     return;
   }
-  
+
   if ((state==STATE_ATTACK) && (ballInAttackZoneHysteresis())){
     //logger.log("step: ball is in attack zone (hyst) =>  leave attack!");
     //setState(STATE_ATTACK); // stay in attack
@@ -398,10 +394,10 @@ void GoalKeeper::step(float elapsed) {
     bufferedSetState(STATE_STOP);
     return;
   }
-  
-  // not in attack mode  
+
+  // not in attack mode
   if (ignoreBall()){ // ball is not visible or out
-    if (state==STATE_GOHOME){      
+    if (state==STATE_GOHOME){
       if (placer->arrived){
         logger.log("step: arrived to home : stop!");
         bufferedSetState(STATE_STOP);
@@ -433,29 +429,28 @@ void GoalKeeper::step(float elapsed) {
 
     }
   }
- 
+
   bind->push();
 }
 
 void GoalKeeper::enterState(std::string state) {
   bind->pull();
   auto &strategy = getServices()->strategy;
-  setTeamPlayPriority(NormalPriority);
   t = 0.0;
   // This seems to break the whole localisation system. Maybe since the
   // separation loc/vision? TODO: check this
   // auto loc = getServices()->localisation;
   // loc->enableFieldFilter(state != STATE_PLACE && placer->arrived);
 
-  
+
   logger.log("ENTER STATE %s ",state.c_str());
-  
+
   if (state==STATE_GOHOME){
     placer->goTo(home().x , home().y , 0);
     if ((neverWalked==true) && (placedByHand==false)){
       placer->setDirectMode(true);
     } else{
-      placer->setDirectMode(false);      
+      placer->setDirectMode(false);
     }
     auto loc = getServices()->localisation;
     auto pos = loc->getFieldPos();
@@ -473,7 +468,7 @@ void GoalKeeper::enterState(std::string state) {
     //placer->setTemporaryMarginAzimuth(5);
     placer->setDirectMode(false);
     startMove("placer",0.0);
-  }  else if (state==STATE_STOP){    
+  }  else if (state==STATE_STOP){
     RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
     neverWalked=false;
   }
@@ -502,14 +497,14 @@ void GoalKeeper::exitState(std::string state) {
     placer->setDirectMode(true);
     //placer->restoreMarginAzimuth();
   } else if (state==STATE_STOP){
-    setAngle("left_shoulder_roll", 0);    
+    setAngle("left_shoulder_roll", 0);
     setAngle("right_shoulder_roll", 0);
-    RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);  
-    RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);  
-    //RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.02);   
-    RhIO::Root.setFloat("/moves/walk/elbowOffset", -175);  
+    RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);
+    RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);
+    //RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.02);
+    RhIO::Root.setFloat("/moves/walk/elbowOffset", -175);
   } else if (state==STATE_ATTACK){
-    auto &strategy = getServices()->strategy;    
+    auto &strategy = getServices()->strategy;
     stopMove(strategy->getDefaultApproach(), 0.0);
     stopMove("clearing_kick_controler", 0.0);
   }

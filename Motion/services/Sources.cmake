@@ -9,5 +9,6 @@ set (SOURCES
     DecisionService.cpp
     MaintenanceService.cpp
     StrategyService.cpp
+    CaptainService.cpp
 )
 

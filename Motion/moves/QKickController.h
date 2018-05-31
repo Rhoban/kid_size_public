@@ -37,7 +37,7 @@ protected:
 
   // Avoid the opponents ?
   bool avoidOpponents;
-        
+
   // The collection of available kicks
   csa_mdp::KickModelCollection kmc;
 

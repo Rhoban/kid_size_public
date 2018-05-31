@@ -52,7 +52,13 @@ class TeamPlayService : public Service
         bool tick(double elapsed);
 
         /**
+         * Is team play enabled ?
+         */
+        bool isEnabled();
+        
+        /**
          * Should I attack?
+         * XXX Captain: this should be removed once captain is implemented
          */
         rhoban_team_play::TeamPlayState myRole();
  
@@ -65,11 +71,6 @@ class TeamPlayService : public Service
          * Extra radius for the referee
          */
         double refereeRadius;
-
-        /**
-         * My priority
-         */
-        rhoban_team_play::TeamPlayPriority myPriority();
         
     private:
 

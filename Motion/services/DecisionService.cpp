@@ -80,7 +80,7 @@ DecisionService::DecisionService()
         ->comment("Share smoothing")->defaultValue(0.99)->persisted(true);
     bind.bindNew("fakeTeamDecisions", fakeTeamDecisions, RhIO::Bind::PullOnly)
         ->defaultValue(false)->persisted(true);
-    
+
     // Shared ball position
     bind.bindNew("shareX", shareX)->defaultValue(4.5);
     bind.bindNew("shareY", shareY)->defaultValue(3);
@@ -105,11 +105,11 @@ DecisionService::DecisionService()
     // Cooperation
     bind.bindNew("cooperation", cooperation, RhIO::Bind::PullOnly)
         ->comment("Enabling the cooperation with team")->defaultValue(true)->persisted(true);
-    
+
     // Who is the goal ?
     bind.bindNew("goalId", goalId, RhIO::Bind::PullOnly)
         ->comment("Id of the goal")->defaultValue(2);
-    
+
     selfAttackingT = 0;
     freeKickT = 99;
     handledT = 0;
@@ -122,17 +122,14 @@ bool DecisionService::shouldLetTeamPlay(float ballDistance)
 {
     auto teamPlay = getServices()->teamPlay;
     int me = teamPlay->myId();
-    int priority = teamPlay->myPriority();
     for (auto entry : teamPlay->allInfo()) {
         auto info = entry.second;
-        if (info.id != me && !info.isOutdated() && info.state == BallHandling && 
-                (info.priority > priority || (info.priority == priority && 
-                            info.getBallDistance() < ballDistance))) {
+        if (info.id != me && !info.isOutdated() && info.state == BallHandling &&
+            info.getBallDistance() < ballDistance) {
             return true;
         }
     }
     return false;
-
 }
 
 bool DecisionService::tick(double elapsed)
@@ -144,15 +141,18 @@ bool DecisionService::tick(double elapsed)
     // Should we let the other players play?
     auto ballPos = loc->getBallPosSelf();
     float ballDistance = ballPos.getLength();
-    bool shouldLetPlayTeamTMP = shouldLetTeamPlay(ballDistance);
     
+    /// XXX Captain: this should be removed once captain is implemented
+    /// Indeed, this should be decided by the captain instead of each robots
+    bool shouldLetPlayTeamTMP = shouldLetTeamPlay(ballDistance);
+
     if (isBallQualityGood) {
         lastSeenBallRight = (ballPos.y > 0);
     }
 
     // Computing the radius
     letPlayRadius = 0;
-    
+
     if (shouldLetPlayTeam) {
         letPlayRadius = teamPlay->teamRadius;
     }
@@ -203,7 +203,9 @@ bool DecisionService::tick(double elapsed)
     float bestDist = -1;
     iAmTheNearest = isBallQualityGood;
 
-
+    // XXX Captain: this should be removed once captain is implemented
+    //              This is quite outdated anyway
+    // 
     // Ball sharing is enabled, we are well localized on the field
     if (!isFallen && enableShare && isFieldQualityGood) {
         auto infos = teamPlay->allInfo();
@@ -219,7 +221,7 @@ bool DecisionService::tick(double elapsed)
                     if (dist < ballDistance) {
                         iAmTheNearest = false;
                     }
-                    
+
                     if (dist < 3 && (bestDist < 0 || dist < bestDist)) {
                         // We use the shared ball that is known to be nearest from
                         // the broadcaster robot
@@ -283,7 +285,7 @@ bool DecisionService::tick(double elapsed)
           // Computing fallStatus
           if (max_imu_angle < threshold_fallen) {
             fallStatus = FallStatus::Falling;
-          } else { 
+          } else {
             fallStatus = FallStatus::Fallen;
           }
           // Computing fallDirection
@@ -334,7 +336,7 @@ bool DecisionService::tick(double elapsed)
     isBallMoving  = tmpIsBallMoving;
     isMateKicking = tmpIsMateKicking;
 
-        
+
     bind.push();
 
     return true;

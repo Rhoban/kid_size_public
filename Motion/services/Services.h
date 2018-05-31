@@ -15,6 +15,7 @@ class TeamPlayService;
 class DecisionService;
 class MaintenanceService;
 class StrategyService;
+class CaptainService;
 
 /**
  * Services
@@ -55,6 +56,7 @@ class Services
         DecisionService *decision;
         MaintenanceService *maintenance;
         StrategyService *strategy;
+        CaptainService *captain;
 
     private:
 

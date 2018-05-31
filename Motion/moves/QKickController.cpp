@@ -87,6 +87,7 @@ void QKickController::updateAction()
         return;
     }
 
+    // XXX Captain: this should be removed once captain is implemented
     if (avoidOpponents) {
         auto opponentsPos = loc->getOpponentsField();
 
