@@ -27,7 +27,6 @@ std::map<int, ArucoTag> TagsSheet::getMarkers() const
     Eigen::Vector3d marker_center = sheet_center + coeffX * dx + coeffY * dy;
     markers[marker_id] = ArucoTag(marker_id, marker_size, marker_center,
                                   dx.normalized(), dy.normalized());
-    std::cout << "Tag [" << marker_id << "]: " << marker_center.transpose() << std::endl;
   }
   return markers;
 }
