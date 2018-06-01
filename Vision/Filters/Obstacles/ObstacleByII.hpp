@@ -93,6 +93,9 @@ private:
   /// Boundary width: boundaryWidthRatio * width * widthScale
   ParamFloat boundaryWidthRatio;
 
+  /// Boundary width: boundaryHeightRatio * width * widthScale
+  ParamFloat boundaryHeightRatio;
+
 
   /// Size of the ROI: roiRatio * width * widthScale (rectangle 1:2, centered)
   /// Allows to provide ROI largers than the area used for getting the score

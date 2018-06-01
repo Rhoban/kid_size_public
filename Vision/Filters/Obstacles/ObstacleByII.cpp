@@ -39,7 +39,8 @@ void ObstacleByII::setParameters() {
   belowCoeff = ParamFloat(1.0,0.0,10.0);
   sideCoeff  = ParamFloat(1.0,0.0,10.0);
   boundaryWidthRatio = ParamFloat(3.0,1.0,5.0);
-  minWidth = ParamFloat(2.0,0.5,20.0);
+  boundaryHeightRatio = ParamFloat(0.8,0.2,2.0);
+  minWidth = ParamFloat(2.0,0.5,100.0);
   minScore = ParamFloat(127.0,0.0,255.);
   maxRois = ParamInt(6,1,100);
   decimationRate = ParamInt(4,1,20);
@@ -52,6 +53,7 @@ void ObstacleByII::setParameters() {
   params()->define<ParamFloat>("belowCoeff", &belowCoeff);
   params()->define<ParamFloat>("sideCoeff" , &sideCoeff );
   params()->define<ParamFloat>("boundaryWidthRatio", &boundaryWidthRatio);
+  params()->define<ParamFloat>("boundaryHeightRatio", &boundaryHeightRatio);
   params()->define<ParamFloat>("minWidth", &minWidth);
   params()->define<ParamFloat>("minScore", &minScore);
   params()->define<ParamInt>("maxRois", &maxRois);
@@ -87,8 +89,6 @@ void ObstacleByII::process() {
   double imgMaxScore = 0;
 
   const cv::Size & srcSize = greenII.size();
-
-  double frameMinWidth = minWidth;
 
   Benchmark::open("computing decimated scores");
   // Computing score matrix and ROI at once
@@ -342,12 +342,11 @@ cv::Rect_<float> ObstacleByII::getBelowPatch(int x, int y, float width)
 cv::Rect_<float> ObstacleByII::getBoundaryPatch(int x, int y, float width)
 {
   float half_width = width * widthScale * boundaryWidthRatio / 2.0;
-  float above = width * widthScale * aboveRatio;
-  float below = width * widthScale * belowRatio;
+  float half_height = width * widthScale * boundaryHeightRatio / 2.0;
   // Creating inner patch
   cv::Point2f center(x,y);
-  return cv::Rect_<float>(center - cv::Point2f(half_width, above),
-                          center + cv::Point2f(half_width, below));
+  return cv::Rect_<float>(center - cv::Point2f(half_width, half_height),
+                          center + cv::Point2f(half_width, half_height));
 }
 
 cv::Rect_<float> ObstacleByII::getROIPatch(int x, int y, float width)
