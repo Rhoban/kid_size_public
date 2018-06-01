@@ -85,7 +85,6 @@ DecisionService::DecisionService()
 
     // Is the ball shared?
     bind.bindNew("ballIsShared", ballIsShared)->defaultValue(false);
-    bind.bindNew("iAmTheNearest", iAmTheNearest)->defaultValue(false);
 
     // Pressure and handling
     bind.bindNew("lowPressureThreshold", lowPressureThreshold, RhIO::Bind::PullOnly)
@@ -176,7 +175,6 @@ bool DecisionService::tick(double elapsed)
     bool ballWasShared = ballIsShared;
     ballIsShared = false;
     float bestDist = -1;
-    iAmTheNearest = isBallQualityGood;
 
     // XXX Captain: this should be removed once captain is implemented
     //              This is quite outdated anyway
@@ -192,10 +190,6 @@ bool DecisionService::tick(double elapsed)
                 if (info.fieldOk && info.ballOk && info.state != Inactive) {
                     // This player sees the ball and is well localized
                     float dist = sqrt(pow(info.ballX, 2) + pow(info.ballY, 2));
-
-                    if (dist < ballDistance) {
-                        iAmTheNearest = false;
-                    }
 
                     if (dist < 3 && (bestDist < 0 || dist < bestDist)) {
                         // We use the shared ball that is known to be nearest from

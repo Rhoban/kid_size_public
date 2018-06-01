@@ -68,12 +68,6 @@ class DecisionService : public Service
          * Should we go for the shared ball?
          */
         bool ballIsShared;
-
-        /**
-         * Am I the nearest robot to the ball ?
-         * XXX: Since captain, this could be removed
-         */
-        bool iAmTheNearest;
         
         /**
          * Position of the shared ball
