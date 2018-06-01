@@ -55,12 +55,12 @@ public:
     /**
      * Returns the captain ID
      */
-    int captainId();
+    int findCaptainId();
     
     /**
      * Am I the captain ?
      */
-    bool IAmCaptain();
+    bool amICaptain();
     
     /**
      * Getting captain info
@@ -75,6 +75,8 @@ public:
 protected:
     // RhIO binding
     RhIO::Bind bind;
+    int captainId;
+    bool IAmCaptain;
     
     // Captain configuration
     Config config;

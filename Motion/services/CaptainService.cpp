@@ -91,6 +91,9 @@ CaptainService::CaptainService()
         ->defaultValue(0.75)->minimum(0.0)->maximum(1.0)
         ->comment("Is the placing aggressive ore defensive?");
     
+    bind.bindNew("captainId", captainId, RhIO::Bind::PushOnly);
+    bind.bindNew("IAmCaptain", IAmCaptain, RhIO::Bind::PushOnly);
+    
     // Creating UDP broadcaster
     _broadcaster = new rhoban_utils::UDPBroadcast(28646, 28646);
 }
@@ -105,7 +108,7 @@ CaptainService::~CaptainService()
     }
 }
 
-int CaptainService::captainId()
+int CaptainService::findCaptainId()
 {
     auto referee = getServices()->referee;
     auto teamPlay = getServices()->teamPlay;
@@ -124,11 +127,11 @@ int CaptainService::captainId()
     return teamPlay->myId();
 }
 
-bool CaptainService::IAmCaptain()
+bool CaptainService::amICaptain()
 {
     auto teamPlay = getServices()->teamPlay;
     
-    return captainId() == teamPlay->myId();
+    return findCaptainId() == teamPlay->myId();
 }
 
 rhoban_team_play::CaptainInfo CaptainService::getInfo()
@@ -168,7 +171,7 @@ void CaptainService::setSolution(PlacementOptimizer::Solution solution)
         info.robotTarget[robot-1][1] = target.position.y;
         info.robotTarget[robot-1][2] = target.orientation;
         info.order[robot-1] = rhoban_team_play::CaptainOrder::Place;
-        // std::cout << "CAPTAIN: Robot #" << robot << " should go to " << target.position.x << ", " << target.position.y << std::endl;
+        std::cout << "CAPTAIN: Robot #" << robot << " should go to " << target.position.x << ", " << target.position.y << std::endl;
     }    
 }
 
@@ -436,10 +439,12 @@ void CaptainService::execThread()
     
     while (running) {
         bind.pull();
+        IAmCaptain = amICaptain();
+        captainId = findCaptainId();
         lastTick = rhoban_utils::TimeStamp::now();
         // Updating
         if (teamPlay->isEnabled()) {
-            if (IAmCaptain()) {
+            if (IAmCaptain) {
                 mutex.lock();
                 compute();   
                 mutex.unlock();
@@ -450,6 +455,7 @@ void CaptainService::execThread()
         } else {
             compute();
         }
+        bind.push();
         
         // Sleepint if needed to fit the given frequency
         auto now = rhoban_utils::TimeStamp::now();
