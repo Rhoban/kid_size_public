@@ -60,8 +60,6 @@ DecisionService::DecisionService()
     // Let play
     bind.bindNew("shouldLetPlay", shouldLetPlay, RhIO::Bind::PushOnly)
         ->comment("Should let play?")->defaultValue(false);
-    bind.bindNew("shouldLetPlayTeam", shouldLetPlayTeam)
-        ->comment("Should let play because of team?")->defaultValue(false);
 
     // Let play radius
     bind.bindNew("letPlayRadius", letPlayRadius, RhIO::Bind::PushOnly)
@@ -118,20 +116,6 @@ DecisionService::DecisionService()
     bind.pull();
 }
 
-bool DecisionService::shouldLetTeamPlay(float ballDistance)
-{
-    auto teamPlay = getServices()->teamPlay;
-    int me = teamPlay->myId();
-    for (auto entry : teamPlay->allInfo()) {
-        auto info = entry.second;
-        if (info.id != me && !info.isOutdated() && info.state == BallHandling &&
-            info.getBallDistance() < ballDistance) {
-            return true;
-        }
-    }
-    return false;
-}
-
 bool DecisionService::tick(double elapsed)
 {
     auto loc = getServices()->localisation;
@@ -141,10 +125,6 @@ bool DecisionService::tick(double elapsed)
     // Should we let the other players play?
     auto ballPos = loc->getBallPosSelf();
     float ballDistance = ballPos.getLength();
-    
-    /// XXX Captain: this should be removed once captain is implemented
-    /// Indeed, this should be decided by the captain instead of each robots
-    bool shouldLetPlayTeamTMP = shouldLetTeamPlay(ballDistance);
 
     if (isBallQualityGood) {
         lastSeenBallRight = (ballPos.y > 0);
@@ -153,10 +133,7 @@ bool DecisionService::tick(double elapsed)
     // Computing the radius
     letPlayRadius = 0;
 
-    if (shouldLetPlayTeam) {
-        letPlayRadius = teamPlay->teamRadius;
-    }
-    shouldLetPlay = cooperation && shouldLetPlayTeam;
+    shouldLetPlay = false;
     if (referee->shouldLetPlay()) {
         if (letPlayRadius < teamPlay->refereeRadius) {
             letPlayRadius = teamPlay->refereeRadius;
@@ -194,8 +171,6 @@ bool DecisionService::tick(double elapsed)
             return true;
         }
     }
-
-    shouldLetPlayTeam = shouldLetPlayTeamTMP;
 
     // Shared ball
     bool ballWasShared = ballIsShared;

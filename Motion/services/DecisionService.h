@@ -58,11 +58,6 @@ class DecisionService : public Service
          * free kick is awarded to the opponent team
          */
         bool shouldLetPlay;
-        
-        /**
-         * Should I let play because of team?
-         */
-        bool shouldLetPlayTeam;
 
         /**
          * With what radius should I let play?
@@ -76,6 +71,7 @@ class DecisionService : public Service
 
         /**
          * Am I the nearest robot to the ball ?
+         * XXX: Since captain, this could be removed
          */
         bool iAmTheNearest;
         
@@ -134,11 +130,6 @@ class DecisionService : public Service
 
         // Low pressure threshold
         float lowPressureThreshold;
-        
-        /**
-         * Should we let play our team
-         */
-        bool shouldLetTeamPlay(float ballDistance);
 
         /**
          * Should we listen to the other players?
