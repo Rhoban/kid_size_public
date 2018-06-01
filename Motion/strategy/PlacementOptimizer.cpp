@@ -26,7 +26,7 @@ void PlacementOptimizer::collectSolutions(
             Solution solution = partial;
             solution.robotTarget[robot] = target.second;
             
-            if (robots.size() == 0) {
+            if (robots.size() == 0 || targets.size() == 0) {
                 solutions.push_back(solution);
             } else {
                 auto tmpTargets = targets;
@@ -52,10 +52,6 @@ PlacementOptimizer::Solution PlacementOptimizer::optimize(
     Solution bestSolution;
     bool hasBest = false;
     float bestScore = 0;
-    
-    if (targets.size() < robots.size()) {
-        throw std::runtime_error("PlacementOptimizer: not enough targets");    
-    }
     
     size_t k;
     

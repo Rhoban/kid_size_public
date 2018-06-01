@@ -53,6 +53,9 @@ class DecisionService : public Service
 
         /**
          * Should I let play?
+         * This will be true if we should let play because of the rules, like if
+         * we can't enter the center circle before the 10 first seconds or if a
+         * free kick is awarded to the opponent team
          */
         bool shouldLetPlay;
         

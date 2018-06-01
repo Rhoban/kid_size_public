@@ -36,16 +36,7 @@ protected:
   bool stopOnHandle;
   bool teamConfidence;
   double avoidRadius;
-  double placingBallDistance;
-  double perpendicularBallDistance;
   double walkBallDistance;
-  double passPlacingRatio, passPlacingOffset;
-
-  double score(Place place, rhoban_geometry::Point pos);
-  Place findPlacingTarget(rhoban_geometry::Point pos,
-                          rhoban_geometry::Point ball,
-                          rhoban_geometry::Point ballTarget,
-                          rhoban_team_play::TeamPlayState intention);
 
   Walk *walk;
   Head *head;

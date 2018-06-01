@@ -55,12 +55,7 @@ class TeamPlayService : public Service
          * Is team play enabled ?
          */
         bool isEnabled();
-        
-        /**
-         * Should I attack?
-         * XXX Captain: this should be removed once captain is implemented
-         */
-        rhoban_team_play::TeamPlayState myRole();
+    
  
         /**
          * TeamPlay radius

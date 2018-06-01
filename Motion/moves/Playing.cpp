@@ -4,6 +4,7 @@
 #include <services/RefereeService.h>
 #include <services/TeamPlayService.h>
 #include <services/StrategyService.h>
+#include <services/CaptainService.h>
 #include <rhoban_utils/control/control.h>
 #include <robocup_referee/constants.h>
 #include "Head.h"
@@ -47,24 +48,10 @@ PlayingMove::PlayingMove(Walk *walk)
 
     bind->bindNew("teamConfidence", teamConfidence, RhIO::Bind::PullOnly)
         ->defaultValue(true)->comment("Am I confident in my team?");
-    
-    bind->bindNew("avoidRadius", avoidRadius, RhIO::Bind::PullOnly)
-        ->defaultValue(1.0)->comment("Radius [m] to avoid colliding the ball while placing");
-    
-    bind->bindNew("placingBallDistance", placingBallDistance, RhIO::Bind::PullOnly)
-        ->defaultValue(2.0)->comment("Distance [m] to the ball for team play placement");
-    
-    bind->bindNew("perpendicularBallDistance", perpendicularBallDistance, RhIO::Bind::PullOnly)
-        ->defaultValue(0.8)->comment("Distance [m] on the perpendicular to attack placement");
 
     bind->bindNew("walkBallDistance", walkBallDistance, RhIO::Bind::PullOnly)
         ->defaultValue(1.2)->comment("Distance to run the approach to the ball [m]");
 
-    bind->bindNew("passPlacingRatio", passPlacingRatio, RhIO::Bind::PullOnly)
-        ->defaultValue(0.85)->comment("Ratio to the kick vector to place");
-    
-    bind->bindNew("passPlacingOffset", passPlacingOffset, RhIO::Bind::PullOnly)
-        ->defaultValue(0.35)->comment("Offset to kick vector to place [m]")->persisted(true);
 }
 
 std::string PlayingMove::getName()
@@ -111,82 +98,6 @@ static void boundPosition(Point &point)
     }
 }
 
-double PlayingMove::score(Place place, Point pos)
-{
-    if (place.ok) {
-        return (pos-place.position).getLength()/walk->maxStep;
-    } else {
-        return -1;
-    }
-}
-
-PlayingMove::Place PlayingMove::findPlacingTarget(Point pos, Point ball, Point ballTarget,
-        TeamPlayState intention)
-{
-    Place place;
-    Point corner;
-    Point target;
-    Point vect = (ballTarget-ball)*passPlacingRatio 
-        - (ballTarget-ball).normalize()*passPlacingOffset;
-    Point nVect = vect.perpendicular().normalize(perpendicularBallDistance);
-    bool backward = ballTarget.x-0.1 <= ball.x;
-
-    if (intention == PlacingA) {
-        corner = Point(Constants::field.fieldLength/2, Constants::field.goalWidth/2 + 0.25);
-
-        if (backward) {
-            target = ball+(ballTarget-ball)*1.15;
-        } else {
-            target = ball+vect+nVect;
-        }
-    } else if (intention == PlacingB) {
-        corner = Point(Constants::field.fieldLength/2, -Constants::field.goalWidth/2 - 0.25);
-
-        if (backward) {
-            auto tmp1 = ball+vect+nVect;
-            auto tmp2 = ball+vect+nVect;
-            if (tmp1.x < tmp2.x) target = tmp1;
-            else target = tmp2;
-        } else {
-            target = ball+vect-nVect;
-        }
-    } else if (intention == PlacingC) {
-        corner = Point(-Constants::field.fieldLength/2, Constants::field.goalWidth/2 + 0.25);
-        target = ball+(corner-ball).normalize(placingBallDistance);
-    } else if (intention == PlacingD) {
-        corner = Point(-Constants::field.fieldLength/2, -Constants::field.goalWidth/2 - 0.25);
-        target = ball+(corner-ball).normalize(placingBallDistance);
-    }
-
-    auto oppositeCorner = corner;
-    oppositeCorner.y *= -1;
-
-    // Avoiding penalty areas
-    boundPosition(target);
-
-    // Avoiding being too close to the ball
-    if ((target-ball).getLength() < avoidRadius) {
-        place.ok = false;
-    } else {
-        place.ok = true;
-    }
-
-    // Target orientation
-    Angle orientation;
-    if (intention == PlacingA || intention == PlacingB) {
-        orientation = (ballTarget-target).getTheta();
-    } else {
-        orientation = Angle::weightedAverage((ball-target).getTheta(), 0.5, 
-            (oppositeCorner-target).getTheta(), 0.5);
-    }
-
-    // Building the place
-    place.position = target;
-    place.orientation = orientation;
-
-    return place;
-}
-
 void PlayingMove::step(float elapsed)
 {
     bind->pull();
@@ -194,6 +105,8 @@ void PlayingMove::step(float elapsed)
     auto loc = getServices()->localisation;
     auto decision = getServices()->decision;
     auto teamPlay = getServices()->teamPlay;
+    auto captain = getServices()->captain;
+    auto instruction = captain->getInstruction();
     t += elapsed;
 
     if (decision->handled && stopOnHandle) {
@@ -263,7 +176,8 @@ void PlayingMove::step(float elapsed)
                 setState(STATE_BACKWARD);
             }
         } else {
-            if (decision->isBallQualityGood && !decision->shouldLetPlay) {
+            if (decision->isBallQualityGood && !decision->shouldLetPlay && 
+                    instruction.order == CaptainOrder::HandleBall) {
                 if (state == STATE_LET_PLAY) {
                     if (t > 1.5) { 
                         setState(STATE_WALKBALL);
@@ -276,7 +190,7 @@ void PlayingMove::step(float elapsed)
 
         // We are letting the other play
         if (state == STATE_LET_PLAY) {
-            if (!teamConfidence || decision->iAmTheNearest) {
+            if (!teamConfidence || instruction.order != CaptainOrder::Place) {
                 // Getting ball distance
                 float letPlayRadius = decision->letPlayRadius;
                 auto ball = loc->getBallPosField();
@@ -323,13 +237,8 @@ void PlayingMove::step(float elapsed)
                 ball = Point(decision->shareX, decision->shareY);
                 ballTarget = Point(decision->ballTargetX, decision->ballTargetY);
 
-                // My position
-                auto pos = loc->getFieldPos();
-                
-                // My info
-                auto &info = teamPlay->selfInfo();
-
                 // Ball handler
+                // XXX: The captain ball handler could be used instead
                 bool handlerFound = false;
                 TeamPlayInfo handler;
                 handler.fieldX = 0;
@@ -341,54 +250,40 @@ void PlayingMove::step(float elapsed)
                     }
                 }
 
-                // Attacking target
-                std::map<TeamPlayState, Place> places;
-                for (auto &intention : {PlacingA, PlacingB, PlacingC, PlacingD}) {
-                    places[intention] = findPlacingTarget(pos, ball, ballTarget, intention);
-                }
-                info.scoreA = score(places[PlacingA], pos);
-                info.scoreB = score(places[PlacingB], pos);
-                info.scoreC = score(places[PlacingC], pos);
-                info.scoreD = score(places[PlacingD], pos);
-
-                info.state = teamPlay->myRole();
-                auto target = places[info.state];
-
+                auto target = instruction.targetPosition;
+                auto orientation = instruction.targetOrientation;
                 if (!placer->isRunning()) {
                     placer->start();
                 }
 
+                // Avoiding the ball
                 std::vector<Circle> obstacles;
                 obstacles.push_back(Circle(ball.x, ball.y, avoidRadius));
+                
                 if (handlerFound) {
                     obstacles.push_back(Circle(handler.fieldX, handler.fieldY, avoidRadius));
                 }
-                placer->goTo(target.position.x, target.position.y, target.orientation.getSignedValue(),
+                placer->goTo(target.x, target.y, orientation,
                         obstacles);
             }
 
-            if (teamConfidence) {
-                if (!decision->isBallQualityGood && !decision->ballIsShared) {
-                    logger.log("I don't see the ball, neither my team, going to search");
-                    setState(STATE_SEARCH);
-                }
-            } else {
+            if (!teamConfidence) {
                 if (!decision->isBallQualityGood) {
                     logger.log("I don't see the ball, going to search");
                     setState(STATE_SEARCH);
                 }
             }
         } else {
-            if (decision->shouldLetPlay) {
+            if (decision->shouldLetPlay || instruction.order == CaptainOrder::Place) {
                 // No confidence in the team, we should see the ball to enter let play,
                 // else we are in search state
                 if (decision->isBallQualityGood) {
-                    logger.log("Respecting the radius and letting play");
+                    logger.log("Letting play");
                     setState(STATE_LET_PLAY);
                 } else if (teamConfidence && decision->ballIsShared) {
                     // We have confidence in the team, even if the ball is shared we
                     // still enter this state and avoid searching for it
-                    logger.log("Respecting the radius and letting play (confident)");
+                    logger.log("Letting play (confident)");
                     setState(STATE_LET_PLAY);
                 }
             }
@@ -398,6 +293,10 @@ void PlayingMove::step(float elapsed)
             if (decision->isBallQualityGood) {
                 logger.log("Let's approach the ball, I see it");
                 setState(STATE_APPROACH);
+            }
+        } else {
+            if (instruction.order == CaptainOrder::SearchBall && !decision->isBallQualityGood) {
+                setState(STATE_SEARCH);
             }
         }
 

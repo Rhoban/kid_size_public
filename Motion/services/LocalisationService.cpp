@@ -102,7 +102,7 @@ LocalisationService::LocalisationService()
     bind.bindNew("mates", mates, RhIO::Bind::PushOnly)
         ->comment("Team Mates positions as string [m] and [deg]");
     bind.bindNew("teamMatesRadius", teamMatesRadius, RhIO::Bind::PullOnly)
-        ->comment("TeamMates radius [m]")->defaultValue(1.5);
+        ->comment("TeamMates radius [m]")->defaultValue(0.85);
     bind.bindNew("sharedOpponents", sharedOpponents, RhIO::Bind::PushOnly)
         ->comment("Opponent positions in field according to mates (as string) [m]");
     

@@ -35,15 +35,11 @@ TeamPlayService::TeamPlayService() :
     _bind->bindFunc("team", "Display information about teamplay",
         &TeamPlayService::cmdTeam, *this);
     _bind->bindNew("teamRadius", teamRadius)
-        ->defaultValue(100)->minimum(0.0)->maximum(1000.0)
+        ->defaultValue(1.0)->minimum(0.0)->maximum(10.0)
         ->persisted(true);
     _bind->bindNew("refereeRadius", refereeRadius)
-        ->defaultValue(110)->minimum(0.0)->maximum(200.0)
+        ->defaultValue(1.1)->minimum(0.0)->maximum(10.0)
         ->comment("Additionnal radius to the teamRadius when referee asks to let play")
-        ->persisted(true);
-    _bind->bindNew("aggressivity", aggressivity, RhIO::Bind::PullOnly)
-        ->defaultValue(0.75)->minimum(0.0)->maximum(1.0)
-        ->comment("Is the placing aggressive ore defensive?")
         ->persisted(true);
 
     //Initialize UDP communication
@@ -93,99 +89,6 @@ TeamPlayInfo& TeamPlayService::selfInfo()
 const std::map<int, TeamPlayInfo>& TeamPlayService::allInfo() const
 {
     return _allInfo;
-}
-
-TeamPlayState TeamPlayService::myRole()
-{
-    std::map<int, TeamPlayInfo> robots;
-
-    // Collecting available robots and their states
-    auto referee =  Helpers::getServices()->referee;
-    for (auto &entry : _allInfo) {
-        auto info = entry.second;
-        if ((info.state == PlacingA || info.state == PlacingB ||
-             info.state == PlacingC || info.state == PlacingD)
-                && !info.isOutdated()
-                && !referee->isPenalized(info.id)) {
-            robots[info.id] = info;
-        }
-    }
-
-    // Collecting configs
-    typedef std::map<int, TeamPlayState> Config;
-
-    std::function<std::vector<Config>(std::map<int, TeamPlayInfo>)>
-    collectConfigs = [&collectConfigs](std::map<int, TeamPlayInfo> robots) -> std::vector<Config> {
-        std::vector<Config> result;
-
-        for (auto &entry : robots) {
-            int id = entry.first;
-            for (auto role : {PlacingA, PlacingB, PlacingC, PlacingD}) {
-                if (entry.second.scoreFor(role) >= 0) {
-                    auto tmp = robots;
-                    tmp.erase(entry.first);
-                    if (tmp.size()) {
-                        auto configs = collectConfigs(tmp);
-                        for (auto &config : configs) {
-                            config[id] = role;
-                            result.push_back(config);
-                        }
-                    } else {
-                        Config config;
-                        config[id] = role;
-                        result.push_back(config);
-                    }
-                }
-            }
-        }
-
-        return result;
-    };
-
-    auto configs = collectConfigs(robots);
-
-    if (!robots.count(myId())) {
-        return PlacingA;
-    }
-
-    auto bestConfig = configs[0];
-    double best = -1;
-    for (auto &config : configs) {
-        double score = 0;
-        double ratio = 0;
-        std::map<TeamPlayState, int> count;
-        count[PlacingA] = 0;
-        count[PlacingB] = 0;
-        count[PlacingC] = 0;
-        count[PlacingD] = 0;
-        for (auto entry : config) {
-            int id = entry.first;
-            TeamPlayState role = entry.second;
-            count[role] += 1;
-            score += robots[id].scoreFor(role);
-            if (role != robots[id].state) score += 1;
-
-            if (role == PlacingA || role == PlacingB) {
-                ratio += 1.0/robots.size();
-            }
-        }
-
-        // Not having 2 robots for the same target
-        for (auto entry : count) {
-            if (entry.second > 1) {
-                score += 5000;
-            }
-        }
-
-        score += fabs(ratio-aggressivity)*1000;
-
-        if (score < best || best < 0) {
-            best = score;
-            bestConfig = config;
-        }
-    }
-
-    return bestConfig[myId()];
 }
 
 bool TeamPlayService::tick(double elapsed)
@@ -336,14 +239,8 @@ std::string TeamPlayService::cmdTeam()
             ss << "- Unknown" << std::endl;
         } else if (info.state == Inactive) {
             ss << "- Is not active" << std::endl;
-        } else if (info.state == PlacingA) {
-            ss << "- Is placing A" << std::endl;
-        } else if (info.state == PlacingB) {
-            ss << "- Is placing B" << std::endl;
-        } else if (info.state == PlacingC) {
-            ss << "- Is placing C" << std::endl;
-        } else if (info.state == PlacingD) {
-            ss << "- Is placing D" << std::endl;
+        } else if (info.state == GoalKeeping) {
+            ss << "- Goal Keeping" << std::endl;
         } else {
             ss << "- Unknown state (?)" << std::endl;
         }
