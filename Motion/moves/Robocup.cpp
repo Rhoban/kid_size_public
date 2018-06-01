@@ -320,7 +320,7 @@ void Robocup::step(float elapsed)
 
 void Robocup::enterState(std::string state)
 { 
-    auto referee = getServices()->referee;
+    // auto referee = getServices()->referee;
 
     t = 0;
 

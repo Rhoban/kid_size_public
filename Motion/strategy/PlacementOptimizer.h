@@ -9,8 +9,11 @@ class PlacementOptimizer
 public:
     struct Target
     {
+        Target();
+        
         rhoban_geometry::Point position;
         float orientation;
+        bool mandatory;
         float data;
     };
     
@@ -23,6 +26,7 @@ public:
         std::map<int, int> robots,
         std::map<int, Target> targets,
         std::vector<Solution> &solutions,
+        unsigned int mandatories,
         Solution partial = Solution()
     );
     

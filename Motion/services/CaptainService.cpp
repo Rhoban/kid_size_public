@@ -20,12 +20,12 @@ void CaptainService::Config::fromJson(const Json::Value & json_value, const std:
             BasePosition basePosition;
             basePosition.targetPosition = Point(position["x"].asFloat(), position["y"].asFloat());
             basePosition.targetOrientation = position["orientation"].asFloat();
-            basePosition.priority = position["priority"].asFloat();
+            basePosition.kickOff = position["kickOff"].asBool();
             
-            if (position.isMember("kickerOffset")) {
-                basePosition.kickerOffset = position["kickerOffset"].asFloat();
+            if (position.isMember("mandatory")) {
+                basePosition.mandatory = position["mandatory"].asBool();
             } else {
-                basePosition.kickerOffset = 0;
+                basePosition.mandatory = false;
             }
             
             basePositions.push_back(basePosition);
@@ -149,42 +149,33 @@ void CaptainService::compute()
     }
     
     if (referee->isPlacingPhase() || true) { // XXX: REMOVE TRUE
+        bool kickOff = referee->myTeamKickOff() && !referee->isDroppedBall();
+        
         // List the possible targets
         std::vector<PlacementOptimizer::Target> targets;
         for (auto &basePosition : config.basePositions) {
-            PlacementOptimizer::Target target;
-            
-            target.position = basePosition.targetPosition;
-            
-            // If we have the kick off, kickerOffset is added to the x of the target
-            // position
-            if (referee->myTeamKickOff() && !referee->isDroppedBall()) {
-                target.position.x += basePosition.kickerOffset;
+            if (basePosition.kickOff == kickOff) {            
+                PlacementOptimizer::Target target;
+                target.position = basePosition.targetPosition;
+                target.orientation = basePosition.targetOrientation;
+                target.mandatory = basePosition.mandatory;
+                targets.push_back(target);
             }
-            
-            target.orientation = basePosition.targetOrientation;
-            target.data = basePosition.priority;
-            targets.push_back(target);
         }
         
         // Finding the best solution
         auto solution = PlacementOptimizer::optimize(robotIds, targets, 
             [&robots](PlacementOptimizer::Solution solution) -> float {
-                // The score is the walk duration (which is the maximum distance to walk
-                // by a robot)
-                // Plus the sum of the priority *1000 to prioritize the lower priority
-                // values
                 float score = 0;
-                float penaltyScore = 0;
                 for (auto &robotTarget : solution.robotTarget) {
                     auto robot = robots[robotTarget.first];
                     float walkLength = (Point(robot.fieldX, robot.fieldY) - robotTarget.second.position).getLength();
-                    penaltyScore += robotTarget.second.data*1000;
-                    if (score < walkLength) {
-                        score = walkLength;
+                    if (robotTarget.second.mandatory) {
+                        walkLength *= 100;
                     }
+                    score += walkLength;
                 }
-                return penaltyScore + score;
+                return score;
         });
         
         setSolution(solution);

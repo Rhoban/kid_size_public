@@ -1,28 +1,44 @@
 #include "PlacementOptimizer.h"
 
+PlacementOptimizer::Target::Target()
+: mandatory(false)
+{    
+}
+
 void PlacementOptimizer::collectSolutions(
     std::map<int, int> robots,
     std::map<int, Target> targets,
     std::vector<PlacementOptimizer::Solution> &solutions,
+    unsigned int mandatories,
     Solution partial
 )
 {
-    for (auto &robot : robots) {
+    if (robots.size()) {
+        auto it = robots.begin();
+        auto robot = it->second;
+        robots.erase(it);
+        
         for (auto &target : targets) {
-            Solution solution = partial;
-            solution.robotTarget[robot.second] = target.second;
+            if (mandatories > robots.size() && !target.second.mandatory) {
+                continue;
+            }
             
-            if (robots.size() == 1 || targets.size() == 1) {
+            Solution solution = partial;
+            solution.robotTarget[robot] = target.second;
+            
+            if (robots.size() == 0) {
                 solutions.push_back(solution);
             } else {
-                auto tmpRobots = robots;
-                tmpRobots.erase(robot.first);
                 auto tmpTargets = targets;
                 tmpTargets.erase(target.first);
+                int tmpMandatory = mandatories;
+                if (target.second.mandatory && tmpMandatory > 0) {
+                    tmpMandatory -= 1;
+                }
                 
-                collectSolutions(tmpRobots, tmpTargets, solutions, solution);
+                collectSolutions(robots, tmpTargets, solutions, tmpMandatory, solution);
             }
-        }    
+        }
     }
 }
 
@@ -37,6 +53,10 @@ PlacementOptimizer::Solution PlacementOptimizer::optimize(
     bool hasBest = false;
     float bestScore = 0;
     
+    if (targets.size() < robots.size()) {
+        throw std::runtime_error("PlacementOptimizer: not enough targets");    
+    }
+    
     size_t k;
     
     std::map<int, int> robotsMap;
@@ -47,10 +67,14 @@ PlacementOptimizer::Solution PlacementOptimizer::optimize(
     
     std::map<int, Target> targetsMap;
     k = 0;
+    unsigned int mandatories = 0;
     for (auto &target : targets) {
+        if (target.mandatory) {
+            mandatories++;
+        }
         targetsMap[k++] = target;
     }
-    collectSolutions(robotsMap, targetsMap, solutions);
+    collectSolutions(robotsMap, targetsMap, solutions, mandatories);
     
     for (auto &solution : solutions) {
         float score = scoreFunc(solution);

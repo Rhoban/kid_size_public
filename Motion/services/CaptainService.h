@@ -23,9 +23,9 @@ public:
     struct BasePosition
     {
         rhoban_geometry::Point targetPosition;
+        bool mandatory;
+        bool kickOff;
         float targetOrientation;
-        float priority;
-        float kickerOffset;
     };
     
     struct Config : public rhoban_utils::JsonSerializable
