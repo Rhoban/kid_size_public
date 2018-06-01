@@ -42,10 +42,10 @@ TeamPlayService::TeamPlayService() :
     _bind->bindFunc("team", "Display information about teamplay",
         &TeamPlayService::cmdTeam, *this);
     _bind->bindNew("teamRadius", teamRadius)
-        ->defaultValue(100)->minimum(0.0)->maximum(1000.0)
+        ->defaultValue(1)->minimum(0.0)->maximum(10.0)
         ->persisted(true);
     _bind->bindNew("refereeRadius", refereeRadius)
-        ->defaultValue(110)->minimum(0.0)->maximum(200.0)
+        ->defaultValue(1.10)->minimum(0.0)->maximum(2.0)
         ->comment("Additionnal radius to the teamRadius when referee asks to let play")
         ->persisted(true);
     _bind->bindNew("aggressivity", aggressivity, RhIO::Bind::PullOnly)
