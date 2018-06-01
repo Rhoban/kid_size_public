@@ -4,6 +4,8 @@
 #include <rhoban_utils/timing/time_stamp.h>
 #include <rhoban_utils/timing/benchmark.h>
 #include <random>
+#include "RefereeService.h"
+#include "TeamPlayService.h"
 #include "LocalisationService.h"
 #include "ModelService.h"
 #include <moves/Walk.h>
@@ -39,13 +41,13 @@ LocalisationService::LocalisationService()
     ,robocup(NULL), locBinding(NULL)
 #endif
 {
-    lastKick = TimeStamp::now();
+    lastKick = rhoban_utils::TimeStamp::now();
     // Ball
     ballPosX = ballPosY = 0;
     ballPosWorld = Eigen::Vector3d(0, 0, 0);
     ballQ = 0;
     ballSpeed = Point(0,0);
-    ballTS = TimeStamp::now();
+    ballTS = rhoban_utils::TimeStamp::now();
     // Goal
     goalPosX = ballPosY = 0;
     goalCap = 0;
@@ -99,8 +101,6 @@ LocalisationService::LocalisationService()
     bind.bindNew("opponentsRadius", opponentsRadius, RhIO::Bind::PullOnly)
         ->comment("Opponent radius [m]")->defaultValue(0.65);
 
-    bind.bindNew("mates", mates, RhIO::Bind::PushOnly)
-        ->comment("Team Mates positions as string [m] and [deg]");
     bind.bindNew("teamMatesRadius", teamMatesRadius, RhIO::Bind::PullOnly)
         ->comment("TeamMates radius [m]")->defaultValue(0.85);
     bind.bindNew("sharedOpponents", sharedOpponents, RhIO::Bind::PushOnly)
@@ -199,7 +199,7 @@ Point LocalisationService::getBallSpeedSelf()
 
 Point LocalisationService::getPredictedBallSelf()
 {
-  return getPredictedBallSelf(TimeStamp::now());
+  return getPredictedBallSelf(rhoban_utils::TimeStamp::now());
 }
 
 Point LocalisationService::getPredictedBallSelf(rhoban_utils::TimeStamp t)
@@ -427,20 +427,19 @@ std::vector<Point> LocalisationService::getOpponentsField()
 
 std::map<int, Eigen::Vector3d> LocalisationService::getTeamMatesField()
 {
-  std::lock_guard<std::mutex> lock(mutex);
-  return teamMatesField;
-}
-
-void LocalisationService::updateTeamMate(int id, const Eigen::Vector3d & poseInField)
-{
-  std::lock_guard<std::mutex> lock(mutex);
-  teamMatesField[id] = poseInField;
-}
-
-void LocalisationService::removeTeamMate(int id)
-{
-  std::lock_guard<std::mutex> lock(mutex);
-  teamMatesField.erase(id);
+    std::map<int, Eigen::Vector3d> mates;
+    auto teamPlay = getServices()->teamPlay;
+    auto referee = getServices()->referee;
+    for (auto &entry : teamPlay->allInfo()) {
+        auto &info = entry.second;
+        if (info.id != teamPlay->myId() && 
+            !info.isOutdated() &&
+            !referee->isPenalized(info.id) && 
+            info.fieldOk) {
+            mates[info.id] = Eigen::Vector3d(info.fieldX, info.fieldY, info.fieldYaw);
+        }
+    }
+    return mates;
 }
 
 void LocalisationService::updateSharedOpponents(int id,
@@ -500,24 +499,24 @@ void LocalisationService::setOpponentsWorld(const std::vector<Eigen::Vector3d> &
     
     updateOpponentsPos();
 }
-
-void LocalisationService::updateMatesPos()
-{
-    std::stringstream ss;
-    ss << "{";
-    for (const auto & mateEntry : teamMatesField) {
-      int robot_id = mateEntry.first;
-      Eigen::Vector3d robot_pose = mateEntry.second;
-      ss << robot_id << ": "
-         << "[" << robot_pose(0) << ", " << robot_pose(1) << ", "
-         << rhoban_utils::rad2deg(robot_pose(2)) << "°], ";
-    }
-    ss << "}";
-
-    mutex.lock();
-    mates = ss.str();
-    mutex.unlock();
-}
+// 
+// void LocalisationService::updateMatesPos()
+// {
+//     std::stringstream ss;
+//     ss << "{";
+//     for (const auto & mateEntry : teamMatesField) {
+//       int robot_id = mateEntry.first;
+//       Eigen::Vector3d robot_pose = mateEntry.second;
+//       ss << robot_id << ": "
+//          << "[" << robot_pose(0) << ", " << robot_pose(1) << ", "
+//          << rhoban_utils::rad2deg(robot_pose(2)) << "°], ";
+//     }
+//     ss << "}";
+// 
+//     mutex.lock();
+//     mates = ss.str();
+//     mutex.unlock();
+// }
 
 std::vector<Eigen::Vector2d> LocalisationService::getSharedOpponents()
 {
@@ -794,7 +793,7 @@ void LocalisationService::resetRobotFilter()
 std::string LocalisationService::cmdFakeBall(double x, double y)
 {
     Eigen::Vector3d posInWorld(x, y, 0.0);
-    setBallWorld(posInWorld, posInWorld, 1.0, Point(0,0), TimeStamp::now());
+    setBallWorld(posInWorld, posInWorld, 1.0, Point(0,0), rhoban_utils::TimeStamp::now());
     return "Fake Ball set in world: X=" + std::to_string(x) + std::string(" Y=") + std::to_string(y);
 }
 
@@ -915,7 +914,6 @@ bool LocalisationService::tick(double elapsed)
         updatePosSelf();
         updateBallPos();
         updateOpponentsPos();
-        updateMatesPos();
         updateSharedOpponentsPos();
     }
 

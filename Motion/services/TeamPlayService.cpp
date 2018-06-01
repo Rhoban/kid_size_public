@@ -206,7 +206,6 @@ void TeamPlayService::processInfo(TeamPlayInfo info)
     auto loc = getServices()->localisation;
     // TODO: handle localization quality
     if (info.id != myId()) {
-      loc->updateTeamMate(info.id, Eigen::Vector3d(info.fieldX, info.fieldY, info.fieldYaw));
       std::vector<Eigen::Vector2d> opponents_seen(info.nbObstacles);
       for (int idx = 0; idx < info.nbObstacles; idx++) {
         opponents_seen[idx] = Eigen::Vector2d(info.obstaclesX[idx], info.obstaclesY[idx]);

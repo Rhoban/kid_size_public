@@ -62,20 +62,11 @@ class LocalisationService : public Service
         void updateOpponentsPos();
         void setOpponentsWorld(const std::vector<Eigen::Vector3d> &pos);
 
-        /// Update the string representing mates
-        void updateMatesPos();
-
         /// Update the string representing shared_opponents
         void updateSharedOpponentsPos();
 
        /// Return a thread safe copy of the team mates positions by Id
        std::map<int, Eigen::Vector3d> getTeamMatesField();
-
-       /// Update the given team mate, add it if it was not present before
-       void updateTeamMate(int id, const Eigen::Vector3d & poseInField);
-
-       /// Remove the mate from the list of localized mates if present
-       void removeTeamMate(int id);
 
        /// Return the list of opponents seen by other mates
        std::vector<Eigen::Vector2d>  getSharedOpponents();
