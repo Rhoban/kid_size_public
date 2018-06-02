@@ -8,6 +8,8 @@
 #include "Search.h"
 #include "Walk.h"
 
+#include "rhoban_utils/logging/logger.h"
+
 // Waiting for the referee to start us
 #define STATE_WAIT      "wait"
 // We lost the ball, rotate around ourself to see it again
@@ -22,6 +24,8 @@
 #define STATE_SHARED    "shared"
 
 using namespace rhoban_utils;
+
+static Logger logger("SearchSTM");
 
 Search::Search(Walk *walk, Placer *placer)
     : walk(walk), placer(placer)
@@ -76,6 +80,7 @@ Search::Search(Walk *walk, Placer *placer)
     // Note: the patrol target is keeped even if the placer is stopped and run
     // again
     patrolTarget = 0;
+    targetAzimuth = 0;
 }
 
 std::string Search::getName()
@@ -178,6 +183,7 @@ void Search::step(float elapsed)
 
 void Search::enterState(std::string state)
 {
+    logger.log("Entering state %s", state.c_str());
     t = 0.0;
 
     if (state == STATE_PATROL || state == STATE_BEGIN || state == STATE_SHARED) {
@@ -202,6 +208,7 @@ float Search::getAzimuthError()
 
 void Search::exitState(std::string state)
 {
+    logger.log("Exiting state %s", state.c_str());
     if (state == STATE_PATROL || state == STATE_BEGIN || state == STATE_SHARED) {
         stopMove("placer", 0.0);
         walk->control(false);

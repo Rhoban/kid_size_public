@@ -101,7 +101,6 @@ void Robocup::applyGameState()
     // If we are at the beginning of the game, jump to state_initial
     if (state != STATE_INITIAL && referee->isInitialPhase()) {
         setState(STATE_INITIAL);
-        logger.log("Jumping to Initial State");
     }
 
     // If:
@@ -111,7 +110,6 @@ void Robocup::applyGameState()
     if (autoKickOff &&
         state != STATE_PLACING && referee->isPlacingPhase() &&
         !wasHandled) {
-        logger.log("Jumping to Placing Phase");
         // If we were previously in initial state, reset particle filters
         if (state == STATE_INITIAL) {
             double locationNoise = 0.3;
@@ -126,7 +124,6 @@ void Robocup::applyGameState()
 
     // If mode is freeze, jump to waiting state
     if (state != STATE_WAITING && referee->isFreezePhase()) {
-        logger.log("Jumping to Wait Phase");
         setState(STATE_WAITING);
     }
 
@@ -194,7 +191,6 @@ void Robocup::applyGameState()
 
     // If we are allowed to play while we were not allowed previously
     if (!rememberStart && !referee->isFreezePhase() && referee->isPlaying() && state == STATE_WAITING) {
-        logger.log("Entering playing");
         setState(STATE_PLAYING);
     }
     
@@ -232,18 +228,15 @@ void Robocup::step(float elapsed)
     /// Let standup finish if it started, otherwise go to penalized state if
     /// referee asks to
     if (state != STATE_STANDUP && state != STATE_PENALIZED && isPenalized) {
-        logger.log("Robot is penalized, waiting information from the referee");
         setState(STATE_PENALIZED);
     }
     /// Go through state Waiting if we were penalized and we are not penalized anymore
     if (state == STATE_PENALIZED && !isPenalized) {
-        logger.log("Robot is leaving penalized, going to waiting");
         setState(STATE_WAITING);
     }
 
     // Fall recovery start from waiting state
     if (state == STATE_WAITING && decision->isFallen) {
-        logger.log("Robot has fallen, standing up");
         setState(STATE_STANDUP);
     }
     // Only apply gameState if robot is not standing up and not penalized
@@ -252,12 +245,10 @@ void Robocup::step(float elapsed)
     }
     // If robot was standing up standup has finished, jump to Waiting state
     if (state == STATE_STANDUP && standup->over) {
-        logger.log("Standup has finished, back to Waiting");
         setState(STATE_WAITING);
     }
     // When the robot falls, go through waiting state (TODO, check if its necessary)
     if (decision->isFallen && (state == STATE_PLAYING || state == STATE_PLACING)) {
-        logger.log("Robot has fallen, going to wait");
         setState(STATE_WAITING);
     }
     // If the robot is being handled during the placing, go to waiting
@@ -306,7 +297,9 @@ void Robocup::step(float elapsed)
 }
 
 void Robocup::enterState(std::string state)
-{ 
+{
+    logger.log("Entering state %s", state.c_str());
+
     auto referee = getServices()->referee;
 
     t = 0;
@@ -368,6 +361,8 @@ void Robocup::enterState(std::string state)
 
 void Robocup::exitState(std::string state)
 {
+    logger.log("Exiting state %s", state.c_str());
+
     auto &decision = getServices()->decision;
 
     // After standing up:
