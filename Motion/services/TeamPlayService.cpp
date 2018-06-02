@@ -31,7 +31,7 @@ TeamPlayService::TeamPlayService() :
         ->defaultValue(true)->persisted(true);
     _bind->bindNew("broadcastPeriod", _broadcastPeriod, RhIO::Bind::PullOnly)
         ->comment("UDP broadcast period in seconds")
-        ->defaultValue(0.3)->persisted(true);
+        ->defaultValue(0.2)->persisted(true);
     _bind->bindFunc("team", "Display information about teamplay",
         &TeamPlayService::cmdTeam, *this);
 

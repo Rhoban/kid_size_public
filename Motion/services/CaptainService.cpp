@@ -70,7 +70,7 @@ CaptainService::CaptainService()
     
     // Scheduling frequency
     bind.bindNew("frequency", frequency, RhIO::Bind::PullOnly)
-        ->defaultValue(10)->comment("Captain refresh max frequency");
+        ->defaultValue(5)->comment("Captain refresh max frequency");
         
     bind.bindNew("passPlacingRatio", passPlacingRatio, RhIO::Bind::PullOnly)
         ->defaultValue(0.85)->comment("Ratio to the kick vector to place");
