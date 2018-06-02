@@ -295,12 +295,13 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(rhoba
 
 void CaptainService::computePlayingPositions()
 {
-    // Choose the robot that will handle the ball
-    // XXX: How does this works for the goal keeper ??
     int handler = -1;
     float smallerDist = 0.0;
     Point ball, ballTarget;
     
+    // XXX: We should check if the goal keepr is handling the ball, because in
+    // this case we should not give the handle ball order to another robot (might
+    // be 2 simultaneous attackers)
     for (auto &entry : robots) {
         auto &robot = entry.second;
         if (robot.ballOk) {
@@ -341,6 +342,10 @@ void CaptainService::computePlayingPositions()
                 info.order[robot.id-1] = rhoban_team_play::CaptainOrder::HandleBall;
             } else {
                 if (robot.state != rhoban_team_play::TeamPlayState::GoalKeeping) {
+                    info.order[robot.id-1] = rhoban_team_play::CaptainOrder::Place;
+                    for (int n=0; n<3; n++) {
+                        info.robotTarget[robot.id-1][n] = 0;
+                    }
                     otherIds.push_back(robot.id);
                 }
             }
