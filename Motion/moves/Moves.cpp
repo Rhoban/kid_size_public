@@ -28,6 +28,7 @@
 #include "LogMachine.hpp"
 // #include "KickCalibration.hpp"
 #include "GoalKick.hpp"
+#include "AutonomousPlaying.h"
 
 #include "ReactiveKicker.h"
 
@@ -106,6 +107,7 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(new Penalty(penaltyController));
 
     add(new ReactiveKicker(walk));
+    add(new AutonomousPlaying(walk, standup));
 }
 
 Moves::~Moves()

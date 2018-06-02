@@ -2,6 +2,7 @@ set (SOURCES
     Approach.cpp
     ApproachPotential.cpp
     ApproachMove.cpp
+    AutonomousPlaying.cpp
     Penalty.cpp
     Walk.cpp
     StandUp.cpp

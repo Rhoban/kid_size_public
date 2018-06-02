@@ -36,7 +36,6 @@ void RobotController::setPosExploration(double newPosE) {
 
 void RobotController::bindWithRhIO() {
   RhIO::Root.newChild("/localisation/field/RobotController");
-  std::cout << "TOTO2" << std::endl;
   RhIO::Root.newFloat("/localisation/field/RobotController/angleExploration")
       ->defaultValue(angleExploration)
       ->minimum(0.0)

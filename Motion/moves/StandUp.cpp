@@ -115,7 +115,6 @@ void StandUp::step(float elapsed)
 
             setAngle("left_shoulder_roll", armsRoll);
             setAngle("right_shoulder_roll", -armsRoll);
-            setAngle("head_pitch", splines["head_pitch"].get(time));
             setAngle("left_shoulder_pitch", splines["shoulder_pitch"].get(time));
             setAngle("right_shoulder_pitch", splines["shoulder_pitch"].get(time));
             setAngle("left_elbow", splines["elbow"].get(time));

@@ -34,13 +34,10 @@ TeamPlayService::TeamPlayService() :
         ->defaultValue(0.3)->persisted(true);
     _bind->bindFunc("team", "Display information about teamplay",
         &TeamPlayService::cmdTeam, *this);
-    _bind->bindNew("teamRadius", teamRadius)
-        ->defaultValue(1.0)->minimum(0.0)->maximum(10.0)
-        ->persisted(true);
+
     _bind->bindNew("refereeRadius", refereeRadius)
-        ->defaultValue(1.1)->minimum(0.0)->maximum(10.0)
-        ->comment("Additionnal radius to the teamRadius when referee asks to let play")
-        ->persisted(true);
+        ->defaultValue(1.10)->minimum(0.0)->maximum(2.0)
+        ->comment("Additionnal radius to the teamRadius when referee asks to let play");
 
     //Initialize UDP communication
     _broadcaster = new rhoban_utils::UDPBroadcast(28645, 28645);
