@@ -152,7 +152,7 @@ TeamPlayState TeamPlayService::myRole()
 
     auto configs = collectConfigs(robots);
 
-    if (!robots.count(myId())) {
+    if (!robots.count(myId()) || (configs.size() == 0)) {
         return PlacingA;
     }
 
