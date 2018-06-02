@@ -184,9 +184,10 @@ void TeamPlayService::messageSend()
         if (opponents.size() > MAX_OBSTACLES) {
           logger.warning("Too many obstacles to broadcast");
         }
+        _selfInfo.obstaclesRadius = loc->teamMatesRadius;
         for (int oppIdx  = 0; oppIdx < _selfInfo.nbObstacles; oppIdx++) {
-          _selfInfo.obstaclesX[oppIdx] = opponents[oppIdx].getX();
-          _selfInfo.obstaclesY[oppIdx] = opponents[oppIdx].getY();
+          _selfInfo.obstacles[oppIdx][0] = opponents[oppIdx].getX();
+          _selfInfo.obstacles[oppIdx][1] = opponents[oppIdx].getY();
         }
 
         //Send UDP broadcast
@@ -205,7 +206,7 @@ void TeamPlayService::processInfo(TeamPlayInfo info)
     if (info.id != myId()) {
       std::vector<Eigen::Vector2d> opponents_seen(info.nbObstacles);
       for (int idx = 0; idx < info.nbObstacles; idx++) {
-        opponents_seen[idx] = Eigen::Vector2d(info.obstaclesX[idx], info.obstaclesY[idx]);
+        opponents_seen[idx] = Eigen::Vector2d(info.obstacles[idx][0], info.obstacles[idx][1]);
       }
       loc->updateSharedOpponents(info.id, opponents_seen);
     }
