@@ -363,6 +363,12 @@ void PlayingMove::exitState(std::string state)
     if (state == STATE_SEARCH) {
         stopMove("search", 0.0);
     }
+    
+    // Avoid glitching off the walk during transition between placing and approach
+    if ((state == STATE_WALKBALL && nextState == STATE_APPROACH) || 
+        (state == STATE_APPROACH && nextState == STATE_WALKBALL)) {
+        walk->control(true);
+    }
 }
 
 void PlayingMove::setTeamPlayState(TeamPlayState state)

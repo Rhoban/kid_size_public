@@ -3,6 +3,7 @@
 void STM::setState(std::string state_)
 {
     if (state != state_) {
+        nextState = state_;
         exitState(state);
         state = state_;
         enterState(state);

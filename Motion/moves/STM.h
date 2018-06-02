@@ -13,4 +13,5 @@ class STM : public Move
 
     protected:
         std::string state;
+        std::string nextState;
 };
