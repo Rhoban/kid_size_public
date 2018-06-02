@@ -163,7 +163,7 @@ CaptainService::Instruction CaptainService::getInstruction()
 
 void CaptainService::setSolution(PlacementOptimizer::Solution solution)
 {
-    std::cout << "~" << std::endl;
+    // std::cout << "~" << std::endl;
     for (auto &robotTarget : solution.robotTarget) {
         auto &robot = robotTarget.first;
         auto &target = robotTarget.second;
@@ -171,7 +171,7 @@ void CaptainService::setSolution(PlacementOptimizer::Solution solution)
         info.robotTarget[robot-1][1] = target.position.y;
         info.robotTarget[robot-1][2] = target.orientation;
         info.order[robot-1] = rhoban_team_play::CaptainOrder::Place;
-        std::cout << "CAPTAIN: Robot #" << robot << " should go to " << target.position.x << ", " << target.position.y << std::endl;
+        // std::cout << "CAPTAIN: Robot #" << robot << " should go to " << target.position.x << ", " << target.position.y << std::endl;
     }    
 }
 
@@ -324,7 +324,7 @@ void CaptainService::computePlayingPositions()
     }
     
     if (handler == -1) {
-        std::cout << "Nobody sees the ball, searching!" << std::endl;
+        // std::cout << "Nobody sees the ball, searching!" << std::endl;
         // No one is seeing the ball, ordering all to search
         for (auto &entry : robots) {
             auto &robot = entry.second;
@@ -337,7 +337,7 @@ void CaptainService::computePlayingPositions()
             auto &robot = entry.second;
             
             if (robot.id == handler) {
-                std::cout << "Handler is " << handler << std::endl;
+                // std::cout << "Handler is " << handler << std::endl;
                 info.order[robot.id-1] = rhoban_team_play::CaptainOrder::HandleBall;
             } else {
                 if (robot.state != rhoban_team_play::TeamPlayState::GoalKeeping) {
@@ -350,7 +350,7 @@ void CaptainService::computePlayingPositions()
         auto targets = getTargetPositions(ball, ballTarget);
         
         // Optimizing the placing
-        std::cout << "Captain: There is " << otherIds.size() << " to place" << std::endl;
+        // std::cout << "Captain: There is " << otherIds.size() << " to place" << std::endl;
         
         auto solution = PlacementOptimizer::optimize(otherIds, targets, 
             [this](PlacementOptimizer::Solution solution) -> float {
@@ -418,7 +418,7 @@ bool CaptainService::tick(double elapsed)
     // Check for incoming captain messages
     while (_broadcaster->checkMessage((unsigned char*)&receive, len)) {
         if (len != sizeof(receive)) {
-            std::cout << "ERROR: CaptainService: invalid message" << std::endl;
+            // std::cout << "ERROR: CaptainService: invalid message" << std::endl;
             continue;
         }
         
