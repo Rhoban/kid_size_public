@@ -95,7 +95,7 @@ CaptainService::CaptainService()
     bind.bindNew("IAmCaptain", IAmCaptain, RhIO::Bind::PushOnly);
     
     // Creating UDP broadcaster
-    _broadcaster = new rhoban_utils::UDPBroadcast(28646, 28646);
+    _broadcaster = new rhoban_utils::UDPBroadcast(CAPTAIN_PORT, CAPTAIN_PORT);
 }
 
 CaptainService::~CaptainService()

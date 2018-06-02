@@ -40,7 +40,7 @@ TeamPlayService::TeamPlayService() :
         ->comment("Additionnal radius to the teamRadius when referee asks to let play");
 
     //Initialize UDP communication
-    _broadcaster = new rhoban_utils::UDPBroadcast(28645, 28645);
+    _broadcaster = new rhoban_utils::UDPBroadcast(TEAM_PLAY_PORT, TEAM_PLAY_PORT);
     _t = 0;
 
     //Initialize self info
