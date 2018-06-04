@@ -351,6 +351,7 @@ void Robocup::enterState(std::string state)
     }
 
     if (state == STATE_PLACING) {
+        walk->control(true);
         startMove("placer");
         logger.log("Starting placer");
     }
