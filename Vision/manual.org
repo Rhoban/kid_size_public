@@ -37,8 +37,16 @@ and direction) to transform the information from the image basis to the position
 in the robot referential. The *CameraState* module at Vision/CameraState ensures
 a proper reading of the position of the camera, provided by the ModelService.
 
-The accuracy of the camera state is entirely dependant on the model of the
+The accuracy of the camera state is entirely dependent on the model of the
 camera.
+
+**** Binding/RoboCup
+
+This component ensures that the perception pipeline is updated regularly, it is
+also in charge of gathering all the useful information from the pipeline. It
+stores the information until the LocalisationBinding retrieves them.
+
+This binding also filters the information concerning the ball and the the robot.
 
 *** Detection of objects
 The acquisition of images is performed by the filter SourcePtGrey which
@@ -168,4 +176,56 @@ is to upload the files and tag the patches using rhoban.com/tag
 For this procedure, see the documentation in the package *deep_vision*
 
 ** Localisation
-TODO
+
+The robot uses a particle filter for localisation.
+- Vision/Localisation/Field/ contains all the code relevant to the particle filter
+- Vision/Binding/LocalisationBinding contains the interface of the localisation
+  module with other modules
+
+*** Main principle
+
+The update of the particle filter is scheduled at a fixed frequency controled by
+the parameter *localisation/period*.
+
+At each period, the following procedure is applied:
+
+1. Information are retrieved from the perception module and summarized
+2. The particles are moved according to the odometry information
+3. Some extra noise is added to the position of the particles
+4. The particles are weighted according to the observation perceived
+5. Particles for the next generation are chosen randomly according to weights
+
+Additionally, information from the referee are used in specific procedures, see
+'Reset and special events'
+
+*** Observations
+
+The observations used are:
+- The base of the goal post
+- The border and the corner of the field (green area)
+- The visual compass (orientation of the robot based on global environment)
+
+*** Reset and special events
+
+There are many specific events which have a major impact on localisation, they 
+are adressed specifically by 'reset' functions
+
+**** Beginning of the game
+At the beginning of the game, we can place the robots at a chosen location,
+thus we initialize the particle filter at the location given by the *startup.sh*
+script.
+
+**** Border reset (after penalized or bad location)
+When a robot comes back to the field after having been penalized or when it was
+placed manually during the 'SET' phase, it enters on the field from the side, in
+front of the penalty mark. This information is used to generate two clusters of
+particles, one on each side of the field.
+
+**** Fall reset
+Falling and standing up introduces a large amount of noise on the position of
+the robot, therefore, when the robot stand up, extra noise is added on the
+particles, because perception is required to have an accurate orientation again.
+
+*** Monitoring the localisation
+The status of the particle filter can be monitored using rhio, a node containing
+an image is provided in *localisation/TopView*
