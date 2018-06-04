@@ -6,7 +6,6 @@
 #include "FieldBorder.hpp"
 #include "ClippingByBorder.hpp"
 #include "WhiteLines.hpp"
-#include "RobotByII.hpp"
 #include "../FilterFactory.hpp"
 
 
@@ -19,7 +18,6 @@ void registerCustomFilters(FilterFactory * ff) {
   ff->registerBuilder("FieldBorder"       , [](){return std::unique_ptr<Filter>(new FieldBorder()       );});
   ff->registerBuilder("ClippingByBorder"  , [](){return std::unique_ptr<Filter>(new ClippingByBorder()  );});
   ff->registerBuilder("WhiteLines"        , [](){return std::unique_ptr<Filter>(new WhiteLines()        );});
-  ff->registerBuilder("RobotByII"         , [](){return std::unique_ptr<Filter>(new RobotByII()         );});
 }
 }
 }
