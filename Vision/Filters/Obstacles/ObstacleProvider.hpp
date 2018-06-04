@@ -10,10 +10,8 @@ class ObstacleProvider : public Filter {
 public:
   ObstacleProvider(const std::string &name);
 
-  /// Values are in [0,1]
-  const std::vector<double> & getObstaclesX() const;
-  /// Values are in [0,1]
-  const std::vector<double> & getObstaclesY() const;
+  /// Values are in [0,1] x [0,1] (in Image)
+  const std::vector<Eigen::Vector2d> & getObstacles() const;
 
 protected:
 
@@ -23,11 +21,8 @@ protected:
   /// Remove previously published data for the obstacle
   void clearObstaclesData();
 
-  /// Position of the obstacle in the image [0,1]
-  std::vector<double> obstacles_x;
-
-  /// Position of the obstacle in the image [0,1]
-  std::vector<double> obstacles_y;
+  /// Position of the obstacle in the image [0,1]x[0,1]
+  std::vector<Eigen::Vector2d> obstacles;
 };
 }
 }
