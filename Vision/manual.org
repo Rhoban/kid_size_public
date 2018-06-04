@@ -1,0 +1,231 @@
+* Perception and localisation manual
+
+Created on: June 3rd, 2018
+
+This manual aims at providing basic knowledge on the Vision and Localisation
+modules developed by the Rhoban team for RoboCup KidSize league.
+
+We distinguish here two different modules:
+- Perception: For everything related to treatment of images and acquisition of information
+- Localisation: Ensuring time coherency and using perception information to
+  build a reliable position estimation
+
+** Perception
+
+First we discuss here the main components of the perception, then we present the
+detection of the different object present on the field, e.g. the ball and the
+posts. Finally we present information on the tuning and diagnostic procedures to
+improve the performances of the perception system.
+
+*** Software components
+
+**** Vision filters and Pipelines
+The perception of the robot is structured by a pipeline of various
+filters. At every new image, the pipeline is updated, starting from the root
+(the source image) and ensuring that all dependencies have been compiled.
+
+The content of the pipeline is read from the file *vision_config.json*,
+instanciation of the objects is ensured by a Factory.
+- Vision/Filters/Filter.hpp contains the definition of the base class for filters
+- Vision/Filters/Pipeline.hpp contains the definition of the Pipeline
+- Vision/Filters/Filter/* contains the implementation of the different filters
+
+**** Camera State
+While computer vision allows to detect the position of an object in an image, it
+is mandatory to have information on the camera model and on its position (height
+and direction) to transform the information from the image basis to the position
+in the robot referential. The *CameraState* module at Vision/CameraState ensures
+a proper reading of the position of the camera, provided by the ModelService.
+
+The accuracy of the camera state is entirely dependent on the model of the
+camera.
+
+**** Binding/RoboCup
+
+This component ensures that the perception pipeline is updated regularly, it is
+also in charge of gathering all the useful information from the pipeline. It
+stores the information until the LocalisationBinding retrieves them.
+
+This binding also filters the information concerning the ball and the the robot.
+
+*** Detection of objects
+The acquisition of images is performed by the filter SourcePtGrey which
+retrieves YUV images from the camera. The configuration files for the pipeline
+are separated by type of object and are available inside the
+environment/common/vision_filters folder.
+
+The global configuration of the filter is set in the 'all.json'. Other
+configuration files are discussed later
+
+**** Colors and Integral Images
+A few color segmentation filters are used in the pipeline, mainly to filter the
+white and green parts of the image which are the most important colors.
+
+We use Integral Images for those colors and for the Y component of the images in
+order to allow more efficient computations for other obstacles.
+
+Those filters are listed in the file colors.json
+
+**** Ball
+The detection of the balls is contained in the ball_detection.json file. It
+follows the following procedure.
+1. Identifying ROI based on two information (ballByII)
+   - Expected size of the ball (according to camerastate)
+   - Color information (ball is bright and it is a hole in the green)
+2. Extracting the ROI from a RGB image (ballPatchProvider)
+3. Classification of the ROI using a neural network (ballByDNN)
+   - Accepted ROI are colored in green,
+   - Refused ROI are colored in red
+
+**** Posts
+The detection of the base of the goalposts is contained in the goals.json file. It
+follows the following procedure.
+1. Identifying ROI based on two information (goalROIProvider)
+   - Expected size of the base of the post (according to camerastate)
+     - Note: instead of computing the size of the base of a post we simply
+       multiplies the size of the ball to reduce the computation requirement
+   - Color information (searching for a vertical white zone in the middle of the green)
+2. Extracting the ROI from a RGB image (goalPatchProvider)
+3. Classification of the ROI using a neural network (goalByDNN)
+   - Accepted ROI are colored in green,
+   - Refused ROI are colored in red
+
+**** Robots
+The detection of other robots is contained in the robots.json file. It
+follows the following procedure.
+1. Identifying ROI based on two information (obstacleByII)
+   - Expected size of the base of the robot (according to camerastate)
+     - Since the size of the feet of the robot depend on the opponent, we simply
+       used a manually tuned scale factor from the size of the ball
+   - Color information (searching for a vertical dark hole in the field which is not white)
+2. Extracting the ROI from the Y canal of the image (obstaclePatchProvider)
+3. Classification of the ROI using a neural network (obstacleByDNN)
+   - Accepted ROI are colored in green,
+   - Refused ROI are colored in red
+
+*** Diagnostic and tuning of perception
+While the perception system is quite robust, it is always possible to improve
+it. Moreover, depending on the lightning condition, it might be necessary to
+change the exposure time of the image acquisition.
+
+**** Viewing filters output
+Visualizing the images at different points of the pipeline is a convenient way
+to identify issues and to tune parameters in the perception system.
+
+In order to do so, it is possible to use the *view* command in a RhIO
+Shell. Every filter is a directory inside the *Vision* node.
+
+Note that it is much more convenient to use an ethernet cable for monitoring
+images.
+
+**** Acquiring logs
+In order to tune up some parameters in specific situations or to obtain new
+patches for training the neural networks, it is useful to acquire images
+directly from the robot and to replay them later
+
+The simplest way to acquire new logs is to use the script *start_manual_log.php*
+in the folder *workspace/tools*. This script makes the robot scan continuously,
+reduces the framerate of the Vision to avoid having too much similar images and
+launch a log session of the required duration. Note that images are not taken
+when the robot is not on the ground. Once the log is finished, the robot will
+stop scanning.
+
+The content of the log will be:
+- A list of images corresponding to the source content
+- A file containing the timestamps corresponding to the images
+- A file containing the low level information (motors, pressure sensors etc)
+  - This file is necessary to be able to obtain the orientation of the camera
+    during the replay
+
+**** Replaying logs
+First move toward the folder *environments/fake*. Then, use the
+script *prepare.sh* to setup the environments properly for the log and the robot
+chosen. After that, you can replay the log using *run.sh*.
+
+Note: It is mandatory to choose which pipeline is used to replay the logs. The
+default choice is *common/vision_filters/all_fake.json*.
+
+**** Tuning up the camera exposition
+In order to change the exposure time, the procedure is the following:
+
+1. Launch a robot and place it on the field
+2. Open a rhio shell to view Vision/human/out
+3. Open a rhio shell to tune the parameters in Vision/source.
+   - Shutter is the aperture time in ms
+     - A low aperture time results in less blur, but darker images
+   - Gain controls the physical gain on images brightness
+     - A higher gain implies a higher chromatical noise
+4. Once the parameters are satisfying, modify the *all.json* file to make sur
+   that changes will be taken into account
+
+**** Training new neural network
+The quality of the neural network can be improved by adding more data. We will
+describe the procedure to use for improving the quality of the classification.
+
+***** Extracting patches
+First, patches have to be extracted. This can be done by:
+
+1. Moving to folder *environments/fake*
+2. Ensuring that *vision_config.json* points toward *common/vision_filters/roi_extractor.json*
+3. Run the script *extract_patches.sh*
+
+All the patches will be placed at *patches/results/patches.zip*, the next step
+is to upload the files and tag the patches using rhoban.com/tag
+
+***** Training neural networks
+For this procedure, see the documentation in the package *deep_vision*
+
+** Localisation
+
+The robot uses a particle filter for localisation.
+- Vision/Localisation/Field/ contains all the code relevant to the particle filter
+- Vision/Binding/LocalisationBinding contains the interface of the localisation
+  module with other modules
+
+*** Main principle
+
+The update of the particle filter is scheduled at a fixed frequency controled by
+the parameter *localisation/period*.
+
+At each period, the following procedure is applied:
+
+1. Information are retrieved from the perception module and summarized
+2. The particles are moved according to the odometry information
+3. Some extra noise is added to the position of the particles
+4. The particles are weighted according to the observation perceived
+5. Particles for the next generation are chosen randomly according to weights
+
+Additionally, information from the referee are used in specific procedures, see
+'Reset and special events'
+
+*** Observations
+
+The observations used are:
+- The base of the goal post
+- The border and the corner of the field (green area)
+- The visual compass (orientation of the robot based on global environment)
+
+*** Reset and special events
+
+There are many specific events which have a major impact on localisation, they 
+are adressed specifically by 'reset' functions
+
+**** Beginning of the game
+At the beginning of the game, we can place the robots at a chosen location,
+thus we initialize the particle filter at the location given by the *startup.sh*
+script.
+
+**** Border reset (after penalized or bad location)
+When a robot comes back to the field after having been penalized or when it was
+placed manually during the 'SET' phase, it enters on the field from the side, in
+front of the penalty mark. This information is used to generate two clusters of
+particles, one on each side of the field.
+
+**** Fall reset
+Falling and standing up introduces a large amount of noise on the position of
+the robot, therefore, when the robot stand up, extra noise is added on the
+particles, because perception is required to have an accurate orientation again.
+
+*** Monitoring the localisation
+The status of the particle filter can be monitored using rhio, a node containing
+an image is provided in *localisation/TopView*

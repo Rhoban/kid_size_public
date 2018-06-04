@@ -303,6 +303,7 @@ void PlayingMove::step(float elapsed)
 
 void PlayingMove::enterState(std::string state)
 {
+    logger.log("Entering state %s", state.c_str());
     auto &strategy = getServices()->strategy;
 
     if (state == STATE_LOCALIZE) {
@@ -338,6 +339,7 @@ void PlayingMove::enterState(std::string state)
 
 void PlayingMove::exitState(std::string state)
 {
+    logger.log("Exiting state %s", state.c_str());
     auto &strategy = getServices()->strategy;
 
     if (state == STATE_APPROACH) {

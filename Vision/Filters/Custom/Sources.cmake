@@ -7,5 +7,4 @@ set (SOURCES
   FieldBorderData.cpp
   ClippingByBorder.cpp
   WhiteLines.cpp
-  RobotByII.cpp
 )
