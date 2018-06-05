@@ -414,7 +414,7 @@ void Head::applyProtection()
   DecisionService * decision = getServices()->decision;
   FallStatus fall_status = decision->fallStatus;
   FallDirection fall_direction = decision->fallDirection;
-  if (fall_status == FallStatus::Falling) {
+  if (fall_status == FallStatus::Falling || fall_status == FallStatus::Fallen) {
     tilt_deg = 0;
     switch(fall_direction)
     {
@@ -428,11 +428,11 @@ void Head::applyProtection()
         break;
     }
     Move::setAngle("head_pitch", tilt_deg);
-    setTorqueLimit("head_pitch", 0.5);
-    setTorqueLimit("head_yaw", 0.5);
-  } else if ( fall_status == FallStatus::Fallen) {
-    setTorqueLimit("head_pitch", 0.0);
-    setTorqueLimit("head_yaw", 0.0);
   }
+  //if ( fall_status == FallStatus::Fallen) {
+  //  Move::setAngle("head_pitch", tilt_deg);
+  //  //setTorqueLimit("head_pitch", 0.0);
+  //  //setTorqueLimit("head_yaw", 0.0);
+  //}
   Move::setAngle("head_yaw"  , 0);
 }
