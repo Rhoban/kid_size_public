@@ -35,7 +35,7 @@ DecisionService::DecisionService()
     bind.bindNew("postKickTrackingTime", postKickTrackingTime, RhIO::Bind::PullOnly)
         ->comment("Time during which a ball is considered as moving after a "
                   "robot started performing a kick [s]")
-        ->defaultValue(2);
+        ->defaultValue(5);
 
     // Field quality
     bind.bindNew("fieldQThreshold", fieldQThreshold, RhIO::Bind::PullOnly)

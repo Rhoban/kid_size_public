@@ -28,16 +28,20 @@ TeamPlayService::TeamPlayService() :
     //Initialize RhiO
     _bind = new RhIO::Bind("teamplay");
     _bind->bindNew("enable", _isEnabled, RhIO::Bind::PullOnly)
-        ->defaultValue(true)->persisted(true);
+        ->defaultValue(true);
     _bind->bindNew("broadcastPeriod", _broadcastPeriod, RhIO::Bind::PullOnly)
         ->comment("UDP broadcast period in seconds")
-        ->defaultValue(0.2)->persisted(true);
+        ->defaultValue(0.2);
     _bind->bindFunc("team", "Display information about teamplay",
         &TeamPlayService::cmdTeam, *this);
 
     _bind->bindNew("refereeRadius", refereeRadius)
         ->defaultValue(1.10)->minimum(0.0)->maximum(2.0)
         ->comment("Additionnal radius to the teamRadius when referee asks to let play");
+
+    _bind->bindNew("timeSinceLastKick", _selfInfo.timeSinceLastKick, RhIO::Bind::PushOnly)
+        ->comment("Time since I performed the last kick [s]")
+        ->defaultValue(10.0);
 
     //Initialize UDP communication
     _broadcaster = new rhoban_utils::UDPBroadcast(TEAM_PLAY_PORT, TEAM_PLAY_PORT);
@@ -115,6 +119,8 @@ bool TeamPlayService::tick(double elapsed)
     } else {
         _allInfo.clear();
     }
+
+    _bind->push();
 
     return true;
 }

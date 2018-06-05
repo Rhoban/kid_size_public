@@ -8,8 +8,12 @@
 
 #include "scheduler/MoveScheduler.h"
 
+#include "rhoban_utils/logging/logger.h"
+
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
+
+static rhoban_utils::Logger logger("StrategyService");
 
 StrategyService::StrategyService()
   : bind("strategy"),
