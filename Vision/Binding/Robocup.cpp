@@ -19,6 +19,7 @@
 
 #include "Filters/Features/TagsDetector.hpp"
 #include "Filters/Goal/GoalProvider.hpp"
+#include "Filters/Obstacles/ObstacleProvider.hpp"
 #include "Filters/Source/SourcePtGrey.hpp"
 
 #include "CameraState/CameraState.hpp"
@@ -48,7 +49,6 @@
 #include <string>
 #include <unistd.h>
 #include "Filters/Custom/FieldBorder.hpp"
-#include "Filters/Custom/RobotByII.hpp"
 
 #include <vector>
 
@@ -627,44 +627,42 @@ void Robocup::readPipeline() {
   }
 
   // Robot detection
-  if (pipeline.isFilterPresent("robotByII")) {
+  if (pipeline.isFilterPresent("obstacleByDNN")) {
     try {
-      Vision::Filter &robotDetector_f = pipeline.get("robotByII");
-      const Filters::RobotByII &robotDetector =
-          dynamic_cast<const Filters::RobotByII &>(robotDetector_f);
+      Vision::Filter &robotDetector_f = pipeline.get("obstacleByDNN");
+      const Filters::ObstacleProvider &robotDetector =
+          dynamic_cast<const Filters::ObstacleProvider &>(robotDetector_f);
+
+      const std::vector<Eigen::Vector2d> & frame_obstacles = robotDetector.getObstacles();
 
       if (robotFilter) {
-          std::vector<Eigen::Vector3d> positions;
-          for (auto &robot : robotDetector.robots) {
-              auto tmp = cs->robotPosFromImg(robot.first.x, robot.first.y, 1, 1, false);
-              Eigen::Vector3d in_world(tmp.x, tmp.y, 0);
-              positions.push_back(in_world);
-          }
-          robotFilter->newFrame(positions);
+        std::vector<Eigen::Vector3d> positions;
+        for (const Eigen::Vector2d & obs : frame_obstacles) {
+          auto tmp = cs->robotPosFromImg(obs.x(), obs.y(), 1, 1, false);
+          Eigen::Vector3d in_world(tmp.x, tmp.y, 0);
+          positions.push_back(in_world);
+        }
+        robotFilter->newFrame(positions);
   
-          LocalisationService *loc = _scheduler->getServices()->localisation;
-          std::vector<Eigen::Vector3d> filteredPositions;
-          for (auto &candidate : robotFilter->getCandidates()) {
-              // XXX: Threshold to Rhioize
-              if (candidate.score > 0.3) {
-                filteredPositions.push_back(candidate.object);
-              }
+        LocalisationService *loc = _scheduler->getServices()->localisation;
+        std::vector<Eigen::Vector3d> filteredPositions;
+        for (auto &candidate : robotFilter->getCandidates()) {
+          // XXX: Threshold to Rhioize
+          if (candidate.score > 0.3) {
+            filteredPositions.push_back(candidate.object);
           }
-          loc->setOpponentsWorld(filteredPositions);
+        }
+        loc->setOpponentsWorld(filteredPositions);
       }
 
       detectedRobots.clear();
       // Going from pixels to world referential
-      for (size_t id = 0; id < robotDetector.robots.size(); id++) {
-        double robot_x = robotDetector.robots[id].first.x;
-        double robot_y = robotDetector.robots[id].first.y;
+      for (const Eigen::Vector2d & obs : frame_obstacles) {
         detectedRobots.push_back(
-            cs->robotPosFromImg(robot_x, robot_y, 1, 1, false));  // false=invariant world reference
-                                                                  // frame (which integrates the
-                                                                  // odometry)
+          cs->robotPosFromImg(obs.x(), obs.y(), 1, 1, false));  // false=invariant world reference
+                                                                // frame (which integrates the
+                                                                // odometry)
       }
-      // detectedRobots = keepFrontRobots(detectedRobots);
-      // Filter out robots that should be hidden by front robots.
     } catch (const std::bad_cast &e) {
       std::cerr << "Failed to import robot positions, check pipeline. Exception = " << e.what() << std::endl;
     } catch (const std::runtime_error &exc) {
