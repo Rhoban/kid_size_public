@@ -79,6 +79,8 @@ Robocup::Robocup(MoveScheduler *scheduler)
       manual_logger("manual_logs", true, 10000),
       moving_ball_logger("moving_ball_logs", false, 1000),
       autologMovingBall(false),
+      game_logger("game_logs", true, 15 * 60 * 40),// Allows 15 minutes at 40 fps ->
+      autolog_games(false),
       logBallExtraTime(2.0),
       writeBallStatus(false),
       _scheduler(scheduler),
@@ -124,6 +126,8 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
        manual_logger("manual_logs", true, 10000),
        moving_ball_logger("moving_ball_logs", false, 1000),
        autologMovingBall(false),
+       game_logger("game_logs", true, 15 * 60 * 40),// Allows 15 minutes at 40 fps
+       autolog_games(false),
        logBallExtraTime(2.0),
        writeBallStatus(false),
        benchmark(false), benchmarkDetail(0),
@@ -222,6 +226,7 @@ Json::Value Robocup::toJson() const {
   v["benchmarkDetail"] = benchmarkDetail;
   v["imageDelay"] = imageDelay;
   v["autologMovingBall"] = autologMovingBall;
+  v["autologGames"] = autolog_games;
   v["logBallExtraTime"] = logBallExtraTime;
   v["writeBallStatus"] = writeBallStatus;
   v["ignoreOutOfFieldBalls"] = ignoreOutOfFieldBalls;
@@ -243,6 +248,7 @@ void Robocup::fromJson(const Json::Value & v, const std::string & dir_name) {
   rhoban_utils::tryRead(v,"benchmarkDetail",&benchmarkDetail);
   rhoban_utils::tryRead(v,"imageDelay",&imageDelay);
   rhoban_utils::tryRead(v,"autologMovingBall",&autologMovingBall);
+  rhoban_utils::tryRead(v,"autologGames",&autolog_games);
   rhoban_utils::tryRead(v,"logBallExtraTime",&logBallExtraTime);
   rhoban_utils::tryRead(v,"writeBallStatus",&writeBallStatus);
   rhoban_utils::tryRead(v,"ignoreOutOfFieldBalls",&ignoreOutOfFieldBalls);
@@ -342,6 +348,9 @@ void Robocup::initRhIO() {
   RhIO::Root.newFloat("/Vision/logBallExtraTime")
       ->defaultValue(logBallExtraTime)
       ->comment("Extra duration of log once ball stopped being flagged as moving [s]");
+  RhIO::Root.newBool("/Vision/autologGames")
+      ->defaultValue(autolog_games)
+      ->comment("If enabled, write logs while game is playing");
   RhIO::Root.newBool("/Vision/benchmark")
       ->defaultValue(benchmark)
       ->comment("Is logging activated ?");
@@ -540,6 +549,7 @@ void Robocup::step() {
 
 void Robocup::importFromRhIO() {
   autologMovingBall = RhIO::Root.getValueBool("/Vision/autologMovingBall").value;
+  autolog_games = RhIO::Root.getValueBool("/Vision/autologGames").value;
   logBallExtraTime = RhIO::Root.getValueFloat("/Vision/logBallExtraTime").value;
   benchmark = RhIO::Root.getValueBool("/Vision/benchmark").value;
   benchmarkDetail = RhIO::Root.getValueInt("/Vision/benchmarkDetail").value;
@@ -871,9 +881,9 @@ void Robocup::loggingStep() {
   // Starting autoLog
   if (startAutoLog) {
     moving_ball_logger.initSession();
-      out.log("Starting a session at '%s'", moving_ball_logger.getSessionPath().c_str());
-      std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
-      startLoggingLowLevel(lowLevelPath);
+    out.log("Starting a session at '%s'", moving_ball_logger.getSessionPath().c_str());
+    std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
+    startLoggingLowLevel(lowLevelPath);
   }
   // Trying to log entry (can fail is maxSize is reached)
   if (useAutoLogEntry) {
@@ -881,6 +891,26 @@ void Robocup::loggingStep() {
       moving_ball_logger.pushEntry(entry);
     } catch (const ImageLogger::SizeLimitException & exc) {
       stopAutoLog = true;
+    }
+  }
+
+  // Status of game_logs
+  bool is_playing = referee->isPlaying();
+  bool gameLogActive = game_logger.isActive();
+  bool useGameLogEntry = autolog_games && is_playing;
+  bool startGameLog = !gameLogActive && useGameLogEntry;
+  bool stopGameLog = gameLogActive && !useGameLogEntry;
+  if (startGameLog) {
+    game_logger.initSession();
+    out.log("Starting a session at '%s'", game_logger.getSessionPath().c_str());
+    std::string lowLevelPath = game_logger.getSessionPath() + "/lowLevel.log";
+    startLoggingLowLevel(lowLevelPath);
+  }
+  if (useGameLogEntry) {
+    try {
+      game_logger.pushEntry(entry);
+    } catch (const ImageLogger::SizeLimitException & exc) {
+      stopGameLog = true;
     }
   }
   logMutex.unlock();
@@ -895,6 +925,11 @@ void Robocup::loggingStep() {
     std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
     stopLoggingLowLevel(lowLevelPath);
     moving_ball_logger.endSession();
+  }
+  if (stopGameLog) {
+    std::string lowLevelPath = game_logger.getSessionPath() + "/lowLevel.log";
+    stopLoggingLowLevel(lowLevelPath);
+    game_logger.endSession();
   }
 }
 

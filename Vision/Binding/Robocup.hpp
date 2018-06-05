@@ -75,6 +75,10 @@ private:
   /// start a new log
   bool autologMovingBall;
 
+  Utils::ImageLogger game_logger;
+  /// If enabled, logs are enabled while the robot is playing
+  bool autolog_games;
+
   /// Keep logging for a while after ball stopped moving [s]
   float logBallExtraTime;
 
