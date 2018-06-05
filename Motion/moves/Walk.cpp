@@ -1,5 +1,5 @@
-#include <algorithm>
 #include <math.h>
+#include <algorithm>
 #include "Walk.h"
 #include "Head.h"
 #include <RhIO.hpp>
@@ -394,13 +394,13 @@ Walk::Walk(Kick *kickMove)
     
     // Speed limits
     bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)
-        ->defaultValue(20.0);
+        ->defaultValue(15.0);
 
     bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)
-        ->defaultValue(45.0);
+        ->defaultValue(50.0);
 
     bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)
-        ->defaultValue(20.0);
+        ->defaultValue(22.5);
 
     bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)
         ->defaultValue(30.0);
