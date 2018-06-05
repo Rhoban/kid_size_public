@@ -396,13 +396,13 @@ Walk::Walk(Kick *kickMove)
     bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)
         ->defaultValue(20.0);
 
-    bind->bindNew("maxStep [mm/step]", maxStep, RhIO::Bind::PullOnly)
+    bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)
         ->defaultValue(45.0);
 
-    bind->bindNew("maxStepBackward [mm/step]", maxStepBackward, RhIO::Bind::PullOnly)
+    bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)
         ->defaultValue(20.0);
 
-    bind->bindNew("maxLateral [mm/step]", maxLateral, RhIO::Bind::PullOnly)
+    bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)
         ->defaultValue(30.0);
 
     bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
