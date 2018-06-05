@@ -1557,7 +1557,10 @@ void Robocup::startLoggingLowLevel(const std::string & path) {
 
 void Robocup::stopLoggingLowLevel(const std::string & path) {
   out.log("Saving lowlevel log to: %s", path.c_str());
+  TimeStamp start_save = TimeStamp::now();
   _scheduler->getServices()->model->stopNamedLog(path);
+  TimeStamp end_save = TimeStamp::now();
+  out.log("Lowlevel logs saved in %f seconds", diffSec(start_save, end_save));
 }
 
 int Robocup::getFrames() { return pipeline.frames; }
