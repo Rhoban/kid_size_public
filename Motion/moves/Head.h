@@ -64,9 +64,6 @@ private:
   double max_pan;
   /// Minimal overlap between two adjacent control points [deg]
   double min_overlap;
-  /// Handle max pan and min tilt (to avoid colliding the handle)
-  double handle_max_pan;
-  double handle_min_tilt;
 
   /// Min tilt wished for localization [deg]
   double localize_min_tilt;

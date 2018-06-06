@@ -33,63 +33,56 @@ Head::Head()
     ->comment("Target a fixed point, but still uses security")->defaultValue(false);
   // Default scan parameters
   bind->bindNew("minTilt", min_tilt, RhIO::Bind::PullOnly)
-    ->comment("Minimum tilt wished for an image point")->persisted(true)
-    ->defaultValue(0);
+    ->comment("Minimum tilt wished for an image point")
+    ->defaultValue(-5);
   bind->bindNew("maxTilt", max_tilt, RhIO::Bind::PullOnly)
-    ->comment("Maximum tilt wished for an image point")->persisted(true)
-    ->defaultValue(90);
+    ->comment("Maximum tilt wished for an image point")
+    ->defaultValue(95);
   bind->bindNew("maxPan", max_pan, RhIO::Bind::PullOnly)
-    ->comment("Maximum pan wished for an image point")->persisted(true)
-    ->defaultValue(135);
+    ->comment("Maximum pan wished for an image point")
+    ->defaultValue(150);
   bind->bindNew("minOverlap", min_overlap, RhIO::Bind::PullOnly)
-    ->comment("Minimal overlap between control points [degrees]")->persisted(true)
+    ->comment("Minimal overlap between control points [degrees]")
     ->defaultValue(5);
-  // Handle
-  bind->bindNew("handleMaxPan", handle_max_pan, RhIO::Bind::PullOnly)
-    ->comment("Maximum pan before we reach the handle")->persisted(true)
-    ->defaultValue(110);
-  bind->bindNew("handleMinTilt", handle_min_tilt, RhIO::Bind::PullOnly)
-    ->comment("Minimum tilt value when the pan is reached")->persisted(true)
-    ->defaultValue(40);
   // Localize scan parameters
   bind->bindNew("localizeMinTilt", localize_min_tilt, RhIO::Bind::PullOnly)
-    ->comment("Minimum tilt wished for an image point")->persisted(true)
+    ->comment("Minimum tilt wished for an image point")
     ->defaultValue(-8);
   bind->bindNew("localizeMaxTilt", localize_max_tilt, RhIO::Bind::PullOnly)
-    ->comment("Maximum tilt wished for an image point")->persisted(true)
+    ->comment("Maximum tilt wished for an image point")
     ->defaultValue(60);
   bind->bindNew("localizeMaxPan", localize_max_pan, RhIO::Bind::PullOnly)
-    ->comment("Maximum pan wished for an image point")->persisted(true)
-    ->defaultValue(135);
+    ->comment("Maximum pan wished for an image point")
+    ->defaultValue(150);
   bind->bindNew("localizeMinOverlap", localize_min_overlap, RhIO::Bind::PullOnly)
-    ->comment("Minimal overlap between control points [degrees]")->persisted(true)
+    ->comment("Minimal overlap between control points [degrees]")
     ->defaultValue(5);
   // Compass scan parameters
   bind->bindNew("compassMinTilt", compass_min_tilt, RhIO::Bind::PullOnly)
-    ->comment("Minimum tilt wished for an image point")->persisted(true)
+    ->comment("Minimum tilt wished for an image point")
     ->defaultValue(-30);
   bind->bindNew("compassMaxTilt", compass_max_tilt, RhIO::Bind::PullOnly)
-    ->comment("Maximum tilt wished for an image point")->persisted(true)
+    ->comment("Maximum tilt wished for an image point")
     ->defaultValue(10);
   bind->bindNew("compassMaxPan", compass_max_pan, RhIO::Bind::PullOnly)
-    ->comment("Maximum pan wished for an image point")->persisted(true)
+    ->comment("Maximum pan wished for an image point")
     ->defaultValue(160);
   // Speed and acc limits for orders
   bind->bindNew("maxSpeed", max_speed, RhIO::Bind::PullOnly)
-    ->comment("Maximal angular speed [deg/s]")->persisted(true)
-    ->defaultValue(120);
+    ->comment("Maximal angular speed [deg/s]")
+    ->defaultValue(180);
   bind->bindNew("maxAcc", max_acc, RhIO::Bind::PullOnly)
-    ->comment("Maximal acceleration [deg/s^2]")->persisted(true)
+    ->comment("Maximal acceleration [deg/s^2]")
     ->defaultValue(3600);
   bind->bindNew("vcMaxSpeed", vc_max_speed, RhIO::Bind::PullOnly)
-    ->comment("Maximal angular speed with visual compass [deg/s]")->persisted(true)
+    ->comment("Maximal angular speed with visual compass [deg/s]")
     ->defaultValue(60);
   // Tracking
   bind->bindNew("maxTiltTrack", max_tilt_track, RhIO::Bind::PullOnly)
-    ->comment("Maximum tilt wished for the center of the image when tracking")->persisted(true)
+    ->comment("Maximum tilt wished for the center of the image when tracking")
     ->defaultValue(65);
   bind->bindNew("maxPanTrack", max_pan_track, RhIO::Bind::PullOnly)
-    ->comment("Maximum pan wished for an image point when tracking")->persisted(true)
+    ->comment("Maximum pan wished for an image point when tracking")
     ->defaultValue(135);
 
   // Timing/tracking variables
@@ -103,21 +96,21 @@ Head::Head()
     ->comment("Duration of scan cycle in compassMode [s]");
   bind->bindNew("scanExtraPeriod", scan_extra_period, RhIO::Bind::PullOnly)
     ->comment("Extra time to ensure we are looking everywhere [s]")
-    ->persisted(true)->defaultValue(0.5);
+    ->defaultValue(0.5);
   bind->bindNew("scanningTime", scanning_time, RhIO::Bind::PushOnly)
     ->comment("Time spent since start of scan phase [s]");
   bind->bindNew("trackingPeriod", tracking_period, RhIO::Bind::PullOnly)
-    ->comment("Duration of tracking when ball_dist >= nearTrackDist [s]")->persisted(true)
+    ->comment("Duration of tracking when ball_dist >= nearTrackDist [s]")
     ->defaultValue(1);
   bind->bindNew("nearTrackingPeriod", near_tracking_period, RhIO::Bind::PullOnly)
-    ->comment("Duration of tracking when ball_dist < nearTrackDist [s]")->persisted(true)
+    ->comment("Duration of tracking when ball_dist < nearTrackDist [s]")
     ->defaultValue(3);
   bind->bindNew("trackingTime", tracking_time, RhIO::Bind::PushOnly)
     ->comment("Time spent since start of tracking [s]");
   bind->bindNew("nearTrackDist", near_track_dist, RhIO::Bind::PullOnly)
-    ->comment("Distance at which tracking becomes longer")->defaultValue(0.7)->persisted(true);
+    ->comment("Distance at which tracking becomes longer")->defaultValue(0.7);
   bind->bindNew("forceTrackDist", force_track_dist, RhIO::Bind::PullOnly)
-    ->comment("Distance to force watching the ball")->defaultValue(0.35)->persisted(true);
+    ->comment("Distance to force watching the ball")->defaultValue(0.35);
   bind->bindNew("forceTrack", force_track, RhIO::Bind::PullOnly)
     ->comment("Is tracking forced ?")->defaultValue(false);
 
@@ -139,16 +132,14 @@ Head::Head()
 
   bind->bindNew("smoothing", smoothing, RhIO::Bind::PullOnly)
     ->comment("smoothing of the orders applied for both scan and track")
-    ->persisted(true)->defaultValue(0.9);
+    ->defaultValue(0.9);
 
   bind->bindNew("fallBackwardPitch", fall_backward_pitch, RhIO::Bind::PullOnly)
     ->defaultValue(80)->minimum(0)->maximum(90)
-    ->comment("Head pitch goal value during backward falls [deg]")
-    ->persisted(true);
+    ->comment("Head pitch goal value during backward falls [deg]");
   bind->bindNew("fallForwardPitch", fall_forward_pitch, RhIO::Bind::PullOnly)
     ->defaultValue(-45)->minimum(-50)->maximum(0)
-    ->comment("Head pitch goal value during forward falls [deg]")
-    ->persisted(true);
+    ->comment("Head pitch goal value during forward falls [deg]");
 
   bind->pull();
 }
@@ -246,10 +237,6 @@ void Head::step(float elapsed)
       // Bounding pan/tilt when tracking
       if (is_tracking) {
         pan_deg = std::max(-max_pan_track,std::min(max_pan_track, pan_deg));
-        // Also bounding tilt if we are nearby the hanle
-        if (fabs(pan_deg) > handle_max_pan) {
-          tilt_deg = std::min(handle_min_tilt, tilt_deg);
-        }
       }
       // Absolute bounds on tilt for safety
       double min_tilt(-40), max_tilt(80);
