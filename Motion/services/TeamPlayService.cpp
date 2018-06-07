@@ -22,7 +22,7 @@ TeamPlayService::TeamPlayService() :
     _allInfo(),
     _t(0.0),
     _isEnabled(true),
-    _broadcastPeriod(0.3)
+    _broadcastPeriod(1.0/TEAM_PLAY_FREQUENCY)
 
 {
     //Initialize RhiO

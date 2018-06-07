@@ -80,7 +80,6 @@ protected:
     
     // Captain configuration
     Config config;
-    float frequency;
     
     // Captain asynchronous thread
     volatile bool running;

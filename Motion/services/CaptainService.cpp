@@ -68,9 +68,6 @@ CaptainService::CaptainService()
     // Loading configuration file
     config.loadFile("captain.json");
     
-    // Scheduling frequency
-    bind.bindNew("frequency", frequency, RhIO::Bind::PullOnly)
-        ->defaultValue(5)->comment("Captain refresh max frequency");
         
     bind.bindNew("passPlacingRatio", passPlacingRatio, RhIO::Bind::PullOnly)
         ->defaultValue(0.85)->comment("Ratio to the kick vector to place");
@@ -465,7 +462,7 @@ void CaptainService::execThread()
         // Sleepint if needed to fit the given frequency
         auto now = rhoban_utils::TimeStamp::now();
         double elapsed = diffSec(lastTick, now);
-        double toSleep = (1.0/frequency) - elapsed;
+        double toSleep = (1.0/CAPTAIN_FREQUENCY) - elapsed;
         if (toSleep > 0) {
             usleep(round(toSleep*1000000));
         }
