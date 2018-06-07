@@ -9,6 +9,7 @@
 #include <Types/MatrixLabel.hpp>
 #include <Utils/Scheduling.hpp>
 #include <rhoban_unsorted/log_model.h>
+#include <rhoban_utils/history/history.h>
 
 /**
  * Enable or not the Quintic Walk engine
@@ -138,8 +139,15 @@ class Walk : public Move
          */
         bool lastWalkEnable;
         bool walkEnable;
+        bool walkEnableTarget;
+        float walkEnableTimeSinceChange;
+        bool walkTransitionning;
         bool walkKickLeft;
         bool walkKickRight;
+        float pressureY;
+        float pressureYStd;
+        float pressureYStdThreshold;
+        rhoban_utils::History ratioHistory;
         std::string walkKickName;
         double walkStep;
         double walkLateral;

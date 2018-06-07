@@ -86,7 +86,7 @@ static bool phasePassed(float before, float after, float phase)
 }
 
 Walk::Walk(Kick *kickMove)
-    : kickMove(kickMove)
+    : kickMove(kickMove), ratioHistory(1)
 {
 #ifdef USE_QUINTICWALK
     _params = _engine.getParameters();
@@ -391,6 +391,9 @@ Walk::Walk(Kick *kickMove)
 #endif
 
     bind->node().newFloat("ratio");
+    bind->bindNew("pressureYStdThreshold", pressureYStdThreshold, RhIO::Bind::PullOnly)
+        ->defaultValue(0.02);
+    bind->bindNew("pressureYStd", pressureYStd, RhIO::Bind::PushOnly);
     
     // Speed limits
     bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)
@@ -605,9 +608,12 @@ void Walk::onStart()
         tmp->setDisabled(true);
     }
     // Default values for variables
+    ratioHistory.clear();
     bind->pull();
     lastWalkEnable = false;
     walkEnable = false;
+    walkEnableTarget = false;
+    walkEnableTimeSinceChange = 0;
     walkStep = 0.0;
     walkLateral = 0.0;
     walkTurn = 0.0;
@@ -710,8 +716,11 @@ void Walk::updateParams(double factor, float step, float lateral, float turn)
 
 void Walk::step(float elapsed)
 {
+    static float t;
     auto &decision = getServices()->decision;
     auto &model = getServices()->model;
+    
+    t += elapsed;
 
 #ifndef USE_QUINTICWALK
     params.extraLeftX = 0;
@@ -749,7 +758,7 @@ void Walk::step(float elapsed)
     updateParams(smoothTransition, smoothingStep, smoothingLateral, smoothingTurn);
 
     // Smoothing
-    smoothing = smoothing*smoothCommands + (walkEnable ? 1 : 0)*(1.0-smoothCommands);
+    smoothing = smoothing*smoothCommands + (walkEnableTarget ? 1 : 0)*(1.0-smoothCommands);
     bool newStep = isNewStep();
     if (!forbidOrders && newStep) {
         VariationBound::update(smoothingStep, step, maxDStepByCycle, 1);
@@ -757,6 +766,32 @@ void Walk::step(float elapsed)
         VariationBound::update(smoothingTurn, turn, maxDTurnByCycle, 1);
     }
     bool isEnabled = (smoothing > 0.95);
+    
+    // Computing y pressure std
+    ratioHistory.pushValue(t, pressureY);
+    float avg = 0;
+    pressureYStd = 0;
+    auto values = ratioHistory.getValues();
+    if (values.size()) {
+        for (auto value : values) {
+            avg += value.second;
+        }
+        avg /= values.size();
+        for (auto value : values) {
+            pressureYStd += pow(value.second-avg, 2);
+        }
+        pressureYStd = sqrt(pressureYStd/values.size());
+    }
+    
+    if (walkEnable != walkEnableTarget) {
+        walkEnableTimeSinceChange += elapsed;
+        if ((!walkEnable && walkEnableTimeSinceChange > 0.3) ||
+            (walkEnable && pressureYStd < pressureYStdThreshold)) {
+            walkEnableTarget = walkEnable;
+        }
+    } else {
+        walkEnableTimeSinceChange = 0;
+    }
 
     // Setting real parameters used gains
 #ifndef USE_QUINTICWALK
@@ -847,16 +882,16 @@ void Walk::step(float elapsed)
     auto& pressureLeft = getScheduler()->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
     auto& pressureRight = getScheduler()->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
     double total = pressureLeft.getWeight() + pressureRight.getWeight();
-    double y = 0;
+    pressureY = 0;
     if (total > 0) {
-        y = 
+        pressureY = 
             (
             pressureLeft.getWeight()*(pressureLeft.getY() + 0.07) +
             pressureRight.getWeight()*(pressureRight.getY() - 0.07)
             )/total
             ;
     }
-    bind->node().setFloat("ratio", y);
+    bind->node().setFloat("ratio", pressureY);
 
 #ifdef MODE_NOMINAL
     double nominalScore = 0;
@@ -906,7 +941,7 @@ void Walk::step(float elapsed)
 #else
             // Right foot security
             if (phasePassed(prevPhase, phase, securityPhase)) {
-                if (y > securityTreshold) {
+                if (pressureY > securityTreshold) {
                     securityBlock = true;
                 }
             }
@@ -914,7 +949,7 @@ void Walk::step(float elapsed)
             double p = 0.5+securityPhase;
             if (p > 1) p -= 1;
             if (phasePassed(prevPhase, phase, p)) {
-                if (y < -securityTreshold) {
+                if (pressureY < -securityTreshold) {
                     securityBlock = true;
                 }
             }
