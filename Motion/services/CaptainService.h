@@ -77,10 +77,10 @@ protected:
     RhIO::Bind bind;
     int captainId;
     bool IAmCaptain;
+    bool share;
     
     // Captain configuration
     Config config;
-    float frequency;
     
     // Captain asynchronous thread
     volatile bool running;

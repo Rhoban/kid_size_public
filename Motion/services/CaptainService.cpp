@@ -68,9 +68,6 @@ CaptainService::CaptainService()
     // Loading configuration file
     config.loadFile("captain.json");
     
-    // Scheduling frequency
-    bind.bindNew("frequency", frequency, RhIO::Bind::PullOnly)
-        ->defaultValue(5)->comment("Captain refresh max frequency");
         
     bind.bindNew("passPlacingRatio", passPlacingRatio, RhIO::Bind::PullOnly)
         ->defaultValue(0.85)->comment("Ratio to the kick vector to place");
@@ -113,17 +110,18 @@ int CaptainService::findCaptainId()
     auto referee = getServices()->referee;
     auto teamPlay = getServices()->teamPlay;
     auto &info = teamPlay->allInfo();
+    share = true;
     
     for (auto &entry : info) {
         auto &robotInfo = entry.second;
-        if (entry.first < teamPlay->myId() &&  // The robot ID is smaller than mine
-           !robotInfo.isOutdated() &&          // The robot info are not outdated
+        if (!robotInfo.isOutdated() &&          // The robot info are not outdated
            robotInfo.state != rhoban_team_play::Unknown &&       // The robot is in a known state
            !referee->isPenalized(robotInfo.id)) {
                return robotInfo.id;
            }
     }
     
+    share = false;
     return teamPlay->myId();
 }
 
@@ -455,7 +453,9 @@ void CaptainService::execThread()
                 mutex.unlock();
                      
                 // Sending captain packet
-                _broadcaster->broadcastMessage((unsigned char*)&info, sizeof(info));
+                if (share) {
+                    _broadcaster->broadcastMessage((unsigned char*)&info, sizeof(info));
+                }
             }
         } else {
             compute();
@@ -465,7 +465,7 @@ void CaptainService::execThread()
         // Sleepint if needed to fit the given frequency
         auto now = rhoban_utils::TimeStamp::now();
         double elapsed = diffSec(lastTick, now);
-        double toSleep = (1.0/frequency) - elapsed;
+        double toSleep = (1.0/CAPTAIN_FREQUENCY) - elapsed;
         if (toSleep > 0) {
             usleep(round(toSleep*1000000));
         }
