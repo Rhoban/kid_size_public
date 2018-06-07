@@ -110,17 +110,18 @@ int CaptainService::findCaptainId()
     auto referee = getServices()->referee;
     auto teamPlay = getServices()->teamPlay;
     auto &info = teamPlay->allInfo();
+    share = true;
     
     for (auto &entry : info) {
         auto &robotInfo = entry.second;
-        if (entry.first < teamPlay->myId() &&  // The robot ID is smaller than mine
-           !robotInfo.isOutdated() &&          // The robot info are not outdated
+        if (!robotInfo.isOutdated() &&          // The robot info are not outdated
            robotInfo.state != rhoban_team_play::Unknown &&       // The robot is in a known state
            !referee->isPenalized(robotInfo.id)) {
                return robotInfo.id;
            }
     }
     
+    share = false;
     return teamPlay->myId();
 }
 
@@ -452,7 +453,9 @@ void CaptainService::execThread()
                 mutex.unlock();
                      
                 // Sending captain packet
-                _broadcaster->broadcastMessage((unsigned char*)&info, sizeof(info));
+                if (share) {
+                    _broadcaster->broadcastMessage((unsigned char*)&info, sizeof(info));
+                }
             }
         } else {
             compute();

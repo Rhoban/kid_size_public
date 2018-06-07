@@ -77,6 +77,7 @@ protected:
     RhIO::Bind bind;
     int captainId;
     bool IAmCaptain;
+    bool share;
     
     // Captain configuration
     Config config;
