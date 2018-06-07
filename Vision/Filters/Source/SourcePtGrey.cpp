@@ -744,12 +744,14 @@ void SourcePtGrey::process() {
     std::ostringstream oss;
     oss << "SourcePtGrey::process: frame is dated from "
         << (-frame_age_ms) << " ms in the future -> refused";
+    measureTimestampDelta();
     throw PtGreyException(oss.str());
   }
   if (frame_age_ms > 128000) {
     std::ostringstream oss;
     oss << "SourcePtGrey::process: frame is dated from "
         << frame_age_ms << " ms in the past -> too old";
+    measureTimestampDelta();
     throw PtGreyException(oss.str());
   }
 
