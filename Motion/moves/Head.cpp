@@ -37,13 +37,13 @@ Head::Head()
     ->defaultValue(-5);
   bind->bindNew("maxTilt", max_tilt, RhIO::Bind::PullOnly)
     ->comment("Maximum tilt wished for an image point")
-    ->defaultValue(95);
+    ->defaultValue(90);
   bind->bindNew("maxPan", max_pan, RhIO::Bind::PullOnly)
     ->comment("Maximum pan wished for an image point")
-    ->defaultValue(150);
+    ->defaultValue(160);
   bind->bindNew("minOverlap", min_overlap, RhIO::Bind::PullOnly)
     ->comment("Minimal overlap between control points [degrees]")
-    ->defaultValue(10);
+    ->defaultValue(15);
   // Localize scan parameters
   bind->bindNew("localizeMinTilt", localize_min_tilt, RhIO::Bind::PullOnly)
     ->comment("Minimum tilt wished for an image point")
@@ -70,7 +70,7 @@ Head::Head()
   // Speed and acc limits for orders
   bind->bindNew("maxSpeed", max_speed, RhIO::Bind::PullOnly)
     ->comment("Maximal angular speed [deg/s]")
-    ->defaultValue(150);
+    ->defaultValue(180);
   bind->bindNew("maxAcc", max_acc, RhIO::Bind::PullOnly)
     ->comment("Maximal acceleration [deg/s^2]")
     ->defaultValue(3600);
@@ -282,7 +282,8 @@ bool Head::shouldTrackBall()
   // For some cases, tracking is forced to stay active
   if (force_track ||
       ball_dist < force_track_dist ||
-      getServices()->decision->isBallMoving||
+// Currently disabled because there are too much false positives!
+//      getServices()->decision->isBallMoving||
       getServices()->decision->isMateKicking) {
     return true;
   }
