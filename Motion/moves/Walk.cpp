@@ -371,9 +371,9 @@ Walk::Walk(Kick *kickMove)
 
     // Shoot warmup and cool down
     bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)
-        ->defaultValue(0)->comment("Cooldown duration [s]")->persisted(true);
+        ->defaultValue(0.5)->comment("Cooldown duration [s]")->persisted(true);
     bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)
-        ->defaultValue(0)->comment("Warmup [s]")->persisted(true);
+        ->defaultValue(1)->comment("Warmup [s]")->persisted(true);
         
 #ifndef USE_QUINTICWALK
     bind->bindNew("paramsStepGain", params.stepGain, RhIO::Bind::PushOnly)
@@ -843,7 +843,7 @@ void Walk::step(float elapsed)
 
     if (shootingLeft || shootingRight) {
         if (isWarmingUp) {
-            if (isStable && waitT > warmup && !decision->freezeKick) {
+            if (waitT > warmup && !decision->freezeKick) {
                 startMove("kick", 0.0);
                 isWarmingUp = false;
                 shootT = 0;
