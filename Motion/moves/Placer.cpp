@@ -91,7 +91,7 @@ Placer::Placer(Walk *walk)
     
     bind->bindNew("avoidOpponents", avoidOpponents, RhIO::Bind::PullOnly)
         ->defaultValue(true)->comment("Avoid the opponents?");
-    bind->bindNew("avoidMates", avoidOpponents, RhIO::Bind::PullOnly)
+    bind->bindNew("avoidMates", avoidMates, RhIO::Bind::PullOnly)
         ->defaultValue(true)->comment("Avoid the team mates based on localisation?");
     bind->bindNew("avoidSharedOpponents", avoidSharedOpponents, RhIO::Bind::PullOnly)
         ->defaultValue(false)->comment("Avoid the shared opponents?");
@@ -330,6 +330,7 @@ void Placer::step(float elapsed)
             rushDistOk = false;
         }
     }
+    
 
     // While the robot has not arrived, update the orders
     if (!arrived) {
