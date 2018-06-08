@@ -14,6 +14,7 @@
 #include <scheduler/MoveScheduler.h>
 #include <rhoban_utils/control/variation_bound.h>
 #include <rhoban_utils/nominal/nominal.h>
+#include <rhoban_utils/stats/stats.h>
 #include <cstring>
 #include "Kick.h"
 
@@ -769,19 +770,13 @@ void Walk::step(float elapsed)
     
     // Computing y pressure std
     ratioHistory.pushValue(t, pressureY);
-    float avg = 0;
     pressureYStd = 0;
-    auto values = ratioHistory.getValues();
-    if (values.size()) {
-        for (auto value : values) {
-            avg += value.second;
-        }
-        avg /= values.size();
-        for (auto value : values) {
-            pressureYStd += pow(value.second-avg, 2);
-        }
-        pressureYStd = sqrt(pressureYStd/values.size());
+    auto historyValues = ratioHistory.getValues();
+    std::vector<double> values;
+    for (auto value : historyValues) {
+        values.push_back(value.second);
     }
+    pressureYStd = standardDeviation(values);
     
     if (walkEnable != walkEnableTarget) {
         walkEnableTimeSinceChange += elapsed;
