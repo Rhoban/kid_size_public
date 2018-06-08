@@ -435,7 +435,11 @@ std::map<int, Eigen::Vector3d> LocalisationService::getTeamMatesField()
         if (info.id != teamPlay->myId() && 
             !info.isOutdated() &&
             !referee->isPenalized(info.id) && 
-            info.fieldOk) {
+            info.fieldOk &&
+            info.fieldX == info.fieldX && // Avoiding NaNs
+            info.fieldY == info.fieldY &&
+            info.fieldYaw == info.fieldYaw
+        ) {
             mates[info.id] = Eigen::Vector3d(info.fieldX, info.fieldY, info.fieldYaw);
         }
     }
