@@ -13,9 +13,8 @@ StandUp::StandUp()
     Move::initializeBinding();
     time=0.0;
     bind->bindNew("speed", speed)
-        ->defaultValue(1.0)->minimum(0.0)->maximum(20.0)
-        ->comment("Speed factor for standing up")
-        ->persisted(true);
+        ->defaultValue(1.5)->minimum(0.0)->maximum(20.0)
+        ->comment("Speed factor for standing up");
     bind->bindNew("enable", enable)
         ->defaultValue(true)->persisted(true);
     bind->bindNew("over", over, RhIO::Bind::PushOnly)
