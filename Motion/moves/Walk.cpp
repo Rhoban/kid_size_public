@@ -391,10 +391,10 @@ Walk::Walk(Kick *kickMove)
         ->comment("IKWalk really used turn parameters");
 #endif
 
-    bind->node().newFloat("ratio");
     bind->bindNew("pressureYStdThreshold", pressureYStdThreshold, RhIO::Bind::PullOnly)
         ->defaultValue(0.02);
     bind->bindNew("pressureYStd", pressureYStd, RhIO::Bind::PushOnly);
+    bind->bindNew("pressureY", pressureY, RhIO::Bind::PushOnly);
     
     // Speed limits
     bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)
@@ -636,6 +636,10 @@ void Walk::onStart()
     waitT = 0;
     phase = 0;
     lastPhase = 0;
+    pressureY = 0;
+    pressureYStd = 0;
+    t = 0;
+    ratioHistory.clear();
 
 #ifndef USE_QUINTICWALK
     params.swingRollGain     = deg2rad(swingRollGain);
@@ -887,7 +891,6 @@ void Walk::step(float elapsed)
             )/total
             ;
     }
-    bind->node().setFloat("ratio", pressureY);
 
 #ifdef MODE_NOMINAL
     double nominalScore = 0;

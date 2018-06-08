@@ -128,6 +128,7 @@ class Walk : public Move
         void endShoot();
         
         // Kick warmup and cooldown
+        double t;
         float waitT;
         float warmup;
         float cooldown;
