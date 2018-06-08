@@ -42,6 +42,9 @@ protected:
   // Foot choice
   bool left;
   double lastFootChoice;
+  
+  // Potential repulsion
+  double repulsion;
 
   // °/m
   double degsPerMeter;

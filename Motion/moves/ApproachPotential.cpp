@@ -39,6 +39,9 @@ ApproachPotential::ApproachPotential(Walk *walk)
     // State
     bind->bindNew("state", STM::state, RhIO::Bind::PushOnly)
         ->comment("Approach STM state");
+        
+    bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)
+        ->defaultValue(0.75);
 
     bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)
         ->defaultValue(200)->persisted(true);
@@ -106,8 +109,10 @@ void ApproachPotential::getControl(const Target &target, const Point &ball,
     double X(0), Y(0);
     double norm2 = sqrt(pow(target.position.x, 2) + pow(target.position.y, 2));
     if (norm2 > 0) {
-        X = 0.67*ball.x*pow(pow(ball.x, 2) + pow(ball.y, 2), -1.335)*sqrt(pow(target.position.x, 2) + pow(target.position.y, 2)) - target.position.x*pow(pow(ball.x, 2) + pow(ball.y, 2), -0.335)/sqrt(pow(target.position.x, 2) + pow(target.position.y, 2));
-        Y = 0.67*ball.y*pow(pow(ball.x, 2) + pow(ball.y, 2), -1.335)*sqrt(pow(target.position.x, 2) + pow(target.position.y, 2)) - target.position.y*pow(pow(ball.x, 2) + pow(ball.y, 2), -0.335)/sqrt(pow(target.position.x, 2) + pow(target.position.y, 2));
+        X = ball.x*repulsion*pow(pow(ball.x, 2) + pow(ball.y, 2), -1/2*repulsion)*sqrt(pow(target.position.x, 2) + pow(target.position.y, 2))/(pow(ball.x, 2) + pow(ball.y, 2)) - target.position.x*pow(pow(ball.x, 2) + pow(ball.y, 2), -1/2*repulsion)/sqrt(pow(target.position.x, 2) + pow(target.position.y,
+ 2));
+        Y = ball.y*repulsion*pow(pow(ball.x, 2) + pow(ball.y, 2), -1/2*repulsion)*sqrt(pow(target.position.x, 2) + pow(target.position.y, 2))/(pow(ball.x, 2) + pow(ball.y, 2)) - target.position.y*pow(pow(ball.x, 2) + pow(ball.y, 2), -1/2*repulsion)/sqrt(pow(target.position.x, 2) + pow(target.position.y,
+ 2));
     }
 
     // XXX: Some below variable should be rhiorized

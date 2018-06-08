@@ -16,6 +16,7 @@ MODE = 'scan'
 x, y = symbols('x, y')
 targetX, targetY = symbols('targetX, targetY')
 ballX, ballY = symbols('ballX, ballY')
+repulsion = symbols('repulsion')
 
 # Distances
 dist = sqrt((x-targetX)**2+(y-targetY)**2)
@@ -23,7 +24,7 @@ distAvoid = sqrt((x-ballX)**2+(y-ballY)**2)
 
 # Near
 score = dist
-score *= 1/(distAvoid**(0.67))
+score *= 1/(distAvoid**(repulsion))
 
 # Far
 # score = dist
@@ -40,6 +41,8 @@ gx = gx.replace('ballX', 'ball.x').replace('ballY', 'ball.y').replace('targetX',
 gy = gy.replace('ballX', 'ball.x').replace('ballY', 'ball.y').replace('targetX', 'target.position.x').replace('targetY', 'target.position.y').replace('Math.pow', 'pow').replace('Math.sqrt', 'sqrt')
 print('X = '+gx+';')
 print('Y = '+gy+';')
+
+score = score.replace(repulsion, 0.75)
 
 # Preparing equation
 score = score.replace(targetX, TARGET[0])
