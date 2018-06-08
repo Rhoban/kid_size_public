@@ -371,9 +371,9 @@ Walk::Walk(Kick *kickMove)
 
     // Shoot warmup and cool down
     bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)
-        ->defaultValue(1)->comment("Cooldown duration [s]")->persisted(true);
+        ->defaultValue(0)->comment("Cooldown duration [s]")->persisted(true);
     bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)
-        ->defaultValue(1)->comment("Warmup [s]")->persisted(true);
+        ->defaultValue(0)->comment("Warmup [s]")->persisted(true);
         
 #ifndef USE_QUINTICWALK
     bind->bindNew("paramsStepGain", params.stepGain, RhIO::Bind::PushOnly)
@@ -777,11 +777,12 @@ void Walk::step(float elapsed)
         values.push_back(value.second);
     }
     pressureYStd = standardDeviation(values);
+    bool isStable = pressureYStd < pressureYStdThreshold;
     
     if (walkEnable != walkEnableTarget) {
         walkEnableTimeSinceChange += elapsed;
         if ((!walkEnable && walkEnableTimeSinceChange > 0.3) ||
-            (walkEnable && pressureYStd < pressureYStdThreshold)) {
+            (walkEnable && isStable)) {
             walkEnableTarget = walkEnable;
         }
     } else {
@@ -842,13 +843,13 @@ void Walk::step(float elapsed)
 
     if (shootingLeft || shootingRight) {
         if (isWarmingUp) {
-            if (waitT > warmup && !decision->freezeKick) {
+            if (isStable && waitT > warmup && !decision->freezeKick) {
                 startMove("kick", 0.0);
                 isWarmingUp = false;
                 shootT = 0;
             }
         } else if (isCoolingDown) {
-            if (waitT > cooldown) {
+            if (isStable && waitT > cooldown) {
                 isCoolingDown = false;
                 endShoot();
                 if (shootingLeft) {
