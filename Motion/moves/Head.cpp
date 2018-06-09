@@ -40,7 +40,7 @@ Head::Head()
     ->defaultValue(90);
   bind->bindNew("maxPan", max_pan, RhIO::Bind::PullOnly)
     ->comment("Maximum pan wished for an image point")
-    ->defaultValue(160);
+    ->defaultValue(135);
   bind->bindNew("minOverlap", min_overlap, RhIO::Bind::PullOnly)
     ->comment("Minimal overlap between control points [degrees]")
     ->defaultValue(15);
