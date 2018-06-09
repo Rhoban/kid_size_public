@@ -154,6 +154,11 @@ WARNING: Do not forget to set MTU of your own computer to 9000.
 
 Cf 2.4.3 of Technical-Reference (page 27)
 
+Preparing GPIO alim cables
+--------------------------
+12V -> green
+Ground -> brown
+
 
 TODO PtGrey
 -----------
