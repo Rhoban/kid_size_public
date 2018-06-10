@@ -55,10 +55,14 @@ ApproachPotential::ApproachPotential(Walk *walk)
     // Servoing
     bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)
         ->defaultValue(1)->persisted(true);
+    bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)
+        ->defaultValue(0.001)->persisted(true);
     bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)
         ->defaultValue(0)->persisted(true);
-    bind->bindNew("rotationP", rotationP, RhIO::Bind::PullOnly)
+    bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)
         ->defaultValue(10)->persisted(true);
+    bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)
+        ->defaultValue(0.01)->persisted(true);
 
     // Acceptance
     bind->bindNew("distanceThreshold", distanceThreshold, RhIO::Bind::PullOnly)
@@ -85,7 +89,19 @@ void ApproachPotential::onStart()
 {
     ApproachMove::onStart();
     lastFootChoice = 1e6;
+    kick_score = 0;
     setState(STATE_PLACE);
+    
+    stepper.max = walk->maxStep;
+    stepper.min = -walk->maxStepBackward;
+    lateraler.min = -walk->maxLateral;
+    lateraler.max = walk->maxLateral;
+    aligner.min = -walk->maxRotation;
+    aligner.max = walk->maxRotation;
+    
+    stepper.reset();
+    lateraler.reset();
+    aligner.reset();
 }
 
 void ApproachPotential::onStop()
@@ -119,7 +135,7 @@ void ApproachPotential::getControl(const Target &target, const Point &ball,
     Point control(-X, -Y);
 
     // XXX: dist here may be replaced with the distance following the potential fields
-    double P = dist*stepP*100;
+    double P = dist*100;
     control.normalize(P);
 
     // Applying punch
@@ -155,14 +171,19 @@ void ApproachPotential::getControl(const Target &target, const Point &ball,
     }
 
     // Response
-    x = control.x*stepP;
-    y = control.y*stepP;
-    yaw = error*rotationP;
+    x = control.x;
+    y = control.y;
+    yaw = error;
 }
 
 void ApproachPotential::step(float elapsed)
 {
     bind->pull();
+    stepper.k_p = stepP;
+    lateraler.k_p = stepP;
+    stepper.k_i = stepI;
+    lateraler.k_i = stepI;
+    
     auto loc = getServices()->localisation;
 
     if (state == STATE_SHOOT) {
@@ -235,7 +256,7 @@ void ApproachPotential::step(float elapsed)
                 double cX, cY, cYaw;
                 getControl(t, ball, cX, cY, cYaw);
                 double score = t.position.getLength();
-                score += fabs(cYaw)/degsPerMeter;
+                score += fabs(rad2deg(cYaw))/degsPerMeter;
 
                 if (ballField.x < 0) {
                     auto defendError = fabs((t.yaw - defendTargetDir).getSignedValue());
@@ -243,7 +264,7 @@ void ApproachPotential::step(float elapsed)
                         score *= 30*defendError;
                     }
                 }
-                //std::cout << "Score for " << t.kickName << " / " << t.yaw.getSignedValue() <<
+                // std::cout << "Score for " << t.kickName << " / " << t.yaw.getSignedValue() <<
                 //    " : " << score << std::endl;
 
                 if (bestScore < 0 || score < bestScore) {
@@ -251,6 +272,8 @@ void ApproachPotential::step(float elapsed)
                     bestScore = score;
                 }
             }
+            
+            // std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " << target.yaw.getSignedValue() << std::endl;
 
             // Setting expectedKick
             expectedKick = target.kickName;
@@ -267,6 +290,11 @@ void ApproachPotential::step(float elapsed)
                 // Applying control
                 double controlX, controlY, controlYaw;
                 getControl(target, ball, controlX, controlY, controlYaw);
+                
+                controlX = stepper.update(controlX, elapsed);
+                controlY = lateraler.update(controlY, elapsed);
+                controlYaw = aligner.update(controlYaw, elapsed);
+                
                 walk->control(!dontWalk, controlX, controlY, controlYaw);
             }
         } else {
@@ -279,6 +307,9 @@ void ApproachPotential::step(float elapsed)
 
 void ApproachPotential::enterState(std::string state)
 {
+    stepper.reset();
+    lateraler.reset();
+    aligner.reset();
 }
 
 void ApproachPotential::exitState(std::string state)
