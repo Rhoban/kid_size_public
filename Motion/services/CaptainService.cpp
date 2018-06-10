@@ -192,14 +192,11 @@ void CaptainService::updateCommonBall()
   std::vector<Point> balls;// (x,y, quality)
   for (const auto & robot_entry : robots) {
     const rhoban_team_play::TeamPlayInfo & info = robot_entry.second;
-    logger.log("Ball info from %d: %s", info.id, info.ballOk ? "OK" : "KO");
 
     if (info.ballOk) {
       balls.push_back(Point(info.ballX, info.ballY));
     }
   }
-
-  logger.log("Nb balls: %d", balls.size());
 
   if (balls.size() == 0) {
     info.common_ball.x = 0;
@@ -211,8 +208,6 @@ void CaptainService::updateCommonBall()
   // Place balls inside clusters
   // Disclaimer: order of balls can have an influence on cluster composition
   std::vector<PointCluster> ball_clusters = createClusters(balls, commonBallTol);
-
-  logger.log("Nb clusters: %d", ball_clusters.size());
 
   // Choosing best cluster with the following criteria (by priority order)
   // 1. Size of the cluster
@@ -245,8 +240,6 @@ void CaptainService::updateCommonBall()
   info.common_ball.nbRobots = best_cluster.size();
   info.common_ball.x = common_pos.x;
   info.common_ball.y = common_pos.y;
-
-  logger.log("Nb robots: %d", info.common_ball.nbRobots);
 }
 
 void CaptainService::computeBasePositions()
