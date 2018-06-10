@@ -127,7 +127,6 @@ bool DecisionService::tick(double elapsed)
 
     // Should we let the other players play?
     auto ballPos = loc->getBallPosSelf();
-    float ballDistance = ballPos.getLength();
 
     if (isBallQualityGood) {
         lastSeenBallRight = (ballPos.y > 0);
