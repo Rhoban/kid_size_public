@@ -100,10 +100,16 @@ protected:
     double placingBallDistance;
     double avoidRadius;
     double aggressivity;
+
+    /// Tolerance for merging parameters
+    double commonBallTol;
     
     std::vector<PlacementOptimizer::Target> getTargetPositions(rhoban_geometry::Point ball,
         rhoban_geometry::Point ballTarget);
-    
+
+    /// Perform a majority vote for ball position
+    void updateCommonBall();
+
     /**
      * Do the update for the base positions
      */

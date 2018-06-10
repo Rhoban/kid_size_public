@@ -6,9 +6,15 @@
 #include <unistd.h>
 #include "CaptainService.h"
 
+#include <rhoban_geometry/point_cluster.h>
+#include <rhoban_utils/logging/logger.h>
+#include <rhoban_utils/util.h>
+
 using namespace rhoban_utils;
 using namespace robocup_referee;
 using namespace rhoban_geometry;
+
+static Logger logger("CaptainService");
 
 /**
  * Helper to bound a position avoiding the penalty area
@@ -90,6 +96,13 @@ CaptainService::CaptainService()
     
     bind.bindNew("captainId", captainId, RhIO::Bind::PushOnly);
     bind.bindNew("IAmCaptain", IAmCaptain, RhIO::Bind::PushOnly);
+
+    bind.bindNew("commonBallTol", commonBallTol, RhIO::Bind::PullOnly)
+      ->defaultValue(1.0)->comment("Distance [m] for merging ball candidates");
+
+    bind.bindNew("commonBallNbRobots", info.common_ball.nbRobots, RhIO::Bind::PushOnly);
+    bind.bindNew("commonBallX", info.common_ball.x, RhIO::Bind::PushOnly);
+    bind.bindNew("commonBallY", info.common_ball.y, RhIO::Bind::PushOnly);
     
     // Creating UDP broadcaster
     _broadcaster = new rhoban_utils::UDPBroadcast(CAPTAIN_PORT, CAPTAIN_PORT);
@@ -173,6 +186,69 @@ void CaptainService::setSolution(PlacementOptimizer::Solution solution)
     }    
 }
 
+void CaptainService::updateCommonBall()
+{
+  // Gather balls which are currently seen by other robots
+  std::vector<Point> balls;// (x,y, quality)
+  for (const auto & robot_entry : robots) {
+    const rhoban_team_play::TeamPlayInfo & info = robot_entry.second;
+    logger.log("Ball info from %d: %s", info.id, info.ballOk ? "OK" : "KO");
+
+    if (info.ballOk) {
+      balls.push_back(Point(info.ballX, info.ballY));
+    }
+  }
+
+  logger.log("Nb balls: %d", balls.size());
+
+  if (balls.size() == 0) {
+    info.common_ball.x = 0;
+    info.common_ball.y = 0;
+    info.common_ball.nbRobots = 0;
+    return;
+  }
+
+  // Place balls inside clusters
+  // Disclaimer: order of balls can have an influence on cluster composition
+  std::vector<PointCluster> ball_clusters = createClusters(balls, commonBallTol);
+
+  logger.log("Nb clusters: %d", ball_clusters.size());
+
+  // Choosing best cluster with the following criteria (by priority order)
+  // 1. Size of the cluster
+  // 2. Distance to last common ball if applicable (if clusters have same size)
+  // 3. First in list (if other criteria were not sufficient (unlikely but can still happen)
+  double max_dist = 15.0;// [m]
+  double best_cluster_score = 0;
+  int best_cluster_id = -1;
+
+  for (size_t cluster_id = 0; cluster_id < ball_clusters.size(); cluster_id++) {
+    const PointCluster & cluster = ball_clusters[cluster_id];
+    double cluster_score = cluster.size() * max_dist;
+    if (info.common_ball.nbRobots > 0) {
+      Point old_pos(info.common_ball.x, info.common_ball.y);
+      cluster_score -= cluster.getAverage().getDist(old_pos);
+    }
+    if (cluster_score > best_cluster_score) {
+      best_cluster_score = cluster_score;
+      best_cluster_id = cluster_id;
+    }
+  }
+
+  // Explicit error in case someone changes scoring or conditions
+  if (best_cluster_id == -1) {
+    throw std::logic_error(DEBUG_INFO + "no best cluster found, should never happen");
+  }
+
+  const PointCluster & best_cluster = ball_clusters[best_cluster_id];
+  Point common_pos = best_cluster.getAverage();
+  info.common_ball.nbRobots = best_cluster.size();
+  info.common_ball.x = common_pos.x;
+  info.common_ball.y = common_pos.y;
+
+  logger.log("Nb robots: %d", info.common_ball.nbRobots);
+}
+
 void CaptainService::computeBasePositions()
 {
     auto referee = getServices()->referee;
@@ -208,8 +284,8 @@ void CaptainService::computeBasePositions()
     setSolution(solution);
 }
 
-std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(rhoban_geometry::Point ball,
-    rhoban_geometry::Point ballTarget)
+std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point ball,
+    Point ballTarget)
 {
     std::vector<PlacementOptimizer::Target> targets;
     std::vector<PlacementOptimizer::Target> finalTargets;
@@ -398,6 +474,8 @@ void CaptainService::compute()
             robotIds.push_back(info.id);
         }
     }
+
+    updateCommonBall();
     
     if (referee->isPlacingPhase()) {
         computeBasePositions();
