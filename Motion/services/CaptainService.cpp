@@ -103,6 +103,9 @@ CaptainService::CaptainService()
       ->defaultValue(3)->comment("The cost of changing of handler [s]");
     bind.bindNew("noViewCost", noViewCost, RhIO::Bind::PullOnly)
       ->defaultValue(5)->comment("The cost of not seeing the ball for a robot [s]");
+    bind.bindNew("wrongBallCost", wrongBallCost, RhIO::Bind::PullOnly)
+      ->defaultValue(20)
+      ->comment("The cost of seeing a ball against consensus for handler selection [s]");
 
     bind.bindNew("commonBallTol", commonBallTol, RhIO::Bind::PullOnly)
       ->defaultValue(1.0)->comment("Distance [m] for merging ball candidates");
@@ -398,6 +401,12 @@ void CaptainService::computePlayingPositions()
         // Otherwise, use common ball and add a penalty
         if (robot.ballOk) {
           dist = sqrt(pow(robot.ballX, 2) + pow(robot.ballY, 2));
+
+          Point robot_ball = robot.getBallInField();
+          Point common_ball(info.common_ball.x, info.common_ball.y);
+          if (robot_ball.getDist(common_ball) > commonBallTol) {
+            cost += wrongBallCost;
+          }
         } else {
           double dx = info.common_ball.x - robot.fieldX;
           double dy = info.common_ball.y - robot.fieldY;

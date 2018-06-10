@@ -112,6 +112,9 @@ protected:
 
     /// The penalty for robots who are not seeing the ball
     double noViewCost;
+
+    /// The penalty for robots who see a ball against consensus
+    double wrongBallCost;
     
     std::vector<PlacementOptimizer::Target> getTargetPositions(rhoban_geometry::Point ball,
         rhoban_geometry::Point ballTarget);
