@@ -222,6 +222,12 @@ bool RefereeService::isFreezePhase()
         || (isFreeKick() && getGameState().getSecondaryMode() == 1);
 }
 
+bool RefereeService::isFinishedPhase()
+{
+    if (force) return false;
+    return getGameState().getActualGameState() == Constants::STATE_FINISHED;
+}
+
 void RefereeService::checkPlaying()
 {
     bind->pull();

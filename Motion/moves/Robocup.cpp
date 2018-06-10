@@ -21,6 +21,7 @@
 #define STATE_PLACING   "placing"
 #define STATE_PENALIZED "penalized"
 #define STATE_GIVE_UP   "give_up"
+#define STATE_FINISHED "finished"
 
 static rhoban_utils::Logger logger("RobocupSTM");
 
@@ -108,6 +109,10 @@ void Robocup::applyGameState()
     // If we are at the beginning of the game, jump to state_initial
     if (state != STATE_INITIAL && referee->isInitialPhase()) {
         setState(STATE_INITIAL);
+    }
+
+    if (state != STATE_FINISHED && referee->isFinishedPhase()) {
+      setState(STATE_FINISHED);
     }
 
     // If:
@@ -317,7 +322,7 @@ void Robocup::enterState(std::string state)
 
     Head * head = (Head*)getMoves()->getMove("head");
     // Not scanningm only if the robot is penalized
-    if (state == STATE_PENALIZED) {
+    if (state == STATE_PENALIZED || state == STATE_FINISHED) {
         head->setDisabled(true);
     } else {
         head->setDisabled(false);

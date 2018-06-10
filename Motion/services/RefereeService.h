@@ -41,6 +41,9 @@ class RefereeService : public Service, public robocup_referee::RefereeClient
         /// During this phase robot should freeze
         bool isFreezePhase();
 
+        /// End of game / end of half
+        bool isFinishedPhase();
+
         /**
          * Is it the begining of the game?
          */
