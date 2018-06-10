@@ -97,6 +97,13 @@ CaptainService::CaptainService()
     bind.bindNew("captainId", captainId, RhIO::Bind::PushOnly);
     bind.bindNew("IAmCaptain", IAmCaptain, RhIO::Bind::PushOnly);
 
+    bind.bindNew("handler", handler, RhIO::Bind::PushOnly)
+      ->defaultValue(-1)->comment("Id of the robot handling the ball");
+    bind.bindNew("handlerChangeCost", handlerChangeCost, RhIO::Bind::PullOnly)
+      ->defaultValue(3)->comment("The cost of changing of handler [s]");
+    bind.bindNew("noViewCost", noViewCost, RhIO::Bind::PullOnly)
+      ->defaultValue(5)->comment("The cost of not seeing the ball for a robot [s]");
+
     bind.bindNew("commonBallTol", commonBallTol, RhIO::Bind::PullOnly)
       ->defaultValue(1.0)->comment("Distance [m] for merging ball candidates");
 
@@ -194,7 +201,7 @@ void CaptainService::updateCommonBall()
     const rhoban_team_play::TeamPlayInfo & info = robot_entry.second;
 
     if (info.ballOk) {
-      balls.push_back(Point(info.ballX, info.ballY));
+      balls.push_back(Point(info.getBallInField()));
     }
   }
 
@@ -362,87 +369,98 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point
 
 void CaptainService::computePlayingPositions()
 {
-    int handler = -1;
-    float smallerDist = 0.0;
-    Point ball, ballTarget;
-    
-    // XXX: We should check if the goal keepr is handling the ball, because in
-    // this case we should not give the handle ball order to another robot (might
-    // be 2 simultaneous attackers)
-    for (auto &entry : robots) {
-        auto &robot = entry.second;
-        if (robot.ballOk) {
-            float dist = sqrt(pow(robot.ballX, 2) + pow(robot.ballY, 2));
-            
-            if (handler == -1 || dist < smallerDist) {
-                handler = robot.id;
-                smallerDist = dist;
-                
-                float a = robot.fieldYaw;
-                
-                // XXX: Smooth those points ?
-                ball = Point(
-                    robot.fieldX + cos(a)*robot.ballX - sin(a)*robot.ballY,
-                    robot.fieldY + sin(a)*robot.ballX + cos(a)*robot.ballY
-                );
-                
-                ballTarget = Point(robot.ballTargetX, robot.ballTargetY);
-            }
-        }
-    }
-    
-    if (handler == -1) {
+    if (info.common_ball.nbRobots == 0) {
         // std::cout << "Nobody sees the ball, searching!" << std::endl;
         // No one is seeing the ball, ordering all to search
         for (auto &entry : robots) {
             auto &robot = entry.second;
             info.order[robot.id-1] = rhoban_team_play::CaptainOrder::SearchBall;
         }
-    } else {
-        // Grabing robots that should be placed (all excepted handler and goal)
-        std::vector<int> otherIds;
-        for (auto &entry : robots) {
-            auto &robot = entry.second;
-            
-            if (robot.id == handler) {
-                // std::cout << "Handler is " << handler << std::endl;
-                info.order[robot.id-1] = rhoban_team_play::CaptainOrder::HandleBall;
-            } else {
-                if (robot.state != rhoban_team_play::TeamPlayState::GoalKeeping) {
-                    info.order[robot.id-1] = rhoban_team_play::CaptainOrder::Place;
-                    for (int n=0; n<3; n++) {
-                        info.robotTarget[robot.id-1][n] = 0;
-                    }
-                    otherIds.push_back(robot.id);
-                }
-            }
-        }
-        
-        // Building targets
-        auto targets = getTargetPositions(ball, ballTarget);
-        
-        // Optimizing the placing
-        // std::cout << "Captain: There is " << otherIds.size() << " to place" << std::endl;
-        
-        auto solution = PlacementOptimizer::optimize(otherIds, targets, 
-            [this](PlacementOptimizer::Solution solution) -> float {
-                float score = 0;
-                float ratio = 0;
-                for (auto &robotTarget : solution.robotTarget) {
-                    auto robot = robots[robotTarget.first];
-                    float walkLength = (Point(robot.fieldX, robot.fieldY) - robotTarget.second.position).getLength();
-                    ratio += robotTarget.second.data;
-                    score += walkLength;
-                }
-                
-                ratio /= solution.robotTarget.size();
-                score += fabs(ratio-aggressivity)*1000;
-                
-                return score;
-        });
-        setSolution(solution);
+        handler = -1;
     }
+
+    int newHandler = -1;
+    double smallestTime = std::numeric_limits<double>::max();
+    
+    // XXX: We should check if the goal keeper is handling the ball, because in
+    // this case we should not give the handle ball order to another robot (might
+    // be 2 simultaneous attackers)
+    for (auto &entry : robots) {
+        auto &robot = entry.second;
+        double robotSpeed = 0.2;// [m/s], should be extracted elsewhere
+        // Computing cost
+        double cost = 0;
+        double dist = 0;
+        if (handler != robot.id) {
+          cost += handlerChangeCost;
+        }
+        // If robot is able to see ball, use his own ball for time estimation
+        // Otherwise, use common ball and add a penalty
+        if (robot.ballOk) {
+          dist = sqrt(pow(robot.ballX, 2) + pow(robot.ballY, 2));
+        } else {
+          double dx = info.common_ball.x - robot.fieldX;
+          double dy = info.common_ball.y - robot.fieldY;
+          dist = sqrt(pow(dx, 2) + pow(dy, 2));
+          cost += noViewCost;
+        }
+        cost += dist / robotSpeed;
+            
+        if (cost < smallestTime) {
+          newHandler = robot.id;
+          smallestTime = cost;
+        }
+
+        logger.log("Cost for %d: %f (current handler %d)", robot.id, cost, handler);
+    }
+    // Grabing robots that should be placed (all excepted newHandler and goal)
+    std::vector<int> otherIds;
+    for (auto &entry : robots) {
+      auto &robot = entry.second;
+      
+      if (robot.id == newHandler) {
+        // std::cout << "NewHandler is " << newHandler << std::endl;
+        info.order[robot.id-1] = rhoban_team_play::CaptainOrder::HandleBall;
+      } else {
+        if (robot.state != rhoban_team_play::TeamPlayState::GoalKeeping) {
+          info.order[robot.id-1] = rhoban_team_play::CaptainOrder::Place;
+          for (int n=0; n<3; n++) {
+            info.robotTarget[robot.id-1][n] = 0;
+          }
+          otherIds.push_back(robot.id);
+        }
+      }
+    }
+        
+    // Building targets
+    const auto & kicker = robots[newHandler];
+    Point ball(info.common_ball.x, info.common_ball.y);
+    Point ballTarget = Point(kicker.ballTargetX, kicker.ballTargetY);
+    auto targets = getTargetPositions(ball, ballTarget);
+        
+    // Optimizing the placing
+    // std::cout << "Captain: There is " << otherIds.size() << " to place" << std::endl;
+        
+    auto solution = PlacementOptimizer::optimize(otherIds, targets, 
+                                                 [this](PlacementOptimizer::Solution solution) -> float {
+                                                   float score = 0;
+                                                   float ratio = 0;
+                                                   for (auto &robotTarget : solution.robotTarget) {
+                                                     auto robot = robots[robotTarget.first];
+                                                     float walkLength = (Point(robot.fieldX, robot.fieldY) - robotTarget.second.position).getLength();
+                                                     ratio += robotTarget.second.data;
+                                                     score += walkLength;
+                                                   }
+                
+                                                   ratio /= solution.robotTarget.size();
+                                                   score += fabs(ratio-aggressivity)*1000;
+                
+                                                   return score;
+                                                 });
+    setSolution(solution);
+    handler = newHandler;
 }
+
 
 void CaptainService::compute()
 {
@@ -502,6 +520,7 @@ bool CaptainService::tick(double elapsed)
         mutex.lock();
         info = receive;
         info.timestamp = rhoban_utils::TimeStamp::now().getTimeMS();
+        handler = info.getHandler();
         mutex.unlock();
     }
     

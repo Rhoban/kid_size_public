@@ -103,6 +103,15 @@ protected:
 
     /// Tolerance for merging parameters
     double commonBallTol;
+
+    /// Robot currently handling the ball
+    int handler;
+
+    /// The penalty received for changing the ball handler in teamplay
+    double handlerChangeCost;
+
+    /// The penalty for robots who are not seeing the ball
+    double noViewCost;
     
     std::vector<PlacementOptimizer::Target> getTargetPositions(rhoban_geometry::Point ball,
         rhoban_geometry::Point ballTarget);
