@@ -57,6 +57,9 @@ public:
   void resetOnLines(int side);
   void fallReset();
   void customReset();
+  /// Apply the pending reset if there is one (and set next reset to None)
+  void applyPendingReset();
+  void applyReset(ResetType t);
 
   void step(rhoban_unsorted::Controller<FieldPosition> &ctrl,
             const std::vector<rhoban_unsorted::Observation<FieldPosition> *> &observations,

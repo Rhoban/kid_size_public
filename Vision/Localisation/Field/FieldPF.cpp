@@ -205,6 +205,55 @@ FieldPF::ResetType FieldPF::getPendingReset()
   return result;
 }
 
+void FieldPF::applyPendingReset()
+{
+  ResetType pendingReset;
+  resetMutex.lock();
+  pendingReset = resetType;
+  resetType = ResetType::None;
+  resetMutex.unlock();
+
+  applyReset(pendingReset);
+}
+
+void FieldPF::applyReset(ResetType t)
+{
+  if (t == ResetType::None) return;
+
+  std::string reset_name = resetNames.at(t);
+  logger.log("Applying a reset of type: '%s'", reset_name.c_str());
+
+  double mins[3] = {-Constants::field.fieldLength / 2,
+                    -Constants::field.fieldWidth / 2, 0};
+  double maxs[3] = {Constants::field.fieldLength / 2,
+                    Constants::field.fieldWidth / 2, 360};
+
+  switch(t){
+    case Uniform: {
+      ParticleFilter::initializeAtUniformRandom(mins, maxs, particles.size());
+      break;
+    }
+    case BordersRight:
+      resetOnLines(-1);
+      break;
+    case BordersLeft:
+      resetOnLines(1);
+      break;
+    case Borders:
+      resetOnLines(0);
+      break;
+    case Fall: {
+      fallReset();
+      break;
+    }
+    case Custom: {
+      customReset();
+      break;
+    }
+    default: {}
+  }
+}
+
 void FieldPF::step(
     Controller<FieldPosition> &ctrl,
     const std::vector<Observation<FieldPosition> *> &observations,
@@ -219,43 +268,19 @@ void FieldPF::step(
   // If we are doing a reset, make sure we are up to date with rhio values
   if (stepReset != None) {
     importFromRhIO();
-    std::string reset_name = resetNames.at(stepReset);
-    logger.log("Applying a reset of type: '%s'", reset_name.c_str());
   }
 
-  double mins[3] = {-Constants::field.fieldLength / 2,
-                    -Constants::field.fieldWidth / 2, 0};
-  double maxs[3] = {Constants::field.fieldLength / 2,
-                    Constants::field.fieldWidth / 2, 360};
-
-  switch (stepReset) {
-  case None: {
+  if (stepReset == ResetType::None) {
+    double mins[3] = {-Constants::field.fieldLength / 2,
+                      -Constants::field.fieldWidth / 2, 0};
+    double maxs[3] = {Constants::field.fieldLength / 2,
+                      Constants::field.fieldWidth / 2, 360};
     // If no reset is planned, apply observations, resampling if required and return
     ParticleFilter::step(ctrl, observations, elapsedTime);
     partialUniformResampling(resamplingRatio, mins, maxs);
     return;
-  }
-  case Uniform: {
-    ParticleFilter::initializeAtUniformRandom(mins, maxs, particles.size());
-    break;
-  }
-  case BordersRight:
-    resetOnLines(-1);
-    break;
-  case BordersLeft:
-    resetOnLines(1);
-    break;
-  case Borders:
-    resetOnLines(0);
-    break;
-  case Fall: {
-    fallReset();
-    break;
-  }
-  case Custom: {
-    customReset();
-    break;
-  }
+  } else {
+    applyReset(stepReset);
   }
 
   // After a reset, we apply odometry but not observations

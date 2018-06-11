@@ -326,6 +326,11 @@ void LocalisationBinding::step()
     // Ensure that visual compass is not used while referee does not allow to play
     setVisualCompassStatus(false);
 
+    FieldPF::ResetType pending_reset = field_filter->getPendingReset();
+    if (pending_reset == FieldPF::ResetType::Custom) {
+      field_filter->applyPendingReset();
+    } 
+
     publishToRhIO();
     return;
   }
