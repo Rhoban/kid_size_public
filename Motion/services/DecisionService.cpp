@@ -48,6 +48,8 @@ DecisionService::DecisionService()
     // Robot fallen
     bind.bindNew("isFallen", isFallen)
         ->comment("Is the robot fallen ?")->defaultValue(false);
+    bind.bindNew("timeSinceFall", timeSinceFall, RhIO::Bind::PushOnly)
+        ->comment("Time elapsed since last fall [s]")->defaultValue(0);
 // TODO: solve issue with RhIO and enums
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
@@ -286,6 +288,12 @@ bool DecisionService::tick(double elapsed)
             handled = false;
             handledT = 0;
         }
+    }
+
+    if (isFallen) {
+      timeSinceFall = 0;
+    } else {
+      timeSinceFall += elapsed;
     }
 
     // Update the isBallMoving amd isMateKicking flags

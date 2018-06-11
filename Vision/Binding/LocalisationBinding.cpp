@@ -628,6 +628,7 @@ void LocalisationBinding::updateFilter(
   //ComputedOdometry
   double odom_start = lastTS.getTimeMS() / 1000.0;
   double odom_end = currTS.getTimeMS() / 1000.0;
+  double elapsed = diffSec(lastTS, currTS);
   FieldPF::ResetType pending_reset = field_filter->getPendingReset();
   // If a reset has been asked, use odometry since reset.
   // Specific case for fall_reset, we still want to use the odometry prior to the reset
@@ -667,11 +668,14 @@ void LocalisationBinding::updateFilter(
   // - An observation has been found
   // - Walk was enabled at least once since the last tick
   // - A reset has been required
+  // - The robot was fallen since last tick
+  DecisionService * decision = scheduler->getServices()->decision;
   bool isResetPending = field_filter->isResetPending();
-  if (enableFieldFilter && (obs.size() > 0 || isWalkEnabled || isResetPending)) {
-
-    double elapsed = odom_end - odom_start;
-    double max_step_time = 5;
+  bool hasFallenRecently = decision->timeSinceFall < elapsed;
+  if (enableFieldFilter &&
+      (obs.size() > 0 || isWalkEnabled || isResetPending || hasFallenRecently))
+  {
+    double max_step_time = 5;// Avoiding to have a huge exploration which causes errors
     if (elapsed > max_step_time) {
       fieldLogger.warning("Large time elapsed in fieldFilter: %f [s]", elapsed);
     }
@@ -686,6 +690,7 @@ void LocalisationBinding::updateFilter(
     if (!enableFieldFilter) oss << "field disabled, ";
     if (!isWalkEnabled) oss << "walk disabled, ";
     if (!isResetPending) oss << "no reset planned, ";
+    if (!hasFallenRecently) oss << "last Fall: " << decision->timeSinceFall << " [s],";
     oss << "nbObs: " << obs.size();
     fieldLogger.log(oss.str().c_str());
   }

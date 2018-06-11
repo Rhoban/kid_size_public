@@ -99,6 +99,12 @@ class DecisionService : public Service
          */
         bool lastSeenBallRight;
 
+        /**
+         * Time since last fall [s]
+         * 0 if the robot is currently fallen
+         */
+        float timeSinceFall;
+
         /// Filtered direction of the fall
         FallDirection fallDirection;
         /// Filtered status of the fall
