@@ -54,15 +54,15 @@ ApproachPotential::ApproachPotential(Walk *walk)
 
     // Servoing
     bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)
-        ->defaultValue(1)->persisted(true);
+        ->defaultValue(1);
     bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)
-        ->defaultValue(0.001)->persisted(true);
+        ->defaultValue(0.0);
     bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)
-        ->defaultValue(0)->persisted(true);
+        ->defaultValue(0);
     bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)
-        ->defaultValue(10)->persisted(true);
+        ->defaultValue(10);
     bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)
-        ->defaultValue(0.01)->persisted(true);
+        ->defaultValue(0.0);
 
     // Acceptance
     bind->bindNew("distanceThreshold", distanceThreshold, RhIO::Bind::PullOnly)
