@@ -104,6 +104,9 @@ protected:
     /// Tolerance for merging parameters
     double commonBallTol;
 
+    /// Time during which a kick is considered as recent
+    double kickMemoryDuration;
+
     /// Robot currently handling the ball
     int handler;
 

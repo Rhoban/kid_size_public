@@ -109,6 +109,9 @@ CaptainService::CaptainService()
 
     bind.bindNew("commonBallTol", commonBallTol, RhIO::Bind::PullOnly)
       ->defaultValue(2.0)->comment("Distance [m] for merging ball candidates");
+    bind.bindNew("kickMemoryDuration", kickMemoryDuration, RhIO::Bind::PullOnly)
+      ->defaultValue(3.0)
+      ->comment("Time during which a kick is considered as recent [s]");
 
     bind.bindNew("commonBallNbRobots", info.common_ball.nbRobots, RhIO::Bind::PushOnly);
     bind.bindNew("commonBallX", info.common_ball.x, RhIO::Bind::PushOnly);
@@ -200,11 +203,15 @@ void CaptainService::updateCommonBall()
 {
   // Gather balls which are currently seen by other robots
   std::vector<Point> balls;// (x,y, quality)
+  bool recentlyKicked = false;
   for (const auto & robot_entry : robots) {
     const rhoban_team_play::TeamPlayInfo & info = robot_entry.second;
 
-    if (info.ballOk) {
+    if (info.ballOk && info.timeSinceLastKick < kickMemoryDuration) {
       balls.push_back(Point(info.getBallInField()));
+    }
+    if (info.timeSinceLastKick < kickMemoryDuration) {
+      recentlyKicked = true;
     }
   }
 
@@ -221,8 +228,9 @@ void CaptainService::updateCommonBall()
 
   // Choosing best cluster with the following criteria (by priority order)
   // 1. Size of the cluster
-  // 2. Distance to last common ball if applicable (if clusters have same size)
-  // 3. First in list (if other criteria were not sufficient (unlikely but can still happen)
+  // 2. Distance to last common ball if applicable
+  //    (Clusters have same size and there are no recent kicks)
+  // 3. First in list (if other criteria were not applicable)
   double max_dist = 15.0;// [m]
   double best_cluster_score = 0;
   int best_cluster_id = -1;
@@ -232,7 +240,9 @@ void CaptainService::updateCommonBall()
     double cluster_score = cluster.size() * max_dist;
     if (info.common_ball.nbRobots > 0) {
       Point old_pos(info.common_ball.x, info.common_ball.y);
-      cluster_score -= cluster.getAverage().getDist(old_pos);
+      if (!recentlyKicked) {
+        cluster_score -= cluster.getAverage().getDist(old_pos);
+      }
     }
     if (cluster_score > best_cluster_score) {
       best_cluster_score = cluster_score;
