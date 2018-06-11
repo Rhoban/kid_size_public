@@ -7,7 +7,7 @@
 /// This class is used to separate the field in different zones with different
 /// weights based on the following scheme (example with 2 separations in x and y)
 ///
-///                                x_limit[1]            x_limit[2]
+///                                x_limit[0]            x_limit[1]
 ///                                   \/                    \/
 ///  ---------------------------------------------------------------
 /// |                                  |                     |      |
