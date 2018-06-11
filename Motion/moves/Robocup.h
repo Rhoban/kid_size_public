@@ -17,7 +17,6 @@ class Robocup : public STM
         void onStop();
         void step(float elapsed);
         bool isFallen();
-        bool isHandled();
 
     protected:
         Walk *walk;
@@ -25,6 +24,7 @@ class Robocup : public STM
         Placer * placer;
 
         float t;
+        bool isHandled;
         bool wasHandled;
         bool lastRefereePlaying;
         bool rememberStart;
