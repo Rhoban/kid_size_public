@@ -87,6 +87,7 @@ void Robocup::onStart()
     lastRefereePlaying = false;
     rememberStart = false;
     wasHandled = true;
+    isHandled = true;
     walk->control(false);
     
     setTeamPlayState(Inactive);
@@ -310,6 +311,18 @@ void Robocup::step(float elapsed)
     
     // Backuping old values
     lastRefereePlaying = isPlaying && !isPenalized;
+    
+    bool handled = decision->handled;
+    if (!handled && isHandled) {
+        if (state == STATE_INITIAL) {
+            logger.log("Putting me on the floor in initial state");
+            double locationNoise = 0.3;
+            double azimuthNoise = 10;
+            loc->customFieldReset(autoStartX, autoStartY, locationNoise,
+                                  autoStartAzimuth, azimuthNoise);            
+        }
+    }
+    isHandled = handled;
 
     bind->push();
 }
