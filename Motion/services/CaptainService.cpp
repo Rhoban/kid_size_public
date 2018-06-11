@@ -108,7 +108,7 @@ CaptainService::CaptainService()
       ->comment("The cost of seeing a ball against consensus for handler selection [s]");
 
     bind.bindNew("commonBallTol", commonBallTol, RhIO::Bind::PullOnly)
-      ->defaultValue(1.0)->comment("Distance [m] for merging ball candidates");
+      ->defaultValue(2.0)->comment("Distance [m] for merging ball candidates");
 
     bind.bindNew("commonBallNbRobots", info.common_ball.nbRobots, RhIO::Bind::PushOnly);
     bind.bindNew("commonBallX", info.common_ball.x, RhIO::Bind::PushOnly);
