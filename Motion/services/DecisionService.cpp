@@ -263,7 +263,7 @@ bool DecisionService::tick(double elapsed)
             fallStatus = FallStatus::Fallen;
           }
           // Computing fallDirection
-          if (fabs(pitch_angle) > fabs(roll_angle)) {
+          if (fabs(pitch_angle) > threshold_falling) {
             if (pitch_angle > 0) {
               fallDirection = FallDirection::Forward;
             } else {
