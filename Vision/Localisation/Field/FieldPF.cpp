@@ -252,6 +252,7 @@ void FieldPF::applyReset(ResetType t)
     }
     default: {}
   }
+  updateInternalValues();
 }
 
 void FieldPF::step(
