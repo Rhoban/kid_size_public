@@ -44,21 +44,21 @@ LocalisationBinding::LocalisationBinding(MoveScheduler * scheduler_,
                                          Robocup * vision_binding_)
   : vision_binding(vision_binding_),
     scheduler(scheduler_),
-    nb_particles_ff(3000),
+    nb_particles_ff(5000),
     toGoalQ(-1), robotQ(-1),
     enableFieldFilter(true),
     isGoalKeeper(false),
     consistencyEnabled(true),
     consistencyScore(1),
-    consistencyStepCost(0.005),
+    consistencyStepCost(0.02),
     consistencyBadObsCost(0.05),
-    consistencyGoodObsGain(0.08),
-    consistencyResetInterval(90),
+    consistencyGoodObsGain(0.15),
+    consistencyResetInterval(30),
     consistencyMaxNoise(3.0),
     cs(new CameraState(scheduler_)),
-    period(3.0),
+    period(1.0),
     maxNoiseBoost(10.0),
-    noiseBoostDuration(20),
+    noiseBoostDuration(5),
     isUsingVisualCompass(false),
     nbVCObs(0),
     minVCObs(1),
@@ -218,43 +218,43 @@ void LocalisationBinding::initRhIO()
   bind->bindNew("consistency/badObsCost", consistencyBadObsCost, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyBadObsCost)
       ->comment("The reduction of consistencyScore for each bad observation");
-  bind->bindNew("/localisation/consistency/goodObsGain", consistencyGoodObsGain, RhIO::Bind::PullOnly)
+  bind->bindNew("consistency/goodObsGain", consistencyGoodObsGain, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyGoodObsGain)
       ->comment("The increase of consistencyScore for each 'good' observation");
-  bind->bindNew("/localisation/consistency/resetInterval", consistencyResetInterval, RhIO::Bind::PullOnly)
+  bind->bindNew("consistency/resetInterval", consistencyResetInterval, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyResetInterval)
       ->comment("The minimal time to wait between two consistency resets [s]");
-  bind->bindNew("/localisation/consistency/maxNoise", consistencyMaxNoise, RhIO::Bind::PullOnly)
+  bind->bindNew("consistency/maxNoise", consistencyMaxNoise, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyMaxNoise)
       ->comment("Noise factor at 0 consistencyScore");
-  bind->bindNew("/localisation/period", period, RhIO::Bind::PullOnly)
+  bind->bindNew("period", period, RhIO::Bind::PullOnly)
       ->defaultValue(period)
       ->maximum(30.0)
       ->minimum(0.0)
       ->comment("Period between two ticks from the particle filter");
-  bind->bindNew("/localisation/consistency/elapsedSinceConvergence", elapsedSinceConvergence, RhIO::Bind::PushOnly)
+  bind->bindNew("consistency/elapsedSinceConvergence", elapsedSinceConvergence, RhIO::Bind::PushOnly)
       ->defaultValue(0)
       ->comment("Elapsed time since last convergence or reset [s]");
-  bind->bindNew("/localisation/field/maxNoiseBoost", maxNoiseBoost, RhIO::Bind::PullOnly)
+  bind->bindNew("field/maxNoiseBoost", maxNoiseBoost, RhIO::Bind::PullOnly)
       ->defaultValue(maxNoiseBoost)
       ->maximum(30.0)
       ->minimum(1.0)
       ->comment("Maximal multiplier for exploration in boost mode");
-  bind->bindNew("/localisation/field/noiseBoostDuration",noiseBoostDuration, RhIO::Bind::PullOnly)
+  bind->bindNew("field/noiseBoostDuration",noiseBoostDuration, RhIO::Bind::PullOnly)
       ->defaultValue(noiseBoostDuration)
       ->maximum(30.0)
       ->minimum(0.0)
       ->comment("Duration of the noise boost after global reset [s]");
-  bind->bindNew("/localisation/field/nbVCObs", nbVCObs, RhIO::Bind::PushOnly)
+  bind->bindNew("field/nbVCObs", nbVCObs, RhIO::Bind::PushOnly)
       ->defaultValue(nbVCObs)
       ->comment("Number of compass observations used since last uniform reset");
-  bind->bindNew("/localisation/field/minVCObs", minVCObs, RhIO::Bind::PullOnly)
+  bind->bindNew("field/minVCObs", minVCObs, RhIO::Bind::PullOnly)
       ->defaultValue(minVCObs)
       ->comment("Number of compass observations necessary to disable VC");
-  bind->bindNew("/localisation/field/isUsingVisualCompass", isUsingVisualCompass, RhIO::Bind::PushOnly)
+  bind->bindNew("field/isUsingVisualCompass", isUsingVisualCompass, RhIO::Bind::PushOnly)
       ->defaultValue(isUsingVisualCompass)
       ->comment("Is the localisation currently using the visual compass");
-  bind->bindNew("/localisation/debugLevel", debugLevel, RhIO::Bind::PullOnly)
+  bind->bindNew("debugLevel", debugLevel, RhIO::Bind::PullOnly)
       ->defaultValue(1)
       ->comment("Verbosity level for Localisation: 0 -> silent");
 
