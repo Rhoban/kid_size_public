@@ -71,10 +71,10 @@ void VisualCompass::setParameters() {
   debugLevel = ParamInt(0, 0, 2);
   params()->define<ParamInt>("debugLevel", &debugLevel);
 
-  nndrRatio = ParamFloat(0.85, 0, 1);
+  nndrRatio = ParamFloat(0.81, 0, 1);// 0.85
   params()->define<ParamFloat>(
       "nndrRatio", &nndrRatio);  // Matching. Distance ratio for correct matching. Higher values=less restrictive match
-
+  
   knn_K = ParamInt(2, 0, 10);
   params()->define<ParamInt>("knn_K", &knn_K);  // number of neigbors
 
@@ -107,26 +107,28 @@ void VisualCompass::updateField()
 
   switch (fieldNumber) {
     case 0: //A
-      out.log("Opening panoramic image: panoA.jpg");
-      field = cv::imread("../common/panoA.jpg", 0);
-      out.log("Opening panoramic image mask: panoA_mask.ong");
-      field_mask=cv::imread("../common/panoA_mask.png", 0);
+      out.log("Opening panoramic image: pano.jpg");
+      field = cv::imread("../common/pano.jpg", 0);
+      out.log("Opening panoramic image mask: pano_mask.jpg");
+      field_mask=cv::imread("../common/pano_mask.jpg", 0);
       break;
     case 1: //C
-      field = cv::imread("../common/panoC.jpg", 0);
-      out.log("Opening panoramic image mask: panoC_mask.ong");
-      field_mask=cv::imread("../common/panoC_mask.png", 0);
+      out.log("Opening panoramic image: pano.jpg");
+      field = cv::imread("../common/pano.jpg", 0);
+      out.log("Opening panoramic image mask: pano_mask.jpg");
+      field_mask=cv::imread("../common/pano_mask.jpg", 0);
       break;
     case 2: //E
-      field = cv::imread("../common/panoE.jpg", 0);
-      out.log("Opening panoramic image mask: panoE_mask.ong");
-      field_mask=cv::imread("../common/panoE_mask.png", 0);
+      out.log("Opening panoramic image: pano.jpg");
+      field = cv::imread("../common/pano.jpg", 0);
+      out.log("Opening panoramic image mask: pano_mask.jpg");
+      field_mask=cv::imread("../common/pano_mask.jpg", 0);
       break;
     default: //ENSEIRB!!!!!
-      out.log("Opening panoramic image: pano_field.jpg");
-      field = cv::imread("../common/pano_field.jpg", 0);
-      out.log("Opening panoramic image mask: pano_field_mask.jpg");
-      field_mask=cv::imread("../common/pano_field_mask.jpg", 0);
+      out.log("Opening panoramic image: pano.jpg");
+      field = cv::imread("../common/pano.jpg", 0);
+      out.log("Opening panoramic image mask: pano_mask.jpg");
+      field_mask=cv::imread("../common/pano_mask.jpg", 0);
       break;
   }
 
@@ -137,26 +139,6 @@ void VisualCompass::updateField()
   out.log("field after resize: %d * %d", field.cols, field.rows);
   out.log("field_mask after resize: %d * %d", field_mask.cols, field_mask.rows);
   // Ideally the panorama should be done with the Robot's camera. Otherwise, errors may be introduced.
-}
-
-// Useless now
-void VisualCompass::matches2points(const std::vector<std::vector<cv::DMatch> >& matches,
-                                   const std::vector<cv::KeyPoint>& kpts_train,
-                                   const std::vector<cv::KeyPoint>& kpts_query, std::vector<cv::Point2f>& pts_train,
-                                   std::vector<cv::Point2f>& pts_query, std::vector<cv::DMatch>& good_matches) {
-  pts_train.clear();
-  pts_query.clear();
-  good_matches.clear();
-
-  for (size_t k = 0; k < matches.size(); k++) {
-    for (size_t i = 0; i < matches[k].size(); i++) {
-      const cv::DMatch& match = matches[k][i];
-      // std::cerr<<"DEBUG MATCH: "<<matches[k][i].distance<<std::endl;
-      pts_query.push_back(kpts_query[match.queryIdx].pt);
-      pts_train.push_back(kpts_train[match.trainIdx].pt);
-      good_matches.push_back(match);
-    }
-  }
 }
 
 void VisualCompass::getPoints(const std::vector<cv::KeyPoint>& kpts_train, const std::vector<cv::KeyPoint>& kpts_query,
@@ -210,8 +192,6 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
 
   Benchmark::close("VisualCompass SIFT match");
 
-  // matches2points(matches, keypoints_pano,keypoints, pts_train, pts_query,good_matches);
-
   // std::cerr<<"DEBUG "<<matches.size()<<std::endl;
   for (int k = 0; k < (int)matches.size(); k++) {
     if ((matches[k][0].distance < nndrRatio * (matches[k][1].distance)))  // &&
@@ -241,13 +221,16 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
 
     if (good_matches.size() > 0) {
       if (debugLevel >= 2) {
+	
         cv::drawMatches(img(), keypoints, field, keypoints_pano, good_matches, img_debug, cv::Scalar(0, 0, 255),
                         cv::Scalar(255, 0, 0), std::vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-        cv::resize(img_debug, img_debug, cv::Size(), 0.5, 0.5);
+        // cv::resize(img_debug, img_debug, cv::Size(), 0.5, 0.5);
+	cv::resize(img_debug, img_debug, cv::Size(), 1.2, 1.2);
 
 
-        // cv::imshow("VisualCompass SIFT debug", img_goodmatches);
+        // cv::imshow("VisualCompass SIFT debug goodmatches", img_goodmatches);
         // cv::imshow("VisualCompass SIFT debug", img_debug);
+	// cv::waitKey(1);
         //////
       }
     }
@@ -338,6 +321,10 @@ void VisualCompass::process() {
       Benchmark::open("VisualCompass compute angle");
       computeAngle(keypoints, good_matches);
       Benchmark::close("VisualCompass compute angle");
+
+      
+      // cv::imshow("VisualCompass SIFT debug", img());
+      // cv::waitKey(1);      
     } else {
       // humm
     }
