@@ -41,7 +41,7 @@ ApproachPotential::ApproachPotential(Walk *walk)
         ->comment("Approach STM state");
         
     bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)
-        ->defaultValue(0.75);
+        ->defaultValue(0.70);
 
     bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)
         ->defaultValue(200)->persisted(true);
