@@ -331,6 +331,8 @@ void LocalisationBinding::step()
       field_filter->applyPendingReset();
     } 
 
+    importFiltersResults();
+    publishToLoc();
     publishToRhIO();
     return;
   }
@@ -360,7 +362,7 @@ void LocalisationBinding::step()
       fieldLogger.log(msg.str().c_str());
     }
 
-
+    importFiltersResults();
     publishToLoc();
     publishToRhIO();
     return;
