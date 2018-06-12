@@ -51,9 +51,6 @@ protected:
   // °/m
   double degsPerMeter;
 
-  // Target X/Y for the ball in the robot frame
-  double targetX, targetY;
-
   // Don't walk
   bool dontWalk;
 

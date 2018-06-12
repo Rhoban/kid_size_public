@@ -46,12 +46,6 @@ ApproachPotential::ApproachPotential(Walk *walk)
     bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)
         ->defaultValue(200)->persisted(true);
 
-    // Ball position target
-    bind->bindNew("targetX", targetX, RhIO::Bind::PullOnly)
-        ->defaultValue(0.1)->persisted(true);
-    bind->bindNew("targetY", targetY, RhIO::Bind::PullOnly)
-        ->defaultValue(0.08)->persisted(true);
-
     // Servoing
     bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)
         ->defaultValue(1);
