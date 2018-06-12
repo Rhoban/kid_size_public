@@ -99,6 +99,7 @@ protected:
     double perpendicularBallDistance;
     double placingBallDistance;
     double avoidRadius;
+    double minAggressivity, maxAggressivity;
     double aggressivity;
 
     /// Tolerance for merging parameters

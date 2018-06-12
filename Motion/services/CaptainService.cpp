@@ -90,9 +90,16 @@ CaptainService::CaptainService()
     bind.bindNew("avoidRadius", avoidRadius, RhIO::Bind::PullOnly)
         ->defaultValue(1.0)->comment("Radius [m] to avoid colliding the ball while placing");
         
-    bind.bindNew("aggressivity", aggressivity, RhIO::Bind::PullOnly)
+    bind.bindNew("minAggressivity", minAggressivity, RhIO::Bind::PullOnly)
+        ->defaultValue(0.25)->minimum(0.0)->maximum(1.0)
+        ->comment("Is the placing aggressive ore defensive?");
+    
+    bind.bindNew("maxAggressivity", maxAggressivity, RhIO::Bind::PullOnly)
         ->defaultValue(0.75)->minimum(0.0)->maximum(1.0)
         ->comment("Is the placing aggressive ore defensive?");
+        
+    bind.bindNew("aggressivity", aggressivity, RhIO::Bind::PushOnly)
+        ->comment("Computed aggressivity");
     
     bind.bindNew("captainId", captainId, RhIO::Bind::PushOnly);
     bind.bindNew("IAmCaptain", IAmCaptain, RhIO::Bind::PushOnly);
@@ -459,6 +466,10 @@ void CaptainService::computePlayingPositions()
         
     // Optimizing the placing
     // std::cout << "Captain: There is " << otherIds.size() << " to place" << std::endl;
+        
+    // Adaptative aggressivity
+    double ballRatio = (info.common_ball.x + Constants::field.fieldLength/2) / Constants::field.fieldLength;
+    aggressivity = minAggressivity + ballRatio * (maxAggressivity - minAggressivity);
         
     auto solution = PlacementOptimizer::optimize(otherIds, targets, 
                                                  [this](PlacementOptimizer::Solution solution) -> float {
