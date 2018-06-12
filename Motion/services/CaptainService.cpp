@@ -207,7 +207,7 @@ void CaptainService::updateCommonBall()
   for (const auto & robot_entry : robots) {
     const rhoban_team_play::TeamPlayInfo & info = robot_entry.second;
 
-    if (info.ballOk && info.timeSinceLastKick < kickMemoryDuration) {
+    if (info.ballOk && info.timeSinceLastKick > kickMemoryDuration) {
       balls.push_back(Point(info.getBallInField()));
     }
     if (info.timeSinceLastKick < kickMemoryDuration) {
