@@ -4,6 +4,8 @@
 #include "CameraState/CameraState.hpp"
 #include "rhoban_utils/timing/benchmark.h"
 #include "Localisation/Field/ArenaCornerObservation.hpp"
+#include <algorithm>
+
 
 #define FBPRINT_DEBUG(str...) if (debug_output) { printf("[CLIPPING] "); printf(str); }
 
@@ -125,11 +127,12 @@ void FieldBorder::process() {
   Benchmark::close("Hough");
   
   // Elimination des marques inconsistantes, i.e. qui n'appartiennent
-  // à aucune ligne de Hough. C'est mieux pour calculer les scores de précision
+  // sur aucune ligne de Hough. C'est mieux pour calculer les scores de précision
   std::vector<cv::Point> bad_marks;
   filter_bad_marks(marks, bad_marks, line_eq, pix_precision);
 
   // Matériel pour calculer les moyennes et écart-types globaux et locaux de score
+  // TODO: à documenter
   compute_precision_scores(marks, line_eq, line_x_domain);
 
   // Pre-calcul des scores géométriques
@@ -137,6 +140,7 @@ void FieldBorder::process() {
     line_pairs_geom_scores; // (idx,idx) -> (score, confidence)
   std::map< std::pair<int,int>, int > line_pairs_X_inter;
   Benchmark::open("geom scores");
+  // TODO: à documenter
   compute_geometric_score(line_pairs_geom_scores, line_pairs_X_inter, line_eq, line_x_domain);
   Benchmark::close("geom scores");
     
@@ -152,7 +156,7 @@ void FieldBorder::process() {
   Benchmark::open("optimisation des lignes");
   compute_border(marks, line_eq, line_x_domain, line_pairs_X_inter, line_pairs_geom_scores);
   Benchmark::close("optimisation des lignes");
-  
+
   // this is the end ...
   epilogue(line_eq, line_x_domain, line_pairs_X_inter);
   debug_tag(&green, &green_density, marks, brut_lines, bad_marks, line_eq);
@@ -396,25 +400,39 @@ FieldBorder::compute_border(std::vector<cv::Point> & marks,
         geo_weight = S.second;
       } catch ( const std::exception & e ) {}
 
-      // on comptabilise les marques orphelines
+      // on regarde les marques orphelines
       double orphan_marks_score = 0.0;
-      for (int m=0; m<(int)marks.size(); m++) {
-        // Note: en fait, la distance au segment serait plus adaptée
-        orphan_marks_score +=
-          min(FieldBorder::dist_point_line(line_eq[ll], marks[m]),
-              FieldBorder::dist_point_line(line_eq[rl], marks[m]));
+      std::vector<double> orphan_marks_scores;
+      double marks_avoiding_ratio = 0.05; // ratio de mauvaise marques à ne pas considérer
+      if (marks.size() > 0) {
+        for (int m=0; m<(int)marks.size(); m++) {
+          int pow_factor = 3;
+          try {
+            int X_inter = line_pairs_X_inter.at(std::pair<int,int>(ll,rl));
+            if (marks[m].x < X_inter)
+              orphan_marks_scores.push_back(FieldBorder::dist_point_line(line_eq[ll], marks[m]));
+            else
+              orphan_marks_scores.push_back(FieldBorder::dist_point_line(line_eq[rl], marks[m]));
+          } catch ( const std::exception & e ) {
+            orphan_marks_scores.push_back(min(FieldBorder::dist_point_line(line_eq[ll], marks[m]),
+                                              FieldBorder::dist_point_line(line_eq[rl], marks[m])));
+          }
+        }
+        // On elimine les (marks_avoiding_ratio%) plus mauvaise marques (supposées être du bruit)
+        // (percentille), et on calcule la moyenne
+        std::sort(orphan_marks_scores.begin(), orphan_marks_scores.end());
+        int N = (int) (orphan_marks_scores.size() * (1.0-marks_avoiding_ratio));
+        for (int n=0; n<N; n++)
+          orphan_marks_score += orphan_marks_scores[n];
+        if (N>0) orphan_marks_score /= N;
       }
+
       
       /* paramétrage du score */
       float pre_weight = 0.5;
       float sep_weight = 2.0;
       /* geo_weight est dynamique, definit avant */
-
-      float orphan_weight = 0.0;
-      if (orphan_marks_score > 300 / scale_factor) // On disqualifie la solution 
-        orphan_weight = 1.0;        // s'il y a trop de marques orphelines
-      else
-        orphan_marks_score = 0;
+      float orphan_weight = 5.0;
       
       float score =
         ((pre_weight * precision_score) +
@@ -543,7 +561,7 @@ FieldBorder::compute_geometric_score(std::map< std::pair<int,int>, std::pair<dou
         atan2(line_eq[ll][0],1.0) - atan2(line_eq[rl][0],1.0);
       if (rad2deg(pix_angle) < 20.0 ) {
         // param: angle en pix minimum pour considérer
-        // la géométrie (qui est très couteuse).
+        // le critère géométrique (qui est très couteux).
         continue;
       }
       
