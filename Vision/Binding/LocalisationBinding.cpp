@@ -360,6 +360,8 @@ void LocalisationBinding::step()
       fieldLogger.log(msg.str().c_str());
     }
 
+
+    publishToLoc();
     publishToRhIO();
     return;
   }
