@@ -29,10 +29,6 @@ public:
   virtual void setParameters() override;
   virtual int expectedDependencies() const override { return 1; }
 
-   //useless
-  void matches2points(const std::vector<std::vector<cv::DMatch> >& matches, const std::vector<cv::KeyPoint>& kpts_train,
-                      const std::vector<cv::KeyPoint>& kpts_query, std::vector<cv::Point2f>& pts_train,
-                      std::vector<cv::Point2f>& pts_query,std::vector<cv::DMatch>& good_matches);
   void getPoints(const std::vector<cv::KeyPoint>& kpts_train,
                  const std::vector<cv::KeyPoint>& kpts_query, std::vector<cv::Point2f>& pts_train,
                  std::vector<cv::Point2f>& pts_query,std::vector<cv::DMatch> & good_matches);
