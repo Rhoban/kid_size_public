@@ -37,6 +37,7 @@ class LocalisationService : public Service
         rhoban_geometry::Point getGoalPosWorld();
         rhoban_geometry::Point getGoalPosSelf();
         rhoban_geometry::Point getGoalPosField();
+        rhoban_geometry::Point getOurGoalPosField();
         rhoban_geometry::Point getLeftGoalPosSelf();
         rhoban_geometry::Point getRightGoalPosSelf();
         rhoban_geometry::Point getFieldPos();

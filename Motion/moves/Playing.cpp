@@ -150,8 +150,22 @@ void PlayingMove::step(float elapsed)
                 if (dist < walkBallDistance) {
                     setState(STATE_APPROACH);
                 }
+                
+                // XXX: Defend infection
                 auto ballField = loc->getBallPosField();
-                placer->goTo(ballField.x, ballField.y, 0);
+                auto goalField = loc->getOurGoalPosField();
+                double c = -ballField.x*2/Constants::field.fieldLength;
+                if (c < 0) {
+                    c = 0;
+                }
+                c *= dist;
+                if (c > walkBallDistance*0.85) {
+                    c = walkBallDistance*0.85;
+                }
+                auto ballGoalField = (goalField-ballField).normalize(c);
+                ballGoalField += ballField;
+                
+                placer->goTo(ballGoalField.x, ballGoalField.y, 0);
             }
 
             if (!decision->isBallQualityGood) {

@@ -268,6 +268,11 @@ Point LocalisationService::getRightGoalPosSelf()
     return Point(p.x(), p.y());
 }
 
+Point LocalisationService::getOurGoalPosField()
+{
+    return Point(-Constants::field.fieldLength/2.0, 0);
+}
+
 Point LocalisationService::getGoalPosField()
 {
     return Point(Constants::field.fieldLength/2.0, 0);
