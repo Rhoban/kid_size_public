@@ -325,9 +325,6 @@ void CaptainService::updateCommonOpponents() {
   info.nb_opponents = nb_shared_opponents;
   for (int k = 0; k < nb_shared_opponents; k++) {
     info.common_opponents[k] = ordered_opponents[k];
-    logger.log("Opp %d: (%d, %f,%f)", k,
-               ordered_opponents[k].consensusStrength,
-               ordered_opponents[k].x, ordered_opponents[k].y);
   }
 }
 
