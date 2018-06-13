@@ -14,6 +14,8 @@ using namespace rhoban_utils;
 using namespace robocup_referee;
 using namespace rhoban_geometry;
 
+using rhoban_team_play::CommonOpponent;
+
 static Logger logger("CaptainService");
 
 /**
@@ -73,7 +75,6 @@ CaptainService::CaptainService()
 {
     // Loading configuration file
     config.loadFile("captain.json");
-    
         
     bind.bindNew("passPlacingRatio", passPlacingRatio, RhIO::Bind::PullOnly)
         ->defaultValue(0.85)->comment("Ratio to the kick vector to place");
@@ -117,8 +118,14 @@ CaptainService::CaptainService()
     bind.bindNew("commonBallTol", commonBallTol, RhIO::Bind::PullOnly)
       ->defaultValue(2.0)->comment("Distance [m] for merging ball candidates");
     bind.bindNew("kickMemoryDuration", kickMemoryDuration, RhIO::Bind::PullOnly)
-      ->defaultValue(3.0)
+      ->defaultValue(1.0)
       ->comment("Time during which a kick is considered as recent [s]");
+
+    bind.bindNew("oppToMateMinDist", oppToMateMinDist, RhIO::Bind::PullOnly)
+      ->defaultValue(1.5)->comment("Minimal distance from mates to consider opponents [m] ");
+
+    bind.bindNew("oppMergeTol", oppMergeTol, RhIO::Bind::PullOnly)
+      ->defaultValue(2.0)->comment("Maximal distance to merge opponents [m] ");
 
     bind.bindNew("commonBallNbRobots", info.common_ball.nbRobots, RhIO::Bind::PushOnly);
     bind.bindNew("commonBallX", info.common_ball.x, RhIO::Bind::PushOnly);
@@ -209,7 +216,7 @@ void CaptainService::setSolution(PlacementOptimizer::Solution solution)
 void CaptainService::updateCommonBall()
 {
   // Gather balls which are currently seen by other robots
-  std::vector<Point> balls;// (x,y, quality)
+  std::vector<Point> balls;
   bool recentlyKicked = false;
   for (const auto & robot_entry : robots) {
     const rhoban_team_play::TeamPlayInfo & info = robot_entry.second;
@@ -267,6 +274,61 @@ void CaptainService::updateCommonBall()
   info.common_ball.nbRobots = best_cluster.size();
   info.common_ball.x = common_pos.x;
   info.common_ball.y = common_pos.y;
+}
+
+void CaptainService::updateCommonOpponents() {
+  std::vector<Point> obstacles;
+  std::vector<Point> mates;
+  // Gathering all published obstacles and mates positions
+  for (const auto & robot_entry : robots) {
+    const rhoban_team_play::TeamPlayInfo & info = robot_entry.second;
+    mates.push_back(Point(info.fieldX, info.fieldY));
+    for (int k = 0; k < info.nbObstacles; k++) {
+      obstacles.push_back(Point(info.obstacles[k][0], info.obstacles[k][1]));
+    }
+  }
+  // Creating clusters
+  std::vector<PointCluster> opponent_clusters;
+  for (const Point & obs : obstacles) {
+    // Do not consider obstacles near mates (they are considered as mates)
+    bool near_mate = false;
+    for (const auto & mate : mates) {
+      if (obs.getDist(mate) < oppToMateMinDist) {
+        near_mate = true;
+        break;
+      }
+    }
+    if (near_mate) continue;
+    // Now we can add the point to existing clusters
+    addToClusters(obs, opponent_clusters, oppMergeTol);
+  }
+  // List of opponents ordered by number of elements
+  std::vector<CommonOpponent> ordered_opponents;
+  for (const PointCluster & c : opponent_clusters) {
+    CommonOpponent opp;
+    opp.consensusStrength = c.size();
+    opp.x = c.getAverage().x;
+    opp.y = c.getAverage().y;
+    ordered_opponents.push_back(opp);
+  }
+  std::sort(ordered_opponents.begin(), ordered_opponents.end(),
+            [](const CommonOpponent & o1, const CommonOpponent & o2) {
+              return o1.consensusStrength > o2.consensusStrength;
+            });
+  // Ensuring we publish a limited number of opponents
+  int nb_shared_opponents = (int) ordered_opponents.size();
+  if (nb_shared_opponents > MAX_OPPONENTS) {
+    logger.log("Too many common opponents (%d), keeping only %d",
+               nb_shared_opponents, MAX_OPPONENTS);
+    nb_shared_opponents = MAX_OPPONENTS;
+  }
+  info.nb_opponents = nb_shared_opponents;
+  for (int k = 0; k < nb_shared_opponents; k++) {
+    info.common_opponents[k] = ordered_opponents[k];
+    logger.log("Opp %d: (%d, %f,%f)", k,
+               ordered_opponents[k].consensusStrength,
+               ordered_opponents[k].x, ordered_opponents[k].y);
+  }
 }
 
 void CaptainService::computeBasePositions()
@@ -517,6 +579,7 @@ void CaptainService::compute()
     }
 
     updateCommonBall();
+    updateCommonOpponents();
     
     if (referee->isPlacingPhase()) {
         computeBasePositions();

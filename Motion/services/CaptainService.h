@@ -105,6 +105,12 @@ protected:
     /// Tolerance for merging parameters
     double commonBallTol;
 
+    /// Minimal distance to a mate required for accepting an obstacle
+    double oppToMateMinDist;
+
+    /// Maximal distance for merging obstacles
+    double oppMergeTol;
+
     /// Time during which a kick is considered as recent
     double kickMemoryDuration;
 
@@ -125,6 +131,10 @@ protected:
 
     /// Perform a majority vote for ball position
     void updateCommonBall();
+
+    /// Use the obstacle information to extract a consensus on opponents
+    /// Removes the obstacles near allies and merge some of the other obstacles
+    void updateCommonOpponents();
 
     /**
      * Do the update for the base positions
