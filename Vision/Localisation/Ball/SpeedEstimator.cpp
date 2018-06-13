@@ -108,13 +108,13 @@ void SpeedEstimator::initBinding() {
   bind = new RhIO::Bind("/ball/speedEstimator");
   bind->bindNew("memory_size", memory_size, RhIO::Bind::PullOnly)
     ->comment("Number of ball positions stored in memory")
-    ->defaultValue(15)->minimum(2)->maximum(50)->persisted(true);
+    ->defaultValue(15)->minimum(2)->maximum(50);
   bind->bindNew("min_dt", min_dt, RhIO::Bind::PullOnly)
     ->comment("Minimal time difference between to entries to compute their speed [s]")
-    ->defaultValue(0.15)->minimum(0.01)->maximum(0.5)->persisted(true);
+    ->defaultValue(0.15)->minimum(0.01)->maximum(0.5);
   bind->bindNew("max_dt", max_dt, RhIO::Bind::PullOnly)
     ->comment("Maximal time difference between first and last entry [s]")
-    ->defaultValue(0.25)->minimum(0.1)->maximum(1)->persisted(true);
+    ->defaultValue(0.25)->minimum(0.1)->maximum(1);
   bind->bindNew("disc", disc, RhIO::Bind::PullOnly)
     ->comment("Discount gain used for speeds")
     ->defaultValue(0.9)->minimum(0)->maximum(1);

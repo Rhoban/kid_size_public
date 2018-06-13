@@ -23,7 +23,7 @@ bool BallStackFilter::bindToRhIO(std::string node, std::string command)
 {
     if (RadarFilterPoint::bindToRhIO(node, command)) {
         bind->bindNew("afterKickPermissiveDuration", afterKickPermissiveDuration, RhIO::Bind::PullOnly)
-            ->defaultValue(3.0)->persisted(true)->comment("Duration (s) of permissive merge after kick");
+            ->defaultValue(3.0)->comment("Duration (s) of permissive merge after kick");
 
         return true;
     }
