@@ -88,7 +88,7 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
       ->defaultValue(0.5);
 
   bind->bindNew("alignTolerance", alignTolerance, RhIO::Bind::PullOnly)
-      ->comment("consider is align is distance with optimal point is below"
+      ->comment("consider is align if distance with optimal point is below"
                 " this value (is added to placer tolerance) [deg]")
       ->defaultValue(10);
 
@@ -99,13 +99,10 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
   bind->bindNew("targetX", targetX, RhIO::Bind::PushOnly)->comment("Target X [m]");
   bind->bindNew("targetY", targetY, RhIO::Bind::PushOnly)->comment("Target Y [m]");
 
-  bind->bindNew("targetSmoothing", targetSmoothing, RhIO::Bind::PullOnly)
-      ->comment("Target smoothing")
-      ->defaultValue(0.95)
-      ->persisted(true);
 
   bind->bindNew("t", t, RhIO::Bind::PushOnly)
     ->comment("Duration of the current state");
+
 }
 
 std::string GoalKeeper::getName() { return "goal_keeper"; }
@@ -114,6 +111,10 @@ void GoalKeeper::onStart() {
   //isPlacing = false;
   // Making the head move by default
   bind->pull();
+  initElbowOffsetValue=RhIO::Root.getFloat("/moves/walk/elbowOffset");
+  initArmsRollValue=RhIO::Root.getFloat("/moves/walk/armsRoll");
+  initTrunkZOffsetValue=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
+  logger.log("GK: initial values %f %f %f\n",initElbowOffsetValue,initArmsRollValue,initTrunkZOffsetValue);
   setTeamPlayState(Playing);
   Head *head = (Head *)getMoves()->getMove("head");
   head->setDisabled(false);
@@ -153,10 +154,16 @@ void GoalKeeper::onStop() {
   stopMove("clearing_kick_controler", 0.0);
   //loc->enableFieldFilter(true);
   setState(STATE_STOP);
-  RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);
-  RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);
-  RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.02);
+  float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
+  while(z>initTrunkZOffsetValue){
+    RhIO::Root.setFloat("/moves/walk/trunkZOffset", z);
+    z-=0.001;
+    usleep(100);
+  }
+  RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue); 
+  RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
 }
+
 
 TeamPlayState GoalKeeper::teamState() {
   return getServices()->teamPlay->selfInfo().state;
@@ -310,39 +317,13 @@ bool GoalKeeper::isAligned(){
   return false;
 }
 
-// ?
-void GoalKeeper::getFieldTarget(Point &wishedPos, Angle &wishedAzimuth) {
-  /*
-  // Retrieving informations
-  auto loc = getServices()->localisation;
-  Point ballInField = loc->getBallPosField();
-
-  // Activate placing if ballQ is high enough and ball is close enough
-  if (loc->ballQ > 0.6 &&
-      ballInField.x < -Constants::field.fieldLength / 2 + placeMinX) {
-    isPlacing = true;
+static float getLinear(float x,float x1, float y1,float x2, float y2){
+  if (x1==x2){
+    return y2;
   }
-  // Back to home position if ball is lost or far enough from goal line
-  if (loc->ballQ < 0.2 ||
-      ballInField.x > -Constants::field.fieldLength / 2 + placeMaxX) {
-    isPlacing = false;
-  }
-
-  // Adapt position
-  if (isPlacing) {
-    // Aling along the Y axis but don't go further away than the goal posts.
-    // We could change this to integrate an arc
-    double maxY = Constants::field.goalWidth / 2;
-    double wishedY = std::min(maxY, std::max(-maxY, ballInField.y));
-    wishedPos = Point(-Constants::field.fieldLength / 2 + waitX, wishedY);
-    wishedAzimuth = (ballInField - wishedPos).getTheta();
-  }
-  // If ball is far from goal line or lost, stay centered
-  else {
-    wishedPos = Point(-Constants::field.fieldLength / 2 + waitX, 0);
-    wishedAzimuth = Angle(0);
-  }
-  */
+  if (y1==y2) return y1;
+  float a=(y1-y2)/(x1-x2);
+  return x*a+y2-x2*a;
 }
 
 void GoalKeeper::step(float elapsed) {
@@ -364,22 +345,32 @@ void GoalKeeper::step(float elapsed) {
   else
     loc->enableFieldFilter(true);
   */
-  // TODO Unknown difference between the 2 rolls
-  setAngle("left_shoulder_roll", 25);
-  setAngle("right_shoulder_roll", -21);
-
+  
   if (state==STATE_STOP){
-    RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.095);
-    if (t>0.8){
-      RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", false);
-      RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", false);
+    if (stopPosture){
+      if (t<2){
+	float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
+	//RhIO::Root.setFloat("/moves/walk/trunkZOffset", (0.17 - initTrunkZOffsetValue)*t/2.0 + initTrunkZOffsetValue);
+	//RhIO::Root.setFloat("/moves/walk/trunkZOffset", (z - 0.17)*(t+0.1)/(t-2.0) + 0.17-2*(z - 0.17)/(t-2.0));
+	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+0.1,t,z,2,0.17));
+      } else {
+	RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.17);
+      }
+      if (t>0.8){ // wait for 0.8s before releasing knee's torque
+	RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
+	RhIO::Root.setFloat("/moves/walk/armsRoll", 20);	
+      }
     }
   } else {
     float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
-    if (z>0.02) {
-      z-=0.001;
-      RhIO::Root.setFloat("/moves/walk/trunkZOffset", z);
-    }
+    if (z>initTrunkZOffsetValue) {
+      //RhIO::Root.setFloat("/moves/walk/trunkZOffset", (initTrunkZOffsetValue-0.17)*t/2.0 +0.17);
+      RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+0.1,t,z,2,initTrunkZOffsetValue));
+      if (t>1){
+	RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
+	RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
+      }
+    }      
   }
 
   // first, attack ball if necessary
@@ -477,10 +468,10 @@ void GoalKeeper::enterState(std::string state) {
     placer->setDirectMode(false);
     startMove("placer",0.0);
   }  else if (state==STATE_STOP){
-
-    if (stopPosture)
+    if (stopPosture){            
+      RhIO::Root.setFloat("/moves/walk/armsRoll", 20);
       RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
-
+    }
     neverWalked=false;
   }
 }
@@ -510,12 +501,11 @@ void GoalKeeper::exitState(std::string state) {
   } else if (state==STATE_STOP){
 
     if (stopPosture){
-      setAngle("left_shoulder_roll", 0);    
-      setAngle("right_shoulder_roll", 0);
-      RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);  
-      RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);  
-      //RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.02);   
-      RhIO::Root.setFloat("/moves/walk/elbowOffset", -175);
+      //RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);  
+      //RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);  
+      //RhIO::Root.setFloat("/moves/walk/trunkZOffset", initTrunkZOffsetValue);   
+      //RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
+      //RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
     }
   } else if (state==STATE_ATTACK){
     auto &strategy = getServices()->strategy;
