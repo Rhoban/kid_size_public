@@ -1,8 +1,11 @@
 #include "RobotFilter.hpp"
 
 #include <rhoban_utils/angle.h>
+#include <rhoban_utils/logging/logger.h>
 
 using namespace rhoban_utils;
+
+static Logger logger("RobotFilter");
 
 namespace Vision
 {
@@ -50,7 +53,7 @@ bool RobotFilter::isSimilar(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2
   double ground_dist2 = pos2.norm();
   double robot_height = cameraState->getHeight(); 
 
-  Angle dir1 = Angle::fromXY(pos1(0), pos2(1));
+  Angle dir1 = Angle::fromXY(pos1(0), pos1(1));
   Angle dir2 = Angle::fromXY(pos2(0), pos2(1));
   Angle pitch1 = Angle::fromXY(ground_dist1, -robot_height);
   Angle pitch2 = Angle::fromXY(ground_dist2, -robot_height);
