@@ -149,7 +149,7 @@ Walk::Walk(Kick *kickMove)
 #ifndef USE_QUINTICWALK
     bind->bindNew("trunkZOffset", params.trunkZOffset, RhIO::Bind::PullOnly)
         ->comment("Trunk Z offset")->persisted(true)
-        ->defaultValue(0.02)->minimum(0.0)->maximum(0.1)
+        ->defaultValue(0.02)->minimum(0.0)->maximum(0.2)
         ;
     bind->bindNew("trunkRoll", trunkRoll, RhIO::Bind::PullOnly)
         ->comment("Roll of the trunk")->persisted(true)
@@ -158,7 +158,7 @@ Walk::Walk(Kick *kickMove)
 #else
     bind->bindNew("trunkZOffset", _trunkZOffset, RhIO::Bind::PullOnly)
         ->comment("Trunk Z offset")->persisted(true)
-        ->defaultValue(0.02)->minimum(0.0)->maximum(0.1)
+        ->defaultValue(0.02)->minimum(0.0)->maximum(0.2)
         ;
 #endif
 
