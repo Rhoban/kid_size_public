@@ -22,7 +22,7 @@ RobotFilter::RobotFilter(Utils::CameraState *cs)
   scoreReduction = 0.01;
   scoreReductionOut = 0.001;
   positionDiscount = 0.8;
-  normalizeSum(true);
+  normalizeSum = true;
   matchDistance = 1.0;
   far = 8;
 }
