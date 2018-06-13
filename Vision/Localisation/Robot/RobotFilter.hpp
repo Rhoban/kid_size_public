@@ -15,8 +15,6 @@ public:
 
   bool bindToRhIO(std::string node, std::string command);
 
-  bool defaultNormalizeSum() override;
-
   Eigen::Vector2d getGroundPosSelf(const Eigen::Vector3d & pt);
 
 	bool isSimilar(const Eigen::Vector3d &pos1, const Eigen::Vector3d &pos2) override;

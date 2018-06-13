@@ -15,6 +15,16 @@ namespace Localisation
 RobotFilter::RobotFilter(Utils::CameraState *cs)
     : RadarFilterPoint(cs)
 {
+  // Overriding default values of parent classes
+  initialScore = 0.2;
+  maximumScore = 1.0;
+  scoreIncrease = 0.1;
+  scoreReduction = 0.01;
+  scoreReductionOut = 0.001;
+  positionDiscount = 0.8;
+  normalizeSum(true);
+  matchDistance = 1.0;
+  far = 8;
 }
 
 bool RobotFilter::bindToRhIO(std::string node, std::string command)
@@ -32,11 +42,6 @@ bool RobotFilter::bindToRhIO(std::string node, std::string command)
     return true;
   }
   return false;
-}
-
-bool RobotFilter::defaultNormalizeSum()
-{
-    return false;
 }
 
 Eigen::Vector2d RobotFilter::getGroundPosSelf(const Eigen::Vector3d & pt)
