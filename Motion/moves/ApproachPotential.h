@@ -58,7 +58,7 @@ protected:
   double distanceThreshold, angleThreshold;
 
   // Gains
-  double stepP, stepI, stepPunch;
+  double stepP, lateralI, stepI, stepPunch;
 
   // Current tolerance used
   double currentTolerance;

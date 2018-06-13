@@ -41,7 +41,7 @@ ApproachPotential::ApproachPotential(Walk *walk)
         ->comment("Approach STM state");
         
     bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)
-        ->defaultValue(0.70);
+        ->defaultValue(0.67);
 
     bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)
         ->defaultValue(200)->persisted(true);
@@ -51,6 +51,8 @@ ApproachPotential::ApproachPotential(Walk *walk)
         ->defaultValue(1);
     bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)
         ->defaultValue(0.0);
+    bind->bindNew("lateralI", stepI, RhIO::Bind::PullOnly)
+        ->defaultValue(0.2);
     bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)
         ->defaultValue(0);
     bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)
@@ -176,7 +178,7 @@ void ApproachPotential::step(float elapsed)
     stepper.k_p = stepP;
     lateraler.k_p = stepP;
     stepper.k_i = stepI;
-    lateraler.k_i = stepI;
+    lateraler.k_i = lateralI;
     
     auto loc = getServices()->localisation;
 
