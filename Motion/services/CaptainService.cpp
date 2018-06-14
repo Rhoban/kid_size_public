@@ -565,6 +565,7 @@ void CaptainService::compute()
         if (!info.isOutdated() && // Info should not be updated
         !referee->isPenalized(info.id) &&  // Robot should not be penalized
         info.state != rhoban_team_play::Unknown && // It should be playing
+        info.state != rhoban_team_play::Inactive &&
         info.fieldOk &&  // It knows where it is
         info.fieldX == info.fieldX && // The values are not NaNs
         info.fieldY == info.fieldY &&
