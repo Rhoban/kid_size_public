@@ -83,7 +83,7 @@ CaptainService::CaptainService()
         ->defaultValue(0.35)->comment("Offset to kick vector to place [m]")->persisted(true);
         
     bind.bindNew("perpendicularBallDistance", perpendicularBallDistance, RhIO::Bind::PullOnly)
-        ->defaultValue(0.8)->comment("Distance [m] on the perpendicular to attack placement");
+        ->defaultValue(1)->comment("Distance [m] on the perpendicular to attack placement");
         
     bind.bindNew("placingBallDistance", placingBallDistance, RhIO::Bind::PullOnly)
         ->defaultValue(2.0)->comment("Distance [m] to the ball for team play placement");
@@ -374,6 +374,7 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point
         - (ballTarget-ball).normalize()*passPlacingOffset;
     Point nVect = vect.perpendicular().normalize(perpendicularBallDistance);
     bool backward = ballTarget.x-0.1 <= ball.x;
+    Point ourGoalCenter(-Constants::field.fieldLength/2, 0);
     auto oppositeCorner = corner;
     oppositeCorner.y *= -1;
 
@@ -410,8 +411,9 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point
     
     {
         PlacementOptimizer::Target target;
-        corner = Point(-Constants::field.fieldLength/2, Constants::field.goalWidth/2 + 0.25);
-        target.position = ball+(corner-ball).normalize(placingBallDistance);
+        auto ballToGoal = (ourGoalCenter-ball);
+        auto normal = ballToGoal.perpendicular().normalize(perpendicularBallDistance);
+        target.position = ball+ballToGoal.normalize(placingBallDistance)+normal;
         
         target.data = 0;
         target.orientation = Angle::weightedAverage((ball-target.position).getTheta(), 0.5, 
@@ -421,8 +423,9 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point
     
     {
         PlacementOptimizer::Target target;
-        corner = Point(-Constants::field.fieldLength/2, -Constants::field.goalWidth/2 - 0.25);
-        target.position = ball+(corner-ball).normalize(placingBallDistance);
+        auto ballToGoal = (ourGoalCenter-ball);
+        auto normal = ballToGoal.perpendicular().normalize(perpendicularBallDistance);
+        target.position = ball+ballToGoal.normalize(placingBallDistance)-normal;
         
         target.data = 0;
         target.orientation = Angle::weightedAverage((ball-target.position).getTheta(), 0.5, 
