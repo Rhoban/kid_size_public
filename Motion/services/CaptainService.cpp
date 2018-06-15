@@ -460,6 +460,7 @@ void CaptainService::computePlayingPositions()
             info.order[robot.id-1] = rhoban_team_play::CaptainOrder::SearchBall;
         }
         handler = -1;
+        return;
     }
 
     int newHandler = -1;

@@ -173,11 +173,11 @@ void PlayingMove::step(float elapsed)
                 placer->goTo(ballGoalField.x, ballGoalField.y, 0);
             }
 
-            if (!decision->isBallQualityGood) {
+            if (!decision->isBallQualityGood && state == STATE_APPROACH) {
                 setState(STATE_BACKWARD);
             }
         } else {
-            if (!decision->shouldLetPlay && instruction.order == CaptainOrder::HandleBall) {
+            if (!decision->shouldLetPlay && instruction.order == CaptainOrder::HandleBall && state != STATE_BACKWARD) {
                 if (state == STATE_LET_PLAY) {
                     if (t > 1.5) { 
                         setState(STATE_WALKBALL);
