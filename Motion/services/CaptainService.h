@@ -25,6 +25,9 @@ public:
         
         // Captain order
         rhoban_team_play::CaptainOrder order;
+        
+        // Consensus ball
+        rhoban_team_play::CommonBall ball;
     };
     
     /**
