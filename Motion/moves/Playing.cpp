@@ -147,12 +147,17 @@ void PlayingMove::step(float elapsed)
             }
 
             if (state == STATE_WALKBALL) {
-                if (dist < walkBallDistance) {
+                if (dist < walkBallDistance && decision->isBallQualityGood) {
                     setState(STATE_APPROACH);
                 }
                 
-                // XXX: Defend infection
-                auto ballField = loc->getBallPosField();
+                // Defend inflection
+                Point ballField;
+                if (decision->isBallQualityGood) {
+                    ballField = loc->getBallPosField();
+                } else {
+                    ballField = Point(instruction.ball.x, instruction.ball.y);
+                }
                 auto goalField = loc->getOurGoalPosField();
                 double c = -ballField.x*2/Constants::field.fieldLength;
                 if (c < 0) {
@@ -168,12 +173,11 @@ void PlayingMove::step(float elapsed)
                 placer->goTo(ballGoalField.x, ballGoalField.y, 0);
             }
 
-            if (!decision->isBallQualityGood) {
+            if (!decision->isBallQualityGood && state == STATE_APPROACH) {
                 setState(STATE_BACKWARD);
             }
         } else {
-            if (decision->isBallQualityGood && !decision->shouldLetPlay && 
-                    instruction.order == CaptainOrder::HandleBall) {
+            if (!decision->shouldLetPlay && instruction.order == CaptainOrder::HandleBall && state != STATE_BACKWARD) {
                 if (state == STATE_LET_PLAY) {
                     if (t > 1.5) { 
                         setState(STATE_WALKBALL);
@@ -286,10 +290,12 @@ void PlayingMove::step(float elapsed)
         }
 
         if (state == STATE_SEARCH || state == STATE_BACKWARD) {
+            /*
             if (decision->isBallQualityGood) {
                 logger.log("Let's approach the ball, I see it");
                 setState(STATE_APPROACH);
             }
+            */
         } else {
             if (instruction.order == CaptainOrder::SearchBall && !decision->isBallQualityGood) {
                 setState(STATE_SEARCH);

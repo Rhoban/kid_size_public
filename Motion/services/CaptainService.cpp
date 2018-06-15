@@ -195,6 +195,7 @@ CaptainService::Instruction CaptainService::getInstruction()
         instruction.targetPosition = Point(tmp.robotTarget[id-1][0], tmp.robotTarget[id-1][1]);
         instruction.targetOrientation = tmp.robotTarget[id-1][2];
         instruction.order = tmp.order[id-1];
+        instruction.ball = tmp.common_ball;
     } else {
         std::cerr << "Captain: getInstruction bad ID!" << std::endl;
     }
@@ -467,6 +468,7 @@ void CaptainService::computePlayingPositions()
             info.order[robot.id-1] = rhoban_team_play::CaptainOrder::SearchBall;
         }
         handler = -1;
+        return;
     }
 
     int newHandler = -1;

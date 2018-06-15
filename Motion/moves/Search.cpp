@@ -52,18 +52,18 @@ Search::Search(Walk *walk, Placer *placer)
         ->comment("Begin Azimuth")->defaultValue(0)->persisted(true);
 
     bind->bindNew("P1X", P1X, RhIO::Bind::PullOnly)
-        ->comment("Patrol checkpoint 1 X")->defaultValue(300)->persisted(true);
+        ->comment("Patrol checkpoint 1 X")->defaultValue(0);
     bind->bindNew("P1Y", P1Y, RhIO::Bind::PullOnly)
-        ->comment("Patrol checkpoint 1 Y")->defaultValue(0)->persisted(true);
+        ->comment("Patrol checkpoint 1 Y")->defaultValue(0);
     bind->bindNew("P1Azimuth", P1Azimuth, RhIO::Bind::PullOnly)
-        ->comment("Patrol checkpoint 1 Azimuth")->defaultValue(0)->persisted(true);
+        ->comment("Patrol checkpoint 1 Azimuth")->defaultValue(0);
 
     bind->bindNew("P2X", P2X, RhIO::Bind::PullOnly)
-        ->comment("Patrol checkpoint 2 X")->defaultValue(-300)->persisted(true);
+        ->comment("Patrol checkpoint 2 X")->defaultValue(0);
     bind->bindNew("P2Y", P2Y, RhIO::Bind::PullOnly)
-        ->comment("Patrol checkpoint 2 Y")->defaultValue(0)->persisted(true);
+        ->comment("Patrol checkpoint 2 Y")->defaultValue(0);
     bind->bindNew("P2Azimuth", P2Azimuth, RhIO::Bind::PullOnly)
-        ->comment("Patrol checkpoint 2 Azimuth")->defaultValue(180)->persisted(true);
+        ->comment("Patrol checkpoint 2 Azimuth")->defaultValue(0);
 
     bind->bindNew("patrolTarget", patrolTarget, RhIO::Bind::PushOnly);
 
@@ -166,9 +166,9 @@ void Search::step(float elapsed)
         }
     
         if (patrolTarget == 0) {
-            placer->goTo(P1X/100, P1Y/100, P1Azimuth);
+            placer->goTo(P1X, P1Y, P1Azimuth);
         } else {
-            placer->goTo(P2X/100, P2Y/100, P2Azimuth);
+            placer->goTo(P2X, P2Y, P2Azimuth);
         }
     }
 
