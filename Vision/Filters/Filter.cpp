@@ -38,7 +38,8 @@ Filter::Filter(const std::string &n, const Dependencies &dependencies)
        _params(),
       _lockParams(), _lockImgs(),
       _pipeline(nullptr),
-      monitor_scale(1), rhio_initialized(false) {
+      monitor_scale(1), rhio_initialized(false),
+      warningExecutionTime(0.01){
   _defaultRoi = false;
   setParameters();
 }
@@ -231,7 +232,10 @@ void Filter::runStep(UpdateType updateType) {
   if (display) displayCurrent();
 
   // Close filter benchmark
-  Benchmark::close(name.c_str());
+  double filterTime = Benchmark::close(name.c_str());
+  if (filterTime > warningExecutionTime) {
+    out.warning("Filter '%s' took %f ms for step", name.c_str(), filterTime * 1000);
+  }
 }
 
 const Filter &Filter::getDependency(const std::string &name) const {
@@ -384,6 +388,7 @@ Json::Value Filter::toJson() const {
   v["dependencies"] = vector2Json(_dependencies);
   v["paramInts"] = parameters2Json<int>();
   v["paramFloats"] = parameters2Json<float>();
+  v["warningExecutionTime"] = warningExecutionTime;
   return v;
 }
 
@@ -413,6 +418,7 @@ void Filter::fromJson(const Json::Value & v, const std::string & dir_name) {
     oss << err.what() << " in filter with name '" << name << "' of class '" << getClassName() << "'";
     throw rhoban_utils::JsonParsingError(oss.str());
   }
+  rhoban_utils::tryRead(v, "warningExecutionTime", &warningExecutionTime);
   // Init display if required
   initWindow();
   // Publish parameters to RhIO
