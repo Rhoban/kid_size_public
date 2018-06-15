@@ -125,6 +125,9 @@ protected:
 
     /// The penalty for robots who see a ball against consensus
     double wrongBallCost;
+
+    /// Has a mate kicked recently
+    bool recentlyKicked;
     
     std::vector<PlacementOptimizer::Target> getTargetPositions(rhoban_geometry::Point ball,
         rhoban_geometry::Point ballTarget);

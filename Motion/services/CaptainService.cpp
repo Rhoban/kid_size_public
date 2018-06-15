@@ -71,7 +71,8 @@ Json::Value CaptainService::Config::toJson() const
 }
 
 CaptainService::CaptainService()
-: bind("captain"), captainThread(NULL)
+  : bind("captain"), captainThread(NULL),
+    recentlyKicked(false)
 {
     // Loading configuration file
     config.loadFile("captain.json");
@@ -130,6 +131,8 @@ CaptainService::CaptainService()
     bind.bindNew("commonBallNbRobots", info.common_ball.nbRobots, RhIO::Bind::PushOnly);
     bind.bindNew("commonBallX", info.common_ball.x, RhIO::Bind::PushOnly);
     bind.bindNew("commonBallY", info.common_ball.y, RhIO::Bind::PushOnly);
+
+    bind.bindNew("recentlyKicked", recentlyKicked, RhIO::Bind::PushOnly);
     
     // Creating UDP broadcaster
     _broadcaster = new rhoban_utils::UDPBroadcast(CAPTAIN_PORT, CAPTAIN_PORT);
@@ -217,7 +220,7 @@ void CaptainService::updateCommonBall()
 {
   // Gather balls which are currently seen by other robots
   std::vector<Point> balls;
-  bool recentlyKicked = false;
+  bool tmpKicked = false;
   for (const auto & robot_entry : robots) {
     const rhoban_team_play::TeamPlayInfo & info = robot_entry.second;
 
@@ -225,9 +228,14 @@ void CaptainService::updateCommonBall()
       balls.push_back(Point(info.getBallInField()));
     }
     if (info.timeSinceLastKick < kickMemoryDuration) {
-      recentlyKicked = true;
+      if (!recentlyKicked) {
+        logger.log("MATEKICK: a robot of the team just kicked");
+      }
+      tmpKicked = true;
     }
   }
+
+  recentlyKicked = tmpKicked;
 
   if (balls.size() == 0) {
     info.common_ball.x = 0;
