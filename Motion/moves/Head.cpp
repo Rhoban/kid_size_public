@@ -68,9 +68,11 @@ Head::Head()
     ->comment("Maximum pan wished for an image point")
     ->defaultValue(160);
   // Speed and acc limits for orders
+  // WARNING: persisted, because 'Tom' has a different camera requiring a higher shutter
   bind->bindNew("maxSpeed", max_speed, RhIO::Bind::PullOnly)
     ->comment("Maximal angular speed [deg/s]")
-    ->defaultValue(180);
+    ->defaultValue(360)
+    ->persisted(true);
   bind->bindNew("maxAcc", max_acc, RhIO::Bind::PullOnly)
     ->comment("Maximal acceleration [deg/s^2]")
     ->defaultValue(3600);

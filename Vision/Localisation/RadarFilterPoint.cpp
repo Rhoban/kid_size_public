@@ -13,7 +13,8 @@ namespace Localisation
 {
 
 RadarFilterPoint::RadarFilterPoint(CameraState *cameraState)
-    : RadarFilter(), cameraState(cameraState)
+  : RadarFilter(), cameraState(cameraState),
+    matchDistance(0.4), far(2), matchAngle(2), alignedAngle(60)
 {
 }
 
@@ -22,22 +23,19 @@ bool RadarFilterPoint::bindToRhIO(std::string node, std::string command)
     if (RadarFilter<Eigen::Vector3d>::bindToRhIO(node, command)) {
         bind->bindNew("matchDistance", matchDistance, RhIO::Bind::PullOnly)
             ->comment("Radius to match the same object")
-            ->defaultValue(0.4)
-            ->persisted(true);
+            ->defaultValue(matchDistance);
 
         bind->bindNew("far", far, RhIO::Bind::PullOnly)
             ->comment("Distance where the object is considered far")
-            ->defaultValue(2);
+            ->defaultValue(far);
 
         bind->bindNew("matchAngle", matchAngle, RhIO::Bind::PullOnly)
             ->comment("Angle at which we match objects [deg]")
-            ->defaultValue(5)
-            ->persisted(true);
+            ->defaultValue(matchAngle);
 
         bind->bindNew("alignedAngle", alignedAngle, RhIO::Bind::PullOnly)
             ->comment("Angle until which objects are considered as visible [deg]")
-            ->defaultValue(60)
-            ->persisted(true);
+            ->defaultValue(alignedAngle);
 
         return true;
     }

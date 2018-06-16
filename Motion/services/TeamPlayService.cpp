@@ -35,9 +35,10 @@ TeamPlayService::TeamPlayService() :
     _bind->bindFunc("team", "Display information about teamplay",
         &TeamPlayService::cmdTeam, *this);
 
-    _bind->bindNew("refereeRadius", refereeRadius)
-        ->defaultValue(0.75 + 0.15)->minimum(0.0)->maximum(2.0)
+    _bind->bindNew("refereeRadius", refereeRadius, RhIO::Bind::PushOnly)
+        ->minimum(0.0)->maximum(2.0)
         ->comment("Additionnal radius to the teamRadius when referee asks to let play");
+    refereeRadius = 1.05;
 
     _bind->bindNew("timeSinceLastKick", _selfInfo.timeSinceLastKick, RhIO::Bind::PushOnly)
         ->comment("Time since I performed the last kick [s]")
