@@ -10,17 +10,7 @@
 #include <Utils/Scheduling.hpp>
 #include <rhoban_unsorted/log_model.h>
 #include <rhoban_utils/history/history.h>
-
-/**
- * Enable or not the Quintic Walk engine
- */
-#define USE_QUINTICWALK 
-
-#ifdef USE_QUINTICWALK
 #include <QuinticWalk/QuinticWalk.hpp>
-#else
-#include <IKWalk/IKWalk.hpp>
-#endif
 
 class Kick;
 class Walk : public Move
@@ -190,7 +180,6 @@ class Walk : public Move
 
         float xOffset, zOffset;
 
-#ifdef USE_QUINTICWALK
         Leph::QuinticWalk _engine;
         Eigen::Vector3d _orders;
         bool _isEnabled;
@@ -200,9 +189,10 @@ class Walk : public Move
         double _footDistance;
         double _footYOffset;
         bool _securityEnabled;
-#else
-        Leph::IKWalk::Parameters params;
-#endif
+
+        double _singleStepPhase;
+        int _singleStepCount;
+        Leph::VectorLabel _singleStepParams;
 
         Leph::Scheduling scheduling;
 
