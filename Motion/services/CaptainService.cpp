@@ -77,7 +77,7 @@ CaptainService::CaptainService()
     config.loadFile("captain.json");
         
     bind.bindNew("passPlacingRatio", passPlacingRatio, RhIO::Bind::PullOnly)
-        ->defaultValue(0.85)->comment("Ratio to the kick vector to place");
+        ->defaultValue(0.75)->comment("Ratio to the kick vector to place");
     
     bind.bindNew("passPlacingOffset", passPlacingOffset, RhIO::Bind::PullOnly)
         ->defaultValue(0.35)->comment("Offset to kick vector to place [m]")->persisted(true);
