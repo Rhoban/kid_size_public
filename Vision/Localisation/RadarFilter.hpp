@@ -21,7 +21,10 @@ public:
 	};
 
   RadarFilter()
-    : bind(NULL)
+    : bind(NULL),
+      initialScore(0.2), maximumScore(1.0),
+      scoreIncrease(0.2), scoreReduction(0.04), scoreReductionOut(0.005),
+      positionDiscount(0.7), normalizeSum(true)
     {
     }
 
@@ -31,11 +34,6 @@ public:
         delete bind;
         bind = NULL;
 	    }
-    }
-
-  virtual bool defaultNormalizeSum()
-    {
-      return true;
     }
 
   /**
@@ -69,40 +67,33 @@ public:
 
         bind->bindNew("initialScore", initialScore, RhIO::Bind::PullOnly)
           ->comment("Score of a new item")
-          ->defaultValue(0.2)
-          ->persisted(true);
+          ->defaultValue(initialScore);
 
         bind->bindNew("maximumScore", maximumScore, RhIO::Bind::PullOnly)
           ->comment("Maximum score of an item")
-          ->defaultValue(1.0)
-          ->persisted(true);
+          ->defaultValue(maximumScore);
 
         bind->bindNew("scoreIncrease", scoreIncrease, RhIO::Bind::PullOnly)
           ->comment("Score increase")
-          ->defaultValue(0.2)
-          ->persisted(true);
+          ->defaultValue(scoreIncrease);
 
         bind->bindNew("scoreReduction", scoreReduction, RhIO::Bind::PullOnly)
           ->comment("Score reduction at each frame")
-          ->defaultValue(0.04)
-          ->persisted(true);
+          ->defaultValue(scoreReduction);
 
         bind->bindNew("scoreReductionOut", scoreReductionOut, RhIO::Bind::PullOnly)
           ->comment("Score reduction at each frame where the object should be in the image ")
-          ->defaultValue(0.01)
-          ->persisted(true);
+          ->defaultValue(scoreReductionOut);
 
         bind->bindNew("positionDiscount", positionDiscount, RhIO::Bind::PullOnly)
           ->comment("new = old * disc + seen * (1 - disc)")
-          ->defaultValue(0.7)
+          ->defaultValue(positionDiscount)
           ->minimum(0)
-          ->maximum(1)
-          ->persisted(true);
+          ->maximum(1);
 
         bind->bindNew("normalizeSum", normalizeSum, RhIO::Bind::PullOnly)
           ->comment("If enabled, the sum of all elements can never be greater than 1")
-          ->defaultValue(defaultNormalizeSum())
-          ->persisted(true);
+          ->defaultValue(normalizeSum);
 
         if (command != "") {
           bind->bindFunc(command, "Show filter candiadtes", 

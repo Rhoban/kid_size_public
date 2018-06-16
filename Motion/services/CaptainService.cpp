@@ -77,13 +77,13 @@ CaptainService::CaptainService()
     config.loadFile("captain.json");
         
     bind.bindNew("passPlacingRatio", passPlacingRatio, RhIO::Bind::PullOnly)
-        ->defaultValue(0.85)->comment("Ratio to the kick vector to place");
+        ->defaultValue(0.75)->comment("Ratio to the kick vector to place");
     
     bind.bindNew("passPlacingOffset", passPlacingOffset, RhIO::Bind::PullOnly)
         ->defaultValue(0.35)->comment("Offset to kick vector to place [m]")->persisted(true);
         
     bind.bindNew("perpendicularBallDistance", perpendicularBallDistance, RhIO::Bind::PullOnly)
-        ->defaultValue(0.8)->comment("Distance [m] on the perpendicular to attack placement");
+        ->defaultValue(1)->comment("Distance [m] on the perpendicular to attack placement");
         
     bind.bindNew("placingBallDistance", placingBallDistance, RhIO::Bind::PullOnly)
         ->defaultValue(2.0)->comment("Distance [m] to the ball for team play placement");
@@ -192,6 +192,7 @@ CaptainService::Instruction CaptainService::getInstruction()
         instruction.targetPosition = Point(tmp.robotTarget[id-1][0], tmp.robotTarget[id-1][1]);
         instruction.targetOrientation = tmp.robotTarget[id-1][2];
         instruction.order = tmp.order[id-1];
+        instruction.ball = tmp.common_ball;
     } else {
         std::cerr << "Captain: getInstruction bad ID!" << std::endl;
     }
@@ -374,6 +375,7 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point
         - (ballTarget-ball).normalize()*passPlacingOffset;
     Point nVect = vect.perpendicular().normalize(perpendicularBallDistance);
     bool backward = ballTarget.x-0.1 <= ball.x;
+    Point ourGoalCenter(-Constants::field.fieldLength/2, 0);
     auto oppositeCorner = corner;
     oppositeCorner.y *= -1;
 
@@ -410,8 +412,9 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point
     
     {
         PlacementOptimizer::Target target;
-        corner = Point(-Constants::field.fieldLength/2, Constants::field.goalWidth/2 + 0.25);
-        target.position = ball+(corner-ball).normalize(placingBallDistance);
+        auto ballToGoal = (ourGoalCenter-ball);
+        auto normal = ballToGoal.perpendicular().normalize(perpendicularBallDistance);
+        target.position = ball+ballToGoal.normalize(placingBallDistance)+normal;
         
         target.data = 0;
         target.orientation = Angle::weightedAverage((ball-target.position).getTheta(), 0.5, 
@@ -421,8 +424,9 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point
     
     {
         PlacementOptimizer::Target target;
-        corner = Point(-Constants::field.fieldLength/2, -Constants::field.goalWidth/2 - 0.25);
-        target.position = ball+(corner-ball).normalize(placingBallDistance);
+        auto ballToGoal = (ourGoalCenter-ball);
+        auto normal = ballToGoal.perpendicular().normalize(perpendicularBallDistance);
+        target.position = ball+ballToGoal.normalize(placingBallDistance)-normal;
         
         target.data = 0;
         target.orientation = Angle::weightedAverage((ball-target.position).getTheta(), 0.5, 
@@ -456,6 +460,7 @@ void CaptainService::computePlayingPositions()
             info.order[robot.id-1] = rhoban_team_play::CaptainOrder::SearchBall;
         }
         handler = -1;
+        return;
     }
 
     int newHandler = -1;
@@ -565,6 +570,7 @@ void CaptainService::compute()
         if (!info.isOutdated() && // Info should not be updated
         !referee->isPenalized(info.id) &&  // Robot should not be penalized
         info.state != rhoban_team_play::Unknown && // It should be playing
+        info.state != rhoban_team_play::Inactive &&
         info.fieldOk &&  // It knows where it is
         info.fieldX == info.fieldX && // The values are not NaNs
         info.fieldY == info.fieldY &&

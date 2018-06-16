@@ -358,6 +358,15 @@ void Robocup::enterState(std::string state)
         startMove("standup", 0.0);
     }
 
+    if (state == STATE_PLACING) {
+        walk->control(true);
+        startMove("placer");
+        logger.log("Starting placer");
+        setTeamPlayState(Playing);
+    } else {
+        setTeamPlayState(Inactive);
+    }
+    
     if (state == STATE_PLAYING) {
         rememberStart = false;
         if (goalKeeper) {
@@ -366,12 +375,6 @@ void Robocup::enterState(std::string state)
         else {
             startMove("playing", 0.0);
         }
-    }
-
-    if (state == STATE_PLACING) {
-        walk->control(true);
-        startMove("placer");
-        logger.log("Starting placer");
     }
 }
 

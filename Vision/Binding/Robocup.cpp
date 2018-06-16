@@ -658,7 +658,7 @@ void Robocup::readPipeline() {
         std::vector<Eigen::Vector3d> filteredPositions;
         for (auto &candidate : robotFilter->getCandidates()) {
           // XXX: Threshold to Rhioize
-          if (candidate.score > 0.3) {
+          if (candidate.score > 0.45) {
             filteredPositions.push_back(candidate.object);
           }
         }
