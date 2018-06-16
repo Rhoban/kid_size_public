@@ -402,7 +402,7 @@ void Robocup::exitState(std::string state)
     // Stop main move when leaving playing
     if (state == STATE_PLAYING) {
         if (goalKeeper) {
-	  //stopMove("goal_keeper", 0.0);
+	  stopMove("goal_keeper", 0.0);
         } else {
             stopMove("playing", 0.0);
         }
@@ -417,7 +417,7 @@ void Robocup::exitState(std::string state)
     // End the player move 
     if (state == STATE_PLAYING) {
         if (goalKeeper) {
-	  //stopMove("goal_keeper", 0.0);
+	  stopMove("goal_keeper", 0.0);
         }
         else {
             stopMove("playing", 0.0);

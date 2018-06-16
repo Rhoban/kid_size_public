@@ -152,8 +152,10 @@ void GoalKeeper::onStop() {
   stopMove("placer", 0.0);
   stopMove(strategy->getDefaultApproach(), 0.0);
   stopMove("clearing_kick_controler", 0.0);
+  logger.log("GK: ***** ON STOP ***** ");
   //loc->enableFieldFilter(true);
   setState(STATE_STOP);
+  RhIO::Root.setBool("/moves/walk/gkMustRaise",true);
   /*
   float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
   while(z>initTrunkZOffsetValue){
@@ -220,12 +222,12 @@ Point GoalKeeper::shootLineCenter(){
   auto ball = loc->getBallPosField();
   float dx=ball.x - (-(Constants::field.fieldLength/2.0f)); // dx = distance to backline
   if ((dx-maxShootDist) > -0.05) {// ball is too far
-    logger.log("ball is too far %f %f %f",dx,dx-maxShootDist,ball.y);
+    //logger.log("ball is too far %f %f %f",dx,dx-maxShootDist,ball.y);
     return Point(-Constants::field.fieldLength/2.0f,ball.y); // go in front
   }
   float dy=maxShootDist*maxShootDist - dx*dx;
   if (dy<0){
-    logger.log("error shootLineCenter: %f %f(%f) %f",maxShootDist,dx,ball.x,dy);
+    //logger.log("error shootLineCenter: %f %f(%f) %f",maxShootDist,dx,ball.x,dy);
     return Point(-Constants::field.fieldLength/2.0f,0); // go in front
   }
   dy=sqrtf(maxShootDist*maxShootDist - dx*dx);
@@ -307,12 +309,12 @@ bool GoalKeeper::isAligned(){
 
   auto ball = loc->getBallPosField();
   float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
-  logger.log("isAligned: ball is at %f %f, dx is %f",ball.x,ball.y,dx);
+  //logger.log("isAligned: ball is at %f %f, dx is %f",ball.x,ball.y,dx);
   if (dx < 0) {    
     return true;
   }
   
-  logger.log("is aligned? %f < %f ",getAlignPoint(home(),t).getDist(pos),alignTolerance+placer->getMaxMarginXY());
+  //logger.log("is aligned? %f < %f ",getAlignPoint(home(),t).getDist(pos),alignTolerance+placer->getMaxMarginXY());
   
   Point p = getAlignPoint(shootLineCenter(),t);
   double d = p.getDist(pos);
@@ -359,22 +361,23 @@ void GoalKeeper::step(float elapsed) {
 	float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
 	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+elapsed,t,z,2,0.17));
       } else {
-	RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.17);
+	//RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.17);
       }
-      if (t>0.8){ // wait for 0.8s before opening arms
+      if ((t>0.8) && (t<2)){ // wait for 0.8s before opening arms
 	RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
 	RhIO::Root.setFloat("/moves/walk/armsRoll", 20);	
       }
     }
   } else {
-    float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset"); 
-    if (z>initTrunkZOffsetValue) { // robot is down
-      RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+elapsed,t,z,2,initTrunkZOffsetValue));
-      if (t>1){  // wait 1s before folding arms
-	RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
-	RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
-      }
-    }      
+    //    float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset"); 
+    //    if (z>initTrunkZOffsetValue) { // robot is down
+      // this is done by walk move:
+      //      RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+elapsed,t,z,2,initTrunkZOffsetValue));
+    //      if ((t>1)&&(t<2)){  // wait 1s before folding arms
+    //	RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
+    //	RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
+    //      }
+    //    }      
   }
 
   //logger.log("step: %s t is %f (%f)",state,t,elapsed);
