@@ -45,6 +45,12 @@ class Walk : public Move
         bool isMoving();
 
         /**
+         * Return true if a single kick 
+         * is currently beeing done
+         */
+        bool isSingleStep() const;
+
+        /**
          * Return the current walk phase
          */
         double getPhase() const;

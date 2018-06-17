@@ -360,7 +360,7 @@ Walk::Walk(Kick *kickMove)
     
     // Speed limits
     bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)
-        ->defaultValue(15.0);
+        ->defaultValue(12.0);
 
     bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)
         ->defaultValue(50.0);
@@ -477,7 +477,7 @@ Eigen::Vector3d Walk::getMaxDeltaOrders() const
         
 void Walk::askSingleStep(const Eigen::Vector3d& deltaPose)
 {
-    if (_singleStepPhase >= 0.0) {
+    if (isSingleStep()) {
         return;
     }
 
@@ -544,6 +544,13 @@ void Walk::kick(bool rightFoot, const std::string & kickName)
 bool Walk::isKicking()
 {
     return shouldKickLeft || shouldKickRight || shootingLeft || shootingRight;
+}
+        
+bool Walk::isSingleStep() const
+{
+    return 
+        (_singleStepPhase >= 0.0) ||
+        (bind->node().getInt("singleStepAsk") != 0);
 }
 
 void Walk::onStart()
