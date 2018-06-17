@@ -474,6 +474,33 @@ Eigen::Vector3d Walk::getMaxDeltaOrders() const
   bound << maxDStepByCycle / 1000, maxDLatByCycle / 1000, deg2rad(maxDTurnByCycle);
   return bound;
 }
+        
+void Walk::askSingleStep(const Eigen::Vector3d& deltaPose)
+{
+    if (_singleStepPhase >= 0.0) {
+        return;
+    }
+
+    bool isFootLeft = true;
+    if (deltaPose.y() > 0.0) {
+        isFootLeft = true;
+    } else if (deltaPose.y() < 0.0) {
+        isFootLeft = false;
+    } else if (deltaPose.z() >= 0.0) {
+        isFootLeft = true;
+    } else {
+        isFootLeft = false;
+    }
+
+    if (isFootLeft) {
+        bind->node().setInt("singleStepAsk", 1);
+    } else {
+        bind->node().setInt("singleStepAsk", 2);
+    }
+    bind->node().setFloat("singleStepForward", deltaPose.x());
+    bind->node().setFloat("singleStepLateral", deltaPose.y());
+    bind->node().setFloat("singleStepTurn", deltaPose.z());
+}
 
 std::string Walk::getName()
 {

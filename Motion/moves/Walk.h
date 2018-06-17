@@ -91,6 +91,13 @@ class Walk : public Move
         Eigen::Vector3d getMaxOrders() const;
         Eigen::Vector3d getMinDeltaOrders() const;
         Eigen::Vector3d getMaxDeltaOrders() const;
+
+        /**
+         * If the walk is disable, ask for a single step of given
+         * pose change. Step foot is automatically chosen.
+         * [dx, dy, dtheta] in meters and radians.
+         */
+        void askSingleStep(const Eigen::Vector3d& deltaPose);
         
         // Maximum rotation speed [deg/step]
         float maxRotation;

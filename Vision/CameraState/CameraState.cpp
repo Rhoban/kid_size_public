@@ -58,7 +58,9 @@ CameraState::CameraState(MoveScheduler *moveScheduler,const std::string& CameraP
   _model->setAutoUpdate(false);
   _model->updateDOFPosition();
 
-
+  //TODO Now, camera parameters are loaded from Vision Camera Model (VCM.json) in ModelService
+  //Aruco camera model is disabled
+  /*
   try {
     std::cout << "Reading camera parameters from " << CameraParametersYAML << std::endl;
     CamParam.readFromXMLFile(CameraParametersYAML);
@@ -77,6 +79,7 @@ CameraState::CameraState(MoveScheduler *moveScheduler,const std::string& CameraP
   } catch (...) {
     throw std::runtime_error("ERROR! You initialized a CameraState without the camera parameters (yaml file)");
   }
+  */
 
 }
 
@@ -219,6 +222,7 @@ double CameraState::getHeight() {
   return height;
 }
 
+/*
 void CameraState::normalizePointFromCamMatrix(const Eigen::Vector2d &in, cv::Point3f &out)
 {
   //Normalize the pixel from image coord (width,height) to a coordinate usable for projectPoints()
@@ -236,10 +240,13 @@ void CameraState::unnormalizePointFromCamMatrix(const cv::Point2d &in, cv::Point
   out = cv::Point2f((in.x  *  CamParam.CameraMatrix.at<float>(0, 0)+ CamParam.CameraMatrix.at<float>(0, 2)),
                     (in.y  * CamParam.CameraMatrix.at<float>(1, 1)+ CamParam.CameraMatrix.at<float>(1, 2)));
 }
+*/
 
 void CameraState::distortPoint(double pixelX, double pixelY, double imgWidth, double imgHeight, cv::Point2f &out)
 {
+  out=cv::Point2f(pixelX,pixelY);
 
+  /* TODO For now, distortion model from ARUCO is disabled
   if(CamParam.CamSize.height != -1) //if the parameters were loaded
   {
     //Convert to the pixel space
@@ -259,11 +266,14 @@ void CameraState::distortPoint(double pixelX, double pixelY, double imgWidth, do
     //Don't do anything
     out=cv::Point2f(pixelX,pixelY);
   }
+  */
 }
 
 void CameraState::undistortPoint(double pixelX, double pixelY, double imgWidth, double imgHeight, cv::Point2f &out)
 {
-
+  out=cv::Point2f(pixelX,pixelY);
+  
+  /* TODO For now, distortion model from ARUCO is disabled
   if(CamParam.CamSize.height != -1) //if the parameters were loaded
   {
 
@@ -288,6 +298,7 @@ void CameraState::undistortPoint(double pixelX, double pixelY, double imgWidth, 
     //Don't do anything
     out=cv::Point2f(pixelX,pixelY);
   }
+  */
 }
 
 cv::Point CameraState::imgXYFromRobotPosition(const cv::Point2f &p,
