@@ -40,7 +40,7 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
 
   bind->bindNew("xAttack", xAttack, RhIO::Bind::PullOnly)
       ->comment("if ball in x margin regarding to goal area, attack [m]")
-      ->defaultValue(0.5);
+      ->defaultValue(0.8);
   bind->bindNew("yAttack", yAttack, RhIO::Bind::PullOnly)
       ->comment("if ball in y margin regarding to goal area, attack [m]")
       ->defaultValue(0.5);
@@ -89,8 +89,8 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
 
   bind->bindNew("alignTolerance", alignTolerance, RhIO::Bind::PullOnly)
       ->comment("consider is align if distance with optimal point is below"
-                " this value (is added to placer tolerance) [deg]")
-      ->defaultValue(10);
+                " this value (is added to placer tolerance) [m]")
+      ->defaultValue(0.1);
 
   bind->bindNew("maxShootDist", maxShootDist, RhIO::Bind::PullOnly)
       ->comment("adversary maximum shoot distance [m]")
@@ -121,8 +121,8 @@ void GoalKeeper::onStart() {
   setState(STATE_STARTWAIT);
   nextState.resize(nextStateSize);
   nextStateIndice=0;
-  RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);
-  RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);
+  //RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);
+  //RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);
   auto loc = getServices()->localisation;
   loc->isGoalKeeper(true);
 }
@@ -152,8 +152,11 @@ void GoalKeeper::onStop() {
   stopMove("placer", 0.0);
   stopMove(strategy->getDefaultApproach(), 0.0);
   stopMove("clearing_kick_controler", 0.0);
+  logger.log("GK: ***** ON STOP ***** ");
   //loc->enableFieldFilter(true);
   setState(STATE_STOP);
+  RhIO::Root.setBool("/moves/walk/gkMustRaise",true);
+  /*
   float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
   while(z>initTrunkZOffsetValue){
     RhIO::Root.setFloat("/moves/walk/trunkZOffset", z);
@@ -162,6 +165,7 @@ void GoalKeeper::onStop() {
   }
   RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue); 
   RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
+  */
 }
 
 
@@ -177,8 +181,8 @@ bool GoalKeeper::ballInZone(float xd, float yd) {
   float lineX = -Constants::field.fieldLength / 2 + Constants::field.goalAreaLength + xd;
   float lineY = Constants::field.goalAreaWidth / 2 + yd;
 
-  //    logger.log("Current ball: %f %f", ball.x, ball.y);
-  //    logger.log("Limits: %f %f", lineX, lineY);
+  //logger.log("Current ball: %f %f", ball.x, ball.y);
+  //logger.log("Limits: %f %f", lineX, lineY);
 
   return decision->isBallQualityGood && ball.x < lineX && fabs(ball.y) < lineY;
 }
@@ -216,14 +220,14 @@ Point GoalKeeper::home(){
 Point GoalKeeper::shootLineCenter(){
   auto loc = getServices()->localisation;
   auto ball = loc->getBallPosField();
-  float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
+  float dx=ball.x - (-(Constants::field.fieldLength/2.0f)); // dx = distance to backline
   if ((dx-maxShootDist) > -0.05) {// ball is too far
-    //logger.log("ball is too far %f %f",dx,dx-maxShootDist);
+    //logger.log("ball is too far %f %f %f",dx,dx-maxShootDist,ball.y);
     return Point(-Constants::field.fieldLength/2.0f,ball.y); // go in front
   }
   float dy=maxShootDist*maxShootDist - dx*dx;
   if (dy<0){
-    logger.log("error shootLineCenter: %f %f(%f) %f",maxShootDist,dx,ball.x,dy);
+    //logger.log("error shootLineCenter: %f %f(%f) %f",maxShootDist,dx,ball.x,dy);
     return Point(-Constants::field.fieldLength/2.0f,0); // go in front
   }
   dy=sqrtf(maxShootDist*maxShootDist - dx*dx);
@@ -289,7 +293,7 @@ Point GoalKeeper::getAlignPoint(const Point &ref,float &theta){
   Point d=intersect(ref,ball,x);
   float v=fabs(d.y)/(Constants::field.goalWidth/2.0);
   v=std::min(v,1.0f);
-  float corFactor= (-(2*v-1)*(2*v-1)+1 ) * 15;
+  float corFactor= (-(2*v-1)*(2*v-1)+1 ) * 0.15; // CHECK THIS
   //float tmp=d.y;
   if (d.y>0) d.y+=corFactor;
   else d.y-=corFactor;
@@ -305,12 +309,16 @@ bool GoalKeeper::isAligned(){
 
   auto ball = loc->getBallPosField();
   float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
-  if (dx < 0) {
+  //logger.log("isAligned: ball is at %f %f, dx is %f",ball.x,ball.y,dx);
+  if (dx < 0) {    
     return true;
   }
+  
   //logger.log("is aligned? %f < %f ",getAlignPoint(home(),t).getDist(pos),alignTolerance+placer->getMaxMarginXY());
+  
   Point p = getAlignPoint(shootLineCenter(),t);
   double d = p.getDist(pos);
+
   if (d < (alignTolerance+placer->getMaxMarginXY())) {
     return true;
   }
@@ -329,6 +337,7 @@ static float getLinear(float x,float x1, float y1,float x2, float y2){
 void GoalKeeper::step(float elapsed) {
   bind->pull();
   t += elapsed;
+  //logger.log("step0: %s t is %f (%f)",state,t,elapsed);
   if (state==STATE_STARTWAIT) {
     if (t<1.0) return;
     setState(STATE_GOHOME);
@@ -350,29 +359,29 @@ void GoalKeeper::step(float elapsed) {
     if (stopPosture){
       if (t<2){
 	float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
-	//RhIO::Root.setFloat("/moves/walk/trunkZOffset", (0.17 - initTrunkZOffsetValue)*t/2.0 + initTrunkZOffsetValue);
-	//RhIO::Root.setFloat("/moves/walk/trunkZOffset", (z - 0.17)*(t+0.1)/(t-2.0) + 0.17-2*(z - 0.17)/(t-2.0));
-	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+0.1,t,z,2,0.17));
+	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+elapsed,t,z,2,0.17));
       } else {
-	RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.17);
+	//RhIO::Root.setFloat("/moves/walk/trunkZOffset", 0.17);
       }
-      if (t>0.8){ // wait for 0.8s before releasing knee's torque
+      if ((t>0.8) && (t<2)){ // wait for 0.8s before opening arms
 	RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
 	RhIO::Root.setFloat("/moves/walk/armsRoll", 20);	
       }
     }
   } else {
-    float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
-    if (z>initTrunkZOffsetValue) {
-      //RhIO::Root.setFloat("/moves/walk/trunkZOffset", (initTrunkZOffsetValue-0.17)*t/2.0 +0.17);
-      RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+0.1,t,z,2,initTrunkZOffsetValue));
-      if (t>1){
-	RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
-	RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
-      }
-    }      
+    //    float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset"); 
+    //    if (z>initTrunkZOffsetValue) { // robot is down
+      // this is done by walk move:
+      //      RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+elapsed,t,z,2,initTrunkZOffsetValue));
+    //      if ((t>1)&&(t<2)){  // wait 1s before folding arms
+    //	RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
+    //	RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
+    //      }
+    //    }      
   }
 
+  //logger.log("step: %s t is %f (%f)",state,t,elapsed);
+  
   // first, attack ball if necessary
   if (ballInAttackZone() && decision->isBallQualityGood){
     if (state!=STATE_ATTACK){
@@ -423,6 +432,7 @@ void GoalKeeper::step(float elapsed) {
       float dx=ball.x - (-(Constants::field.fieldLength/2.0f));
       if (dx > 0) {
         auto p=getAlignPoint(shootLineCenter(),t);
+	logger.log("placer => move to %f %f %f",p.x,p.y,t);
         placer->goTo(p.x,p.y,t);
       }
 

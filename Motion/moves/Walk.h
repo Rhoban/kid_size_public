@@ -10,17 +10,7 @@
 #include <Utils/Scheduling.hpp>
 #include <rhoban_unsorted/log_model.h>
 #include <rhoban_utils/history/history.h>
-
-/**
- * Enable or not the Quintic Walk engine
- */
-#define USE_QUINTICWALK 
-
-#ifdef USE_QUINTICWALK
 #include <QuinticWalk/QuinticWalk.hpp>
-#else
-#include <IKWalk/IKWalk.hpp>
-#endif
 
 class Kick;
 class Walk : public Move
@@ -101,6 +91,13 @@ class Walk : public Move
         Eigen::Vector3d getMaxOrders() const;
         Eigen::Vector3d getMinDeltaOrders() const;
         Eigen::Vector3d getMaxDeltaOrders() const;
+
+        /**
+         * If the walk is disable, ask for a single step of given
+         * pose change. Step foot is automatically chosen.
+         * [dx, dy, dtheta] in meters and radians.
+         */
+        void askSingleStep(const Eigen::Vector3d& deltaPose);
         
         // Maximum rotation speed [deg/step]
         float maxRotation;
@@ -190,7 +187,6 @@ class Walk : public Move
 
         float xOffset, zOffset;
 
-#ifdef USE_QUINTICWALK
         Leph::QuinticWalk _engine;
         Eigen::Vector3d _orders;
         bool _isEnabled;
@@ -200,9 +196,10 @@ class Walk : public Move
         double _footDistance;
         double _footYOffset;
         bool _securityEnabled;
-#else
-        Leph::IKWalk::Parameters params;
-#endif
+
+        double _singleStepPhase;
+        int _singleStepCount;
+        Leph::VectorLabel _singleStepParams;
 
         Leph::Scheduling scheduling;
 
@@ -218,4 +215,10 @@ class Walk : public Move
         double lastPhase;
 
 	float elbowOffset;
+
+	// GoalKeeper related attributs:
+	bool gkMustRaise;
+	float initElbowOffsetValue;
+	float initArmsRollValue;
+	float initTrunkZOffsetValue;
 };

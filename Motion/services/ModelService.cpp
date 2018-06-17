@@ -48,7 +48,7 @@ ModelService::ModelService() :
   rhoban_model_learning::VisionCorrectionModel correction_model;
   correction_model.loadFile("VCM.json");
   _cameraParameters = correction_model.getCameraParameters();
-  _imuOffset = correction_model.getNeckOffsetsRad();
+  _imuOffset = correction_model.getImuOffsetsRad();
 
   //Load odometry model parameters from file
   //Open file
