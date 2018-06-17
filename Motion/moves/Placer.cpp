@@ -64,7 +64,7 @@ Placer::Placer(Walk *walk)
     bind->bindNew("lmDriftXMax", lmDriftXMax, RhIO::Bind::PullOnly)
       ->defaultValue(0.2)
       ->comment("in lateral step mode, maximum X drift allowed before correction [m]");
-    bind->bindNew("lmDriftXMaxHyst", lmDriftXMax, RhIO::Bind::PullOnly)
+    bind->bindNew("lmDriftXMaxHyst", lmDriftXMaxHyst, RhIO::Bind::PullOnly)
       ->defaultValue(0.1)
       ->comment("in lateral step mode, maximum X drift allowed before correction / Hysteresis [m]");
     

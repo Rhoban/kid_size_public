@@ -72,9 +72,9 @@ Search::Search(Walk *walk, Placer *placer)
    
     bind->bindNew("goLeft", goLeft)
         ->defaultValue(false);
-    bind->bindNew("goRight", goLeft)
+    bind->bindNew("goRight", goRight)
         ->defaultValue(false);
-    bind->bindNew("goForward", goLeft)
+    bind->bindNew("goForward", goForward)
         ->defaultValue(false);
 
     // Note: the patrol target is keeped even if the placer is stopped and run

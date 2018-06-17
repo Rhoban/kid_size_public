@@ -336,7 +336,7 @@ Walk::Walk(Kick *kickMove)
     bind->bindNew("SingleStepParams/trunkPhase", _singleStepParams("trunkPhase"), RhIO::Bind::PullOnly)
         ->persisted(true)
         ->defaultValue(_singleStepParams("trunkPhase"))->minimum(0.0)->maximum(1.0);
-    bind->bindNew("SingleStepParams/trunkPause", _params("trunkPause"), RhIO::Bind::PullOnly)
+    bind->bindNew("SingleStepParams/trunkPause", _singleStepParams("trunkPause"), RhIO::Bind::PullOnly)
         ->persisted(true)
         ->defaultValue(_singleStepParams("trunkPause"))->minimum(0.0)->maximum(1.0);
 
