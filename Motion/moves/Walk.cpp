@@ -693,13 +693,14 @@ void Walk::step(float elapsed)
       if (tgk<0) tgk=0;
       tgk+=elapsed;
       if (_trunkZOffset>initTrunkZOffsetValue){
-	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(tgk+elapsed,tgk,_trunkZOffset,2,initTrunkZOffsetValue));
+	double x=RhIO::Root.getFloat("/moves/goal_keeper/stopMoveTime");
+	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(tgk+elapsed,tgk,_trunkZOffset,x,initTrunkZOffsetValue));
       }
       else {
 	tgk=-1;
 	if (tgk2<0) tgk2=elapsed;
 	else tgk2+=elapsed;
-	if (tgk2>1){
+	if (tgk2>1){ // leave 1s of cool down
 	  tgk2=-1;
 	  RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
 	  RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
@@ -795,7 +796,7 @@ void Walk::step(float elapsed)
 
     if (shootingLeft || shootingRight) {
         if (isWarmingUp) {
-            if (waitT > warmup && !decision->freezeKick) {
+	  if (waitT > warmup && !decision->freezeKick && (gkMustRaise==false)) {
                 startMove("kick", 0.0);
                 isWarmingUp = false;
                 shootT = 0;
