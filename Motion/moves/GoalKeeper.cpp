@@ -75,9 +75,9 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
   //    ->defaultValue(false)
   //    ->persisted(true);
 
-  bind->bindNew("stopPosture", stopPosture, RhIO::Bind::PushOnly)
+  bind->bindNew("stopPosture", stopPosture, RhIO::Bind::PullOnly)
     ->comment("Is the robot adopt a special posture when stopped")
-    ->defaultValue(false)
+    ->defaultValue(true)
     ->persisted(true);
   
   bind->bindNew("xIgnoreBall", xIgnoreBall, RhIO::Bind::PullOnly)
@@ -356,6 +356,14 @@ void GoalKeeper::step(float elapsed) {
   */
   
   if (state==STATE_STOP){
+    Point a=loc->getBallSpeedSelf();
+    Point b=loc->getPredictedBallSelf();//rhoban_utils::TimeStamp::now()+elapsed*2);
+    Point c=loc->getBallPosSelf();
+    if (a.x < -0.5){
+      logger.log("a= %f %f ",a.x,a.y);
+      logger.log("b= %f %f ",b.x,b.y);
+      logger.log("c= %f %f ",c.x,c.y);
+    }
     if (stopPosture){
       if (t<2){
 	float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
@@ -367,6 +375,7 @@ void GoalKeeper::step(float elapsed) {
 	RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
 	RhIO::Root.setFloat("/moves/walk/armsRoll", 20);	
       }
+      
     }
   } else {
     //    float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset"); 
@@ -478,9 +487,10 @@ void GoalKeeper::enterState(std::string state) {
     placer->setDirectMode(false);
     startMove("placer",0.0);
   }  else if (state==STATE_STOP){
-    if (stopPosture){            
-      RhIO::Root.setFloat("/moves/walk/armsRoll", 20);
-      RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
+    if (stopPosture){           
+      //RhIO::Root.setFloat("/moves/walk/armsRoll", 20);
+      //RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);      
+      RhIO::Root.setBool("/moves/walk/gkMustRaise",false);
     }
     neverWalked=false;
   }
@@ -511,6 +521,7 @@ void GoalKeeper::exitState(std::string state) {
   } else if (state==STATE_STOP){
 
     if (stopPosture){
+      RhIO::Root.setBool("/moves/walk/gkMustRaise",true);
       //RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);  
       //RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);  
       //RhIO::Root.setFloat("/moves/walk/trunkZOffset", initTrunkZOffsetValue);   

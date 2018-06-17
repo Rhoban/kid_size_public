@@ -681,8 +681,7 @@ static float getLinear(float x,float x1, float y1,float x2, float y2){
 void Walk::step(float elapsed)
 {
     static float t;
-    static float tgk=0.0;
-    //static int gkWalkEnableBack=-1;
+    static float tgk=-1,tgk2=-1;
     auto &decision = getServices()->decision;
     auto &model = getServices()->model;
     
@@ -691,8 +690,6 @@ void Walk::step(float elapsed)
     bind->pull();
 
     if (gkMustRaise){
-      //if (gkWalkEnableBack==-1) gkWalkEnableBack=walkEnable;
-      //walkEnable=false;
       if (tgk<0) tgk=0;
       tgk+=elapsed;
       if (_trunkZOffset>initTrunkZOffsetValue){
@@ -700,11 +697,14 @@ void Walk::step(float elapsed)
       }
       else {
 	tgk=-1;
-	//walkEnable=gkWalkEnableBack; // restore expected walkEnable state
-	//gkWalkEnableBack=-1;       
-	RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
-	RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
-	RhIO::Root.setBool("/moves/walk/gkMustRaise",false);
+	if (tgk2<0) tgk2=elapsed;
+	else tgk2+=elapsed;
+	if (tgk2>1){
+	  tgk2=-1;
+	  RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
+	  RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
+	  RhIO::Root.setBool("/moves/walk/gkMustRaise",false);
+	}
       }
     }
     
