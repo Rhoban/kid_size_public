@@ -35,7 +35,7 @@ See GoalKeeper.svg for a schematic
  */
 
 GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
-  : walk(walk),  placer(placer) , neverWalked(true),walkStopped(0){
+  : walk(walk),  placer(placer) , neverWalked(true){
   initializeBinding();
 
   bind->bindNew("xAttack", xAttack, RhIO::Bind::PullOnly)
@@ -380,14 +380,6 @@ void GoalKeeper::step(float elapsed) {
 	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t+elapsed,t,z,stopMoveTime,0.17));
       }
       else {
-	if (walkStopped==0){
-	  //stopMove("walk",0.0);
-	  walkStopped=1;
-	} else if (walkStopped==1){	  
-	  //RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", false);  
-	  //RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", false);
-	  walkStopped=2;
-	}
       }
       if ((t>0.8) && (t<stopMoveTime)){ // wait for 0.8s before opening arms
 	RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
@@ -495,7 +487,6 @@ void GoalKeeper::enterState(std::string state) {
     placer->setDirectMode(false);
     startMove("placer",0.0);
   }  else if (state==STATE_STOP){
-    walkStopped=0;
     if (stopPosture){           
       //RhIO::Root.setFloat("/moves/walk/armsRoll", 20);
       //RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);      
@@ -528,7 +519,6 @@ void GoalKeeper::exitState(std::string state) {
     placer->setDirectMode(true);
     //placer->restoreMarginAzimuth();
   } else if (state==STATE_STOP){
-    walkStopped=0;
     if (stopPosture){
       RhIO::Root.setBool("/moves/walk/gkMustRaise",true);
       //startMove("walk");

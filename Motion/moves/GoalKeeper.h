@@ -61,5 +61,4 @@ protected:
   float initArmsRollValue;
   float initTrunkZOffsetValue;
   float stopMoveTime;
-  int walkStopped;
 };
