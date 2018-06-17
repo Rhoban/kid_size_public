@@ -215,6 +215,7 @@ void Robocup::applyGameState()
 void Robocup::step(float elapsed)
 {
     auto &decision = getServices()->decision;
+    getServices()->teamPlay->selfInfo().goalKeeper = goalKeeper;
     bind->pull();
 
     // We gave up, just die

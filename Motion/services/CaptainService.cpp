@@ -355,8 +355,20 @@ void CaptainService::computeBasePositions()
         }
     }
     
+    // Collecting non-goalie robots
+    std::vector<int> noGoalIds;
+    int goalId = 0;
+    for (auto &id : robotIds) {
+        auto &robot = robots[id];
+        if (!robot.goalKeeper) {
+            noGoalIds.push_back(id);
+        } else {
+            goalId = id;
+        }
+    }
+    
     // Finding the best solution
-    auto solution = PlacementOptimizer::optimize(robotIds, targets, 
+    auto solution = PlacementOptimizer::optimize(noGoalIds, targets, 
         [this](PlacementOptimizer::Solution solution) -> float {
             float score = 0;
             for (auto &robotTarget : solution.robotTarget) {
@@ -370,6 +382,14 @@ void CaptainService::computeBasePositions()
             return score;
     });
     setSolution(solution);
+    
+    // Sending the goalie in the goals
+    if (goalId) {
+        info.robotTarget[goalId-1][0] = -Constants::field.fieldLength/2 + 0.25;
+        info.robotTarget[goalId-1][1] = 0;
+        info.robotTarget[goalId-1][2] = 0;
+        info.order[goalId-1] = rhoban_team_play::CaptainOrder::Place;
+    }
 }
 
 std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point ball,
