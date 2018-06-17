@@ -385,6 +385,8 @@ Walk::Walk(Kick *kickMove)
     bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)
         ->defaultValue(false);
 
+    bind->bindNew("gkMustRaise", gkMustRaise, RhIO::Bind::PullOnly)
+            ->comment("goal keeper flag: walk must raise")->defaultValue(false);
 
 #ifdef MODE_NOMINAL
     bind->node().newFloat("guessPhase");
@@ -597,6 +599,12 @@ void Walk::onStart()
     setTorqueLimit("left_shoulder_roll", 0.2);
     setTorqueLimit("right_shoulder_roll", 0.2);
 
+
+    initElbowOffsetValue=RhIO::Root.getFloat("/moves/walk/elbowOffset");
+    initArmsRollValue=RhIO::Root.getFloat("/moves/walk/armsRoll");
+    initTrunkZOffsetValue=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
+    
+    
     //Turn off the control on rhio variables
     control(false);
     bind->push();
@@ -633,9 +641,20 @@ void Walk::updateParams(double factor, float step, float lateral, float turn)
     _params("trunkHeight")    = _trunkHeight - _trunkZOffset;
 }
 
+
+static float getLinear(float x,float x1, float y1,float x2, float y2){
+  if (x1==x2){
+    return y2;
+  }
+  if (y1==y2) return y1;
+  float a=(y1-y2)/(x1-x2);
+  return x*a+y2-x2*a;
+}
+
 void Walk::step(float elapsed)
 {
     static float t;
+    static float tgk=0.0;
     auto &decision = getServices()->decision;
     auto &model = getServices()->model;
     
@@ -643,6 +662,21 @@ void Walk::step(float elapsed)
 
     bind->pull();
 
+    if (gkMustRaise){
+      walkEnable=false;
+      if (tgk<0) tgk=0;
+      tgk+=elapsed;
+      if (_trunkZOffset>initTrunkZOffsetValue){
+	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(tgk+elapsed,tgk,_trunkZOffset,2,initTrunkZOffsetValue));
+      }
+      else {
+	tgk=-1;
+	RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
+	RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
+	RhIO::Root.setBool("/moves/walk/gkMustRaise",false);
+      }
+    }
+    
     // Getting orders
     float lateral= walkLateral;
     float step = walkStep;

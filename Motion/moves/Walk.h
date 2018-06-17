@@ -208,4 +208,10 @@ class Walk : public Move
         double lastPhase;
 
 	float elbowOffset;
+
+	// GoalKeeper related attributs:
+	bool gkMustRaise;
+	float initElbowOffsetValue;
+	float initArmsRollValue;
+	float initTrunkZOffsetValue;
 };
