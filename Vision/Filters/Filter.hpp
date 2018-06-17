@@ -321,6 +321,9 @@ protected:
    */
   bool rhio_initialized;
 
+  /// If the step of the  filter is longer than the limit, a warning is shown. [s]
+  double warningExecutionTime;
+
   /**
    * Check and wait that dependencies are
    * fresh and updated

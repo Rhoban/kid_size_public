@@ -51,7 +51,7 @@ ApproachPotential::ApproachPotential(Walk *walk)
         ->defaultValue(1);
     bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)
         ->defaultValue(0.0);
-    bind->bindNew("lateralI", stepI, RhIO::Bind::PullOnly)
+    bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)
         ->defaultValue(0.0);
     bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)
         ->defaultValue(0);

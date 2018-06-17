@@ -141,6 +141,8 @@ class LocalisationService : public Service
         void setVisualCompassStatus(bool inUse);
         bool getVisualCompassStatus() const;
 
+        rhoban_geometry::Point worldToField(Eigen::Vector3d world);
+
         void enableFieldFilter(bool enable=true);
 	void isGoalKeeper(bool status=false);
 
@@ -174,8 +176,6 @@ class LocalisationService : public Service
         std::string opponents;
         std::string mates;
         std::string sharedOpponents;
-
-        rhoban_geometry::Point worldToField(Eigen::Vector3d world);
         
         // Ticking
         bool tick(double elapsed) override;

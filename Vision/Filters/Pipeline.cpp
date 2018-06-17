@@ -84,9 +84,9 @@ const Pipeline::FiltersMap &Pipeline::filters() const { return _filters; }
 Pipeline::FiltersMap &Pipeline::filters() { return _filters; }
 
 void Pipeline::step(Filter::UpdateType updateType) {
-  Benchmark::open("Resolve dependecies");
+  Benchmark::open("Resolve dependencies");
   resolveDependencies();
-  Benchmark::close("Resolve dependecies");
+  Benchmark::close("Resolve dependencies");
 
   // Apply previous on nonDependency filters
   std::list<Filter *> list;

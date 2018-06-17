@@ -34,6 +34,7 @@ void BallByII::setParameters() {
   maxRois = ParamInt(4,1,100);
   decimationRate = ParamInt(1,1,20);
   tagLevel = ParamInt(0,0,1);
+  useLocalSearch = ParamInt(1,0,1);
 
   params()->define<ParamFloat>("boundaryFactor", &boundaryFactor);
   params()->define<ParamFloat>("maxBoundaryThickness", &maxBoundaryThickness);
@@ -44,6 +45,7 @@ void BallByII::setParameters() {
   params()->define<ParamInt>("maxRois", &maxRois);
   params()->define<ParamInt>("decimationRate", &decimationRate);
   params()->define<ParamInt>("tagLevel", &tagLevel);
+  params()->define<ParamInt>("useLocalSearch", &useLocalSearch);
 }
 
 void BallByII::process() {
@@ -108,38 +110,7 @@ void BallByII::process() {
         continue;
       }
 
-      // Computing inner patches
-      cv::Rect_<float> innerPatch = getInnerPatch(center_x, center_y, radius);
-      cv::Rect_<float> innerAbovePatch = getInnerAbovePatch(center_x, center_y, radius);
-      cv::Rect_<float> innerBelowPatch = getInnerBelowPatch(center_x, center_y, radius);
-      cv::Rect_<float> boundaryAbovePatch = getBoundaryAbovePatch(center_x, center_y, radius);
-
-      // Abreviations are the following:
-      // ia: inner above
-      // ib: inner below
-      // b : boundary
-      // ub: upper boundary
-
-      // Computing y_score
-      double y_ia = getPatchScore(innerAbovePatch, yImg);
-      double y_ib = getPatchScore(innerBelowPatch, yImg);
-      double y_b  = getPatchScore(boundaryPatch, yImg);
-      double y_ub = getPatchScore(boundaryAbovePatch, yImg);
-      // When ball is far: IA is supposed to be bright and the rest supposed to be dark
-      // score_far = (y_ia - y_ub) + (y_ia - y_ib) + (y_ia - y_b)
-      // (y_ia - y_ub) -> Avoid white object on the top of the boundary zone
-      // (y_ia - y_ib) -> Upper part has to be bright
-      // (y_ia - y_b ) -> Difference with the global boundary
-      double y_score_far = 3 * y_ia - y_ub - y_ib - y_b;
-      double y_score_close = y_ia + y_ib - 2 * y_b;
-      double y_score = std::max(y_score_far, y_score_close);
-
-      // Computing green_score
-      double green_b = getPatchScore(boundaryPatch, greenImg);
-      double green_i = getPatchScore(innerPatch, greenImg);
-      double green_score = green_b - green_i;
-
-      double score = (yWeight * y_score + greenWeight * green_score) / (yWeight + greenWeight);
+      double score = getCandidateScore(center_x, center_y, radius, yImg, greenImg);
 
       // Write score in scores map
       if (tagLevel > 0) {
@@ -222,6 +193,37 @@ void BallByII::process() {
   }
 
   Benchmark::close("computing decimated scores");
+
+  if (useLocalSearch) {
+    Benchmark::open("local search");
+    std::vector<std::pair<double, cv::Rect>> locallySearchedRois;
+    for (const auto & roi : tmpRois) {
+      cv::Rect initial_patch = roi.second;
+      int center_x = initial_patch.x + initial_patch.width / 2;
+      int center_y = initial_patch.y + initial_patch.height / 2;
+      
+      double bestScore = minScore;
+      cv::Rect bestPatch;
+      int maxOffset = ceil(decimationRate /2.0);
+      for (int xOffset = -maxOffset; xOffset <= maxOffset; xOffset++) {
+        for (int yOffset = -maxOffset; yOffset <= maxOffset; yOffset++) {
+          int new_center_x = center_x + xOffset;
+          int new_center_y = center_y + yOffset;
+          float radius = radiusImg.at<float>(new_center_y,new_center_x);
+          cv::Rect newPatch = getBoundaryPatch(new_center_x,new_center_y, radius);
+          if (!Utils::isContained(newPatch, size)) continue;
+          double score = getCandidateScore(new_center_x, new_center_y, radius, yImg, greenImg);
+          if (score > bestScore) {
+            bestScore = score;
+            bestPatch = newPatch;
+          }
+        }
+      }
+      locallySearchedRois.push_back({bestScore, bestPatch});
+    }
+    tmpRois = locallySearchedRois;
+    Benchmark::close("local search");
+  }
   
   for (const std::pair<double, cv::Rect> & scored_roi : tmpRois) {
     addRoi(scored_roi.first, Utils::toRotatedRect(scored_roi.second));
@@ -332,6 +334,43 @@ double BallByII::getPatchScore(const cv::Rect & patch,
   double area = cropped.area();
 
   return (A + D - B - C) / area;
+}
+
+double BallByII::getCandidateScore(int center_x, int center_y, double radius,
+                                   const cv::Mat & yImg, const cv::Mat & greenImg) {
+  // Computing inner patches
+  cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x, center_y, radius);
+  cv::Rect_<float> innerPatch = getInnerPatch(center_x, center_y, radius);
+  cv::Rect_<float> innerAbovePatch = getInnerAbovePatch(center_x, center_y, radius);
+  cv::Rect_<float> innerBelowPatch = getInnerBelowPatch(center_x, center_y, radius);
+  cv::Rect_<float> boundaryAbovePatch = getBoundaryAbovePatch(center_x, center_y, radius);
+
+  // Abreviations are the following:
+  // ia: inner above
+  // ib: inner below
+  // b : boundary
+  // ub: upper boundary
+
+  // Computing y_score
+  double y_ia = getPatchScore(innerAbovePatch, yImg);
+  double y_ib = getPatchScore(innerBelowPatch, yImg);
+  double y_b  = getPatchScore(boundaryPatch, yImg);
+  double y_ub = getPatchScore(boundaryAbovePatch, yImg);
+  // When ball is far: IA is supposed to be bright and the rest supposed to be dark
+  // score_far = (y_ia - y_ub) + (y_ia - y_ib) + (y_ia - y_b)
+  // (y_ia - y_ub) -> Avoid white object on the top of the boundary zone
+  // (y_ia - y_ib) -> Upper part has to be bright
+  // (y_ia - y_b ) -> Difference with the global boundary
+  double y_score_far = 3 * y_ia - y_ub - y_ib - y_b;
+  double y_score_close = y_ia + y_ib - 2 * y_b;
+  double y_score = std::max(y_score_far, y_score_close);
+
+  // Computing green_score
+  double green_b = getPatchScore(boundaryPatch, greenImg);
+  double green_i = getPatchScore(innerPatch, greenImg);
+  double green_score = green_b - green_i;
+
+  return (yWeight * y_score + greenWeight * green_score) / (yWeight + greenWeight);
 }
 
 void BallByII::fillScore(cv::Mat & img, int score,

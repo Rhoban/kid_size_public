@@ -46,6 +46,9 @@ private:
   double getPatchScore(const cv::Rect & patch,
                        const cv::Mat & integralImage);
 
+  double getCandidateScore(int center_x, int center_y, double radius,
+                           const cv::Mat & y_img, const cv::Mat & green_img);
+
   /// img should be CV_32SC1
   /// draw pixels in [start_x,end_x[ * [start_y,end_y[
   void fillScore(cv::Mat & img, int score,
@@ -87,6 +90,9 @@ private:
 
   /// 0: No heatMap produced
   ParamInt tagLevel;
+
+  /// If enabled, a local search is used nearby every selected candidate
+  ParamInt useLocalSearch;
 };
 }
 }

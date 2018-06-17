@@ -989,20 +989,18 @@ void Robocup::updateBallInformations() {
   if (writeBallStatus) {
     // Some properties are shared for the frame
     double time = getNowTS().getTimeSec();
-    Eigen::Vector2d usable_speed_world_eigen = ballSpeedEstimator->getUsableSpeed();
-    cv::Point2f usable_speed_world = rg2cv2f(usable_speed_world_eigen);
-    cv::Point2f usable_speed_self = rg2cv2f(cs->getVecInSelf(usable_speed_world_eigen));
     for (const Eigen::Vector3d & pos_in_world : positions) {
+      Point ball_pos_in_field = loc->worldToField(pos_in_world);
+      Point robot_pos = loc->getFieldPos();
+      double field_dir = normalizeRad(loc->getFieldOrientation());
+      
       Eigen::Vector2d tmp = pos_in_world.segment(0,2);
       cv::Point2f pos_in_self = cs->getPosInSelf(rg2cv2f(tmp));
       // Entry format:
-      // TimeStamp, xWorld, yWorld, vxWorld, vyWorld, xSelf, ySelf, vxSelf, vySelf,
-      out.log("ballStatusEntry: %lf,%f,%f,%f,%f,%f,%f,%f,%f",
-              time,
-              pos_in_world.x(), pos_in_world.y(),
-              usable_speed_world.x, usable_speed_world.y,
-              pos_in_self.x, pos_in_self.y,
-              usable_speed_self.x, usable_speed_self.y);
+      // TimeStamp, ballX, ballY, robotX, robotY, fieldDir
+      out.log("ballStatusEntry: %lf,%f,%f,%f,%f,%f",
+              time, ball_pos_in_field.x, ball_pos_in_field.y,
+              robot_pos.x, robot_pos.y, field_dir);
     }
   }
 }
