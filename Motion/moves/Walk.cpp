@@ -602,7 +602,7 @@ void Walk::onStart()
 
     initElbowOffsetValue=RhIO::Root.getFloat("/moves/walk/elbowOffset");
     initArmsRollValue=RhIO::Root.getFloat("/moves/walk/armsRoll");
-    initTrunkZOffsetValue=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
+    initTrunkZOffsetValue=0.02;//RhIO::Root.getFloat("/moves/walk/trunkZOffset");
     
     
     //Turn off the control on rhio variables
@@ -655,6 +655,7 @@ void Walk::step(float elapsed)
 {
     static float t;
     static float tgk=0.0;
+    //static int gkWalkEnableBack=-1;
     auto &decision = getServices()->decision;
     auto &model = getServices()->model;
     
@@ -663,7 +664,8 @@ void Walk::step(float elapsed)
     bind->pull();
 
     if (gkMustRaise){
-      walkEnable=false;
+      //if (gkWalkEnableBack==-1) gkWalkEnableBack=walkEnable;
+      //walkEnable=false;
       if (tgk<0) tgk=0;
       tgk+=elapsed;
       if (_trunkZOffset>initTrunkZOffsetValue){
@@ -671,6 +673,8 @@ void Walk::step(float elapsed)
       }
       else {
 	tgk=-1;
+	//walkEnable=gkWalkEnableBack; // restore expected walkEnable state
+	//gkWalkEnableBack=-1;       
 	RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
 	RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
 	RhIO::Root.setBool("/moves/walk/gkMustRaise",false);
@@ -721,6 +725,7 @@ void Walk::step(float elapsed)
     }
     pressureYStd = standardDeviation(values);
     bool isStable = pressureYStd < pressureYStdThreshold;
+
     
     if (walkEnable != walkEnableTarget) {
         walkEnableTimeSinceChange += elapsed;
@@ -731,6 +736,7 @@ void Walk::step(float elapsed)
     } else {
         walkEnableTimeSinceChange = 0;
     }
+
 
     // Setting real parameters used gains
     _isEnabled = (smoothing > 0.5);
@@ -879,6 +885,7 @@ void Walk::step(float elapsed)
         }
     } else {
         _engine.setParameters(_params);
+	if (gkMustRaise) _isEnabled=false;
         _engine.setOrders(_orders, _isEnabled);
     }
     if (!_securityEnabled) {
