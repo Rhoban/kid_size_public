@@ -79,7 +79,7 @@ Robocup::Robocup(MoveScheduler *scheduler)
       manual_logger("manual_logs", true, 10000),
       moving_ball_logger("moving_ball_logs", false, 1000),
       autologMovingBall(false),
-      game_logger("game_logs", true, 15 * 60 * 40),// Allows 15 minutes at 40 fps ->
+      game_logger("game_logs", false, 15 * 60 * 40),// Allows 15 minutes at 40 fps ->
       autolog_games(false),
       logBallExtraTime(2.0),
       writeBallStatus(false),
