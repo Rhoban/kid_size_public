@@ -688,8 +688,7 @@ static float getLinear(float x,float x1, float y1,float x2, float y2){
 void Walk::step(float elapsed)
 {
     static float t;
-    static float tgk=0.0;
-    //static int gkWalkEnableBack=-1;
+    static float tgk=-1,tgk2=-1;
     auto &decision = getServices()->decision;
     auto &model = getServices()->model;
     
@@ -698,20 +697,22 @@ void Walk::step(float elapsed)
     bind->pull();
 
     if (gkMustRaise){
-      //if (gkWalkEnableBack==-1) gkWalkEnableBack=walkEnable;
-      //walkEnable=false;
       if (tgk<0) tgk=0;
       tgk+=elapsed;
       if (_trunkZOffset>initTrunkZOffsetValue){
-	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(tgk+elapsed,tgk,_trunkZOffset,2,initTrunkZOffsetValue));
+	double x=RhIO::Root.getFloat("/moves/goal_keeper/stopMoveTime");
+	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(tgk+elapsed,tgk,_trunkZOffset,x,initTrunkZOffsetValue));
       }
       else {
 	tgk=-1;
-	//walkEnable=gkWalkEnableBack; // restore expected walkEnable state
-	//gkWalkEnableBack=-1;       
-	RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
-	RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
-	RhIO::Root.setBool("/moves/walk/gkMustRaise",false);
+	if (tgk2<0) tgk2=elapsed;
+	else tgk2+=elapsed;
+	if (tgk2>1){ // leave 1s of cool down
+	  tgk2=-1;
+	  RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
+	  RhIO::Root.setFloat("/moves/walk/armsRoll", initArmsRollValue);
+	  RhIO::Root.setBool("/moves/walk/gkMustRaise",false);
+	}
       }
     }
     
@@ -802,7 +803,7 @@ void Walk::step(float elapsed)
 
     if (shootingLeft || shootingRight) {
         if (isWarmingUp) {
-            if (waitT > warmup && !decision->freezeKick) {
+	  if (waitT > warmup && !decision->freezeKick && (gkMustRaise==false)) {
                 startMove("kick", 0.0);
                 isWarmingUp = false;
                 shootT = 0;
