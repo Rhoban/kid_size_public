@@ -1,3 +1,4 @@
+#include <iostream>
 #include "ImageLogger.h"
 
 #include <rhoban_utils/util.h>
@@ -29,10 +30,11 @@ void ImageLogger::pushEntry(const ImageLogger::Entry & cst_entry) {
   }
   // Store or write imaged depending on mode
   Entry entry(cst_entry.first, cst_entry.second.clone());
+  
   if (store_images) {
-    entries_map[img_index] = entry;
+      entries_map[img_index] = entry;
   } else {
-    writeEntry(img_index, entry);
+      writeEntry(img_index, entry);
   }
   img_index++;
 }
