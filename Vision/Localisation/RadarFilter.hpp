@@ -23,7 +23,7 @@ public:
   RadarFilter()
     : bind(NULL),
       initialScore(0.2), maximumScore(1.0),
-      scoreIncrease(0.2), scoreReduction(0.04), scoreReductionOut(0.005),
+      scoreIncrease(0.2), scoreReduction(0.02), scoreReductionOut(0.0025),
       positionDiscount(0.7), normalizeSum(true)
     {
     }
