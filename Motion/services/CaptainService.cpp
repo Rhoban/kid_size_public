@@ -23,7 +23,8 @@ static Logger logger("CaptainService");
  */
 static void boundPosition(Point &point)
 {
-    double xMax = Constants::field.fieldLength/2 - Constants::field.goalAreaLength - 0.5;
+    double xMin = -(Constants::field.fieldLength/2 - Constants::field.goalAreaLength - 0.5);
+    double xMax = Constants::field.fieldLength/2 - Constants::field.goalAreaLength + 0.5;
     double yMax = Constants::field.goalAreaWidth/2;
 
     if (point.x > xMax) {
@@ -31,9 +32,8 @@ static void boundPosition(Point &point)
         if (point.y > yMax) point.y = yMax;
         if (point.y < -yMax) point.y = -yMax;
     }
-    if (point.x < -xMax) {
-        point.x = -xMax;
-        point.x = -xMax;
+    if (point.x < xMin) {
+        point.x = xMin;
         if (point.y > yMax) point.y = yMax;
         if (point.y < -yMax) point.y = -yMax;
     }
