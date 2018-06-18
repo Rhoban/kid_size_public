@@ -260,6 +260,17 @@ void PlayingMove::step(float elapsed)
                 std::vector<Circle> obstacles;
                 obstacles.push_back(Circle(ball.x, ball.y, avoidRadius));
                 
+                // Avoiding the ball trajectory
+                Point tmp = ball;
+                Point kickVect = (ballTarget - ball);
+                double norm = kickVect.getLength();
+                int parts = norm/0.3;
+                if (parts > 5) parts = 5;
+                for (int k=1; k<=parts; k++) {
+                    Point pos = ball + kickVect.normalize(norm*k/(float)parts);
+                    obstacles.push_back(Circle(pos.x, pos.y, 0.5));
+                }
+                
                 if (handlerFound) {
                     obstacles.push_back(Circle(handler.fieldX, handler.fieldY, avoidRadius));
                 }
