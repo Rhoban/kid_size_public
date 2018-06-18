@@ -363,10 +363,10 @@ Walk::Walk(Kick *kickMove)
         ->defaultValue(12.0);
 
     bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)
-        ->defaultValue(50.0);
+        ->defaultValue(40.0);
 
     bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)
-        ->defaultValue(22.5);
+        ->defaultValue(20.0);
 
     bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)
         ->defaultValue(30.0);
