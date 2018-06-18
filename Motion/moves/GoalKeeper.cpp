@@ -18,6 +18,7 @@ static rhoban_utils::Logger logger("GoalKeeper");
 
 #define STATE_STARTWAIT "start_wait"
 #define STATE_GOHOME "gohome"   // go back to home position
+#define STATE_STANDING "standing" // stop without block position when ball is far away
 #define STATE_STOP "stop"      // stop and take the block position
 #define STATE_ALIGNBALL "align" // align goalkeeper with ball in x position
 #define STATE_ATTACK "attack"   // go to ball and shoot it out
@@ -164,7 +165,7 @@ void GoalKeeper::onStop() {
   stopMove("clearing_kick_controler", 0.0);
   logger.log("GK: ***** ON STOP ***** ");
   //loc->enableFieldFilter(true);
-  setState(STATE_STOP);
+  setState(STATE_STANDING);
   RhIO::Root.setBool("/moves/walk/gkMustRaise",true);
   /*
   float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
@@ -408,7 +409,7 @@ void GoalKeeper::step(float elapsed) {
 
   if ((state==STATE_ATTACK) && !decision->isBallQualityGood){
     logger.log("step: ball Q is not good enough => leave attack!");
-    bufferedSetState(STATE_STOP);
+    bufferedSetState(STATE_STANDING);
     return;
   }
 
@@ -416,13 +417,14 @@ void GoalKeeper::step(float elapsed) {
   if (ignoreBall()){ // ball is not visible or out
     if (state==STATE_GOHOME){
       if (placer->arrived){
-        logger.log("step: arrived to home : stop!");
-        bufferedSetState(STATE_STOP);
+        logger.log("step: arrived to home : standing!");
+        bufferedSetState(STATE_STANDING);
         return;
       }
-    } else
-      if (state!=STATE_STOP)
+    } else{
+      if (state!=STATE_STANDING)
         bufferedSetState(STATE_GOHOME);
+    }
   } else { // ball is visible but not close enought to attack => align wih it
     if (state==STATE_STOP){
       if (isAligned()==false)
@@ -474,7 +476,8 @@ void GoalKeeper::enterState(std::string state) {
     auto pos = loc->getFieldPos();
 
     if (neverWalked && home().getDist(pos)<0.1) {
-        setState(STATE_STOP);
+      //setState(STATE_STOP);
+      setState(STATE_STANDING);
     } else {
       startMove("placer", 0.0);
     }
@@ -485,8 +488,10 @@ void GoalKeeper::enterState(std::string state) {
   } else if (state==STATE_ALIGNBALL){
     //placer->setTemporaryMarginAzimuth(5);
     placer->setDirectMode(false);
-    startMove("placer",0.0);
-  }  else if (state==STATE_STOP){
+    startMove("placer",0.0);    
+  } else if (state==STATE_STANDING) {
+    stopMove("placer",0.0);
+  }else if (state==STATE_STOP){
     if (stopPosture){           
       //RhIO::Root.setFloat("/moves/walk/armsRoll", 20);
       //RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);      
