@@ -44,7 +44,7 @@ ApproachPotential::ApproachPotential(Walk *walk)
         ->defaultValue(0.7);
 
     bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)
-        ->defaultValue(200);
+        ->defaultValue(30);
 
     // Servoing
     bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)
@@ -54,7 +54,7 @@ ApproachPotential::ApproachPotential(Walk *walk)
     bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)
         ->defaultValue(0.0);
     bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)
-        ->defaultValue(0);
+        ->defaultValue(6);
     bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)
         ->defaultValue(10);
     bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)
@@ -156,7 +156,7 @@ void ApproachPotential::getControl(const Target &target, const Point &ball,
         // We are near the ball, let's face it
         error = ballCap;
     }
-    if (dist < 0.2) {
+    if (dist < 0.4) {
         // We are near the goal, let's face the goal
         error = targetCap;
     }
@@ -175,8 +175,10 @@ void ApproachPotential::getControl(const Target &target, const Point &ball,
 void ApproachPotential::step(float elapsed)
 {
     bind->pull();
+    
     stepper.k_p = stepP;
     lateraler.k_p = stepP;
+    
     stepper.k_i = stepI;
     lateraler.k_i = lateralI;
     
