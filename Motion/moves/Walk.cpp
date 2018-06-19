@@ -701,7 +701,14 @@ void Walk::step(float elapsed)
       tgk+=elapsed;
       if (_trunkZOffset>initTrunkZOffsetValue){
 	double x=RhIO::Root.getFloat("/moves/goal_keeper/stopMoveTime");
-	RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(tgk+elapsed,tgk,_trunkZOffset,x,initTrunkZOffsetValue));
+
+	double z;
+	if (tgk>x)
+	  z=_trunkZOffset-0.1;
+	else
+	  z=getLinear(tgk+elapsed,tgk,_trunkZOffset,x,initTrunkZOffsetValue);
+	if (z<initTrunkZOffsetValue) z=initTrunkZOffsetValue;
+	RhIO::Root.setFloat("/moves/walk/trunkZOffset", z);
       }
       else {
 	tgk=-1;

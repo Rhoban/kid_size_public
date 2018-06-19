@@ -69,7 +69,7 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
 
   bind->bindNew("nextStateSize", nextStateSize, RhIO::Bind::PullOnly)
     ->comment("length of the buffer used to smooth next state change")
-    ->defaultValue(5);
+    ->defaultValue(3);
 
   //bind->bindNew("isPlacing", isPlacing, RhIO::Bind::PushOnly)
   //    ->comment("Is the robot performing an accurate placement")
@@ -88,7 +88,7 @@ GoalKeeper::GoalKeeper(Walk *walk, Placer *placer)
   
   bind->bindNew("xIgnoreBall", xIgnoreBall, RhIO::Bind::PullOnly)
       ->comment("Ignore ball if ball is out of xIgnoreBall position [m]")
-      ->defaultValue(3.5)
+      ->defaultValue(4)
       ->persisted(true);
   
   bind->bindNew("xIgnoreBallHys", xIgnoreBallHys, RhIO::Bind::PullOnly)
@@ -165,8 +165,9 @@ void GoalKeeper::onStop() {
   stopMove("clearing_kick_controler", 0.0);
   logger.log("GK: ***** ON STOP ***** ");
   //loc->enableFieldFilter(true);
+  if (state==STATE_STOP)
+    RhIO::Root.setBool("/moves/walk/gkMustRaise",true);
   setState(STATE_STANDING);
-  RhIO::Root.setBool("/moves/walk/gkMustRaise",true);
   /*
   float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
   while(z>initTrunkZOffsetValue){
@@ -178,7 +179,6 @@ void GoalKeeper::onStop() {
   RhIO::Root.setFloat("/moves/walk/elbowOffset", initElbowOffsetValue);
   */
 }
-
 
 TeamPlayState GoalKeeper::teamState() {
   return getServices()->teamPlay->selfInfo().state;
@@ -206,7 +206,7 @@ bool GoalKeeper::ballInAttackZone() {
 }
 
 bool GoalKeeper::ballInAttackZoneHysteresis() {
-  return ballInZone(xAttack+xAttackHys,-yAttack+yAttackHys);
+  return ballInZone(xAttack+xAttackHys,-yAttack-yAttackHys);
 }
 
 bool GoalKeeper::ignoreBall() {
@@ -228,6 +228,7 @@ Point GoalKeeper::home(){
   return Point(-(Constants::field.fieldLength/2)+homeX,0);
 }
 
+// return a point on the backline that is suppose to be the shooting target of the opponent
 Point GoalKeeper::shootLineCenter(){
   auto loc = getServices()->localisation;
   auto ball = loc->getBallPosField();
@@ -239,15 +240,17 @@ Point GoalKeeper::shootLineCenter(){
   float dy=maxShootDist*maxShootDist - dx*dx;
   if (dy<0){
     //logger.log("error shootLineCenter: %f %f(%f) %f",maxShootDist,dx,ball.x,dy);
-    return Point(-Constants::field.fieldLength/2.0f,0); // go in front
+    // should not happen!
+    return Point(-Constants::field.fieldLength/2.0f,ball.y); // go in front
   }
-  dy=sqrtf(maxShootDist*maxShootDist - dx*dx);
+  dy=sqrtf(dy);
   float up=ball.y+dy;
   float down=ball.y-dy;
   up=std::min(up,(float)(Constants::field.goalWidth/2.0f));
   down=std::max(down,(float)(-Constants::field.goalWidth/2.0f));
   return Point(-Constants::field.fieldLength/2.0f,(up+down)/2.0f);
 }
+
 
 bool GoalKeeper::isNearHome(){
     auto loc = getServices()->localisation;
@@ -268,7 +271,7 @@ bool GoalKeeper::isNearHomeHys(){
     return (
 	    (pos.x > (-(Constants::field.fieldLength/2)+homeX))
 	    && (home().getDist(pos)<=(maxHomeDistance+maxHomeDistanceHys))
-	    //&& (fabs(loc->getFieldOrientation()*180.0/3.14)<25)
+	    && (fabs(loc->getFieldOrientation()*180.0/3.14)<25)
 	    );
 }
 
