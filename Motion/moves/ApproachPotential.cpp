@@ -54,7 +54,7 @@ ApproachPotential::ApproachPotential(Walk *walk)
     bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)
         ->defaultValue(0.0);
     bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)
-        ->defaultValue(6);
+        ->defaultValue(8);
     bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)
         ->defaultValue(10);
     bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)
