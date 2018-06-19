@@ -17,6 +17,7 @@ using namespace rhoban_utils;
 
 #define STATE_STOPPING          "stopping"
 #define STATE_PLACE             "place"
+#define STATE_STEPPING          "stepping"
 #define STATE_SHOOT             "shoot"
 
 ApproachPotential::Target::Target()
@@ -68,6 +69,11 @@ ApproachPotential::ApproachPotential(Walk *walk)
 
     // Don't walk
     bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)
+        ->defaultValue(false);
+
+    // Are we using a final last step
+    bind->node().newBool("useLastStep")
+        ->persisted(true)
         ->defaultValue(false);
 }
 
@@ -187,6 +193,13 @@ void ApproachPotential::step(float elapsed)
             setState(STATE_PLACE);
         }
     }
+    
+    if (state == STATE_STEPPING) {
+        if (!walk->isLastStep()) {
+            requestKick();
+            setState(STATE_SHOOT);
+        }
+    }
 
     if (state == STATE_PLACE) {
         // Target yaw
@@ -279,9 +292,32 @@ void ApproachPotential::step(float elapsed)
             updateKickScore(elapsed);
 
             if (kick_score >= 1.0) {
-                requestKick();
-                walk->control(!dontWalk, 0, 0, 0);
-                setState(STATE_SHOOT);
+                walk->control(false, 0, 0, 0);
+                if (bind->node().getBool("useLastStep")) {
+                    //Compute last step displacement
+                    double aa = cap.getSignedValue()*M_PI/180.0;
+                    Eigen::Vector3d targetEgoToBall = kmc.getKickModel(expectedKick)
+                        .getKickZone().getWishedPos(kickRight);
+                    Eigen::Vector3d dpose(
+                        ball.x, ball.y, aa + targetEgoToBall.z());
+                    dpose.x() -= targetEgoToBall.x()*std::cos(aa) - targetEgoToBall.y()*std::sin(aa);
+                    dpose.y() -= targetEgoToBall.x()*std::sin(aa) + targetEgoToBall.y()*std::cos(aa);
+                    //Security bounds
+                    if (dpose.x() > 0.1) dpose.x() = 0.1;
+                    if (dpose.x() < -0.05) dpose.x() = -0.05;
+                    if (dpose.y() > 0.1) dpose.y() = 0.1;
+                    if (dpose.y() < -0.1) dpose.y() = -0.1;
+                    if (dpose.z() > 0.8) dpose.z() = 0.8;
+                    if (dpose.z() < -0.8) dpose.z() = -0.8;
+                    std::cout << "LEPH ball:" << currentEgoToBall.transpose() << std::endl;
+                    std::cout << "LEPH targ:" << targetEgoToBall.transpose() << std::endl;
+                    std::cout << "LEPH pose:" << dpose.transpose() << std::endl;
+                    walk->askLastStep(dpose);
+                    setState(STATE_STEPPING);
+                } else {
+                    requestKick();
+                    setState(STATE_SHOOT);
+                }
             } else {
                 // Applying control
                 double controlX, controlY, controlYaw;
