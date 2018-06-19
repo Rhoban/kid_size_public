@@ -311,9 +311,6 @@ void ApproachPotential::step(float elapsed)
                     if (dpose.y() < -0.1) dpose.y() = -0.1;
                     if (dpose.z() > 0.8) dpose.z() = 0.8;
                     if (dpose.z() < -0.8) dpose.z() = -0.8;
-                    std::cout << "LEPH ball:" << currentEgoToBall.transpose() << std::endl;
-                    std::cout << "LEPH targ:" << targetEgoToBall.transpose() << std::endl;
-                    std::cout << "LEPH pose:" << dpose.transpose() << std::endl;
                     walk->askLastStep(dpose);
                     setState(STATE_STEPPING);
                 } else {
