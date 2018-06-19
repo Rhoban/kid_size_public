@@ -722,9 +722,18 @@ void Walk::step(float elapsed)
     smoothing = smoothing*smoothCommands + (walkEnableTarget ? 1 : 0)*(1.0-smoothCommands);
     bool newStep = isNewStep();
     if (!forbidOrders && newStep) {
-        VariationBound::update(smoothingStep, step, maxDStepByCycle, 1);
-        VariationBound::update(smoothingLateral, lateral, maxDLatByCycle, 1);
-        VariationBound::update(smoothingTurn, turn, maxDTurnByCycle, 1);
+        double tmpMaxDStepByCycle = maxDStepByCycle;
+        double tmpMaxDLatByCycle = maxDLatByCycle;
+        double tmpMaxDTurnByCycle = maxDTurnByCycle;
+        
+        // We accept way more deceleration than acceleration
+        if (smoothingStep > step) tmpMaxDStepByCycle *= 5;
+        if (smoothingLateral > lateral) tmpMaxDLatByCycle *= 5;
+        if (smoothingTurn > turn) tmpMaxDTurnByCycle *= 5;
+        
+        VariationBound::update(smoothingStep, step, tmpMaxDStepByCycle, 1);
+        VariationBound::update(smoothingLateral, lateral, tmpMaxDLatByCycle, 1);
+        VariationBound::update(smoothingTurn, turn, tmpMaxDTurnByCycle, 1);
     }
     bool isEnabled = (smoothing > 0.95);
     
