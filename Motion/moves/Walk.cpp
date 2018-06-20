@@ -87,7 +87,7 @@ static bool phasePassed(float before, float after, float phase)
 }
 
 Walk::Walk(Kick *kickMove)
-    : kickMove(kickMove), ratioHistory(1)
+    : kickMove(kickMove), ratioHistory(0.5)
 {
     _params = _engine.getParameters();
     _lastStepParams = _engine.getParameters();
@@ -315,7 +315,7 @@ Walk::Walk(Kick *kickMove)
     bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)
         ->defaultValue(0.5)->comment("Cooldown duration [s]")->persisted(true);
     bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)
-        ->defaultValue(1)->comment("Warmup [s]")->persisted(true);
+        ->defaultValue(0.5)->comment("Warmup [s]")->persisted(true);
         
     bind->bindNew("paramsStepGain", _orders.x(), RhIO::Bind::PushOnly)
         ->comment("IKWalk really used step parameters");
@@ -324,7 +324,9 @@ Walk::Walk(Kick *kickMove)
     bind->bindNew("paramsTurnGain", _orders.z(), RhIO::Bind::PushOnly)
         ->comment("IKWalk really used turn parameters");
 
-    bind->bindNew("pressureYStdThreshold", pressureYStdThreshold, RhIO::Bind::PullOnly)
+    bind->bindNew("pressureYStdThresholdWarmup", pressureYStdThresholdWarmup, RhIO::Bind::PullOnly)
+        ->defaultValue(0.05);
+    bind->bindNew("pressureYStdThresholdCooldown", pressureYStdThresholdCooldown, RhIO::Bind::PullOnly)
         ->defaultValue(0.02);
     bind->bindNew("pressureYStd", pressureYStd, RhIO::Bind::PushOnly);
     bind->bindNew("pressureY", pressureY, RhIO::Bind::PushOnly);
@@ -752,13 +754,14 @@ void Walk::step(float elapsed)
         values.push_back(value.second);
     }
     pressureYStd = standardDeviation(values);
-    bool isStable = pressureYStd < pressureYStdThreshold;
+    bool isStableWarmup = pressureYStd < pressureYStdThresholdWarmup;
+    bool isStableCooldown = pressureYStd < pressureYStdThresholdCooldown;
 
     
     if (walkEnable != walkEnableTarget) {
         walkEnableTimeSinceChange += elapsed;
         if ((!walkEnable && walkEnableTimeSinceChange > 0.3) ||
-            (walkEnable && isStable)) {
+            (walkEnable && isStableCooldown)) {
             walkEnableTarget = walkEnable;
         }
     } else {
@@ -796,13 +799,13 @@ void Walk::step(float elapsed)
 
     if (shootingLeft || shootingRight) {
         if (isWarmingUp) {
-	  if (waitT > warmup && !decision->freezeKick && (gkMustRaise==false)) {
+	  if (isStableWarmup && waitT > warmup && !decision->freezeKick && (gkMustRaise==false)) {
                 startMove("kick", 0.0);
                 isWarmingUp = false;
                 shootT = 0;
             }
         } else if (isCoolingDown) {
-            if (isStable && waitT > cooldown) {
+            if (isStableCooldown && waitT > cooldown) {
                 isCoolingDown = false;
                 endShoot();
                 if (shootingLeft) {

@@ -150,7 +150,8 @@ class Walk : public Move
         bool walkKickRight;
         float pressureY;
         float pressureYStd;
-        float pressureYStdThreshold;
+        float pressureYStdThresholdWarmup;
+        float pressureYStdThresholdCooldown;
         rhoban_utils::History ratioHistory;
         std::string walkKickName;
         double walkStep;
