@@ -298,6 +298,7 @@ void ApproachPotential::step(float elapsed)
                 if (bind->node().getBool("useLastStep")) {
                     //Compute last step displacement
                     Eigen::Vector3d dpose;
+                    //TODO XXX FIXME take into account current step to compute next last step and ball position !!!!!!
                     if (expectedKick != "lateral") {
                         //In case of classic or small forward kick 
                         //rechoose the kick foot for last step
