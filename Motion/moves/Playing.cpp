@@ -72,6 +72,8 @@ void PlayingMove::onStart()
     if (RhIO::Root.getValueFloat("decision/fieldQThreshold").value > 0.9) {
         logger.warning("High value for decision/fieldQThreshold");
     }
+    
+    backwardT = 10;
 }
 
 void PlayingMove::onStop()
@@ -177,14 +179,8 @@ void PlayingMove::step(float elapsed)
                 setState(STATE_BACKWARD);
             }
         } else {
-            if (!decision->shouldLetPlay && instruction.order == CaptainOrder::HandleBall && state != STATE_BACKWARD) {
-                if (state == STATE_LET_PLAY) {
-                    if (t > 1.5) { 
-                        setState(STATE_WALKBALL);
-                    }
-                } else {
-                    setState(STATE_WALKBALL);
-                }
+            if (!decision->shouldLetPlay && instruction.order == CaptainOrder::HandleBall) {
+                setState(STATE_WALKBALL);
             }
         }
 
@@ -299,8 +295,15 @@ void PlayingMove::step(float elapsed)
                 }
             }
         }
+        
+        if (decision->isBallQualityGood) {
+            backwardT = 0;
+        } else {
+            backwardT += elapsed;
+        }
 
         if (state == STATE_SEARCH || state == STATE_BACKWARD) {
+            logger.log("Let's approach the ball, I see it");
             /*
             if (decision->isBallQualityGood) {
                 logger.log("Let's approach the ball, I see it");
@@ -309,7 +312,11 @@ void PlayingMove::step(float elapsed)
             */
         } else {
             if (instruction.order == CaptainOrder::SearchBall && !decision->isBallQualityGood) {
-                setState(STATE_SEARCH);
+                if (backwardT < 3) {
+                    setState(STATE_BACKWARD);
+                } else {
+                    setState(STATE_SEARCH);
+                }
             }
         }
 
