@@ -428,12 +428,15 @@ void GoalKeeper::step(float elapsed) {
       }
       else {
 	// robot is stopped and down: try to anticipate a shoot for a possible jump
-	TimeStamp kick_time = TimeStamp::now()
-	  + std::chrono::duration<int,std::milli>((int)(3 * 1000));
-	Point future_ball_loc = loc->getPredictedBallSelf(kick_time);
-	logger.log("futur ball position is %f %f ",future_ball_loc.x,future_ball_loc.y);
+	Point future_ball_loc;
+	for(int i=1;i<4;++i){
+	  TimeStamp kick_time = TimeStamp::now()
+	    + std::chrono::duration<int,std::milli>((int)(i * 1000));
+	  future_ball_loc = loc->getPredictedBallSelf(kick_time);
+	  logger.log("futur ball position at %d sec is %f %f ",i,future_ball_loc.x,future_ball_loc.y);
+	}
 	if (future_ball_loc.x<0) {
-	  logger.log("ball is arriving!!!");
+	  logger.log("ball is arriving!!! %f %f",future_ball_loc.x,future_ball_loc.y);
 	  if (DIVING){	
 	    if (future_ball_loc.y>0.15){
 	      setState(STATE_DIVING_LEFT);
