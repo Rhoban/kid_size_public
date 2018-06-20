@@ -90,7 +90,7 @@ Walk::Walk(Kick *kickMove)
     : kickMove(kickMove), ratioHistory(1)
 {
     _params = _engine.getParameters();
-    _singleStepParams = _engine.getParameters();
+    _lastStepParams = _engine.getParameters();
     Move::initializeBinding();
 
 #ifdef MODE_NOMINAL
@@ -300,45 +300,16 @@ Walk::Walk(Kick *kickMove)
     bind->bindNew("walkKickName", walkKickName, RhIO::Bind::PullOnly)
             ->comment("Kick name")->defaultValue("classic");
 
-    //Single step variables
-    bind->node().newInt("singleStepAsk")
-        ->comment("0: no step. 1: left foot. 2: right foot.")
+    //Last step variables
+    bind->node().newInt("lastStepAsk")
+        ->comment("0: no last step. 1: left foot. 2: right foot.")
         ->defaultValue(0);
-    bind->node().newFloat("singleStepForward")
+    bind->node().newFloat("lastStepForward")
         ->defaultValue(0.0);
-    bind->node().newFloat("singleStepLateral")
+    bind->node().newFloat("lastStepLateral")
         ->defaultValue(0.0);
-    bind->node().newFloat("singleStepTurn")
+    bind->node().newFloat("lastStepTurn")
         ->defaultValue(0.0);
-    //Single step parameters
-    bind->node().newChild("SingleStepParams");
-    bind->bindNew("SingleStepParams/freq", _singleStepParams("freq"), RhIO::Bind::PullOnly)
-        ->persisted(true)
-        ->defaultValue(1.0)->minimum(0.1)->maximum(10.0);
-    bind->bindNew("SingleStepParams/doubleSupportRatio", _singleStepParams("doubleSupportRatio"), RhIO::Bind::PullOnly)
-        ->persisted(true)
-        ->defaultValue(0.0)->minimum(0.0)->maximum(1.0);
-    bind->bindNew("SingleStepParams/footApexPhase", _singleStepParams("footApexPhase"), RhIO::Bind::PullOnly)
-        ->persisted(true)
-        ->defaultValue(_singleStepParams("footApexPhase"))->minimum(0.0)->maximum(1.0);
-    bind->bindNew("SingleStepParams/footOvershootRatio", _singleStepParams("footOvershootRatio"), RhIO::Bind::PullOnly)
-        ->persisted(true)
-        ->defaultValue(_singleStepParams("footOvershootRatio"))->minimum(0.0)->maximum(2.0);
-    bind->bindNew("SingleStepParams/footOvershootPhase", _singleStepParams("footOvershootPhase"), RhIO::Bind::PullOnly)
-        ->persisted(true)
-        ->defaultValue(_singleStepParams("footOvershootPhase"))->minimum(0.0)->maximum(1.0);
-    bind->bindNew("SingleStepParams/footRise", _singleStepParams("footRise"), RhIO::Bind::PullOnly)
-        ->persisted(true)
-        ->defaultValue(_singleStepParams("footRise"))->minimum(0.0)->maximum(0.1);
-    bind->bindNew("SingleStepParams/trunkSwing", _singleStepParams("trunkSwing"), RhIO::Bind::PullOnly)
-        ->persisted(true)
-        ->defaultValue(_singleStepParams("trunkSwing"))->minimum(0.0)->maximum(2.0);
-    bind->bindNew("SingleStepParams/trunkPhase", _singleStepParams("trunkPhase"), RhIO::Bind::PullOnly)
-        ->persisted(true)
-        ->defaultValue(_singleStepParams("trunkPhase"))->minimum(0.0)->maximum(1.0);
-    bind->bindNew("SingleStepParams/trunkPause", _singleStepParams("trunkPause"), RhIO::Bind::PullOnly)
-        ->persisted(true)
-        ->defaultValue(_singleStepParams("trunkPause"))->minimum(0.0)->maximum(1.0);
 
     // Shoot warmup and cool down
     bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)
@@ -475,9 +446,9 @@ Eigen::Vector3d Walk::getMaxDeltaOrders() const
   return bound;
 }
         
-void Walk::askSingleStep(const Eigen::Vector3d& deltaPose)
+void Walk::askLastStep(const Eigen::Vector3d& deltaPose)
 {
-    if (isSingleStep()) {
+    if (!_isEnabled || isLastStep()) {
         return;
     }
 
@@ -493,13 +464,13 @@ void Walk::askSingleStep(const Eigen::Vector3d& deltaPose)
     }
 
     if (isFootLeft) {
-        bind->node().setInt("singleStepAsk", 1);
+        bind->node().setInt("lastStepAsk", 1);
     } else {
-        bind->node().setInt("singleStepAsk", 2);
+        bind->node().setInt("lastStepAsk", 2);
     }
-    bind->node().setFloat("singleStepForward", deltaPose.x());
-    bind->node().setFloat("singleStepLateral", deltaPose.y());
-    bind->node().setFloat("singleStepTurn", deltaPose.z());
+    bind->node().setFloat("lastStepForward", deltaPose.x());
+    bind->node().setFloat("lastStepLateral", deltaPose.y());
+    bind->node().setFloat("lastStepTurn", deltaPose.z());
 }
 
 std::string Walk::getName()
@@ -546,11 +517,11 @@ bool Walk::isKicking()
     return shouldKickLeft || shouldKickRight || shootingLeft || shootingRight;
 }
         
-bool Walk::isSingleStep() const
+bool Walk::isLastStep() const
 {
     return 
-        (_singleStepPhase >= 0.0) ||
-        (bind->node().getInt("singleStepAsk") != 0);
+        (_lastStepPhase >= 0.0) ||
+        (bind->node().getInt("lastStepAsk") != 0);
 }
 
 void Walk::onStart()
@@ -612,8 +583,8 @@ void Walk::onStart()
     pressureYStd = 0;
     t = 0;
     ratioHistory.clear();
-    _singleStepPhase = -1.0;
-    _singleStepCount = 0;
+    _lastStepPhase = -1.0;
+    _lastStepCount = 0;
 
     _params("footDistance") = 2.0*_footYOffset + _footDistance;
     _params("trunkSwing")        = swingGain/std::fabs(_params("footDistance"));
@@ -880,63 +851,95 @@ void Walk::step(float elapsed)
     bind->node().setBool("nominalError", nominalScore > securityTreshold);
 #endif
 
-    //Check if a single step is asked
-    int isAskSingle = bind->node().getInt("singleStepAsk");
-    if (_singleStepPhase < 0.0 && !isEnabled && isAskSingle != 0) {
-        _singleStepParams("footDistance") = _params("footDistance");
-        _singleStepParams("trunkHeight") = _params("trunkHeight");
-        _singleStepParams("trunkPitch") = _params("trunkPitch");
-        _singleStepParams("trunkXOffset") = _params("trunkXOffset");
-        _singleStepParams("trunkYOffset") = _params("trunkYOffset");
-        _engine.setParameters(_singleStepParams);
-        Eigen::Vector3d singleOrder(
-            bind->node().getFloat("singleStepForward"),
-            bind->node().getFloat("singleStepLateral"),
-            bind->node().getFloat("singleStepTurn"));
-        if (isAskSingle == 1) {
-            _engine.setOrders(singleOrder, true, true);
-        } else if (isAskSingle == 2) {
-            _engine.setOrders(singleOrder, true, false);
-        }
-        _singleStepPhase = _engine.getPhase();
-        _singleStepCount = 0;
-        bind->node().setInt("singleStepAsk", 0);
+    //Check if a last step is asked
+    int isAskLast = bind->node().getInt("lastStepAsk");
+    if (_lastStepPhase < 0.0 && isEnabled && isAskLast != 0) {
+        //Start the last step
+        _lastStepPhase = _engine.getPhase();
+        _lastStepCount = 0;
     }
 
     float prevPhase = phase;
-    if (_singleStepPhase >= 0.0) {
-        _engine.setParameters(_singleStepParams);
+    //Control the walk engine
+    if (_lastStepPhase >= 0.0) {
+        //Last step case
+        //Count half walk cycle
+        //and walk in place during waiting
         if (
-            _singleStepCount%2 == 0 &&
-            ((_singleStepPhase >= 0.0 && 
-            _singleStepPhase < 0.5 && 
+            _lastStepCount%2 == 0 &&
+            ((_lastStepPhase >= 0.0 && 
+            _lastStepPhase < 0.5 && 
             _engine.getPhase() > 0.5) ||
-            (_singleStepPhase >= 0.5 && 
-            _singleStepPhase < 1.0 && 
+            (_lastStepPhase >= 0.5 && 
+            _lastStepPhase < 1.0 && 
             _engine.getPhase() < 0.5))
         ) {
-            _singleStepCount++;
-            _engine.setOrders(Eigen::Vector3d(0.0, 0.0, 0.0), false);
+            _lastStepCount++;
         }
         if (
-            _singleStepCount%2 == 1 &&
-            ((_singleStepPhase >= 0.0 && 
-            _singleStepPhase < 0.5 && 
+            _lastStepCount%2 == 1 &&
+            ((_lastStepPhase >= 0.0 && 
+            _lastStepPhase < 0.5 && 
             _engine.getPhase() < 0.5) ||
-            (_singleStepPhase >= 0.5 && 
-            _singleStepPhase < 1.0 && 
+            (_lastStepPhase >= 0.5 && 
+            _lastStepPhase < 1.0 && 
             _engine.getPhase() > 0.5))
         ) {
-            _singleStepCount++;
+            _lastStepCount++;
+        }
+        //Retrieve last step displacement
+        Eigen::Vector3d lastOrder(
+            bind->node().getFloat("lastStepForward"),
+            bind->node().getFloat("lastStepLateral"),
+            bind->node().getFloat("lastStepTurn"));
+        //Select when to make the step according 
+        //to chosen foot and current walk phase
+        bool isFinished = false;
+        if (isAskLast == 1 && _lastStepPhase > 0.5) {
+            if (_lastStepCount == 0) {
+                _engine.setOrders(Eigen::Vector3d(0.0, 0.0, 0.0), true);
+            } else if (_lastStepCount == 1) {
+                _engine.setOrders(lastOrder, true);
+            } else {
+                isFinished = true;
+            }
+        } else if (isAskLast == 1 && _lastStepPhase < 0.5) {
+            if (_lastStepCount == 0) {
+                _engine.setOrders(lastOrder, true);
+            } else {
+                isFinished = true;
+            }
+        } else if (isAskLast == 2 && _lastStepPhase > 0.5) {
+            if (_lastStepCount == 0) {
+                _engine.setOrders(lastOrder, true);
+            } else {
+                isFinished = true;
+            }
+        } else if (isAskLast == 2 && _lastStepPhase < 0.5) {
+            if (_lastStepCount == 0) {
+                _engine.setOrders(Eigen::Vector3d(0.0, 0.0, 0.0), true);
+            } else if (_lastStepCount == 1) {
+                _engine.setOrders(lastOrder, true);
+            } else {
+                isFinished = true;
+            }
+        } 
+        //Stop the walk when the last step is performed
+        if (isFinished) {
+            _lastStepPhase = -1.0;
+            _lastStepCount = 0;
+            bind->node().setInt("lastStepAsk", 0);
+            _isEnabled = false;
+            smoothing = 0.0;
+            walkEnableTarget = false;
+            walkEnable = false;
+            bind->node().setBool("walkEnable", false);
             _engine.setOrders(Eigen::Vector3d(0.0, 0.0, 0.0), false);
         }
-        if (_singleStepCount == 3) {
-            _singleStepPhase = -1.0;
-            _singleStepCount = 0;
-        }
     } else {
-        _engine.setParameters(_params);
+        //Normal step case
 	if (gkMustRaise) _isEnabled=false;
+        _engine.setParameters(_params);
         _engine.setOrders(_orders, _isEnabled);
     }
     if (!_securityEnabled) {
@@ -1054,3 +1057,4 @@ void Walk::endShoot()
     shootingLeft = false;
     shootingRight = false;
 }
+

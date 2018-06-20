@@ -45,10 +45,10 @@ class Walk : public Move
         bool isMoving();
 
         /**
-         * Return true if a single kick 
+         * Return true if a last kick 
          * is currently beeing done
          */
-        bool isSingleStep() const;
+        bool isLastStep() const;
 
         /**
          * Return the current walk phase
@@ -99,11 +99,11 @@ class Walk : public Move
         Eigen::Vector3d getMaxDeltaOrders() const;
 
         /**
-         * If the walk is disable, ask for a single step of given
+         * If the walk is disable, ask for a last step of given
          * pose change. Step foot is automatically chosen.
          * [dx, dy, dtheta] in meters and radians.
          */
-        void askSingleStep(const Eigen::Vector3d& deltaPose);
+        void askLastStep(const Eigen::Vector3d& deltaPose);
         
         // Maximum rotation speed [deg/step]
         float maxRotation;
@@ -203,9 +203,9 @@ class Walk : public Move
         double _footYOffset;
         bool _securityEnabled;
 
-        double _singleStepPhase;
-        int _singleStepCount;
-        Leph::VectorLabel _singleStepParams;
+        double _lastStepPhase;
+        int _lastStepCount;
+        Leph::VectorLabel _lastStepParams;
 
         Leph::Scheduling scheduling;
 
