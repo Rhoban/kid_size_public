@@ -357,6 +357,7 @@ void Robocup::enterState(std::string state)
         walk->control(false);
         stopMove("walk", 0.3);
         startMove("standup", 0.0);
+        setTeamPlayState(Inactive);
     }
 
     if (state == STATE_PLACING) {

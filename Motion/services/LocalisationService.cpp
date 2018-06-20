@@ -763,7 +763,8 @@ bool LocalisationService::getVisualCompassStatus() const
 bool LocalisationService::isVisionActive() const
 {
 #ifdef VISION_COMPONENT
-  return robocup->activeSource;
+    double lastFrame = diffSec(robocup->lastTS, rhoban_utils::TimeStamp::now());
+    return lastFrame < 3;
 #else
   return true;
 #endif
