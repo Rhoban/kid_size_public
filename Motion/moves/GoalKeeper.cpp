@@ -386,15 +386,7 @@ void GoalKeeper::step(float elapsed) {
   }
 
   auto loc = getServices()->localisation;
-  auto decision = getServices()->decision;
-  //auto teamPlay = getServices()->teamPlay;
-
-  /*
-  if (neverWalked)
-    loc->enableFieldFilter(false);
-  else
-    loc->enableFieldFilter(true);
-  */
+  auto decision = getServices()->decision;  
 
   if (DIVING){  
     if (state==STATE_DIVING_RIGHT){

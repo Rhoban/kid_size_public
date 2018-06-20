@@ -5,6 +5,9 @@ ClearingKickController::ClearingKickController()
     : KickController()
 {
     Move::initializeBinding();
+    bind->bindNew("lateral", isInLateral, RhIO::Bind::PushOnly)
+      ->defaultValue(false);
+
 }
 
 std::string ClearingKickController::getName()
@@ -14,7 +17,7 @@ std::string ClearingKickController::getName()
 
 void ClearingKickController::step(float elapsed)
 {
-  static bool isInLateral=false;
+  bind->pull();
   auto loc = getServices()->localisation;
   auto ball = loc->getBallPosField();
 
@@ -28,7 +31,7 @@ void ClearingKickController::step(float elapsed)
     } 
   }
   if (isInLateral){
-      allowed_kicks = {"lateral"};      
+      allowed_kicks = {"lateral"};
       kick_dir = 0;
       tolerance = 50;    
   } else {
@@ -36,4 +39,5 @@ void ClearingKickController::step(float elapsed)
       kick_dir = 0;
       tolerance = 80;    
   }
+  bind->push();
 }
