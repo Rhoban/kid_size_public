@@ -331,6 +331,7 @@ void ApproachPotential::step(float elapsed)
                             isSelectedRight = kickRight;
                         }
                         dpose = isSelectedRight ? dposeRight : dposeLeft;
+                        kickRight = isSelectedRight;
                         std::cout << "LEPH: name=" << expectedKick << " foot=" << kickRight << std::endl;
                         std::cout << "LEPH: phase:" << phase << std::endl;
                         std::cout << "LEPH: dposeLeft: " << dposeLeft.transpose() << std::endl;
@@ -341,7 +342,6 @@ void ApproachPotential::step(float elapsed)
                         std::cout << "LEPH: effortRight: " << effortRight << std::endl;
                         std::cout << "LEPH: selected: " << isSelectedRight << std::endl;
                         std::cout << "LEPH: selectPose: " << dpose.transpose() << std::endl;
-                        if (isSelectedRight != kickRight) std::cout << "!!!!!!!!!!!!!!!!!!!!" << std::endl;
                     } else {
                         dpose = computeLastStepDelta(expectedKick, kickRight);
                     }
