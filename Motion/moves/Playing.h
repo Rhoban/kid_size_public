@@ -30,6 +30,7 @@ public:
 
 protected:
   double t;
+  double backwardT;
   double localizeWalkDuration;
 
   bool useKickController;

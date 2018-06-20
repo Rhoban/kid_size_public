@@ -50,6 +50,8 @@ ApproachPotential::ApproachPotential(Walk *walk)
     // Servoing
     bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)
         ->defaultValue(1);
+    bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)
+        ->defaultValue(4);
     bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)
         ->defaultValue(0.0);
     bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)
@@ -183,7 +185,7 @@ void ApproachPotential::step(float elapsed)
     bind->pull();
     
     stepper.k_p = stepP;
-    lateraler.k_p = stepP;
+    lateraler.k_p = lateralP;
     
     stepper.k_i = stepI;
     lateraler.k_i = lateralI;
