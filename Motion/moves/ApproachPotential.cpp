@@ -73,8 +73,8 @@ ApproachPotential::ApproachPotential(Walk *walk)
 
     // Are we using a final last step
     bind->node().newBool("useLastStep")
-        ->persisted(true)
-        ->defaultValue(false);
+        ->persisted(false)
+        ->defaultValue(true);
 }
 
 Angle ApproachPotential::getKickCap()
@@ -297,13 +297,19 @@ void ApproachPotential::step(float elapsed)
                 walk->control(false, 0, 0, 0);
                 if (bind->node().getBool("useLastStep")) {
                     //Compute last step displacement
-                    double aa = cap.getSignedValue()*M_PI/180.0;
+                    double capA = cap.getSignedValue()*M_PI/180.0;
                     Eigen::Vector3d targetEgoToBall = kmc.getKickModel(expectedKick)
                         .getKickZone().getWishedPos(kickRight);
+                    targetEgoToBall.z() *= -1.0;
+                    Eigen::Vector3d targetBallToEgo;
+                    double tmpA = -targetEgoToBall.z();
+                    targetBallToEgo.x() = -targetEgoToBall.x()*std::cos(tmpA) + targetEgoToBall.y()*sin(tmpA);
+                    targetBallToEgo.y() = -targetEgoToBall.x()*std::sin(tmpA) - targetEgoToBall.y()*cos(tmpA);
+                    targetBallToEgo.z() = tmpA;
                     Eigen::Vector3d dpose(
-                        ball.x, ball.y, aa + targetEgoToBall.z());
-                    dpose.x() -= targetEgoToBall.x()*std::cos(aa) - targetEgoToBall.y()*std::sin(aa);
-                    dpose.y() -= targetEgoToBall.x()*std::sin(aa) + targetEgoToBall.y()*std::cos(aa);
+                        ball.x, ball.y, capA + targetBallToEgo.z());
+                    dpose.x() += targetBallToEgo.x()*std::cos(capA) - targetBallToEgo.y()*std::sin(capA);
+                    dpose.y() += targetBallToEgo.x()*std::sin(capA) + targetBallToEgo.y()*std::cos(capA);
                     //Security bounds
                     if (dpose.x() > 0.1) dpose.x() = 0.1;
                     if (dpose.x() < -0.05) dpose.x() = -0.05;
