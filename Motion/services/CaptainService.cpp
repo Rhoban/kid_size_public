@@ -23,8 +23,8 @@ static Logger logger("CaptainService");
  */
 static void boundPosition(Point &point)
 {
-    double xMin = -(Constants::field.fieldLength/2 - Constants::field.goalAreaLength - 0.5);
-    double xMax = Constants::field.fieldLength/2 - Constants::field.goalAreaLength + 0.5;
+    double xMin = -Constants::field.fieldLength/2 + Constants::field.goalAreaLength + 0.5;
+    double xMax = Constants::field.fieldLength/2 - Constants::field.goalAreaLength;
     double yMax = Constants::field.goalAreaWidth/2;
 
     if (point.x > xMax) {
@@ -93,11 +93,11 @@ CaptainService::CaptainService()
         ->defaultValue(1.0)->comment("Radius [m] to avoid colliding the ball while placing");
         
     bind.bindNew("minAggressivity", minAggressivity, RhIO::Bind::PullOnly)
-        ->defaultValue(0.25)->minimum(0.0)->maximum(1.0)
+        ->defaultValue(0.5)->minimum(0.0)->maximum(1.0)
         ->comment("Is the placing aggressive ore defensive?");
     
     bind.bindNew("maxAggressivity", maxAggressivity, RhIO::Bind::PullOnly)
-        ->defaultValue(0.75)->minimum(0.0)->maximum(1.0)
+        ->defaultValue(0.5)->minimum(0.0)->maximum(1.0)
         ->comment("Is the placing aggressive ore defensive?");
         
     bind.bindNew("aggressivity", aggressivity, RhIO::Bind::PushOnly)

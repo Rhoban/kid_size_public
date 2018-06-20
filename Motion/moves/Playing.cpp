@@ -51,7 +51,9 @@ PlayingMove::PlayingMove(Walk *walk)
 
     bind->bindNew("walkBallDistance", walkBallDistance, RhIO::Bind::PullOnly)
         ->defaultValue(1.2)->comment("Distance to run the approach to the ball [m]");
-
+        
+    bind->bindNew("avoidRadius", avoidRadius, RhIO::Bind::PullOnly)
+        ->defaultValue(1.0)->comment("Radius [m] to avoid colliding the ball while placing");
 }
 
 std::string PlayingMove::getName()

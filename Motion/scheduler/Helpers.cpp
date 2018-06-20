@@ -50,10 +50,18 @@ Moves* Helpers::getMoves()
     
 bool Helpers::isFakeMode() const
 {
-    return (_scheduler->getManager()
-        ->BaseManager::parametersList()
-        .paramStr("protocol").value 
-        == "FakeProtocol");
+    static bool isFake = false;
+    static bool asked = false;
+    
+    if (!asked) {
+        asked = true;
+        isFake = (_scheduler->getManager()
+            ->BaseManager::parametersList()
+            .paramStr("protocol").value 
+            == "FakeProtocol");
+    }
+    
+    return isFake;
 }
 
 bool Helpers::hasMove(const std::string& moveName) const
