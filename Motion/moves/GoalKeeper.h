@@ -61,4 +61,6 @@ protected:
   float initArmsRollValue;
   float initTrunkZOffsetValue;
   float stopMoveTime;
+  bool opponentWithGrass;
+  float againstGrassRatio,grassRatio;
 };

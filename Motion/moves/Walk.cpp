@@ -387,6 +387,8 @@ Walk::Walk(Kick *kickMove)
 
     bind->bindNew("gkMustRaise", gkMustRaise, RhIO::Bind::PullOnly)
             ->comment("goal keeper flag: walk must raise")->defaultValue(false);
+    bind->bindNew("gkMustBlock", gkMustBlock, RhIO::Bind::PullOnly)
+            ->comment("goal keeper flag: walk must be blocked")->defaultValue(false);
 
 #ifdef MODE_NOMINAL
     bind->node().newFloat("guessPhase");
@@ -696,6 +698,10 @@ void Walk::step(float elapsed)
 
     bind->pull();
 
+    if (gkMustBlock){
+      return;
+    }
+    
     if (gkMustRaise){
       if (tgk<0) tgk=0;
       tgk+=elapsed;

@@ -19,11 +19,11 @@ void ClearingKickController::step(float elapsed)
   auto ball = loc->getBallPosField();
 
   if (isInLateral){
-    if (fabs(ball.y)<2){
+    if (fabs(ball.y)<1.8){
       isInLateral=false;
     } 
   } else { // not in lateral
-    if (fabs(ball.y)>2.2){
+    if (fabs(ball.y)>2){
       isInLateral=true;
     } 
   }

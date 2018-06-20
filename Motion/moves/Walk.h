@@ -224,6 +224,7 @@ class Walk : public Move
 
 	// GoalKeeper related attributs:
 	bool gkMustRaise;
+	bool gkMustBlock;
 	float initElbowOffsetValue;
 	float initArmsRollValue;
 	float initTrunkZOffsetValue;
