@@ -313,9 +313,9 @@ Walk::Walk(Kick *kickMove)
 
     // Shoot warmup and cool down
     bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)
-        ->defaultValue(0.5)->comment("Cooldown duration [s]")->persisted(true);
+        ->defaultValue(1.0)->comment("Cooldown duration [s]")->persisted(false);
     bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)
-        ->defaultValue(0.5)->comment("Warmup [s]")->persisted(true);
+        ->defaultValue(0.2)->comment("Warmup [s]")->persisted(false);
         
     bind->bindNew("paramsStepGain", _orders.x(), RhIO::Bind::PushOnly)
         ->comment("IKWalk really used step parameters");
