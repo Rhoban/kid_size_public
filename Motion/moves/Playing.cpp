@@ -125,20 +125,14 @@ void PlayingMove::step(float elapsed)
             double turnSpeed = 0.7 * walk->maxRotation;
             double affix = fmod(t, localizePeriod);
             
-            if (!loc->getVisualCompassStatus() && loc->fieldConsistency <= 0 && loc->consistencyEnabled) {
-                // XXX: Hack, if we don't have the visual compass enabled, we
-                // just walk out of the field to be sure that we can pick it up
+            if (affix < locWait) {
+                walk->control(false);
+            } else if (affix < locWait + locRotTime) {
+                walk->control(true, 0, 0, turnSpeed);
+            } else if (affix < 2 * locWait + locRotTime) {
+                walk->control(false);
+            } else{
                 walk->control(true, walkSpeed);
-            } else {
-                if (affix < locWait) {
-                    walk->control(false);
-                } else if (affix < locWait + locRotTime) {
-                    walk->control(true, 0, 0, turnSpeed);
-                } else if (affix < 2 * locWait + locRotTime) {
-                    walk->control(false);
-                } else{
-                    walk->control(true, walkSpeed);
-                }
             }
         }
 
