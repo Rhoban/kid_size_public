@@ -85,7 +85,7 @@ Head::Head()
     ->defaultValue(65);
   bind->bindNew("maxPanTrack", max_pan_track, RhIO::Bind::PullOnly)
     ->comment("Maximum pan wished for an image point when tracking")
-    ->defaultValue(135);
+    ->defaultValue(115);
 
   // Timing/tracking variables
   bind->bindNew("isTracking", is_tracking, RhIO::Bind::PushOnly)
