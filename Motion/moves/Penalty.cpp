@@ -15,8 +15,7 @@ Penalty::Penalty(PenaltyKickController *controler)
 {
     initializeBinding();
 
-    bind->bindNew("startX", startX, RhIO::Bind::PullOnly)
-        ->comment("X Offset for the starting")->defaultValue(205)->persisted(true);
+    startX = 1.35;
 
     bind->bindNew("forceStart", forceStart, RhIO::Bind::PullOnly)
         ->comment("Force the start")->defaultValue(false);
@@ -73,7 +72,7 @@ void Penalty::step(float elapsed)
             }
             
             if (watching) {
-                if (T > 5) {
+                if (T > 1) {
                     T = 0;
                     watching = false;
                     startMove("head");
