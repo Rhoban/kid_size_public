@@ -315,7 +315,7 @@ Walk::Walk(Kick *kickMove)
     bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)
         ->defaultValue(1.0)->comment("Cooldown duration [s]")->persisted(false);
     bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)
-        ->defaultValue(0.5)->comment("Warmup [s]")->persisted(false);
+        ->defaultValue(0.75)->comment("Warmup [s]")->persisted(false);
         
     bind->bindNew("paramsStepGain", _orders.x(), RhIO::Bind::PushOnly)
         ->comment("IKWalk really used step parameters");
