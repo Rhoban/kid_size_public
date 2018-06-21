@@ -315,7 +315,7 @@ Walk::Walk(Kick *kickMove)
     bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)
         ->defaultValue(1.0)->comment("Cooldown duration [s]")->persisted(false);
     bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)
-        ->defaultValue(0.2)->comment("Warmup [s]")->persisted(false);
+        ->defaultValue(0.5)->comment("Warmup [s]")->persisted(false);
         
     bind->bindNew("paramsStepGain", _orders.x(), RhIO::Bind::PushOnly)
         ->comment("IKWalk really used step parameters");
@@ -325,7 +325,7 @@ Walk::Walk(Kick *kickMove)
         ->comment("IKWalk really used turn parameters");
 
     bind->bindNew("pressureYStdThresholdWarmup", pressureYStdThresholdWarmup, RhIO::Bind::PullOnly)
-        ->defaultValue(0.05);
+        ->defaultValue(0.04);
     bind->bindNew("pressureYStdThresholdCooldown", pressureYStdThresholdCooldown, RhIO::Bind::PullOnly)
         ->defaultValue(0.02);
     bind->bindNew("pressureYStd", pressureYStd, RhIO::Bind::PushOnly);
