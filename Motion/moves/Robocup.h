@@ -34,6 +34,7 @@ class Robocup : public STM
         bool autoKickOff;
         int standup_try;
         double timeSinceVisionInactive;
+        double timeSinceNoConsistency;
 
         // Robot position at end of initial phase for autoKickOff
         float autoStartX;

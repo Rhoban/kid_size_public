@@ -70,6 +70,7 @@ Robocup::Robocup(Walk *walk, StandUp *standup, Placer *placer)
         ->defaultValue(0);
     // Time since vision
     bind->bindNew("timeSinceVisionInactive", timeSinceVisionInactive, RhIO::Bind::PushOnly);
+    bind->bindNew("timeSinceNoConsistency", timeSinceNoConsistency, RhIO::Bind::PushOnly);
 }
 
 std::string Robocup::getName()
@@ -89,6 +90,9 @@ void Robocup::onStart()
     wasHandled = true;
     isHandled = true;
     walk->control(false);
+    
+    timeSinceNoConsistency = 0;
+    timeSinceVisionInactive = 0;
     
     setTeamPlayState(Inactive);
 }
@@ -299,6 +303,17 @@ void Robocup::step(float elapsed)
         } else {
             timeSinceVisionInactive = 0;
         }
+        
+        if (!loc->getVisualCompassStatus() && loc->fieldConsistency <= 0.1 && loc->consistencyEnabled) {
+            timeSinceNoConsistency += elapsed;
+            
+            if (timeSinceNoConsistency > 15) {
+                setState(STATE_GIVE_UP);
+                logger.log("I lost my localization for more than 15s, giving up!");
+            }
+        } else {
+            timeSinceNoConsistency = 0;
+        }
         /*
         // We are attacking ourself, stop this!
         if (decision->isSelfAttacking) {
@@ -307,6 +322,7 @@ void Robocup::step(float elapsed)
         }
         */
     } else {
+        timeSinceNoConsistency = 0;
         timeSinceVisionInactive = 0;
     }
     
