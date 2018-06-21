@@ -48,7 +48,7 @@ LocalisationBinding::LocalisationBinding(MoveScheduler * scheduler_,
     toGoalQ(-1), robotQ(-1),
     enableFieldFilter(true),
     isGoalKeeper(false),
-    consistencyEnabled(false),
+    consistencyEnabled(true),
     consistencyScore(1),
     consistencyStepCost(0.01),
     consistencyBadObsCost(0.02),
@@ -375,7 +375,8 @@ void LocalisationBinding::step()
     fieldLogger.log("consistency: %d | nbVCObs: %d | minVCObs: %d",
                     consistencyEnabled, nbVCObs, minVCObs);
   }
-  setVisualCompassStatus(consistencyEnabled && nbVCObs < minVCObs);
+  // setVisualCompassStatus(consistencyEnabled && nbVCObs < minVCObs);
+  setVisualCompassStatus(false);
 
   // Compute observations if there is no reset pending
   ObservationVector observations;
@@ -723,7 +724,7 @@ void LocalisationBinding::publishToLoc()
   loc->setPosSelf(Eigen::Vector3d(lg.x, lg.y, 0),
                   Eigen::Vector3d(rg.x, rg.y, 0), Eigen::Vector3d(c.x, c.y, 0),
                   deg2rad(o.getValue()),
-                  robotQ, consistencyScore);
+                  robotQ, consistencyScore, consistencyEnabled);
 }
 
 void LocalisationBinding::applyWatcher(

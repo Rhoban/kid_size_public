@@ -48,6 +48,7 @@ class LocalisationService : public Service
         rhoban_utils::Angle getOurBallToGoalDirSelf();
 
         float fieldQ, fieldConsistency;
+        bool consistencyEnabled;
         double getGoalCap();
         double getLeftGoalCap();
         double getRightGoalCap();
@@ -103,7 +104,7 @@ class LocalisationService : public Service
         void setPosSelf(const Eigen::Vector3d &left, 
 			const Eigen::Vector3d &right, 
 			const Eigen::Vector3d &center, float orientation, 
-                        float quality, float consistency);
+                        float quality, float consistency, bool consistencyEnabled=false);
         void updatePosSelf();
 
         // Goal Scanner target

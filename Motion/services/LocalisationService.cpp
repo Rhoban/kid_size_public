@@ -606,7 +606,7 @@ void LocalisationService::updatePosSelf()
         
 void LocalisationService::setPosSelf(const Eigen::Vector3d &left,
         const Eigen::Vector3d &right, const Eigen::Vector3d &center, float orientation, 
-        float quality, float consistency)
+        float quality, float consistency, bool consistencyEnabled_)
 {
     bind.pull();
 
@@ -614,6 +614,7 @@ void LocalisationService::setPosSelf(const Eigen::Vector3d &left,
 
     fieldQ = quality;
     fieldConsistency = consistency;
+    consistencyEnabled = consistencyEnabled_;
 
     if (Helpers::isFakeMode()) {
         fieldCenterWorld = getServices()->model->goalModel().get().selfInFrame("origin", center);
