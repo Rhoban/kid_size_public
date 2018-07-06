@@ -3,7 +3,6 @@
 
 #include "Walk.h"
 #include "Kick.h"
-// #include "LateralStep.hpp"
 #include "StandUp.h"
 #include "IMUTest.h"
 #include "StaticLearner.hpp"
@@ -15,31 +14,33 @@
 #include "Search.h"
 #include "TestHeadSinus.hpp"
 #include "TrajectoriesPlayer.hpp"
-#include "KickPhilipp.hpp"
 #include "CameraCalibration.hpp"
 #ifdef VISION_COMPONENT
 #include "ArucoCalibration.h"
 #endif
-#include "OdometryCalibration.hpp"
-#include "ModelCalibration.hpp"
 #include "GoalKeeper.h"
 #include "Placer.h"
 #include "ApproachPotential.h"
 #include "LogMachine.hpp"
-// #include "KickCalibration.hpp"
 #include "GoalKick.hpp"
 #include "AutonomousPlaying.h"
 
 #include "ReactiveKicker.h"
 
-#include "MDPKickController.h"
 #include "QKickController.h"
 #include "ClearingKickController.h"
 #include "PenaltyKickController.h"
-#include "LearnedApproach.h"
 #include "policies/expert_approach.h"
 #include "problems/extended_problem_factory.h"
 #include "rhoban_csa_mdp/core/policy_factory.h"
+
+// #include "KickPhilipp.hpp"
+// #include "KickCalibration.hpp"
+// #include "LateralStep.hpp"
+// #include "OdometryCalibration.hpp"
+// #include "ModelCalibration.hpp"
+// #include "LearnedApproach.h"
+// #include "MDPKickController.h"
 
 Moves::Moves(MoveScheduler* scheduler) :
         _scheduler(scheduler)
@@ -58,7 +59,6 @@ Moves::Moves(MoveScheduler* scheduler) :
     Head *head = new Head;
     Placer *placer = new Placer(walk);
     StandUp *standup = new StandUp;
-    // LateralStep *lateralStep = new LateralStep();
     add(walk);
     add(standup);
     add(head);
@@ -78,15 +78,11 @@ Moves::Moves(MoveScheduler* scheduler) :
 #ifdef VISION_COMPONENT
     add(new ArucoCalibration);
 #endif
-    add(new OdometryCalibration(walk));
-    add(new ModelCalibration);
     add(new TrajectoriesPlayer);
     add(new IMUTest);
     add(new TestHeadSinus);
     add(new StaticLearner);
     add(new Replayer);
-
-    add(new KickPhilipp);
 
     add(new LogMachine(walk, head));
 
@@ -95,19 +91,24 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(new GoalKick());
 
     // Requires additionnal dependencies
-    csa_mdp::PolicyFactory::registerExtraBuilder("ExpertApproach",
-                                                 []() {return std::unique_ptr<csa_mdp::Policy>(new csa_mdp::ExpertApproach);});
 
-    add(new MDPKickController());
     add(new QKickController());
     add(new ClearingKickController());
     auto penaltyController = new PenaltyKickController();
     add(penaltyController);
-    add(new LearnedApproach(walk));
     add(new Penalty(penaltyController));
 
     add(new ReactiveKicker(walk));
     add(new AutonomousPlaying(walk, standup));
+
+
+//    csa_mdp::PolicyFactory::registerExtraBuilder("ExpertApproach", []() {return std::unique_ptr<csa_mdp::Policy>(new csa_mdp::ExpertApproach);});
+//    add(new MDPKickController());
+//    LateralStep *lateralStep = new LateralStep();
+//    add(new LearnedApproach(walk));
+//    add(new KickPhilipp);
+//    add(new OdometryCalibration(walk));
+//    add(new ModelCalibration);
 }
 
 Moves::~Moves()

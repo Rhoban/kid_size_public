@@ -19,19 +19,19 @@ set (SOURCES
     IMUTest.cpp
     TrajectoriesPlayer.cpp
     CameraCalibration.cpp
-    OdometryCalibration.cpp
-    ModelCalibration.cpp
     GoalKeeper.cpp
     Placer.cpp
     Kick.cpp
-    # LateralStep.cpp
 
     LogMachine.cpp
-    KickPhilipp.cpp
 
     GoalKick.cpp
-
     ReactiveKicker.cpp
+
+#    LateralStep.cpp
+#    KickPhilipp.cpp
+#    OdometryCalibration.cpp
+#    ModelCalibration.cpp
 )
 
 if (BUILD_KID_SIZE_VISION)
@@ -45,8 +45,8 @@ if (csa_mdp_experiments_FOUND)
   set(SOURCES
     ${SOURCES}
     KickController.cpp
-    LearnedApproach.cpp
-    MDPKickController.cpp
+#    LearnedApproach.cpp
+#    MDPKickController.cpp
     QKickController.cpp
     ClearingKickController.cpp
     PenaltyKickController.cpp
