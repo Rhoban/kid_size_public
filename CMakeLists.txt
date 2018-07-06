@@ -34,7 +34,7 @@ if (BUILD_KID_SIZE_VISION)
   add_definitions(-DVISION_COMPONENT)
   add_definitions(-DENABLE_OPENCV)
   set (OpenCV_DIR /home/gregwar/opencv/build/)
-  find_package(OpenCV REQUIRED)
+  find_package(OpenCV 3 REQUIRED)
   include_directories(${OpenCV_DIR}/include)
   include_directories(${OpenCV_DIR}/include/opencv2)
   link_directories(${OpenCV_DIR}/lib ${OpenCV_DIR}/3rdparty/lib)
@@ -124,7 +124,6 @@ if (BUILD_KID_SIZE_VISION)
     Vision/Filters/Obstacles
     Vision/Filters/Patches
     Vision/Filters/Source
-    Vision/Features
     Vision/FrameSource
     Vision/Hough
     Vision/Localisation

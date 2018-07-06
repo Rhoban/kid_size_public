@@ -1,7 +1,7 @@
 #include <stdexcept>
 #include "Filters/Features/VisualCompass.hpp"
 
-#include <opencv2/legacy/legacy.hpp>
+//#include <opencv2/legacy/legacy.hpp>
 #include "rhoban_utils/timing/time_stamp.h"
 #include "Utils/RotatedRectUtils.hpp"
 #include "rhoban_utils/logging/logger.h"
@@ -13,9 +13,7 @@
 #include "rhoban_utils/logging/logger.h"
 #include "Filters/Features/homography_decomp.hpp"
 #include <cvdrawingutils.h>
-#include <opencv2/calib3d/calib3d.hpp>
-// #include <iterator>
-#include "Filters/Features/precomp_import.hpp"
+#include <opencv2/calib3d.hpp>
 #include <algorithm>
 
 // FIXME: this should be elsewhere
@@ -44,8 +42,8 @@ void VisualCompass::initSIFT() {
   // detector = cv::FeatureDetector::create("SIFT");
   // descriptor_extractor = cv::DescriptorExtractor::create("SIFT");
 
-  detector = new cv::SiftFeatureDetector();
-  descriptor_extractor = new cv::SiftDescriptorExtractor();
+  detector = new cv::xfeatures2d::SiftFeatureDetector();
+  descriptor_extractor = new cv::xfeatures2d::SiftDescriptorExtractor();
 
   // Matcher
   // descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING); //Brute force
@@ -192,7 +190,6 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
 
   Benchmark::close("VisualCompass SIFT match");
 
-  // std::cerr<<"DEBUG "<<matches.size()<<std::endl;
   for (int k = 0; k < (int)matches.size(); k++) {
     if ((matches[k][0].distance < nndrRatio * (matches[k][1].distance)))  // &&
       //  ((int)matches[k].size() <= 2 && (int)matches[k].size()>0) ) //TODO param
@@ -203,16 +200,6 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
     }
   }
 
-  /*
-  //crash, for unknown reasons...
-  std::vector<cv::Point2f>pts_train;
-  std::vector<cv::Point2f>pts_query;
-  getPoints(keypoints_pano,keypoints, pts_train, pts_query,good_matches);
-  cv::Mat E, R, t, mask;
-  E = findEssentialMat(pts_query, pts_train, CamParam.CameraMatrix, cv::RANSAC, 0.999, 1.0, mask);
-  recoverPose(E, pts_query, pts_train, R, t, CamParam.CameraMatrix, mask);
-  */
-
     if (debugLevel >= 1) {
       out.log("Good matches: %d", good_matches.size());
     }
@@ -222,16 +209,11 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
     if (good_matches.size() > 0) {
       if (debugLevel >= 2) {
 	
-        cv::drawMatches(img(), keypoints, field, keypoints_pano, good_matches, img_debug, cv::Scalar(0, 0, 255),
-                        cv::Scalar(255, 0, 0), std::vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-        // cv::resize(img_debug, img_debug, cv::Size(), 0.5, 0.5);
-	cv::resize(img_debug, img_debug, cv::Size(), 1.2, 1.2);
-
-
-        // cv::imshow("VisualCompass SIFT debug goodmatches", img_goodmatches);
-        // cv::imshow("VisualCompass SIFT debug", img_debug);
-	// cv::waitKey(1);
-        //////
+        cv::drawMatches(img(), keypoints, field, keypoints_pano, good_matches,
+                        img_debug, cv::Scalar(0, 0, 255),
+                        cv::Scalar(255, 0, 0), std::vector<char>(),
+                        cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+        cv::resize(img_debug, img_debug, cv::Size(), 1.2, 1.2);
       }
     }
 }
@@ -439,74 +421,6 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
         out.log("VisualCompass: homography polygon is convex");
       }
       isHomographyGood = true;
-
-      // Huumm? Doesn't work?
-      // cv::Mat pose;
-      // cameraPoseFromHomography(H,pose);
-      // std::cerr<<"POSE: "<<pose<<std::endl;
-
-      /*
-      //Overkill but...
-      std::vector<cv::Mat> rotations;
-      std::vector<cv::Mat> translations;
-      std::vector<cv::Mat> normals;
-      int nbsol=cv::decomposeHomographyMat(H,CamParam.CameraMatrix,rotations,translations,normals);
-
-      //DEBUG
-      // std::cerr<<"VisualCompass: "<<H<<" Camera pose "<<pose<<std::endl;
-      std::cerr<<"VisualCompass decomp: "<<nbsol<<std::endl;
-      std::cerr<<"VisualCompass rotations:"<<std::endl;
-      for(int it=0;it<rotations.size();it++)
-      std::cerr<<"\t"<<rotations[it]<<std::endl;
-      std::cerr<<std::endl;
-
-      // for (auto R_ : rotations) {
-      //   cv::Mat1d rvec;
-      //   cv::Rodrigues(R_, rvec);
-      //   std::cout << rvec*180/CV_PI << std::endl << std::endl;
-      // }
-
-
-      std::cerr<<"VisualCompass translations:"<<std::endl;
-      for(int it=0;it<translations.size();it++)
-      std::cerr<<"\t"<<translations[it]<<std::endl;
-      std::cerr<<std::endl;
-
-
-
-
-      std::cerr<<"VisualCompass normals:"<<std::endl;
-      for(int it=0;it<normals.size();it++)
-      std::cerr<<"\t"<<normals[it]<<std::endl;
-      std::cerr<<std::endl;
-      */
-
-      /*
-        for(size_t it=0;it<4;it++)
-        {
-        //   cv::Mat1d rvec;
-        //   cv::Rodrigues(rotations[it], rvec);
-        //   std::cerr<<"Rvec: "<<it<<" "<<rvec<<std::endl;
-        //   CvDrawingUtils::draw3dAxis(outangle,CamParam,rvec,translations[it],0.25);
-
-
-
-        //   // try{CvDrawingUtils::draw3dAxis(outangle,CamParam,rvec,translations[it],0.25);}
-        //   // catch(...){std::cerr<<"DRAW failed"<<it<<std::endl;}
-        // }
-        // */
-
-      /*
-        cv::Mat1d rvec;
-        cv::Rodrigues(rotations[0], rvec);
-        // std::cerr<<"Rvec: "<<it<<" "<<rvec<<std::endl;
-        CvDrawingUtils::draw3dAxis(outangle,CamParam,rvec,translations[0],0.25);
-      */
-
-      // CvDrawingUtils::draw3dAxis(outangle,CamParam,rotations[0],translations[0],0.25);
-      // CvDrawingUtils::draw3dAxis(outangle,CamParam,rotations[1],translations[1],0.25);
-      // CvDrawingUtils::draw3dAxis(outangle,CamParam,rotations[2],translations[2],0.25);
-      // CvDrawingUtils::draw3dAxis(outangle,CamParam,rotations[1],translations[3],0.25);
 
     } else  // humm... let's still use the outliers mask (seems to be quite ok)
     {

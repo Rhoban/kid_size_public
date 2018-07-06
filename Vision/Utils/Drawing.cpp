@@ -4,6 +4,8 @@
 
 #include "Utils/Interface.h"
 
+#include <opencv2/imgproc.hpp>
+
 using namespace rhoban_geometry;
 
 namespace Vision {
@@ -12,8 +14,8 @@ namespace Utils {
 void draw(cv::Mat &img, const Ellipse &e, const cv::Scalar &color,
           int thickness) {
   cv::Size s(e.getBigRadius(), e.getSmallRadius());
-  ellipse(img, rg2cv(e.getCenter()), s, e.getAngle().getValue(), 0.0, 360.0,
-          color, thickness);
+  cv::ellipse(img, rg2cv(e.getCenter()), s, e.getAngle().getValue(), 0.0, 360.0,
+              color, thickness);
 }
 
 void draw(cv::Mat &img, const ParametricLine &line, const cv::Scalar &color,

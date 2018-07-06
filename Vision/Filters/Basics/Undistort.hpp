@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Filters/Filter.hpp"
-#include "opencv2/ocl/ocl.hpp"
 
 
 namespace Vision {
@@ -34,7 +33,7 @@ protected:
 private:
   bool _first = true;
   cv::Mat _map1, _map2, _map1Inverted;
-  cv::ocl::oclMat map1, map2;
+  cv::UMat map1, map2;
 };
 }
 }

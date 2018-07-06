@@ -3,7 +3,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include "rhoban_utils/timing/benchmark.h"
-#include "opencv2/ocl/ocl.hpp"
 
 using rhoban_utils::Benchmark;
 using namespace std;
@@ -26,11 +25,10 @@ void addBlobs(const Mat &binary, vector<vector<Point2i>> &blobs, bool gpuOn,
   }
   if (gpuOn) {
     Benchmark::open("(OpenCL) Addblob: binary_convert");
-    cv::ocl::oclMat oclBinary,
-        oclOut; // ocl method is slightly faster ~18ms vs ~26ms
-    oclBinary.upload(binary);
-    oclBinary.convertTo(oclOut, CV_32FC1);
-    oclOut.download(*output);
+    cv::UMat gpuIn, gpuOut;
+    binary.copyTo(gpuIn);
+    gpuIn.convertTo(gpuOut, CV_32FC1);
+    gpuOut.copyTo(*output);
     Benchmark::close("(OpenCL) Addblob: binary_convert");
   } else {
     Benchmark::open("(OpenCL) Addblob: binary_convert");
@@ -93,11 +91,10 @@ void addBlobsRects(const Mat &binary, std::vector<cv::Rect> &rects, bool gpuOn,
   }
   if (gpuOn) {
     Benchmark::open("(OpenCL) Addblob: binary_convert");
-    cv::ocl::oclMat oclBinary,
-        oclOut; // ocl method is slightly faster ~18ms vs ~26ms
-    oclBinary.upload(binary);
-    oclBinary.convertTo(oclOut, CV_32FC1);
-    oclOut.download(*output);
+    cv::UMat gpuIn, gpuOut;
+    binary.copyTo(gpuIn);
+    gpuIn.convertTo(gpuOut, CV_32FC1);
+    gpuOut.copyTo(*output);
     Benchmark::close("(OpenCL) Addblob: binary_convert");
   } else {
     Benchmark::open("(OpenCL) Addblob: binary_convert");

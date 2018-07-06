@@ -8,7 +8,6 @@
 #include <opencv2/core/core.hpp>
 #include <iostream>
 #include <string>
-#include "opencv2/ocl/ocl.hpp"
 
 using rhoban_utils::Benchmark;
 
@@ -160,20 +159,19 @@ void Undistort::process() {
     Benchmark::close("Reading huge map1 and map2 (only once)");
 
     if (Filter::GPU_ON) {
-      map1.upload(_map1Inverted);
-      map2.upload(_map2);
+      _map1Inverted.copyTo(map1);
+      _map2.copyTo(map2);
     }
   }
 
   if (Filter::GPU_ON) {
     Benchmark::open("OPENCL REMAP");
-    cv::ocl::oclMat image_gpu;
-    image_gpu.upload(input);
-    cv::ocl::oclMat image_gpu_undist;
+    cv::UMat image_gpu, image_gpu_undist;
+    input.copyTo(image_gpu);
 
-    cv::ocl::remap(image_gpu, image_gpu_undist, map1, map2, cv::INTER_LINEAR,
-                   cv::BORDER_CONSTANT);
-    image_gpu_undist.download(img());
+    cv::remap(image_gpu, image_gpu_undist, map1, map2, cv::INTER_LINEAR,
+              cv::BORDER_CONSTANT);
+    image_gpu_undist.copyTo(img());
     // std::cerr<<"OPENCL"<<std::endl;
 
     Benchmark::close("OPENCL REMAP");
