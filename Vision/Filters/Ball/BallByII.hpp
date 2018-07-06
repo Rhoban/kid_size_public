@@ -42,10 +42,6 @@ private:
   /// Return the patch associated to the upper boundary part of the ball at the given point
   cv::Rect_<float> getBoundaryAbovePatch(int x, int y, float radius);
 
-  /// Return the score of the patch given the provided integralImage
-  double getPatchScore(const cv::Rect & patch,
-                       const cv::Mat & integralImage);
-
   double getCandidateScore(int center_x, int center_y, double radius,
                            const cv::Mat & y_img, const cv::Mat & green_img);
 

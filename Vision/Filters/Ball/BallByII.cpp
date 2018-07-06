@@ -3,6 +3,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "rhoban_utils/timing/benchmark.h"
 #include "Utils/OpencvUtils.h"
+#include "Utils/PatchTools.hpp"
 #include "Utils/ROITools.hpp"
 #include "Utils/RotatedRectUtils.hpp"
 #include "CameraState/CameraState.hpp"
@@ -312,30 +313,6 @@ cv::Rect_<float> BallByII::getBoundaryAbovePatch(int x, int y, float radius)
   return cv::Rect_<float>(tl, tl + fullSize);
 }
 
-double BallByII::getPatchScore(const cv::Rect & patch,
-                               const cv::Mat & integralImage) {
-  // Use cropped rectangle
-  cv::Rect cropped = Utils::cropRect(patch, cv::Size(cols,rows));
-
-  // Return null score if cropped area is small
-  if (cropped.area() == 0) return 0;
-
-  // Top left and bottom right corners
-  cv::Point2i tl, br;
-  tl = cropped.tl();
-  br = cropped.br();//Offset has to be counted on image score
-
-  int A, B, C, D;
-  A = integralImage.at<int>(tl.y, tl.x);
-  B = integralImage.at<int>(tl.y, br.x);
-  C = integralImage.at<int>(br.y, tl.x);
-  D = integralImage.at<int>(br.y, br.x);
-
-  double area = cropped.area();
-
-  return (A + D - B - C) / area;
-}
-
 double BallByII::getCandidateScore(int center_x, int center_y, double radius,
                                    const cv::Mat & yImg, const cv::Mat & greenImg) {
   // Computing inner patches
@@ -352,10 +329,10 @@ double BallByII::getCandidateScore(int center_x, int center_y, double radius,
   // ub: upper boundary
 
   // Computing y_score
-  double y_ia = getPatchScore(innerAbovePatch, yImg);
-  double y_ib = getPatchScore(innerBelowPatch, yImg);
-  double y_b  = getPatchScore(boundaryPatch, yImg);
-  double y_ub = getPatchScore(boundaryAbovePatch, yImg);
+  double y_ia = Utils::getPatchDensity(innerAbovePatch, yImg);
+  double y_ib = Utils::getPatchDensity(innerBelowPatch, yImg);
+  double y_b  = Utils::getPatchDensity(boundaryPatch, yImg);
+  double y_ub = Utils::getPatchDensity(boundaryAbovePatch, yImg);
   // When ball is far: IA is supposed to be bright and the rest supposed to be dark
   // score_far = (y_ia - y_ub) + (y_ia - y_ib) + (y_ia - y_b)
   // (y_ia - y_ub) -> Avoid white object on the top of the boundary zone
@@ -366,8 +343,8 @@ double BallByII::getCandidateScore(int center_x, int center_y, double radius,
   double y_score = std::max(y_score_far, y_score_close);
 
   // Computing green_score
-  double green_b = getPatchScore(boundaryPatch, greenImg);
-  double green_i = getPatchScore(innerPatch, greenImg);
+  double green_b = Utils::getPatchDensity(boundaryPatch, greenImg);
+  double green_i = Utils::getPatchDensity(innerPatch, greenImg);
   double green_score = green_b - green_i;
 
   return (yWeight * y_score + greenWeight * green_score) / (yWeight + greenWeight);
