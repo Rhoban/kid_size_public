@@ -69,13 +69,6 @@ public:
   static PanTilt panTiltFromXY(const cv::Point2f &pos, double height);
 
   /**
-   * Returns the number of pixels the radius of the ball should take if the ball
-   * center was at pos
-   */
-  //      int ballPixelRadiusFromXY(const cv::Point2f & pos, double height, int
-  //      nbCols, int nbRows);
-
-  /**
    * Compute with the model the cartesian position of the
    * ball in model world frame viewed in the image at given
    * pixel. Also optionally assign minimum and maximum
