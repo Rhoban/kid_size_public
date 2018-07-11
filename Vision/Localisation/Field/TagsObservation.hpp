@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Localisation/Field/SerializableFieldObservation.hpp"
-#include "CameraState/CameraState.hpp"
 #include <string>
 
 namespace Vision {
@@ -59,8 +58,6 @@ public:
 
   static void bindWithRhIO();
   static void importFromRhIO();
-
-  // static double maxTiltAllowed;
 
   std::string getClassName() const override;
   void fromJson(const Json::Value & v, const std::string & dir_name);

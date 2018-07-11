@@ -1,5 +1,7 @@
 #include "BallProvider.hpp"
 
+#include "CameraState/CameraState.hpp"
+
 using namespace rhoban_geometry;
 
 namespace Vision {
@@ -72,8 +74,8 @@ Circle BallProvider::rescaleCircle(const Circle &circle,
                                    const cv::Mat &circle_img) const
 {
   double new_x, new_y, new_radius;
-  new_x = circle.getCenter().x / circle_img.cols;
-  new_y = circle.getCenter().y / circle_img.rows;
+  new_x = circle.getCenter().x / circle_img.cols * getCS().getCameraModel().getImgWidth();
+  new_y = circle.getCenter().y / circle_img.rows * getCS().getCameraModel().getImgHeight();
   new_radius = circle.getRadius() / circle_img.cols;
   return Circle(Point(new_x, new_y), new_radius);
 }
@@ -82,8 +84,8 @@ Circle BallProvider::scaleToImg(const Circle &circle,
                                 const cv::Mat &circle_img) const
 {
   double new_x, new_y, new_radius;
-  new_x = circle.getCenter().x * circle_img.cols;
-  new_y = circle.getCenter().y * circle_img.rows;
+  new_x = circle.getCenter().x * circle_img.cols / getCS().getCameraModel().getImgWidth();
+  new_y = circle.getCenter().y * circle_img.rows / getCS().getCameraModel().getImgHeight();
   new_radius = circle.getRadius() * circle_img.cols;
   return Circle(Point(new_x, new_y), new_radius);
 }

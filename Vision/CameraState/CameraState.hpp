@@ -20,16 +20,22 @@ class CameraState {
 public:
   typedef std::pair<rhoban_utils::Angle,rhoban_utils::Angle> PanTilt;
   
-  CameraState(MoveScheduler *moveScheduler, const std::string& CameraParametersYAML="./camera_calib.yml");
+  CameraState(MoveScheduler *moveScheduler);
+
+  const Leph::CameraModel & getCameraModel() const;
 
   /// Asks the model to update itself to the state the robot had at timeStamp
   void updateInternalModel(double timeStamp);
 
-  /// Return the [x,y] position of the ground point seen at imgX, imgY [0,1]
-  /// Return value is in [m]
+  /// Return the [x,y] position of the ground point seen at (imgX, imgY)
+  /// in self referential [m]
   /// throws a runtime_error if the point requested is above horizon
-  cv::Point2f robotPosFromImg(double imgX, double imgY, double imgWidth,
-                              double imgHeight, bool self = true);
+  cv::Point2f robotPosFromImg(double imgX, double imgY);
+
+  /// Return the [x,y] position of the ground point seen at (imgX, imgY)
+  /// in world referential [m]
+  /// throws a runtime_error if the point requested is above horizon
+  cv::Point2f worldPosFromImg(double imgX, double imgY);
 
   /// Converting vector from world referential to self referential
   Eigen::Vector2d getVecInSelf(const Eigen::Vector2d & vec_in_world);
@@ -38,17 +44,14 @@ public:
   cv::Point2f getPosInSelf(const cv::Point2f & pos_in_origin);
 
   /// Return the [pan, tilt] pair of the ground point seen at imgX, imgY
-  PanTilt robotPanTiltFromImg(double imgX, double imgY,
-                              double imgWidth,
-                              double imgHeight);
+  PanTilt robotPanTiltFromImg(double imgX, double imgY);
 
   /*
-   * Returns the xy position expected on the screen of the point p
-   * expressed in the robot's frame
+   * Returns the xy position expected on the screen of the point p [m]
    * Return (-1,-1) if point p is outside of the img
    */
-  cv::Point imgXYFromRobotPosition(const cv::Point2f &p, double imgWidth,
-                                   double imgHeight, bool self = true);
+  cv::Point imgXYFromRobotPosition(const cv::Point2f &p);
+  cv::Point imgXYFromWorldPosition(const cv::Point2f &p);
 
   /**
    * Return the xy position in the robot basis, from pan, tilt respectively to
@@ -113,13 +116,6 @@ public:
    */
   rhoban_utils::Angle getTrunkYawInWorld();
 
-
-  /// Return the lateral aperture angle in degrees
-  double getLatApertureDeg();
-
-  /// Return the vertical aperture angle in degrees
-  double getVertApertureDeg();
-
   /**
    * Returns the timestamp of the last update in the obnoxius type
    */
@@ -130,41 +126,17 @@ public:
   double getTimeStampDouble();
 
   /**
-   * Returns the Y coordinate of the pixel on the horizon line whose
-   * position in the X coordinate is pixelX
+   * Returns the Y coordinate of the pixel on the horizon line whose position in
+   * the X coordinate is pixelX
    */
-  double getPixelYtAtHorizon(double pixelX, double imgWidth, double imgHeight);
-
-
-  /**
-   * Normalize a point from the CameraMatrix. For internal use only...
-   */
-
-  void normalizePointFromCamMatrix(const Eigen::Vector2d &in, cv::Point3f &out);
-
-  void unnormalizePointFromCamMatrix(const cv::Point2d &in, cv::Point2f &out);
-
-  /**
-   * Undistort points from the real camera to an ideal one.
-   */
-  void undistortPoint(double pixelX, double pixelY, double imgWidth, double imgHeight, cv::Point2f &out);
-
-  /**
-   * Distort points from an ideal camera coordinate to the "real" camera.
-   */
-  void distortPoint(double pixelX, double pixelY, double imgWidth, double imgHeight, cv::Point2f &out);
+  double getPixelYtAtHorizon(double pixelX);
 
   MoveScheduler *_moveScheduler;
   Leph::HumanoidFixedPressureModel _pastReadModel;
   Leph::HumanoidModel *_model;
-  Leph::CameraParameters _params;
+  Leph::CameraModel _cameraModel;
   double _timeStamp;
   double _angularPitchErrorDefault = 0.0;
-
-  //Parameters that are very confortable here...
-  aruco::CameraParameters CamParam;
-  double fovx; //Horizontal Field of view in degrees
-  double fovy; //Vertical
 };
 }
 }

@@ -23,8 +23,8 @@ void FieldBorderData::computeTransformations(Vision::Utils::CameraState * cs,
     for (size_t k = 0; k < pix_lines.size(); k++) {
       cv::Point2f A = pix_lines[k].first;
       cv::Point2f B = pix_lines[k].second;
-      auto pointA = cs->robotPosFromImg(A.x, A.y, 1, 1, false);
-      auto pointB = cs->robotPosFromImg(B.x, B.y, 1, 1, false);
+      auto pointA = cs->worldPosFromImg(A.x, A.y);
+      auto pointB = cs->worldPosFromImg(B.x, B.y);
       world_lines.push_back(std::pair<cv::Point2f, cv::Point2f >(pointA, pointB));
       pointA = cs->getPosInSelf(pointA);
       pointB = cs->getPosInSelf(pointB);
@@ -38,8 +38,7 @@ void FieldBorderData::computeTransformations(Vision::Utils::CameraState * cs,
     }
         
     if (hasCorner) {
-      world_corner = cs->robotPosFromImg(pix_corner.x,
-					 pix_corner.y, 1, 1, false);
+      world_corner = cs->worldPosFromImg(pix_corner.x,pix_corner.y);
       self_corner = cs->getPosInSelf(world_corner);
       corner_robot_dist = cv::norm(self_corner);
       

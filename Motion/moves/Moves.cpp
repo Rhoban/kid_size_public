@@ -14,7 +14,6 @@
 #include "Search.h"
 #include "TestHeadSinus.hpp"
 #include "TrajectoriesPlayer.hpp"
-#include "CameraCalibration.hpp"
 #ifdef VISION_COMPONENT
 #include "ArucoCalibration.h"
 #endif
@@ -74,7 +73,6 @@ Moves::Moves(MoveScheduler* scheduler) :
     add(new PlayingMove(walk));
 
     // Dev moves
-    add(new CameraCalibration);
 #ifdef VISION_COMPONENT
     add(new ArucoCalibration);
 #endif

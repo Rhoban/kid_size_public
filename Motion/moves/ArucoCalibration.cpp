@@ -119,11 +119,10 @@ void ArucoCalibration::addEntry(std::vector<int> &indices,
     int indice = indices[i];
     std::pair<float, float> center = centers[i];
     std::pair<float, float> uncorrected_center = uncorrected_centers[i];
-    // In Leph: pixels are in [-1, 1] and not [0, 1]
-    double pixelX = (center.first - 0.5)*2;
-    double pixelY = (center.second - 0.5)*2;
-    double pixelXUncorrected = (uncorrected_center.first - 0.5)*2;
-    double pixelYUncorrected = (uncorrected_center.second - 0.5)*2;
+    double pixelX = center.first;
+    double pixelY = center.second;
+    double pixelXUncorrected = uncorrected_center.first;
+    double pixelYUncorrected = uncorrected_center.second;
     
     if (!(_mapOfTagPositions.count(indice))) {
       logger.log("The index %d was seen but its position is unknown.", indice);

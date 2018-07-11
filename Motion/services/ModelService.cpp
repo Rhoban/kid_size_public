@@ -25,9 +25,7 @@ ModelService::ModelService() :
     InitHumanoidModel<Leph::HumanoidFixedPressureModel>()),
   _correctedModel(
     InitHumanoidModel<Leph::HumanoidFixedPressureModel>()),
-  _cameraParameters({
-      67.0*M_PI/180.0,
-        52.47*M_PI/180.0}),
+  _cameraModel(),
   _imuOffset(Eigen::Vector3d::Zero()),
   _isUpdateReadBase(false),
   _wasUpdateReadBase(false),
@@ -47,7 +45,7 @@ ModelService::ModelService() :
   // Reading the correection to bring to the model
   rhoban_model_learning::VisionCorrectionModel correction_model;
   correction_model.loadFile("VCM.json");
-  _cameraParameters = correction_model.getCameraParameters();
+  _cameraModel = correction_model.getCameraModel();
   _imuOffset = correction_model.getImuOffsetsRad();
 
   //Load odometry model parameters from file
@@ -178,15 +176,6 @@ ModelService::ModelService() :
     ->persisted(true)
     ->comment("Loaded model type. sigmaban or grosban.")
     ->defaultValue("sigmaban");
-  //Add camera aperture RhIO export
-  _bind.node().newFloat("cameraModelAngularWidth")
-    ->comment("Camera Model parameter width angular aperture in degree. Read only.");
-  _bind.node().newFloat("cameraModelAngularHeight")
-    ->comment("Camera Model parameter height angular aperture in degree. Read only.");
-  _bind.node().setFloat("cameraModelAngularWidth",
-                        _cameraParameters.widthAperture*180.0/M_PI);
-  _bind.node().setFloat("cameraModelAngularHeight",
-                        _cameraParameters.heightAperture*180.0/M_PI);
   //Add odometry export RhIO node
   _bind.node().newFloat("x")
     ->comment("Corrected odometry X world position");
@@ -615,15 +604,9 @@ Leph::Odometry& ModelService::getOdometryModel()
   return _odometry;
 }
 
-const Leph::CameraParameters& ModelService::getCameraParameters() const
+const Leph::CameraModel& ModelService::getCameraModel() const
 {
-  return _cameraParameters;
-}
-
-void ModelService::setCameraParametersFOV(const double fovx, const double fovy)
-{
-  _cameraParameters.widthAperture=fovx;
-  _cameraParameters.heightAperture=fovy;
+  return _cameraModel;
 }
 
 Eigen::Vector3d ModelService::odometryDiff(

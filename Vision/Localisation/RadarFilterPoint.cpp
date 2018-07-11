@@ -46,21 +46,22 @@ bool RadarFilterPoint::bindToRhIO(std::string node, std::string command)
 bool RadarFilterPoint::isVisible(const Eigen::Vector3d &pt)
 {
     // Point is in robot basis in order to check if ball is seen
-    auto point = cameraState->imgXYFromRobotPosition(
-            cv::Point2f(pt.x(), pt.y()), 1000, 1000,
-            false);// false parameters means imgXYFromWorldPosition
+    cv::Point2f pt_cv(pt.x(), pt.y());
+    try {
+      cv::Point2f point = cameraState->imgXYFromWorldPosition(pt_cv);
+      bool inScreen = cameraState->getCameraModel().containsPixel(point);
 
-    auto pos = cameraState->_model->frameInSelf("origin", pt);
+      auto pos = cameraState->_model->frameInSelf("origin", pt);
+      bool isFar = pos.norm() > far;
+      // When objects are excentred and close, there is a risk to have them
+      Angle objDir = Angle::fromXY(pos.x(),pos.y());
+      bool isAligned = objDir.getSignedValue() < alignedAngle;
 
-    bool outOfScreen =
-        (point.x <= 0 || point.y <= 0 || point.x >= 1000 || point.y >= 1000);
-
-    bool isFar = pos.norm() > far;
-    // When objects are excentred and close, there is a risk to have them
-    Angle objDir = Angle::fromXY(pos.x(),pos.y());
-    bool isAligned = objDir.getSignedValue() < alignedAngle;
-
-    return !outOfScreen && !isFar && isAligned;
+      return inScreen && !isFar && isAligned;
+    } catch (const std::runtime_error & exc) {
+      // Fails when the object is behind the camera which means point is not visible
+      return false;
+    }
 }
 
 bool RadarFilterPoint::isSimilar(const Eigen::Vector3d &pt1, const Eigen::Vector3d &pt2)

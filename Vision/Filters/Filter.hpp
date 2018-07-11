@@ -137,6 +137,7 @@ public:
   SafePtr<const Parameters> params() const;
   SafePtr<Parameters> params();
 
+  const Utils::CameraState &getCS() const;
   Utils::CameraState &getCS();
 
   Pipeline *getPipeline();

@@ -1,7 +1,6 @@
 #include "ArenaBorderObservation.hpp"
 
 #include "Field/Field.hpp"
-#include "CameraState/CameraState.hpp"
 
 #include "RhIO.hpp"
 
@@ -89,7 +88,7 @@ ArenaBorderObservation::ArenaBorderObservation(
     Point pImg = src + diff * rndDiff(generator);
     try {
       // Converting to centimeters
-      cv::Point2f p_2f = cs.robotPosFromImg(pImg.x, pImg.y, imgWidth, imgHeight);
+      cv::Point2f p_2f = cs.robotPosFromImg(pImg.x, pImg.y);
       Point p = 100 * cv2rg(p_2f);
       // std::cerr<<"DEBUG point; "<<pImg.x<<" "<<pImg.y<<" "<<imgWidth<<"
       // "<<imgHeight<<" "<<p.x<<" "<<p.y<<std::endl;

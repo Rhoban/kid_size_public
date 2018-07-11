@@ -6,7 +6,7 @@
 
 namespace Leph {
   class HumanoidModel;
-  class CameraParameters;
+  class CameraModel;
 }
 
 /// PermaScan Move based on smooth trajectories
@@ -44,7 +44,7 @@ private:
 
   /// Get the ball target in self referential
   Eigen::Vector3d getBallTarget(Leph::HumanoidModel * model,
-                                Leph::CameraParameters * cam_params);
+                                const Leph::CameraModel & camera_model);
 
   /// Apply the protection orders based on provided status
   void applyProtection();

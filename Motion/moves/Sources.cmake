@@ -18,7 +18,6 @@ set (SOURCES
     TestHeadSinus.cpp
     IMUTest.cpp
     TrajectoriesPlayer.cpp
-    CameraCalibration.cpp
     GoalKeeper.cpp
     Placer.cpp
     Kick.cpp

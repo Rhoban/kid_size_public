@@ -1,5 +1,7 @@
 #include "GoalProvider.hpp"
 
+#include "CameraState/CameraState.hpp"
+
 namespace Vision {
 namespace Filters {
 
@@ -19,8 +21,8 @@ void GoalProvider::pushGoal(double x, double y,
                             const cv::Mat & goal_img)
 {
   double new_x, new_y;
-  new_x = x / goal_img.cols;
-  new_y = y / goal_img.rows;
+  new_x = x / goal_img.cols * getCS().getCameraModel().getImgWidth();
+  new_y = y / goal_img.rows * getCS().getCameraModel().getImgHeight();
   goals_x.push_back(new_x);
   goals_y.push_back(new_y);
 }

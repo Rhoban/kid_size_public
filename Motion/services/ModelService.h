@@ -216,14 +216,9 @@ public:
   Leph::Odometry& getOdometryModel();
 
   /**
-   * Access to Camera Model angular parameters
+   * Access to the Camera Model
    */
-  const Leph::CameraParameters& getCameraParameters() const;
-
-  /**
-   * Override the FOV parameters (inputs in radians). Dirty hack to try to keep consistency between camera parameters...
-   */
-  void setCameraParametersFOV(const double fovx, const double fovy);
+  const Leph::CameraModel& getCameraModel() const;
 
 private:
 
@@ -270,7 +265,7 @@ private:
    * Camera Model camera angular parameters
    * and IMU angle offsets
    */
-  Leph::CameraParameters _cameraParameters;
+  Leph::CameraModel _cameraModel;
   Eigen::Vector3d _imuOffset;
 
   /**

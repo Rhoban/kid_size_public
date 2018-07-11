@@ -72,6 +72,19 @@ SafePtr<Filter::Parameters> Filter::params() {
   return SafePtr<Filter::Parameters>(_params, _lockParams);
 }
 
+const Utils::CameraState &Filter::getCS() const {
+  if (_pipeline == NULL) {
+    throw std::runtime_error(
+        "Requesting CameraState in a filter not attached to a pipeline");
+  }
+  Utils::CameraState *cs = _pipeline->getCameraState();
+  if (cs == NULL) {
+    throw std::runtime_error("Invalid camera state");
+  } else {
+    return *cs;
+  }
+}
+
 Utils::CameraState &Filter::getCS() {
   if (_pipeline == NULL) {
     throw std::runtime_error(
@@ -133,17 +146,10 @@ void Filter::initWindow() {
         int V = R * 0.615 + G * -0.51499 + B * -0.10001 + 128;
 
 
-        cv::Point2f undistorded;
-        filter->getCS().undistortPoint(x, y, imgWidth, imgHeight,
-                                       undistorded);
-        // Code taken from ballInfoFromPixel
-        Eigen::Vector2d pixelInLeph;//Leph limits are [-1,1]
-        pixelInLeph.x() = ((double)(undistorded.x - imgWidth / 2.0) * 2.0 / imgWidth);
-        pixelInLeph.y() = ((double)(undistorded.y - imgHeight / 2.0) * 2.0 / imgHeight);
+        cv::Point2f corrected;
+        corrected = filter->getCS().getCameraModel().toCorrectedImg(cv::Point2f(x,y));
         std::cout << "CLICK x=" << x << " y=" << y << std::endl;
-        std::cout << " -> undistorded: "
-                  << undistorded.x << ", " << undistorded.y << std::endl;
-        std::cout << " ->pixelInLeph: "  << pixelInLeph.transpose() << std::endl;
+        std::cout << " -> corrected: " << corrected.x << ", " << corrected.y << std::endl;
         std::cout << " --> BGR[" << B << ",";
         std::cout << G << ",";
         std::cout << R << "]";

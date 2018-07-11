@@ -602,10 +602,8 @@ void Robocup::readPipeline() {
       for (size_t id = 0; id < providerGoalsX.size(); id++) {
         double goal_x = providerGoalsX[id];
         double goal_y = providerGoalsY[id];
-        detectedGoals.push_back(cs->robotPosFromImg(
-            goal_x, goal_y, 1, 1, false)); // false=invariant world reference
-                                           // frame (which integrates the
-                                           // odometry)
+        cv::Point2f goal_pos_world = cs->worldPosFromImg(goal_x, goal_y);
+        detectedGoals.push_back(goal_pos_world); 
       }
     } catch (const std::bad_cast &e) {
 
@@ -648,7 +646,7 @@ void Robocup::readPipeline() {
       if (robotFilter) {
         std::vector<Eigen::Vector3d> positions;
         for (const Eigen::Vector2d & obs : frame_obstacles) {
-          auto tmp = cs->robotPosFromImg(obs.x(), obs.y(), 1, 1, false);
+          auto tmp = cs->worldPosFromImg(obs.x(), obs.y());
           Eigen::Vector3d in_world(tmp.x, tmp.y, 0);
           positions.push_back(in_world);
         }
@@ -668,10 +666,7 @@ void Robocup::readPipeline() {
       detectedRobots.clear();
       // Going from pixels to world referential
       for (const Eigen::Vector2d & obs : frame_obstacles) {
-        detectedRobots.push_back(
-          cs->robotPosFromImg(obs.x(), obs.y(), 1, 1, false));  // false=invariant world reference
-                                                                // frame (which integrates the
-                                                                // odometry)
+        detectedRobots.push_back(cs->worldPosFromImg(obs.x(), obs.y()));
       }
     } catch (const std::bad_cast &e) {
       std::cerr << "Failed to import robot positions, check pipeline. Exception = " << e.what() << std::endl;
@@ -722,15 +717,16 @@ void Robocup::readPipeline() {
           avg_in_img += Eigen::Vector2d(marker[i].x, marker[i].y);
         }
         avg_in_img /= 4.0;
+        // Rescaling to cameraModel image
+        avg_in_img(0) *= cs->getCameraModel().getImgWidth() / size.width;
+        avg_in_img(1) *= cs->getCameraModel().getImgHeight() / size.height;
         // Undistort position
-        cv::Point2f avg_undistorded;
-        cs->undistortPoint(avg_in_img(0), avg_in_img(1), size.width, size.height, avg_undistorded);
+        cv::Point2f avg_in_corrected;
+        avg_in_corrected = cs->getCameraModel().toCorrectedImg(eigen2CV(avg_in_img));
         // Using a pair instead than a cv::Point so the structure is usable even
         // without opencv (will be read by the low level)
-        std::pair<float, float> pair_in_img(avg_in_img(0) / size.width,
-                                            avg_in_img(1) / size.height);
-        std::pair<float, float> pair_undistorded(avg_undistorded.x / size.width,
-                                                 avg_undistorded.y / size.height);
+        std::pair<float, float> pair_in_img(avg_in_img(0), avg_in_img(1));
+        std::pair<float, float> pair_undistorded(avg_in_corrected.x, avg_in_corrected.y);
         detectedTagsCenters.push_back(pair_in_img);
         detectedTagsCentersUndistort.push_back(pair_undistorded);
       }
@@ -939,7 +935,7 @@ void Robocup::updateBallInformations() {
   for (size_t k = 0; k < ballsX.size(); k++) {
     try {
       if (ignoreOutOfFieldBalls) {
-        cv::Point2f posInSelf = cs->robotPosFromImg(ballsX[k], ballsY[k], 1, 1);
+        cv::Point2f posInSelf = cs->robotPosFromImg(ballsX[k], ballsY[k]);
         double ballXSelf = posInSelf.x;
         double ballYSelf = posInSelf.y;
         LocalisationService * localisation = _scheduler->getServices()->localisation;
@@ -993,9 +989,6 @@ void Robocup::updateBallInformations() {
       Point ball_pos_in_field = loc->worldToField(pos_in_world);
       Point robot_pos = loc->getFieldPos();
       double field_dir = normalizeRad(loc->getFieldOrientation());
-      
-      Eigen::Vector2d tmp = pos_in_world.segment(0,2);
-      cv::Point2f pos_in_self = cs->getPosInSelf(rg2cv2f(tmp));
       // Entry format:
       // TimeStamp, ballX, ballY, robotX, robotY, fieldDir
       out.log("ballStatusEntry: %lf,%f,%f,%f,%f,%f",
@@ -1084,12 +1077,6 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
 
   cv::cvtColor(tmp_small, img, CV_YCrCb2BGR);
 
-  // Tagging horizon
-  double halfTagAngle =
-      (cs->getVertApertureDeg() + cs->getLatApertureDeg()) / 2;
-  if (halfTagAngle > 180)
-    halfTagAngle = 180; // Handling wide angle camera
-
   {
       // Drawing candidates of balls
       auto candidates = ballStackFilter->getCandidates();
@@ -1097,35 +1084,36 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
       for (auto &candidate : candidates) {
         k++;
         auto cpos = candidate.object;
-        auto pos = cs->imgXYFromRobotPosition(cv::Point2f(cpos.x(), cpos.y()),
-                                              img.cols, img.rows, false);
-        // I candidate is outside of the image, ignore it
-        if (pos.x < 0 && pos.y < 0) continue;
+        try {
+          auto pos = cs->imgXYFromWorldPosition(cv::Point2f(cpos.x(), cpos.y()));
+          // I candidate is outside of the image, ignore it
+          if (pos.x < 0 && pos.y < 0) continue;
 
-        // Draw ball candidate
-        cv::circle(img, pos, 6*candidate.score, cv::Scalar(255, 255, 0), CV_FILLED);
+          // Draw ball candidate
+          cv::circle(img, pos, 6*candidate.score, cv::Scalar(255, 255, 0), CV_FILLED);
 
-        // Write candidate number
-        std::stringstream ss;
-        ss << (candidates.size() - k);
-        cv::putText(img, ss.str(), pos, cv::FONT_HERSHEY_SIMPLEX, 0.3,
-                    cv::Scalar(0, 0, 0), 1);
+          // Write candidate number
+          std::stringstream ss;
+          ss << (candidates.size() - k);
+          cv::putText(img, ss.str(), pos, cv::FONT_HERSHEY_SIMPLEX, 0.3,
+                      cv::Scalar(0, 0, 0), 1);
 
-        // # Futur position of ball
-        // Elapsed time
-        double tag_ball_anticipation = 0.2;// [s] (TODO: set as rhio parameters?)
-        double elapsed = tag_ball_anticipation;
-        elapsed += diffSec(cs->getTimeStamp(), getNowTS());
-        // Compute futur position
-        Point ball_usable_speed = ballSpeedEstimator->getUsableSpeed();
-        Eigen::Vector3d ball_speed(ball_usable_speed.x, ball_usable_speed.y, 0);
+          // # Futur position of ball
+          // Elapsed time
+          double tag_ball_anticipation = 0.2;// [s] (TODO: set as rhio parameters?)
+          double elapsed = tag_ball_anticipation;
+          elapsed += diffSec(cs->getTimeStamp(), getNowTS());
+          // Compute futur position
+          Point ball_usable_speed = ballSpeedEstimator->getUsableSpeed();
+          Eigen::Vector3d ball_speed(ball_usable_speed.x, ball_usable_speed.y, 0);
 
-        auto next_cpos = cpos +  ball_speed * elapsed;
-        auto futur_pos = cs->imgXYFromRobotPosition(cv::Point2f(next_cpos.x(), next_cpos.y()),
-                                                    img.cols, img.rows, false);
-        // Avoid drawing line if out of image
-        if (futur_pos.x < 0 && futur_pos.y < 0) continue;
-        cv::line(img, pos, futur_pos, cv::Scalar(255, 255, 0), 2);
+          auto next_cpos = cpos +  ball_speed * elapsed;
+          cv::Point2f next_cpos_cv(next_cpos.x(), next_cpos.y());
+          auto futur_pos = cs->imgXYFromWorldPosition(next_cpos_cv);
+          cv::line(img, pos, futur_pos, cv::Scalar(255, 255, 0), 2);
+        } catch (const std::runtime_error & exc) {
+          out.warning("%s: failed ball drawing due to '%s'", DEBUG_INFO.c_str(), exc.what());
+        }
       }
   }
   
@@ -1136,20 +1124,23 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
       for (auto &candidate : candidates) {
         k++;
         auto cpos = candidate.object;
-        auto pos = cs->imgXYFromRobotPosition(cv::Point2f(cpos.x(), cpos.y()),
-                                              img.cols, img.rows, false);
+        try {
+          auto pos = cs->imgXYFromWorldPosition(cv::Point2f(cpos.x(), cpos.y()));
 
-        // I candidate is outside of the image, ignore it
-        if (pos.x < 0 && pos.y < 0) continue;
+          // I candidate is outside of the image, ignore it
+          if (pos.x < 0 && pos.y < 0) continue;
 
-        // Draw robot candidate
-        cv::circle(img, pos, 6*candidate.score, cv::Scalar(255, 0, 255), CV_FILLED);
+          // Draw robot candidate
+          cv::circle(img, pos, 6*candidate.score, cv::Scalar(255, 0, 255), CV_FILLED);
 
-        // Write candidate number
-        std::stringstream ss;
-        ss << (candidates.size() - k);
-        cv::putText(img, ss.str(), pos, cv::FONT_HERSHEY_SIMPLEX, 0.3,
-                    cv::Scalar(0, 0, 0), 1);
+          // Write candidate number
+          std::stringstream ss;
+          ss << (candidates.size() - k);
+          cv::putText(img, ss.str(), pos, cv::FONT_HERSHEY_SIMPLEX, 0.3,
+                      cv::Scalar(0, 0, 0), 1);
+        } catch (const std::runtime_error & exc) {
+          out.warning("%s: failed ball drawing due to '%s'", DEBUG_INFO.c_str(), exc.what());
+        }
       }
   }
 
@@ -1172,14 +1163,15 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
   // Drawing opponent robots
   auto candidates = ballStackFilter->getCandidates();
 
-  // Tagging horizon
-  cv::Point horizon1, horizon2;
-  horizon1.x = 0;
-  horizon2.x = width - 1;
-  horizon1.y = cs->getPixelYtAtHorizon(horizon1.x, width, height);
-  horizon2.y = cs->getPixelYtAtHorizon(horizon2.x, width, height);
-  // Color in BGR
-  cv::line(img, horizon1, horizon2, cv::Scalar(255, 0, 0), 2);
+//  // TODO: to repair
+//  // Tagging horizon
+//  cv::Point horizon1, horizon2;
+//  horizon1.x = 0;
+//  horizon2.x = width - 1;
+//  horizon1.y = cs->getPixelYtAtHorizon(horizon1.x, width, height);
+//  horizon2.y = cs->getPixelYtAtHorizon(horizon2.x, width, height);
+//  // Color in BGR
+//  cv::line(img, horizon1, horizon2, cv::Scalar(255, 0, 0), 2);
 
   globalMutex.unlock();
 
@@ -1216,8 +1208,8 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
                (i / 2.0) * scale_factor, cv::Scalar(0, 150, 0), 2 - (i % 2));
   }
   // Drawing vision cone
-  double yaw = -cs->getYaw().getSignedValue() * M_PI / 180.0;
-  double half_aperture = cs->getLatApertureDeg() * M_PI / (2 * 180.0);
+  rhoban_utils::Angle yaw = -cs->getYaw();
+  rhoban_utils::Angle half_aperture = cs->getCameraModel().getFOVY();
   cv::Point2i p1(width / 2 + height * cos(yaw + half_aperture),
                  height / 2 + height * sin(yaw + half_aperture));
   cv::Point2i p2(width / 2 + height * cos(yaw - half_aperture),
@@ -1260,8 +1252,7 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         // Going from and image position to a position on the field, in the
         // origin (of world) frame
         try {
-          auto point = cs->robotPosFromImg(ballsX[ballIndex], ballsY[ballIndex],
-                                           1, 1, false);
+          auto point = cs->worldPosFromImg(ballsX[ballIndex], ballsY[ballIndex]);
           // std::cout << "DEBUG Ball seen at (origin frame) " << point << std::endl;
           freshObservations.push_back(point);
         } catch (const std::runtime_error &exc) {
@@ -1288,9 +1279,8 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
                     << detectedTagsCenters[index].second << std::endl;
           // Going from and image position to a position on the field, in the
           // origin (of world) frame
-          auto point = cs->robotPosFromImg(detectedTagsCenters[index].first,
-                                           detectedTagsCenters[index].second, 1,
-                                           1, false);
+          auto point = cs->worldPosFromImg(detectedTagsCenters[index].first,
+                                           detectedTagsCenters[index].second);
           freshObservations.push_back(point);
         } catch (const std::runtime_error &exc) {
           // Ignore the candidate

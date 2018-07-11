@@ -181,8 +181,8 @@ void Head::step(float elapsed)
   } else {
     model = &(Helpers::getServices()->model->correctedModel().get());
   }
-  Leph::CameraParameters camParams = 
-    Helpers::getServices()->model->getCameraParameters();
+  const Leph::CameraModel & camera_model = 
+    Helpers::getServices()->model->getCameraModel();
 
   Eigen::Vector3d target_in_self;
   if (disabled) {
@@ -197,7 +197,7 @@ void Head::step(float elapsed)
     is_tracking = false;// Important to ensure scanning_time is properly updated
   }
   else if (shouldTrackBall()) {
-    target_in_self = getBallTarget(model, &camParams);
+    target_in_self = getBallTarget(model, camera_model);
     is_tracking = true;
   }
   else {
@@ -215,10 +215,7 @@ void Head::step(float elapsed)
   double wished_pan_rad, wished_tilt_rad;
 
   bool modelSuccess = model->cameraLookAtNoUpdate(
-    wished_pan_rad, wished_tilt_rad,
-    camParams,
-    target_in_world,
-    0);
+    wished_pan_rad, wished_tilt_rad, target_in_world);
 
   if (!modelSuccess) {
     std::cout << "head: failed lookAtNoUpdate" << std::endl;
@@ -335,7 +332,7 @@ Eigen::Vector3d Head::getScanTarget(Leph::HumanoidModel * model,
 }
 
 Eigen::Vector3d Head::getBallTarget(Leph::HumanoidModel * model,
-                                     Leph::CameraParameters * cam_params)
+                                    const Leph::CameraModel & camera_model)
 {
   double robotHeight = model->frameInSelf("camera", Eigen::Vector3d::Zero())(2);//[m]
 
@@ -344,7 +341,7 @@ Eigen::Vector3d Head::getBallTarget(Leph::HumanoidModel * model,
 
   // Getting limits angle
   double max_tilt_value = max_tilt_track;
-  double min_tilt_value = min_tilt + rad2deg(cam_params->heightAperture / 2);
+  double min_tilt_value = min_tilt + (camera_model.getFOVY() / 2).getSignedValue();
 
   // Bounding target
   double targetDist = std::sqrt(point.x * point.x + point.y * point.y);
@@ -360,19 +357,18 @@ Eigen::Vector3d Head::getBallTarget(Leph::HumanoidModel * model,
 
 void Head::updateScanners()
 {
-  Leph::CameraParameters cam_params = 
-    Helpers::getServices()->model->getCameraParameters();
+  const Leph::CameraModel camera_model = Helpers::getServices()->model->getCameraModel();
+  double fovx = camera_model.getFOVX().getSignedValue();
+  double fovy = camera_model.getFOVY().getSignedValue();
   // Update default scanner
-  scanner.setFOV(rad2deg(cam_params.widthAperture),
-                 rad2deg(cam_params.heightAperture));
+  scanner.setFOV(fovx, fovy);
   scanner.setMinTilt(min_tilt);
   scanner.setMaxTilt(max_tilt);
   scanner.setMaxPan(max_pan);
   scanner.setMinOverlap(min_overlap);
   scanner.setControlLaw(max_speed, max_acc);
   // Update localisation scanner
-  localize_scanner.setFOV(rad2deg(cam_params.widthAperture),
-                          rad2deg(cam_params.heightAperture));
+  localize_scanner.setFOV(fovx, fovy);
   localize_scanner.setMinTilt(localize_min_tilt);
   localize_scanner.setMaxTilt(localize_max_tilt);
   localize_scanner.setMaxPan(localize_max_pan);
@@ -381,8 +377,7 @@ void Head::updateScanners()
   // update compass_scanner
   double tmp_max_speed = vc_max_speed;
   double tmp_max_pan = compass_max_pan;
-  compass_scanner.setFOV(rad2deg(cam_params.widthAperture),
-                         rad2deg(cam_params.heightAperture));
+  compass_scanner.setFOV(fovx, fovy);
   compass_scanner.setMinTilt(compass_min_tilt);
   compass_scanner.setMaxTilt(compass_max_tilt);
   compass_scanner.setMaxPan(tmp_max_pan);

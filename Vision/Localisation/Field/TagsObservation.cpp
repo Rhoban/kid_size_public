@@ -1,7 +1,6 @@
 #include "TagsObservation.hpp"
 
 #include "Field/Field.hpp"
-#include "CameraState/CameraState.hpp"
 #include "Utils/Interface.h"
 
 #include "RhIO.hpp"
@@ -13,7 +12,6 @@
 
 static rhoban_utils::Logger out("TagsObservation");
 
-using Vision::Utils::CameraState;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 
