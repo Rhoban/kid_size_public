@@ -1,3 +1,0 @@
-set (SOURCES
-  TestCameraState.cpp
-)
