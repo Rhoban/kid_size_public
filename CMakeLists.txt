@@ -33,11 +33,10 @@ if (BUILD_KID_SIZE_VISION)
   enable_language(ASM)
   add_definitions(-DVISION_COMPONENT)
   add_definitions(-DENABLE_OPENCV)
-  set (OpenCV_DIR /home/gregwar/opencv/build/)
-  find_package(OpenCV 3 REQUIRED)
-  include_directories(${OpenCV_DIR}/include)
-  include_directories(${OpenCV_DIR}/include/opencv2)
-  link_directories(${OpenCV_DIR}/lib ${OpenCV_DIR}/3rdparty/lib)
+#  find_package(OpenCV 3 REQUIRED)
+#  include_directories(${OpenCV_DIR}/include)
+#  include_directories(${OpenCV_DIR}/include/opencv2)
+#  link_directories(${OpenCV_DIR}/lib ${OpenCV_DIR}/3rdparty/lib)
 
   # Use SSE2 and AVX if provided, otherwise, show a warning
   if ("${CMAKE_CXX_FLAGS}" MATCHES "-msse2" AND
@@ -92,7 +91,7 @@ set (LINKED_LIBRARIES
 if (BUILD_KID_SIZE_VISION)
     set (LINKED_LIBRARIES
       ${LINKED_LIBRARIES}
-      ${OpenCV_LIBS}
+#      ${OpenCV_LIBS}
 #      v4l2 #v4l2 cameras are not used anymore
       flycapture
       )

@@ -99,10 +99,9 @@ bool StrategyService::tick(double elapsed)
   // XXX: Todo share the ball target X
 
   static std::vector<std::string> approach_candidates =
-    {"approach", "approach_potential", "learned_approach"};
+    {"approach", "approach_potential"};
   static std::vector<std::string> kick_controler_candidates =
-    {"kick_controler", "q_kick_controler", "clearing_kick_controler",
-    "penalty_kick_controler"};
+    {"q_kick_controler", "clearing_kick_controler", "penalty_kick_controler"};
 
 
   bind.pull();
