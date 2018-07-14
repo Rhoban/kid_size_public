@@ -22,6 +22,8 @@ public:
   
   CameraState(MoveScheduler *moveScheduler);
 
+  Leph::HumanoidModel & getHumanoidModel() const;
+
   const Leph::CameraModel & getCameraModel() const;
 
   /// Asks the model to update itself to the state the robot had at timeStamp
@@ -30,28 +32,28 @@ public:
   /// Return the [x,y] position of the ground point seen at (imgX, imgY)
   /// in self referential [m]
   /// throws a runtime_error if the point requested is above horizon
-  cv::Point2f robotPosFromImg(double imgX, double imgY);
+  cv::Point2f robotPosFromImg(double imgX, double imgY) const;
 
   /// Return the [x,y] position of the ground point seen at (imgX, imgY)
   /// in world referential [m]
   /// throws a runtime_error if the point requested is above horizon
-  cv::Point2f worldPosFromImg(double imgX, double imgY);
+  cv::Point2f worldPosFromImg(double imgX, double imgY) const;
 
   /// Converting vector from world referential to self referential
-  Eigen::Vector2d getVecInSelf(const Eigen::Vector2d & vec_in_world);
+  Eigen::Vector2d getVecInSelf(const Eigen::Vector2d & vec_in_world) const;
 
   /// Return the position in the robot basis from a position in origin basis
-  cv::Point2f getPosInSelf(const cv::Point2f & pos_in_origin);
+  cv::Point2f getPosInSelf(const cv::Point2f & pos_in_origin) const;
 
   /// Return the [pan, tilt] pair of the ground point seen at imgX, imgY
-  PanTilt robotPanTiltFromImg(double imgX, double imgY);
+  PanTilt robotPanTiltFromImg(double imgX, double imgY) const;
 
   /*
    * Returns the xy position expected on the screen of the point p [m]
    * Return (-1,-1) if point p is outside of the img
    */
-  cv::Point imgXYFromRobotPosition(const cv::Point2f &p);
-  cv::Point imgXYFromWorldPosition(const cv::Point2f &p);
+  cv::Point imgXYFromRobotPosition(const cv::Point2f &p) const;
+  cv::Point imgXYFromWorldPosition(const cv::Point2f &p) const;
 
   /**
    * Return the xy position in the robot basis, from pan, tilt respectively to
@@ -79,11 +81,13 @@ public:
    * A negative value of angularPitchError means that the value used
    * for angularPitchError is set to angularPitchErrorDefault
    */
-  Eigen::Vector3d ballInfoFromPixel(const cv::Point2f &pos, double width,
-                                    double height);
-  Eigen::Vector3d ballInfoFromPixel(const cv::Point2f &pos, double width,
-                                    double height, int *radiusMin, int *radiusMax,
-                                    double angularPitchError = -1.0);
+  Eigen::Vector3d ballInfoFromPixel(const cv::Point2f &pos) const;
+  Eigen::Vector3d ballInfoFromPixel(const cv::Point2f &pos,
+                                    int *radiusMin, int *radiusMax,
+                                    double angularPitchError = -1.0) const;
+  Eigen::Vector3d ballInfoFromPixel(const cv::Point2f &pos,
+                                    double *radiusMin, double *radiusMax,
+                                    double angularPitchError = -1.0) const;
 
   /// Distance to ground [m]
   double getHeight();
@@ -109,14 +113,9 @@ public:
    */
   rhoban_utils::Angle getTrunkYawInWorld();
 
-  /**
-   * Returns the timestamp of the last update in the obnoxius type
-   */
-  rhoban_utils::TimeStamp getTimeStamp();
-  /**
-   * Returns the timestamp of the last update in a respectable type
-   */
-  double getTimeStampDouble();
+  rhoban_utils::TimeStamp getTimeStamp() const;
+  /// Return the timestamp in [ms]
+  double getTimeStampDouble() const;
 
   /**
    * Returns the Y coordinate of the pixel on the horizon line whose position in

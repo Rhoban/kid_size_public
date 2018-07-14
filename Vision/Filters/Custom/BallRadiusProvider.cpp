@@ -47,12 +47,10 @@ void BallRadiusProvider::process() {
   for (int col : key_cols) {
     for (int row : key_rows) {
       ///TODO: replace the current method to get something more appropriate
-      float factor = 100;//Since current method returns a int for the expected radius, use a factor
-      int radiusMin, radiusMax;
-      getCS().ballInfoFromPixel(cv::Point2f(factor*col, factor*row),
-                                factor * size.width, factor*size.height,
+      double radiusMin, radiusMax;
+      getCS().ballInfoFromPixel(cv::Point2f(col, row),
                                 &radiusMin, &radiusMax);
-      float radius = (radiusMin + radiusMax) / 2 / factor;
+      float radius = (radiusMin + radiusMax) / 2;
       tmp_img.at<float>(row, col) = radius;
     }
   }

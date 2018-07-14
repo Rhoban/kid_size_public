@@ -38,6 +38,11 @@ CameraState::CameraState(MoveScheduler *moveScheduler) :
   _model->updateDOFPosition();
 }
 
+Leph::HumanoidModel & CameraState::getHumanoidModel() const
+{
+  return *_model;
+}
+
 const Leph::CameraModel & CameraState::getCameraModel() const
 {
   return _cameraModel;
@@ -61,7 +66,7 @@ Angle CameraState::getTrunkYawInWorld()
   return Angle(rad2deg(_model->orientationYaw("trunk", "origin")));
 }
 
-cv::Point2f CameraState::robotPosFromImg(double imgX, double imgY)
+cv::Point2f CameraState::robotPosFromImg(double imgX, double imgY) const
 {
   cv::Point2f posInWorldCV = worldPosFromImg(imgX, imgY);
 
@@ -71,7 +76,7 @@ cv::Point2f CameraState::robotPosFromImg(double imgX, double imgY)
   return cv::Point2f(posInSelf(0), posInSelf(1));
 }
 
-cv::Point2f CameraState::worldPosFromImg(double imgX, double imgY) {
+cv::Point2f CameraState::worldPosFromImg(double imgX, double imgY) const{
 
   Eigen::Vector2d pixel(imgX, imgY);
 
@@ -90,7 +95,7 @@ cv::Point2f CameraState::worldPosFromImg(double imgX, double imgY) {
   return cv::Point2f(posInWorld(0), posInWorld(1));
 }
 
-Eigen::Vector2d CameraState::getVecInSelf(const Eigen::Vector2d & vec_in_world)
+Eigen::Vector2d CameraState::getVecInSelf(const Eigen::Vector2d & vec_in_world) const
 {
   Eigen::Vector3d src_in_world = Eigen::Vector3d::Zero();
   Eigen::Vector3d dst_in_world = Eigen::Vector3d::Zero();
@@ -103,7 +108,7 @@ Eigen::Vector2d CameraState::getVecInSelf(const Eigen::Vector2d & vec_in_world)
   return (dst_in_self - src_in_self).segment(0,2);
 }
 
-cv::Point2f CameraState::getPosInSelf(const cv::Point2f & pos_in_origin)
+cv::Point2f CameraState::getPosInSelf(const cv::Point2f & pos_in_origin) const
 {
   Eigen::Vector3d pos_in_origin_3d(pos_in_origin.x, pos_in_origin.y, 0);
   Eigen::Vector3d pos_in_self_3d;
@@ -111,7 +116,7 @@ cv::Point2f CameraState::getPosInSelf(const cv::Point2f & pos_in_origin)
   return cv::Point2f(pos_in_self_3d(0), pos_in_self_3d(1));
 }
 
-std::pair<Angle, Angle> CameraState::robotPanTiltFromImg(double imgX, double imgY)
+std::pair<Angle, Angle> CameraState::robotPanTiltFromImg(double imgX, double imgY) const
 {
   Eigen::Vector2d pixel(imgX, imgY);
   Eigen::Vector2d panTilt = _model->cameraPixelToPanTilt(_cameraModel, pixel);
@@ -139,14 +144,14 @@ double CameraState::getHeight() {
   return height;
 }
 
-cv::Point CameraState::imgXYFromRobotPosition(const cv::Point2f &p)
+cv::Point CameraState::imgXYFromRobotPosition(const cv::Point2f &p) const
 {
   Eigen::Vector3d posInSelf(p.x, p.y, 0);
   Eigen::Vector3d posInWorld = _model->selfInFrame("origin", posInSelf);
   return imgXYFromWorldPosition(cv::Point(posInWorld(0), posInWorld(1)));
 }
 
-cv::Point CameraState::imgXYFromWorldPosition(const cv::Point2f &p)
+cv::Point CameraState::imgXYFromWorldPosition(const cv::Point2f &p) const
 {
   Eigen::Vector3d pos(p.x, p.y, 0);
   Eigen::Vector2d pixel;
@@ -177,9 +182,23 @@ std::pair<Angle, Angle> CameraState::panTiltFromXY(const cv::Point2f &pos,
 }
 
 Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
-                                               double width, double height,
                                                int *radiusMin, int *radiusMax,
-                                               double angularPitchError) {
+                                               double angularPitchError) const {
+  double radiusMinDouble, radiusMaxDouble;
+  Eigen::Vector3d posInWorld =
+    ballInfoFromPixel(pos,&radiusMinDouble,&radiusMaxDouble, angularPitchError);
+  if (radiusMin != nullptr) {
+    *radiusMin = std::round(radiusMinDouble);
+  }
+  if (radiusMax != nullptr) {
+    *radiusMax = std::round(radiusMaxDouble);
+  }
+  return posInWorld;
+}
+
+Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
+                                               double *radiusMin, double *radiusMax,
+                                               double angularPitchError) const {
   if (angularPitchError < 0) {
     angularPitchError = _angularPitchErrorDefault;
   }
@@ -189,6 +208,7 @@ Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
   Eigen::Vector2d pixel = cv2Eigen(pos);
   
   Eigen::Vector2d panTilt = _model->cameraPixelToPanTilt(_cameraModel, pixel);
+
   Eigen::Vector3d viewVectorUp = _model->cameraPanTiltToViewVector(
     panTilt + Eigen::Vector2d(0.0, angularPitchError));
   Eigen::Vector3d viewVectorMiddle = _model->cameraPanTiltToViewVector(panTilt);
@@ -241,22 +261,15 @@ Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
     minDown = 0.0;
 
   if (radiusMin != nullptr) {
-    *radiusMin = std::round(std::min(std::min(minUp, minDown), minMiddle));
+    *radiusMin = std::min(std::min(minUp, minDown), minMiddle);
   }
   if (radiusMax != nullptr) {
-    *radiusMax = std::round(std::max(std::max(minUp, minDown), minMiddle));
+    *radiusMax = std::max(std::max(minUp, minDown), minMiddle);
   }
 
   return ballCenterMiddle;
 }
-Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
-                                               double width, double height) {
-  if (width <= 0 || height <= 0) {
-    std::ostringstream oss;
-    oss << "Invalid values for (width,height): (" << width << "," << height << ")";
-    throw std::logic_error(oss.str());
-  }
-
+Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos) const {
   Eigen::Vector2d pixel = cv2Eigen(pos);
 
   Eigen::Vector3d ballCenter;
@@ -267,11 +280,13 @@ Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
   return ballCenter;
 }
 
-::rhoban_utils::TimeStamp CameraState::getTimeStamp() {
+::rhoban_utils::TimeStamp CameraState::getTimeStamp() const {
   return ::rhoban_utils::TimeStamp::fromMS(_timeStamp * 1000);
 }
 
-double CameraState::getTimeStampDouble() { return _timeStamp * 1000; }
+double CameraState::getTimeStampDouble() const {
+  return _timeStamp * 1000;
+}
 
 double CameraState::getPixelYtAtHorizon(double pixelX)
 {

@@ -25,6 +25,8 @@ using namespace rhoban_utils;
 
 static rhoban_utils::Logger out("Filter");
 
+using Vision::Utils::CameraState;
+
 namespace Vision {
 
 bool Filter::GPU_ON = false;
@@ -112,7 +114,7 @@ void Filter::initWindow() {
   }
 
   // Create Opencv window for image and parameters
-  cv::namedWindow(name, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO);
+  cv::namedWindow(name);//, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO);
 
   // Set up and initialize mouse callback
   cv::setMouseCallback(
@@ -122,17 +124,23 @@ void Filter::initWindow() {
           return;
         }
         // Print coordinate, pixel value and world estimated position
+        const CameraState & cs = filter->getCS();
+        const Leph::CameraModel & cameraModel = cs.getCameraModel();
+        Leph::HumanoidModel & humanoidModel = cs.getHumanoidModel();
         cv::Vec3b pixel = filter->getImg()->at<cv::Vec3b>(y, x);
         Eigen::Vector3d ball_pos;
         cv::Point2f ball_center_in_img = cv::Point2f(x,y);
-        int radiusMin, radiusMax;
-        double imgWidth = filter->img().cols;
-        double imgHeight = filter->img().rows;
-        std::cout << "filter->getCS()->timestamp" << filter->getCS().getTimeStampDouble()
+        double radiusMin, radiusMax;
+        std::cout << "filter->getCS()->timestamp" << cs.getTimeStampDouble()
                   << std::endl;
-        ball_pos = filter->getCS().ballInfoFromPixel(ball_center_in_img,
-                                                     imgWidth, imgHeight,
-                                                     &radiusMin, &radiusMax);
+        ball_pos = cs.ballInfoFromPixel(ball_center_in_img,
+                                        &radiusMin, &radiusMax);
+        cv::Point2f corrected;
+        corrected = cs.getCameraModel().toCorrectedImg(cv::Point2f(x,y));
+
+        cv::Point2f selfPos = cs.robotPosFromImg(x,y);
+        Eigen::Vector3d viewVector = humanoidModel.cameraPixelToViewVector(
+          cameraModel, Eigen::Vector2d(x,y));
 
         int B = (int)pixel[0];
         int G = (int)pixel[1];
@@ -146,8 +154,6 @@ void Filter::initWindow() {
         int V = R * 0.615 + G * -0.51499 + B * -0.10001 + 128;
 
 
-        cv::Point2f corrected;
-        corrected = filter->getCS().getCameraModel().toCorrectedImg(cv::Point2f(x,y));
         std::cout << "CLICK x=" << x << " y=" << y << std::endl;
         std::cout << " -> corrected: " << corrected.x << ", " << corrected.y << std::endl;
         std::cout << " --> BGR[" << B << ",";
@@ -160,6 +166,8 @@ void Filter::initWindow() {
         std::cout << "Note :  YUV format is YCrCb" << std::endl;
 
         std::cout << "-> pos: " << ball_pos.transpose() << std::endl
+                  << "-> selfPos: " << selfPos.x << "," << selfPos.y << ")" << std::endl
+                  << "-> viewVector: " << viewVector.transpose() << std::endl
                   << "-> radiusMin: " << radiusMin << std::endl
                   << "-> radiusMax: " << radiusMax << std::endl;
         // Draw radiusMin and radiusMax circles on the image
