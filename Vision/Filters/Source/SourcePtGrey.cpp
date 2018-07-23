@@ -48,12 +48,6 @@ std::map<unsigned int, std::string> pixel_format_names = {
   {FlyCapture2::PIXEL_FORMAT_S_RGB16      , "Signed RGB 16"}
   // Ignoring vendor pixel format 422YUV8_JPEG
 };
-
-PtGreyException::PtGreyException(const std::string & msg)
-  : std::runtime_error(msg) {}
-
-PtGreyConnectionException::PtGreyConnectionException(const std::string & msg)
-  : std::runtime_error(msg) {}
   
 SourcePtGrey::SourcePtGrey()
     : Source("SourcePtGrey"), is_capturing(false), nb_retrieve_success(0),

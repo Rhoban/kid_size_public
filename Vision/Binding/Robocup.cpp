@@ -20,11 +20,11 @@
 #include "Filters/Features/TagsDetector.hpp"
 #include "Filters/Goal/GoalProvider.hpp"
 #include "Filters/Obstacles/ObstacleProvider.hpp"
-#include "Filters/Source/SourcePtGrey.hpp"
 
 #include "CameraState/CameraState.hpp"
 #include "Utils/Drawing.hpp"
 #include "Utils/Interface.h"
+#include "Utils/PtGreyExceptions.hpp"
 
 #include "rhoban_geometry/point.h"
 
@@ -469,7 +469,7 @@ void Robocup::step() {
       out.log("Vision exiting, asking to scheduler to shut down");
       _scheduler->askQuit();
     }
-  } catch (const Vision::Filters::PtGreyException &exc) {
+  } catch (const Vision::PtGreyException &exc) {
     globalMutex.unlock();
     Benchmark::close("Pipeline");
     Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);
@@ -479,7 +479,7 @@ void Robocup::step() {
     int sleep_time_ms = 100;
     usleep(sleep_time_ms * 1000);
     return;
-  } catch (const Vision::Filters::PtGreyConnectionException &exc) {
+  } catch (const Vision::PtGreyConnectionException &exc) {
     globalMutex.unlock();
     Benchmark::close("Pipeline");
     Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);

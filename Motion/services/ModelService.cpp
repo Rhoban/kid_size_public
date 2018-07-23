@@ -34,7 +34,6 @@ ModelService::ModelService() :
   _isReplay(false),
   _replayTimestamp(0.0),
   _bind("model"),
-  _currentSupport(Leph::HumanoidFixedModel::LeftSupportFoot),
   _odometry(
     Leph::OdometryDisplacementModel::DisplacementProportionalXYA,
     Leph::OdometryNoiseModel::NoiseDisable),
@@ -607,6 +606,11 @@ Leph::Odometry& ModelService::getOdometryModel()
 const Leph::CameraModel& ModelService::getCameraModel() const
 {
   return _cameraModel;
+}
+
+Leph::HumanoidFixedModel::SupportFoot ModelService::getSupportFoot() const
+{
+  return _readModel.getSupportFoot();
 }
 
 Eigen::Vector3d ModelService::odometryDiff(

@@ -24,6 +24,7 @@ catkin_package(
 
 #Build option
 option (BUILD_KID_SIZE_VISION "Build the Vision" ON)
+option (KID_SIZE_USES_FLYCAPTURE "Use flycapture to build the vision" ON)
 option (BUILD_VISION_OPENCL "Build vision with OpenCL support" OFF)
 option (BUILD_KID_SIZE_PROGRAM_VISION "Enable the build of Vision Programs" OFF)
 option (BUILD_KID_SIZE_PROGRAM_STRATEGY "Enable the build of Strategy programs" OFF)
@@ -33,10 +34,6 @@ if (BUILD_KID_SIZE_VISION)
   enable_language(ASM)
   add_definitions(-DVISION_COMPONENT)
   add_definitions(-DENABLE_OPENCV)
-#  find_package(OpenCV 3 REQUIRED)
-#  include_directories(${OpenCV_DIR}/include)
-#  include_directories(${OpenCV_DIR}/include/opencv2)
-#  link_directories(${OpenCV_DIR}/lib ${OpenCV_DIR}/3rdparty/lib)
 
   # Use SSE2 and AVX if provided, otherwise, show a warning
   if ("${CMAKE_CXX_FLAGS}" MATCHES "-msse2" AND
@@ -89,13 +86,13 @@ set (LINKED_LIBRARIES
 
 #Add Vision libraries
 if (BUILD_KID_SIZE_VISION)
-    set (LINKED_LIBRARIES
-      ${LINKED_LIBRARIES}
-#      ${OpenCV_LIBS}
-#      v4l2 #v4l2 cameras are not used anymore
-      flycapture
-      )
-endif ()
+    if (KID_SIZE_USES_FLYCAPTURE)
+        set (LINKED_LIBRARIES
+            ${LINKED_LIBRARIES}
+            flycapture
+        )
+    endif(KID_SIZE_USES_FLYCAPTURE)
+endif (BUILD_KID_SIZE_VISION)
 
 
 #List Sources sub source directories

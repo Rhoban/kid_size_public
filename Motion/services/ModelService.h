@@ -220,6 +220,11 @@ public:
    */
   const Leph::CameraModel& getCameraModel() const;
 
+  /**
+   * Get current support foot
+   */
+  Leph::HumanoidFixedModel::SupportFoot getSupportFoot() const;
+
 private:
 
   /**
@@ -301,11 +306,6 @@ private:
    * RhIO binding
    */
   RhIO::Bind _bind;
-
-  /**
-   * Current Model support foot
-   */
-  Leph::HumanoidFixedModel::SupportFoot _currentSupport;
 
   /**
    * Odometry displacement

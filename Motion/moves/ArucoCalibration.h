@@ -61,4 +61,7 @@ private:
 
   /// The duration of a log
   float _logDuration;
+
+  /// The last foot support according to Model
+  float _lastSupportFoot;
 };

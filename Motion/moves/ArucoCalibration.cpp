@@ -22,7 +22,8 @@ static rhoban_utils::Logger logger("ArucoCalibration");
 
 ArucoCalibration::ArucoCalibration()
   : Move(),
-    _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>()) {
+    _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>()),
+    _lastSupportFoot(Leph::HumanoidFixedModel::SupportFoot::LeftSupportFoot){
   _model = &(_pastReadModel.get());
   Move::initializeBinding();
   bind->bindNew("filename", _fileName, RhIO::Bind::PullOnly)
@@ -193,8 +194,16 @@ void ArucoCalibration::step(float elapsed) {
     dance(_t);
     moveHead();
   }
+
+
   
   auto loc = getServices()->localisation;
+  ModelService * modelService = Helpers::getServices()->model;
+  if (modelService->getSupportFoot() != Leph::HumanoidFixedModel::SupportFoot::LeftSupportFoot) {
+    logger.error("Support foot is not left foot!!!");
+  }
+
+
   std::vector<int> markerIndices;
   std::vector<Eigen::Vector3d> markerPositions;
   std::vector<std::pair<float, float>> markerCenters;
@@ -216,7 +225,7 @@ void ArucoCalibration::step(float elapsed) {
   logger.log("Adding entry for TS %f", tagTimestamp);
   // Retrieving the model at the given timestamp
   _model->setAutoUpdate(true);
-  Helpers::getServices()->model->pastReadModel(tagTimestamp, _pastReadModel);
+  modelService->pastReadModel(tagTimestamp, _pastReadModel);
   _model = &(_pastReadModel.get());
   _model->setAutoUpdate(false);
   _model->updateDOFPosition();
