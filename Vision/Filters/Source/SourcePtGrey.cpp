@@ -135,8 +135,8 @@ Source::Type SourcePtGrey::getType() const {
 
 void SourcePtGrey::updateImageSettings() {
   // Error variable
-  setImagingMode(FlyCapture2::Mode::MODE_0);
-  //updateBinning(2,2);
+  setImagingMode(FlyCapture2::Mode::MODE_1);
+  updateBinning(2,2);
   setPixelFormat(FlyCapture2::PixelFormat::PIXEL_FORMAT_444YUV8);
 }
 
