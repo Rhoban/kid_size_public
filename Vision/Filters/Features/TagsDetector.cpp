@@ -23,6 +23,7 @@ TagsDetector::TagsDetector() : Filter("TagsDetector")
   MDetector.setDictionary("ARUCO_MIP_36h12");
   // Getting default parameters
   detectionParam = MDetector.getParams();
+  periodCounter = 0;
 }
 
 
