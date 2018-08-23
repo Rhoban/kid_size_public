@@ -5,5 +5,7 @@ set (SOURCES
 
 
 if (KID_SIZE_USES_FLYCAPTURE)
-  set(SOURCES "${SOURCES} SourcePtGrey.cpp")
+  set(SOURCES "${SOURCES}" 
+    SourcePtGrey.cpp
+  )
 endif(KID_SIZE_USES_FLYCAPTURE)

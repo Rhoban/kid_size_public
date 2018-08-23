@@ -64,6 +64,8 @@ using namespace rhoban_geometry;
 
 using namespace std::chrono;
 
+using namespace Vision::Utils;
+
 using Vision::Utils::CameraState;
 using Vision::Utils::ImageLogger;
 using Vision::Filters::BallProvider;
@@ -469,7 +471,7 @@ void Robocup::step() {
       out.log("Vision exiting, asking to scheduler to shut down");
       _scheduler->askQuit();
     }
-  } catch (const Vision::PtGreyException &exc) {
+  } catch (const PtGreyException &exc) {
     globalMutex.unlock();
     Benchmark::close("Pipeline");
     Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);
@@ -479,7 +481,7 @@ void Robocup::step() {
     int sleep_time_ms = 100;
     usleep(sleep_time_ms * 1000);
     return;
-  } catch (const Vision::PtGreyConnectionException &exc) {
+  } catch (const PtGreyConnectionException &exc) {
     globalMutex.unlock();
     Benchmark::close("Pipeline");
     Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);

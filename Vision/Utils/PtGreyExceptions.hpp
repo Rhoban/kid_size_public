@@ -4,6 +4,8 @@
 
 namespace Vision
 {
+namespace Utils
+{
 
 class PtGreyException : public std::runtime_error {
 public:
@@ -15,4 +17,5 @@ public:
   PtGreyConnectionException(const std::string & msg);
 };
 
+}
 }

@@ -8,5 +8,6 @@ set(SOURCES
     PatchTools.cpp
     ROITools.cpp
     RotatedRectUtils.cpp
+    PtGreyExceptions.cpp
 )
 

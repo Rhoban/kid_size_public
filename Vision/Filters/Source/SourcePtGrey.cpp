@@ -1,4 +1,5 @@
 #include "SourcePtGrey.hpp"
+#include "Utils/PtGreyExceptions.hpp"
 
 #include "Filters/Pipeline.hpp"
 
@@ -173,7 +174,7 @@ void SourcePtGrey::updatePacketProperties() {
       oss << ": Camera was capturing, stop capturing before changing packet "
              "size";
     }
-    throw PtGreyException(oss.str());
+    throw Utils::PtGreyException(oss.str());
   }
   error = camera.SetGigEProperty(&packet_delay_prop);
   if (error != FlyCapture2::PGRERROR_OK) {
@@ -183,7 +184,7 @@ void SourcePtGrey::updatePacketProperties() {
       oss << ": Camera was capturing, stop capturing before changing packet "
              "size";
     }
-    throw PtGreyException(oss.str());
+    throw Utils::PtGreyException(oss.str());
   }
 }
 
@@ -197,7 +198,7 @@ void SourcePtGrey::startCamera() {
   error = camera.Connect(0); // TODO: replace by &camera_id when implemented
   if (error != FlyCapture2::PGRERROR_OK) {
     const std::string message = "SourcePtGrey::StartCamera: Failed to connect to camera. Message: " + std::string(error.GetDescription());
-    throw PtGreyConnectionException(message);
+    throw Utils::PtGreyConnectionException(message);
   }
   try {
     // Properly set up size of packet and delay between packets
@@ -210,7 +211,7 @@ void SourcePtGrey::startCamera() {
     while (true) {
       error = camera.StartCapture();
       if (error == FlyCapture2::PGRERROR_ISOCH_BANDWIDTH_EXCEEDED) {
-        throw PtGreyException("SourcePtGrey::StartCamera: bandwidth exceeded");
+        throw Utils::PtGreyException("SourcePtGrey::StartCamera: bandwidth exceeded");
       } else if (error == FlyCapture2::PGRERROR_ISOCH_ALREADY_STARTED) {
         std::cerr << "SourcePtGrey::StartCamera: Isoch already started: stopping"
                   << std::endl;
@@ -248,10 +249,10 @@ void SourcePtGrey::startCamera() {
     embeddedInfo.timestamp.onOff = true;
     error = camera.SetEmbeddedImageInfo(&embeddedInfo);
     if (error != FlyCapture2::PGRERROR_OK) {
-      throw PtGreyException("failed to set 'embedded ImageInfo'");
+      throw Utils::PtGreyException("failed to set 'embedded ImageInfo'");
     }
     logger.log("setEmbeddedImageInfo OK");
-  } catch (const PtGreyException & exc) {
+  } catch (const Utils::PtGreyException & exc) {
     logger.error("Got a PtGreyException while preparing camera: '%s'",
                  exc.what());
     camera.Disconnect();
@@ -265,7 +266,7 @@ void SourcePtGrey::endCamera() {
   if (is_capturing) {
     camera.StopCapture();
     if (error != FlyCapture2::PGRERROR_OK) {
-      throw PtGreyException(
+      throw Utils::PtGreyException(
           "SourcePtGrey::endCamera: Failed to stop capture!");
     }
   }
@@ -286,7 +287,7 @@ void SourcePtGrey::reconnectCamera() {
   logger.log("reconnectCamera::Connect()");
   error = camera.Connect(0); // TODO: replace by &camera_id when implemented
   if (error != FlyCapture2::PGRERROR_OK) {
-    throw PtGreyConnectionException(
+    throw Utils::PtGreyConnectionException(
         "SourcePtGrey::StartCamera: Failed to connect to camera");
   }
   logger.log("reconnectCamera::OK()");
@@ -302,7 +303,7 @@ void SourcePtGrey::updateProperties() {
     property.type = property_type;
     error = camera.GetProperty(&property);
     if (error != FlyCapture2::PGRERROR_OK) {
-      throw PtGreyException("Failed to Get Property: '" + property_name +
+      throw Utils::PtGreyException("Failed to Get Property: '" + property_name +
                                "'");
     }
     // Write Property inside local map
@@ -320,7 +321,7 @@ void SourcePtGrey::updatePropertiesInformation() {
     property_info.type = property_type;
     error = camera.GetPropertyInfo(&property_info);
     if (error != FlyCapture2::PGRERROR_OK) {
-      throw PtGreyException("Failed to Get Property Information: '" +
+      throw Utils::PtGreyException("Failed to Get Property Information: '" +
                                property_name + "'");
     }
     // Write Property inside local map
@@ -539,13 +540,13 @@ void SourcePtGrey::applyWishedProperties() {
         std::cout << "PtGreyError: " <<  error.GetDescription() << std::endl;
         std::cout << "Wished prop: ";
         writeProperty(entry.second, std::cout, "  ");
-        throw PtGreyException("Failed to apply property: '" + property_name +
+        throw Utils::PtGreyException("Failed to apply property: '" + property_name +
                                  "'");
       }
       // Checking that property has properly been updated
       error = camera.GetProperty(&(properties.at(property_name)));
       if (error != FlyCapture2::PGRERROR_OK) {
-        throw PtGreyException("Failed to get property: '" + property_name +
+        throw Utils::PtGreyException("Failed to get property: '" + property_name +
                                  "'");
       }
       std::cout << "Difference between values:"
@@ -565,7 +566,7 @@ void SourcePtGrey::setTimeout(int time_ms)
   if (error != FlyCapture2::PGRERROR_OK) {
     std::ostringstream oss;
     oss << "SourcePtGrey::setTimeout: failed to getConfig: " << error.GetDescription();
-    throw PtGreyException(oss.str());
+    throw Utils::PtGreyException(oss.str());
   }
   config.grabTimeout = time_ms;
   // Set timeout
@@ -573,7 +574,7 @@ void SourcePtGrey::setTimeout(int time_ms)
   if (error != FlyCapture2::PGRERROR_OK) {
     std::ostringstream oss;
     oss << "SourcePtGrey::setTimeout: failed to setConfig: " << error.GetDescription();
-    throw PtGreyException(oss.str());
+    throw Utils::PtGreyException(oss.str());
   }
   
 }
@@ -618,9 +619,9 @@ double SourcePtGrey::measureTimestampDelta() {
     const std::string message = "WriteGVCPRegister failed (timestamp latch). Message: " + std::string(error.GetDescription());
     if (diffMs(last_retrieval_success, TimeStamp::now()) > 5000) {
       endCamera();
-      throw PtGreyException("Failed to reset timestamp for more than 5 s");
+      throw Utils::PtGreyException("Failed to reset timestamp for more than 5 s");
     }
-    throw PtGreyException(message);
+    throw Utils::PtGreyException(message);
   }
   
   TimeStamp t1 = TimeStamp::now();
@@ -634,12 +635,12 @@ double SourcePtGrey::measureTimestampDelta() {
   error = camera.ReadGVCPRegister(addressHigh, &bufferHigh);
   if (error != FlyCapture2::PGRERROR_OK) {
     const std::string message = "ReadRegister failed (timestamp). Message: " + std::string(error.GetDescription());
-    throw PtGreyException(message);
+    throw Utils::PtGreyException(message);
   }
   error = camera.ReadGVCPRegister(addressLow, &bufferLow);
   if (error != FlyCapture2::PGRERROR_OK) {
     const std::string message = "ReadRegister failed (timestamp). Message: " + std::string(error.GetDescription());
-    throw PtGreyException(message);
+    throw Utils::PtGreyException(message);
   }
 
   //From latched timestamp to milliseconds. The timestamp increments at 125MHz
@@ -688,7 +689,7 @@ void SourcePtGrey::process() {
 
   if (error == FlyCapture2::PGRERROR_TIMEOUT) {
     endCamera();
-    throw PtGreyException("RetrieveBuffer timed out");
+    throw Utils::PtGreyException("RetrieveBuffer timed out");
   }
   else if (error != FlyCapture2::PGRERROR_OK) {
     std::ostringstream oss;
@@ -700,7 +701,7 @@ void SourcePtGrey::process() {
     //    << "Elapsed from synch " << elapsed_from_synch_ms;
     nb_retrieve_failures++;
     updateRhIO();
-    throw PtGreyException(oss.str());
+    throw Utils::PtGreyException(oss.str());
   }
   last_retrieval_success = now;
   nb_retrieve_success++;
@@ -739,14 +740,14 @@ void SourcePtGrey::process() {
     oss << "SourcePtGrey::process: frame is dated from "
         << (-frame_age_ms) << " ms in the future -> refused";
     measureTimestampDelta();
-    throw PtGreyException(oss.str());
+    throw Utils::PtGreyException(oss.str());
   }
   if (frame_age_ms > 128000) {
     std::ostringstream oss;
     oss << "SourcePtGrey::process: frame is dated from "
         << frame_age_ms << " ms in the past -> too old";
     measureTimestampDelta();
-    throw PtGreyException(oss.str());
+    throw Utils::PtGreyException(oss.str());
   }
 
   getPipeline()->setTimestamp(TimeStamp::fromMS(normalized_frame_ts));
@@ -757,7 +758,7 @@ void SourcePtGrey::process() {
     std::ostringstream oss;
     oss << "Invalid elapsed time: " << elapsed_ms
         << " (Elapsed from sync " << elapsed_from_synch_ms << ")";
-    throw PtGreyException(oss.str());
+    throw Utils::PtGreyException(oss.str());
   } else if (elapsed_ms > 500) {
     std::cout << "SourcePtGrey:: Warning: Elapsed time: " << elapsed_ms << " ms" << std::endl;
   }
@@ -814,7 +815,7 @@ FlyCapture2::Mode SourcePtGrey::getMode() {
   FlyCapture2::Mode image_mode;
   FlyCapture2::Error error = camera.GetGigEImagingMode(&image_mode);
   if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw PtGreyException(DEBUG_INFO + error.GetDescription());
+    throw Utils::PtGreyException(DEBUG_INFO + error.GetDescription());
   }
   return image_mode;
 }
@@ -823,7 +824,7 @@ FlyCapture2::GigEImageSettings SourcePtGrey::getImageSettings() {
   FlyCapture2::GigEImageSettings settings;
   FlyCapture2::Error error = camera.GetGigEImageSettings(&settings);
   if ( error != FlyCapture2::ErrorType::PGRERROR_OK ) {
-    throw PtGreyException(DEBUG_INFO + error.GetDescription());
+    throw Utils::PtGreyException(DEBUG_INFO + error.GetDescription());
   }
   return settings;
 }
@@ -832,7 +833,7 @@ FlyCapture2::GigEImageSettingsInfo SourcePtGrey::getImageSettingsInfo() {
   FlyCapture2::GigEImageSettingsInfo infos;
   FlyCapture2::Error error = camera.GetGigEImageSettingsInfo(&infos);
   if ( error != FlyCapture2::ErrorType::PGRERROR_OK ) {
-    throw PtGreyException(DEBUG_INFO + error.GetDescription());
+    throw Utils::PtGreyException(DEBUG_INFO + error.GetDescription());
   }
   return infos;
 }
@@ -840,7 +841,7 @@ FlyCapture2::GigEImageSettingsInfo SourcePtGrey::getImageSettingsInfo() {
 void SourcePtGrey::setImagingMode(FlyCapture2::Mode mode) {
   FlyCapture2::Error error = camera.SetGigEImagingMode(mode);
   if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw PtGreyException(DEBUG_INFO + error.GetDescription());
+    throw Utils::PtGreyException(DEBUG_INFO + error.GetDescription());
   }
 }
 
@@ -852,7 +853,7 @@ void SourcePtGrey::updateBinning(unsigned int h_binning, unsigned int v_binning)
   error = camera.GetGigEImageBinningSettings(&current_h_binning,
                                              &current_v_binning);
   if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw PtGreyException(DEBUG_INFO + "Error getting current binning settings"
+    throw Utils::PtGreyException(DEBUG_INFO + "Error getting current binning settings"
                           + error.GetDescription());
   }
 
@@ -860,7 +861,7 @@ void SourcePtGrey::updateBinning(unsigned int h_binning, unsigned int v_binning)
   if (h_binning != current_h_binning || v_binning != current_v_binning) {
     error = camera.SetGigEImageBinningSettings(h_binning, v_binning);
     if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-      throw PtGreyException(DEBUG_INFO + "Error setting binning settings"
+      throw Utils::PtGreyException(DEBUG_INFO + "Error setting binning settings"
                             + error.GetDescription());
     }
   }
@@ -871,7 +872,7 @@ void SourcePtGrey::setPixelFormat(FlyCapture2::PixelFormat pixel_format) {
   image_settings.pixelFormat = pixel_format;
   FlyCapture2::Error error = camera.SetGigEImageSettings(&image_settings);
   if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw PtGreyException(DEBUG_INFO + "Error setting image settings: "
+    throw Utils::PtGreyException(DEBUG_INFO + "Error setting image settings: "
                           + error.GetDescription());
   }
 }

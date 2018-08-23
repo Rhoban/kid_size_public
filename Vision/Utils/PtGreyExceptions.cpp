@@ -2,6 +2,8 @@
 
 namespace Vision
 {
+namespace Utils
+{
 
 PtGreyException::PtGreyException(const std::string & msg)
   : std::runtime_error(msg) {}
@@ -9,4 +11,5 @@ PtGreyException::PtGreyException(const std::string & msg)
 PtGreyConnectionException::PtGreyConnectionException(const std::string & msg)
   : std::runtime_error(msg) {}
 
+}
 }
