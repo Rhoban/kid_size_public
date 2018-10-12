@@ -42,10 +42,10 @@ ModelService::ModelService() :
   _isLogBinaryFormat(true)
 {
   // Reading the correection to bring to the model
-  rhoban_model_learning::VisionCorrectionModel correction_model;
-  correction_model.loadFile("VCM.json");
-  _cameraModel = correction_model.getCameraModel();
-  _imuOffset = correction_model.getImuOffsetsRad();
+  rhoban_model_learning::CalibrationModel calibration_model;
+  calibration_model.loadFile("calibration.json");
+  _cameraModel = calibration_model.getCameraModel();
+  _imuOffset = calibration_model.getImuOffsetsRad();
 
   //Load odometry model parameters from file
   //Open file

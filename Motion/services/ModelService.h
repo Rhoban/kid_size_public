@@ -1,6 +1,6 @@
 #pragma once
 
-#include <rhoban_model_learning/humanoid_models/vision_correction_model.h>
+#include <rhoban_model_learning/humanoid_models/calibration_model.h>
 
 #include <Eigen/Dense>
 #include <string>
@@ -47,9 +47,9 @@ ModelType InitHumanoidModel()
     robotType = Leph::SigmabanModel;
   }
 
-  // Reading the correection to bring to the model
-  rhoban_model_learning::VisionCorrectionModel correction_model;
-  correction_model.loadFile("VCM.json");
+  // Reading the correction to bring to the model
+  rhoban_model_learning::CalibrationModel calibration_model;
+  calibration_model.loadFile("calibration.json");
 
   // Importing geometry data from a default model
   // Current intialization is based on the fact that initial root doesn't matter
@@ -61,9 +61,9 @@ ModelType InitHumanoidModel()
 
   // Modification of geometry data
   geometryData.block(geometryName.at("camera"),0,1,3) +=
-    correction_model.getCameraOffsetsRad().transpose();
+    calibration_model.getCameraOffsetsRad().transpose();
   geometryData.block(geometryName.at("head_yaw"),0,1,3) +=
-    correction_model.getNeckOffsetsRad().transpose();
+    calibration_model.getNeckOffsetsRad().transpose();
 
   //Initialize and return the model
   return ModelType (robotType, Eigen::MatrixXd(), {},
