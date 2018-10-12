@@ -8,7 +8,6 @@
 #include <Model/HumanoidFixedPressureModel.hpp>
 #include <Model/HumanoidModel.hpp>
 #include "rhoban_utils/timing/time_stamp.h"
-#include <aruco.h> //access to the camera params struct
 #include <utility>
 #include <string>
 

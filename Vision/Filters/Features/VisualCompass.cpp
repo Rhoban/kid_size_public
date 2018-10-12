@@ -12,7 +12,6 @@
 #include <cmath>
 #include "rhoban_utils/logging/logger.h"
 #include "Filters/Features/homography_decomp.hpp"
-#include <cvdrawingutils.h>
 #include <opencv2/calib3d.hpp>
 #include <algorithm>
 
@@ -21,17 +20,15 @@
 #define NATIVE_WIDTH 1280
 #define NATIVE_HEIGHT 960
 
-using ::rhoban_utils::Benchmark;
-using namespace aruco;
 using namespace rhoban_utils;
+using namespace std;
 static rhoban_utils::Logger out("VisualCompass");
 
 namespace Vision {
 namespace Filters {
 
 VisualCompass::VisualCompass() : CompassProvider("VisualCompass"), active_field(-1) {
-  CamParam.readFromXMLFile("camera_calib.yml");
-  cameraparamsdone = false;
+  cameraparamsdone=1;
   prev_maskBelow=0;
   prev_maskAbove=1;
 }
@@ -260,20 +257,19 @@ void VisualCompass::process() {
 
 
       // std::cout<<"WIDTH: "<<width<<" "<<pano_width<<" HEIGHT: "<<height<<" "<<pano_height<<std::endl;
+      //TODO: fix: use parameters from camera
 
       double appertureW = NATIVE_WIDTH / width * PIXEL_SIZE;
       double appertureH = NATIVE_HEIGHT / height * PIXEL_SIZE;
       double fovx, fovy, focalLength, aspectRatio;
       cv::Point2d principalPoint;
 
-      cv::calibrationMatrixValues(CamParam.CameraMatrix, cv::Size(width, height), appertureW, appertureH, fovx, fovy,
+      const Leph::CameraModel & cam_model = getCS().getCameraModel();
+
+      cv::calibrationMatrixValues(cam_model.getCameraMatrix(),
+                                  cv::Size(width, height), appertureW, appertureH, fovx, fovy,
                                   focalLength, principalPoint, aspectRatio);
       hfov_rad = deg2rad(fovx);
-      // std::cerr<<"DEBUG CAMERA: "<<fovx<<" "<<fovy<<" "<<focalLength<<" "<<principalPoint<<"
-      // "<<aspectRatio<<std::endl;
-
-      // std::cerr<<"DEBUG MATRIX: "<<CamParam.CameraMatrix.at< float >(0, 0)<<" "<<CamParam.CameraMatrix.at< float >(1,
-      // 1)<<std::endl;
 
       pixeltoangle_pano = (2.0 * M_PI) / pano_width;
       angletopixel_pano = pano_width / (2.0 * M_PI);

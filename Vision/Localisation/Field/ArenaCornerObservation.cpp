@@ -13,6 +13,7 @@ static rhoban_utils::Logger out("ArenaCornerObservation");
 using Vision::Utils::CameraState;
 using robocup_referee::Constants;
 using namespace rhoban_utils;
+using namespace std;
 
 // double getMinScore() const override; à implémenter
 // les observations elle naviguent entre pError et 1.0

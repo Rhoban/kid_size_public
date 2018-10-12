@@ -176,7 +176,7 @@ void LocalisationBinding::initRhIO()
       unsigned int k = 0;
       
       auto rhioNode = &(RhIO::Root.child("/localisation/field/fieldPF"));
-      for (string item : {"customX", "customY", "customTheta", "customNoise", "customThetaNoise"}) {
+      for (std::string item : {"customX", "customY", "customTheta", "customNoise", "customThetaNoise"}) {
         if (args.size() > k) {
           rhioNode->setFloat(item, atof(args[k].c_str()));
         }

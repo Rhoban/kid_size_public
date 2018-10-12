@@ -11,6 +11,7 @@
 
 using ::rhoban_utils::Benchmark;
 using namespace rhoban_utils;
+using namespace std;
 
 namespace Vision {
 namespace Filters {
@@ -110,7 +111,7 @@ void FieldBorder::process() {
   compute_marks(green_density, marks, threshold);
   Benchmark::close("calcul des marques");
 
-  vector<cv::Vec2f> brut_lines; // sortie de l'algorithme de Hough
+  std::vector<cv::Vec2f> brut_lines; // sortie de l'algorithme de Hough
   // On calcule les équations des droites sous la forme y=ax+b
   // (les droites verticales sont bannies pour le moment...)
   std::vector<cv::Vec2f> line_eq;
@@ -357,9 +358,9 @@ FieldBorder::compute_border(std::vector<cv::Point> & marks,
 
       // restriction aux domaines des droite
       int min_x = line_x_domain[ll].first;
-      int min_K = max(1, min_x / comb_dx); 
+      int min_K = std::max(1, min_x / comb_dx); 
       int max_x = line_x_domain[rl].second;
-      int max_K = min(corr_comb_size-2, max_x / comb_dx); 
+      int max_K = std::min(corr_comb_size-2, max_x / comb_dx); 
       if (K < min_K) K = min_K;
       if (K > max_K) K = max_K;
       
@@ -574,7 +575,7 @@ FieldBorder::compute_geometric_score(std::map< std::pair<int,int>, std::pair<dou
       float geo_weight = 0.0;
       if (loc_data.hasCorner || loc_data.hasSegment) {
         float a = loc_data.getCornerAngle(); // in [0, PI] (in particular, positive)
-        geo_score = min(fabs(a), (float) min(fabs(a-M_PI/2), fabs(a-M_PI)));
+        geo_score = std::min(fabs(a), (float) std::min(fabs(a-M_PI/2), fabs(a-M_PI)));
         geo_score *= 180 / M_PI; // in degree
         geo_score = 10 * pow(geo_score / 10, 3.0); // On creuse le score en dessous de 10 degres 
         float maxD = 10.0; // Note: parametre

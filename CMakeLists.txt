@@ -9,7 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
   rhoban_random
   rhoban_unsorted
   tiny-dnn
-  aruco
   tclap
   rhoban_team_play
   rhoban_model_learning

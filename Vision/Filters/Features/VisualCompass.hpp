@@ -11,7 +11,6 @@
 #include "opencv2/calib3d.hpp"
 #include <string>
 #include <vector>
-#include <aruco.h> //FIXME annoying to include that juste to access the cameraparam struct
 
 namespace Vision {
 namespace Filters {
@@ -56,7 +55,6 @@ private:
   /// Should we update the field
   int active_field;
 
-  aruco::CameraParameters CamParam;
   cv::Ptr<cv::FeatureDetector> detector;
   cv::Ptr<cv::DescriptorExtractor> descriptor_extractor;
 

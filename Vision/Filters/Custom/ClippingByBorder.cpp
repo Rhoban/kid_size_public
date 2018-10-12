@@ -58,7 +58,7 @@ void ClippingByBorder::process() {
       int y = (int) (row_nb * (line_eq[l].first * (((double) x)/col_nb) + line_eq[l].second));
       if (y_max < y) y_max = y;
     }
-    for (int y=max(0,y_max-vshift); y<row_nb; y++)
+    for (int y=std::max(0,y_max-vshift); y<row_nb; y++)
       img().at<uchar>(y,x) = 255;
   }
 }

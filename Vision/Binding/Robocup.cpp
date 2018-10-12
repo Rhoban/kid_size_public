@@ -62,6 +62,7 @@ using namespace Vision::Localisation;
 using namespace rhoban_utils;
 using namespace rhoban_geometry;
 
+using namespace std;
 using namespace std::chrono;
 
 using namespace Vision::Utils;
@@ -686,16 +687,16 @@ void Robocup::readPipeline() {
     try {
       const TagsDetector &tagProvider =
           dynamic_cast<const TagsDetector &>(tagFilter);
-      std::vector<aruco::Marker> new_tags = tagProvider.getDetectedMarkers();
-      for (const aruco::Marker &marker : new_tags) {
+      const std::vector<TagsDetector::Marker> & new_tags = tagProvider.getDetectedMarkers();
+      for (const TagsDetector::Marker &marker : new_tags) {
         // Adding Id
         detectedTagsIndices.push_back(marker.id);
         // Computing position of marker in self and adding it
         Eigen::Vector3d marker_pos_in_cam;
         // Changing camera basis from Usual notation to Leph::notation
-        marker_pos_in_cam(0) = marker.Tvec.ptr<float>(0)[2];
-        marker_pos_in_cam(1) = -marker.Tvec.ptr<float>(0)[0];
-        marker_pos_in_cam(2) = -marker.Tvec.ptr<float>(0)[1];
+        marker_pos_in_cam(0) = marker.tvec[2];
+        marker_pos_in_cam(1) = -marker.tvec[0];
+        marker_pos_in_cam(2) = -marker.tvec[1];
         Eigen::Vector3d marker_pos_in_self =
             cs->_model->frameInSelf("camera", marker_pos_in_cam);
         Eigen::Vector3d marker_pos_in_world =
@@ -715,8 +716,8 @@ void Robocup::readPipeline() {
         // TODO, if the barycenter is not good enough, do better (crossing the
         // diags?)
         Eigen::Vector2d avg_in_img(0,0);
-        for (unsigned int i = 0; i < marker.size(); i++) {
-          avg_in_img += Eigen::Vector2d(marker[i].x, marker[i].y);
+        for (unsigned int i = 0; i < marker.corners.size(); i++) {
+          avg_in_img += Eigen::Vector2d(marker.corners[i].x, marker.corners[i].y);
         }
         avg_in_img /= 4.0;
         // Rescaling to cameraModel image
@@ -1450,8 +1451,8 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         double x = cos(oppGoalDirInSelf) * 10.0;
         double y = sin(oppGoalDirInSelf) * 10.0;
 
-        tmp.x = max(0, (int)(x * scale_factor + width / 2));
-        tmp.y = max(0, (int)(-y * scale_factor + height / 2));
+        tmp.x = std::max(0, (int)(x * scale_factor + width / 2));
+        tmp.y = std::max(0, (int)(-y * scale_factor + height / 2));
 
         cv::Point2i center(width / 2, height / 2);
         cv::Scalar lineColor(0, 0, 255 * opponent.y); // quality is in y

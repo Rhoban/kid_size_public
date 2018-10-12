@@ -7,8 +7,8 @@
 #include "opencv2/features2d/features2d.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
+#include <opencv2/aruco.hpp>
 #include <string>
-#include <aruco.h>
 
 namespace Vision {
 namespace Filters {
@@ -19,9 +19,26 @@ namespace Filters {
  */
 class TagsDetector : public Filter {
 public:
+  /// Aruco::Marker does not exit in OpenCV3
+  class Marker {
+  public:
+    Marker();
+    Marker(int id, float size, const std::vector<cv::Point2f> & corners,
+           const cv::Vec3d & rvec, const cv::Vec3d & tvec);
+    
+    /// Id of the marker
+    int id;
+    /// Size in [m]
+    float size;
+    /// Corners inside the image
+    std::vector<cv::Point2f> corners;
+    /// Rotation with respect to Camera
+    cv::Vec3d rvec;
+    /// Translation with respect to Camera
+    cv::Vec3d tvec;
+  };
+  
   TagsDetector();
-
-
 
   // Json stuff
   // virtual void fromJson(const Json::Value & v, const std::string & dir_name);
@@ -31,7 +48,7 @@ public:
   virtual void setParameters() override;
   virtual int expectedDependencies() const override;
 
-  std::vector<aruco::Marker> getDetectedMarkers() const;
+  const std::vector<Marker> & getDetectedMarkers() const;
 
 protected:
   /**
@@ -40,17 +57,14 @@ protected:
   virtual void process() override;
 
 private:
-  ParamFloat thresholdParam1;
-  ParamFloat thresholdParam2;
-  /// Try all parameters1 in [param1 - paramRange1, param1 + paramRange1]
-  /// Keep it to 0 when using ADPT_THRES (default), because only 'odd' values
-  /// for param1 are considered (thus half of the computation time is useless)
-  ParamInt thresholdParamRange1;
-  
-  ParamFloat minSize;
-  ParamFloat maxSize;
-  ParamInt minSize_pix;
-  ParamInt subpix_wsize;
+  ParamFloat adaptiveThreshConstant;
+  ParamInt adaptiveThreshWinSizeMin;
+  ParamInt adaptiveThreshWinSizeMax;
+  ParamInt adaptiveThreshWinSizeStep;
+
+  // TODO: other parameters are available:
+  // see: https://docs.opencv.org/3.1.0/d1/dcd/structcv_1_1aruco_1_1DetectorParameters.html
+
   /// Size of the markers in [m]
   ParamFloat markerSize;
 
@@ -64,12 +78,9 @@ private:
   ParamInt period;
 
   // Detection parameters
-  aruco::MarkerDetector::Params detectionParam;
-  // Camera parameters (distortion and camera matrix)
-  aruco::CameraParameters CamParam;
-  aruco::MarkerDetector MDetector;
+  cv::Ptr<cv::aruco::DetectorParameters> detectorParameters;
 
-  std::vector<aruco::Marker>  Markers;
+  std::vector<Marker> markers;
 
   int periodCounter;
 
