@@ -38,11 +38,6 @@ CameraState::CameraState(MoveScheduler *moveScheduler) :
   _model->updateDOFPosition();
 }
 
-Leph::HumanoidModel & CameraState::getHumanoidModel() const
-{
-  return *_model;
-}
-
 const Leph::CameraModel & CameraState::getCameraModel() const
 {
   return _cameraModel;
@@ -122,6 +117,28 @@ std::pair<Angle, Angle> CameraState::robotPanTiltFromImg(double imgX, double img
   Eigen::Vector2d panTilt = _model->cameraPixelToPanTilt(_cameraModel, pixel);
   std::pair<Angle, Angle> result(rad2deg(panTilt(0)), rad2deg(panTilt(1)));
   return result;
+}
+
+Eigen::Vector3d CameraState::getWorldPosFromCamera(const Eigen::Vector3d & pos_camera) const
+{
+  Eigen::Vector3d obj_pos_in_cam;
+  // Changing camera basis from Usual notation to Leph::notation
+  obj_pos_in_cam(0) = pos_camera[2];
+  obj_pos_in_cam(1) = -pos_camera[0];
+  obj_pos_in_cam(2) = -pos_camera[1];
+  Eigen::Vector3d obj_pos_in_self  = _model->frameInSelf("camera", obj_pos_in_cam );
+  Eigen::Vector3d obj_pos_in_world = _model->selfInFrame("origin", obj_pos_in_self);
+  return obj_pos_in_world;
+}
+
+Eigen::Vector3d CameraState::getSelfFromWorld(const Eigen::Vector3d & pos_world) const
+{
+  return _model->frameInSelf("origin", pos_world);
+}
+
+Eigen::Vector3d CameraState::getWorldFromSelf(const Eigen::Vector3d & pos_self) const
+{
+  return _model->selfInFrame("origin", pos_self);
 }
 
 Angle CameraState::getPitch() {

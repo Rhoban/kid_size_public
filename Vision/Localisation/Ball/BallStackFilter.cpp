@@ -37,8 +37,7 @@ void BallStackFilter::reset(float x, float y) {
 
   Eigen::Vector3d point(x, y, 0.0);
   Candidate candidate;
-  candidate.object =
-      cameraState->_model->selfInFrame("origin", point);
+  candidate.object = cameraState->getWorldFromSelf(point);
   candidate.score = maximumScore;
   candidates.push_back(candidate);
 
@@ -54,12 +53,10 @@ void BallStackFilter::applyKick(float x, float y) {
 
   for (Candidate candidate : candidates) {
     Candidate kicked_candidate = candidate;
-    auto pos =
-        cameraState->_model->frameInSelf("origin", candidate.object);
+    auto pos = cameraState->getSelfFromWorld(candidate.object);
     pos.x() += x;
     pos.y() += y;
-    kicked_candidate.object =
-        cameraState->_model->selfInFrame("origin", pos);
+    kicked_candidate.object = cameraState->getWorldFromSelf(pos);
     if (duplicateOnKick) {
       candidate.score /= 2;
       kicked_candidate.score /= 2;

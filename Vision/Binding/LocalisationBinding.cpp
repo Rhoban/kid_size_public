@@ -499,8 +499,7 @@ std::vector<TagsObservation *> LocalisationBinding::extractTagsObservations()
   std::map<int,std::vector<Eigen::Vector3d>> tagsInSelf;
   for (size_t markerId = 0; markerId < markerIndices.size(); markerId++) {
     Eigen::Vector3d pos_in_world = markerPositions[markerId];
-    Eigen::Vector3d pos_in_self =
-      cs->_model->frameInSelf("origin", pos_in_world);
+    Eigen::Vector3d pos_in_self = cs->getSelfFromWorld(pos_in_world);
     tagsInSelf[markerIndices[markerId]].push_back(pos_in_self);
   }
   for (const std::pair<int, std::vector<Eigen::Vector3d>> & entry : tagsInSelf) {
@@ -809,11 +808,9 @@ void LocalisationBinding::importFiltersResults() {
 }
 
 cv::Mat LocalisationBinding::getTopView(int width, int height) {
-  if (cs == NULL)
-    throw std::runtime_error("TopView is not ready");
   filterMutex.lock();
   cv::Mat img(height, width, CV_8UC3);
-  field_filter->draw(img, cs);
+  field_filter->draw(img);
 
   filterMutex.unlock();
   return img;

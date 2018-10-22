@@ -46,7 +46,7 @@ bool RobotFilter::bindToRhIO(std::string node, std::string command)
 
 Eigen::Vector2d RobotFilter::getGroundPosSelf(const Eigen::Vector3d & pt)
 {
-  return cameraState->_model->frameInSelf("origin", pt).segment(0,2);
+  return cameraState->getSelfFromWorld(pt).segment(0,2);
 }
 
 bool RobotFilter::isSimilar(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2)

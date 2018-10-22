@@ -349,17 +349,7 @@ void FieldPF::customReset() {
              customX, customY, customTheta, customNoise, customThetaNoise);
 }
 
-void FieldPF::draw(cv::Mat &img, Utils::CameraState *cs) const {
-  if (cs == nullptr) {
-    std::string msg("FieldPF::draw: cameraState is null");
-    logger.error("%s", msg.c_str());
-    throw std::logic_error(msg);
-  }
-  if (cs->_model == nullptr) {
-    std::string msg("FieldPF::draw: cameraState is null");
-    logger.error("%s", msg.c_str());
-    throw std::logic_error(msg);
-  }
+void FieldPF::draw(cv::Mat &img) const {
   std::cout << "Drawing field" << std::endl;
   Field::Field::drawField(img);
   std::cout << "Drawing particles" << std::endl;

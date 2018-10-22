@@ -14,14 +14,25 @@
 namespace Vision {
 namespace Utils {
 
+
+/// Relevant basis:
+/// - World: fixed reference in which the camera is evolving
+/// - Self: A basis centered on the robot
+///   - Center: Projection of trunk of the robot on the ground
+///   - X-axis: in front of the robot
+///   - Y-axis: left of the robot
+///   - Z-axis: same as world axis
+/// - Camera:
+///   - Center: At camera optical center
+///   - X-axis: aligned with x-axis of the image
+///   - Y-axis: aligned with y-axis of the image
+///   - Z-axis: direction toward which the camera is pointing
 class CameraState {
 
 public:
   typedef std::pair<rhoban_utils::Angle,rhoban_utils::Angle> PanTilt;
   
   CameraState(MoveScheduler *moveScheduler);
-
-  Leph::HumanoidModel & getHumanoidModel() const;
 
   const Leph::CameraModel & getCameraModel() const;
 
@@ -46,6 +57,15 @@ public:
 
   /// Return the [pan, tilt] pair of the ground point seen at imgX, imgY
   PanTilt robotPanTiltFromImg(double imgX, double imgY) const;
+
+  /// Convert the position 'pos_camera' (in camera referential) to the 'world' basis
+  Eigen::Vector3d getWorldPosFromCamera(const Eigen::Vector3d & pos_camera) const;
+
+  /// Convert the position 'pos_world' (in world referential) to the 'self' basis
+  Eigen::Vector3d getSelfFromWorld(const Eigen::Vector3d & pos_world) const;
+
+  /// Convert the position 'pos_self' (in self referential) to the 'world' basis
+  Eigen::Vector3d getWorldFromSelf(const Eigen::Vector3d & pos_self) const;
 
   /*
    * Returns the xy position expected on the screen of the point p [m]

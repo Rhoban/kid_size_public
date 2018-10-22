@@ -234,6 +234,11 @@ void Pipeline::addFiltersFromJson(const Json::Value & v, const std::string & dir
 void Pipeline::fromJson(const Json::Value & v, const std::string & dir_name) {
   addFiltersFromJson(v, dir_name);
   std::cout << "There is now " << _filters.size() << " filters." << std::endl;
+
+  if (v.isObject() && v.isMember("default_camera_state")) {
+    cs = new Utils::CameraState(nullptr);
+    cs->_cameraModel.read(v["default_camera_state"], "camera_model", dir_name);
+  }
 }
 
 void Pipeline::setTimestamp(const ::rhoban_utils::TimeStamp &ts) {

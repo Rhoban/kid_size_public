@@ -3,8 +3,6 @@
 #include "FieldPosition.hpp"
 #include "Field/Field.hpp"
 
-#include "CameraState/CameraState.hpp"
-
 #include "rhoban_unsorted/particle_filter/particle_filter.h"
 
 #include "RhIO.hpp"
@@ -65,7 +63,7 @@ public:
             const std::vector<rhoban_unsorted::Observation<FieldPosition> *> &observations,
             double elapsedTime) override;
 
-  void draw(cv::Mat &img, Utils::CameraState *cs) const;
+  void draw(cv::Mat &img) const;
 
   rhoban_utils::Angle getAngleToGoal(const GoalKey &gk) const;
   double angleToGoalQuality(const QualityKey &qk) const;

@@ -51,7 +51,7 @@ bool RadarFilterPoint::isVisible(const Eigen::Vector3d &pt)
       cv::Point2f point = cameraState->imgXYFromWorldPosition(pt_cv);
       bool inScreen = cameraState->getCameraModel().containsPixel(point);
 
-      auto pos = cameraState->_model->frameInSelf("origin", pt);
+      auto pos = cameraState->getSelfFromWorld(pt);
       bool isFar = pos.norm() > far;
       // When objects are excentred and close, there is a risk to have them
       Angle objDir = Angle::fromXY(pos.x(),pos.y());
@@ -67,8 +67,8 @@ bool RadarFilterPoint::isVisible(const Eigen::Vector3d &pt)
 bool RadarFilterPoint::isSimilar(const Eigen::Vector3d &pt1, const Eigen::Vector3d &pt2)
 {
     // We need the position in robot referential, c1 and c2 are in world referential
-    Eigen::Vector3d c1_robot = cameraState->_model->frameInSelf("origin", pt1);
-    Eigen::Vector3d c2_robot = cameraState->_model->frameInSelf("origin", pt2);
+    Eigen::Vector3d c1_robot = cameraState->getSelfFromWorld(pt1);
+    Eigen::Vector3d c2_robot = cameraState->getSelfFromWorld(pt2);
     double robotHeight = cameraState->getHeight();
 
     // Converting to Point3f
@@ -91,8 +91,7 @@ std::string RadarFilterPoint::toString(const Eigen::Vector3d &point)
 {
     std::stringstream ss;
 
-    auto pos =
-        cameraState->_model->frameInSelf("origin", point);
+    auto pos = cameraState->getSelfFromWorld(point);
 
     ss << pos.x() << ", " << pos.y();
 

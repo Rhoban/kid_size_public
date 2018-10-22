@@ -126,7 +126,6 @@ void Filter::initWindow() {
         // Print coordinate, pixel value and world estimated position
         const CameraState & cs = filter->getCS();
         const Leph::CameraModel & cameraModel = cs.getCameraModel();
-        Leph::HumanoidModel & humanoidModel = cs.getHumanoidModel();
         cv::Vec3b pixel = filter->getImg()->at<cv::Vec3b>(y, x);
         Eigen::Vector3d ball_pos;
         cv::Point2f ball_center_in_img = cv::Point2f(x,y);
@@ -139,8 +138,6 @@ void Filter::initWindow() {
         corrected = cs.getCameraModel().toCorrectedImg(cv::Point2f(x,y));
 
         cv::Point2f selfPos = cs.robotPosFromImg(x,y);
-        Eigen::Vector3d viewVector = humanoidModel.cameraPixelToViewVector(
-          cameraModel, Eigen::Vector2d(x,y));
 
         int B = (int)pixel[0];
         int G = (int)pixel[1];
@@ -167,7 +164,6 @@ void Filter::initWindow() {
 
         std::cout << "-> pos: " << ball_pos.transpose() << std::endl
                   << "-> selfPos: " << selfPos.x << "," << selfPos.y << ")" << std::endl
-                  << "-> viewVector: " << viewVector.transpose() << std::endl
                   << "-> radiusMin: " << radiusMin << std::endl
                   << "-> radiusMax: " << radiusMax << std::endl;
         // Draw radiusMin and radiusMax circles on the image

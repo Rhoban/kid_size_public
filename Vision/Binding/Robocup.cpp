@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <opencv2/core/eigen.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -689,27 +690,12 @@ void Robocup::readPipeline() {
           dynamic_cast<const TagsDetector &>(tagFilter);
       const std::vector<TagsDetector::Marker> & new_tags = tagProvider.getDetectedMarkers();
       for (const TagsDetector::Marker &marker : new_tags) {
-        // Adding Id
-        detectedTagsIndices.push_back(marker.id);
-        // Computing position of marker in self and adding it
-        Eigen::Vector3d marker_pos_in_cam;
-        // Changing camera basis from Usual notation to Leph::notation
-        marker_pos_in_cam(0) = marker.tvec[2];
-        marker_pos_in_cam(1) = -marker.tvec[0];
-        marker_pos_in_cam(2) = -marker.tvec[1];
-        Eigen::Vector3d marker_pos_in_self =
-            cs->_model->frameInSelf("camera", marker_pos_in_cam);
-        Eigen::Vector3d marker_pos_in_world =
-            cs->_model->selfInFrame("origin", marker_pos_in_self);
-        // DEBUG
-        // std::cout << "Marker pos in cam   : " <<
-        // marker_pos_in_cam.transpose()    << std::endl;
-        // std::cout << "Marker pos in self  : " <<
-        // marker_pos_in_self.transpose()   << std::endl;
-        // std::cout << "Marker pos in world : " <<
-        // marker_pos_in_world.transpose()  << std::endl;
+        Eigen::Vector3d pos_camera;
+        cv::cv2eigen(marker.tvec, pos_camera);
+        Eigen::Vector3d marker_pos_in_world = cs->getWorldPosFromCamera(pos_camera);
 
-        // Adding position of marker in world
+        // Adding Marker to detectedTagsb
+        detectedTagsIndices.push_back(marker.id);
         detectedTagsPositions.push_back(marker_pos_in_world);
 
         // Calculating the center of the tags on the image (x, y)
