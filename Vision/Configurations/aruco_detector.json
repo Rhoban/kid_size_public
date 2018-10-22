@@ -1,0 +1,49 @@
+{
+    "playing" : true,
+    "embedded" : false,
+    "pipeline" : {
+        "default_camera_state" : {
+            "camera_model" : {
+                "img_width" : 640,
+                "img_height" : 480,
+                "focal_x" : 400,
+                "focal_y" : 400,
+                "center_x" : 320,
+                "center.y" : 240
+            }
+        },
+        "filters" : [
+            {
+                "class name" : "SourceOpenCV",
+                "content" : {
+//                    "display" : true,
+                    "name" : "source",
+                    "device_name" : "/tmp/test.avi"
+//                    "device_index" : 0
+                }
+            },
+            {
+                "class name" : "ChannelSelector",
+                "content" : {
+//                    "display" : true,
+                    "name" : "Y",
+                    "dependencies" : ["source"],
+                    "paramInts" : {
+                        "channel" : 0
+                    }
+                }
+            },
+            {
+                "class name" : "TagsDetector",
+                "content" : {
+                    "display" : true,
+                    "name" : "tags",
+                    "dependencies" : ["Y"],
+                    "paramInts" : {
+                        "debugLevel" : 1
+                    }
+                }
+            }
+            ]
+    }
+}

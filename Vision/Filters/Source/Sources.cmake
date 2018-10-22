@@ -1,6 +1,7 @@
 set (SOURCES
   SourceFactory.cpp
   SourceLogs.cpp
+  SourceOpenCV.cpp
 )
 
 
