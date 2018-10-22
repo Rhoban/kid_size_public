@@ -25,7 +25,9 @@ TagsDetector::Marker::Marker(int id, float size, const std::vector<cv::Point2f> 
   : id(id), size(size), corners(corners), rvec(rvec), tvec(tvec)
 {}
 
-TagsDetector::TagsDetector() : Filter("TagsDetector")
+TagsDetector::TagsDetector()
+  : Filter("TagsDetector"),
+    detectorParameters(new cv::aruco::DetectorParameters())
 {
   periodCounter = 0;
 }

@@ -76,12 +76,12 @@ SafePtr<Filter::Parameters> Filter::params() {
 
 const Utils::CameraState &Filter::getCS() const {
   if (_pipeline == NULL) {
-    throw std::runtime_error(
+    throw std::runtime_error(DEBUG_INFO + 
         "Requesting CameraState in a filter not attached to a pipeline");
   }
   Utils::CameraState *cs = _pipeline->getCameraState();
   if (cs == NULL) {
-    throw std::runtime_error("Invalid camera state");
+    throw std::runtime_error(DEBUG_INFO + "Invalid camera state");
   } else {
     return *cs;
   }
@@ -89,12 +89,12 @@ const Utils::CameraState &Filter::getCS() const {
 
 Utils::CameraState &Filter::getCS() {
   if (_pipeline == NULL) {
-    throw std::runtime_error(
-        "Requesting CameraState in a filter not attached to a pipeline");
+    throw std::runtime_error(DEBUG_INFO + 
+      "Requesting CameraState in a filter not attached to a pipeline");
   }
   Utils::CameraState *cs = _pipeline->getCameraState();
   if (cs == NULL) {
-    throw std::runtime_error("Invalid camera state");
+    throw std::runtime_error(DEBUG_INFO + "Invalid camera state");
   } else {
     return *cs;
   }
@@ -221,7 +221,7 @@ void Filter::runStep(UpdateType updateType) {
         << exc.what();
     throw std::runtime_error(oss.str());
   } catch (...) {
-    Benchmark::close(name.c_str());
+    Benchmark::closeUntil(name);
     throw;
   }
 

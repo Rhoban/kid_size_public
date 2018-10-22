@@ -11,7 +11,6 @@ class Player : public Application::Application {
 
   void step() {
     Application::step();
-    // std::cout << "Nb filters : " << pipeline.filters().size() << std::endl;
   }
 };
 

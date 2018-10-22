@@ -81,7 +81,7 @@ void Application::step() {
       playing = false;
     }
   } catch (const std::runtime_error & exc) {
-    std::cerr << DEBUG_INFO << ": " << exc.what() << std::endl;
+    std::cerr << DEBUG_INFO << " exception during update: " << exc.what() << std::endl;
   }
 }
 
