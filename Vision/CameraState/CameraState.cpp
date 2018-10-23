@@ -46,13 +46,22 @@ const Leph::CameraModel & CameraState::getCameraModel() const
 void CameraState::updateInternalModel(double timeStamp) {
   _timeStamp = timeStamp;
 
-  _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
-  _model->setAutoUpdate(true);
-  _moveScheduler->getServices()->model->pastReadModel(timeStamp,
-                                                      _pastReadModel);
-  _model = &(_pastReadModel.get());
-  _model->setAutoUpdate(false);
-  _model->updateDOFPosition();
+  if (_moveScheduler != nullptr) {
+    _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
+    _model->setAutoUpdate(true);
+    _moveScheduler->getServices()->model->pastReadModel(timeStamp,
+                                                        _pastReadModel);
+    _model = &(_pastReadModel.get());
+    _model->setAutoUpdate(false);
+    _model->updateDOFPosition();
+
+    worldToSelf = _model->selfFrameTransform("origin");
+    selfToWorld = worldToSelf.inverse();
+    worldToCamera = _model->getTransform("camera","origin");
+    cameraToWorld = worldToCamera.inverse();
+  } else {
+    logger.warning("Not updating internal model (no moveScheduler available)");
+  }
 }
 
 
@@ -66,7 +75,7 @@ cv::Point2f CameraState::robotPosFromImg(double imgX, double imgY) const
   cv::Point2f posInWorldCV = worldPosFromImg(imgX, imgY);
 
   Eigen::Vector3d posInWorld(posInWorldCV.x, posInWorldCV.y, 0);
-  Eigen::Vector3d posInSelf = _model->frameInSelf("origin", posInWorld);
+  Eigen::Vector3d posInSelf = worldToSelf * posInWorld;
 
   return cv::Point2f(posInSelf(0), posInSelf(1));
 }
@@ -75,7 +84,8 @@ cv::Point2f CameraState::worldPosFromImg(double imgX, double imgY) const{
 
   Eigen::Vector2d pixel(imgX, imgY);
 
-  Eigen::Vector3d viewVector = _model->cameraPixelToViewVector(_cameraModel, pixel);
+  Eigen::Vector3d viewVector =
+    _model->cameraPixelToViewVector(_cameraModel, pixel);
   Eigen::Vector3d posInWorld;
 
 

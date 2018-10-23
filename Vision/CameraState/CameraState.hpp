@@ -148,6 +148,11 @@ public:
   Leph::CameraModel _cameraModel;
   double _timeStamp;
   double _angularPitchErrorDefault = 0.0;
+
+  Eigen::Affine3d worldToSelf;
+  Eigen::Affine3d selfToWorld;
+  Eigen::Affine3d worldToCamera;
+  Eigen::Affine3d cameraToWorld;
 };
 }
 }
