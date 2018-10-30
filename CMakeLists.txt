@@ -86,6 +86,7 @@ set (LINKED_LIBRARIES
 #Add Vision libraries
 if (BUILD_KID_SIZE_VISION)
     if (KID_SIZE_USES_FLYCAPTURE)
+        add_definitions(-DKID_SIZE_USES_FLYCAPTURE)
         set (LINKED_LIBRARIES
             ${LINKED_LIBRARIES}
             flycapture
