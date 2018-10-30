@@ -197,7 +197,7 @@ Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
 }
 
 Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
-                                               double *radiusMin, double *radiusMax,
+                                               double *minRadiusImg, double *maxRadiusImg,
                                                double angularPitchError) const {
   if (angularPitchError < 0) {
     angularPitchError = _angularPitchErrorDefault;
@@ -208,67 +208,35 @@ Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
   Eigen::Vector2d pixel = cv2Eigen(pos);
   
   Eigen::Vector2d panTilt = _model->cameraPixelToPanTilt(_cameraModel, pixel);
+  
+  std::map<std::string, Eigen::Vector3d> viewVectors =
+  {
+    { "up", _model->cameraPanTiltToViewVector(panTilt + Eigen::Vector2d(0.0, angularPitchError))},
+    { "center", _model->cameraPanTiltToViewVector(panTilt)},
+    { "down", _model->cameraPanTiltToViewVector(panTilt + Eigen::Vector2d(0.0, angularPitchError))}
+  };
 
-  Eigen::Vector3d viewVectorUp = _model->cameraPanTiltToViewVector(
-    panTilt + Eigen::Vector2d(0.0, angularPitchError));
-  Eigen::Vector3d viewVectorMiddle = _model->cameraPanTiltToViewVector(panTilt);
-  Eigen::Vector3d viewVectorDown = _model->cameraPanTiltToViewVector(
-    panTilt + Eigen::Vector2d(0.0, -angularPitchError));
-
-  // Up
-  Eigen::Vector3d ballCenterUp;
-  Eigen::Vector2d ballCenterPixelUp;
-  std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> bordersPixelUp;
-  _model->cameraViewVectorToBallWorld(_cameraModel, viewVectorUp, Constants::field.ballRadius,
-                                      ballCenterUp, &ballCenterPixelUp,
-                                      &bordersPixelUp);
-  // Middle
-  Eigen::Vector3d ballCenterMiddle;
-  Eigen::Vector2d ballCenterPixelMiddle;
-  std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> bordersPixelMiddle;
-  _model->cameraViewVectorToBallWorld(
-    _cameraModel, viewVectorMiddle, Constants::field.ballRadius, ballCenterMiddle,
-    &ballCenterPixelMiddle, &bordersPixelMiddle);
-  // Down
-  Eigen::Vector3d ballCenterDown;
-  Eigen::Vector2d ballCenterPixelDown;
-  std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> bordersPixelDown;
-  _model->cameraViewVectorToBallWorld(_cameraModel, viewVectorDown,
-                                      Constants::field.ballRadius, ballCenterDown,
-                                      &ballCenterPixelDown, &bordersPixelDown);
-
-  // Compute minimum and maximum radius
-  double minUp = -1.0;
-  double minMiddle = -1.0;
-  double minDown = -1.0;
-  for (size_t i = 0; i < bordersPixelMiddle.size(); i++) {
-    double rUp = (ballCenterPixelUp - bordersPixelUp[i]).norm();
-    double rMiddle = (ballCenterPixelMiddle - bordersPixelMiddle[i]).norm();
-    double rDown = (ballCenterPixelDown - bordersPixelDown[i]).norm();
-    if (minUp < 0.0 || minUp > rUp)
-      minUp = rUp;
-    if (minMiddle < 0.0 || minMiddle > rMiddle)
-      minMiddle = rMiddle;
-    if (minDown < 0.0 || minDown > rDown)
-      minDown = rDown;
+  *minRadiusImg = std::numeric_limits<double>::max();
+  *maxRadiusImg = 0;
+  for (const auto & entry : viewVectors) {
+    double entryRadMinPx, entryRadMaxPx;
+    bool success = _model->getImgRadiusFromViewVector(_cameraModel, entry.second,
+                                                      Constants::field.ballRadius,
+                                                      &entryRadMinPx, &entryRadMaxPx);
+    if (!success) {
+      logger.log("%s: Failed to get image radius", DEBUG_INFO);
+    }
+    if (*minRadiusImg > entryRadMinPx) *minRadiusImg = entryRadMinPx;
+    if (*maxRadiusImg < entryRadMaxPx) *maxRadiusImg = entryRadMaxPx;
   }
-
-  if (minUp < 0.0)
-    minUp = 0.0;
-  if (minMiddle < 0.0)
-    minMiddle = 0.0;
-  if (minDown < 0.0)
-    minDown = 0.0;
-
-  if (radiusMin != nullptr) {
-    *radiusMin = std::min(std::min(minUp, minDown), minMiddle);
-  }
-  if (radiusMax != nullptr) {
-    *radiusMax = std::max(std::max(minUp, minDown), minMiddle);
-  }
-
-  return ballCenterMiddle;
+  Eigen::Vector3d ballPosInWorld;
+  bool success = _model->cameraViewVectorToBallWorld(_cameraModel,
+                                                     _model->cameraPanTiltToViewVector(panTilt),
+                                                     Constants::field.ballRadius,
+                                                     ballPosInWorld);
+  return ballPosInWorld;
 }
+
 Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos) const {
   Eigen::Vector2d pixel = cv2Eigen(pos);
 
