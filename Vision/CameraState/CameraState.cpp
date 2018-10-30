@@ -224,7 +224,7 @@ Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
                                                       Constants::field.ballRadius,
                                                       &entryRadMinPx, &entryRadMaxPx);
     if (!success) {
-      logger.log("%s: Failed to get image radius", DEBUG_INFO);
+      logger.log((DEBUG_INFO + "Failed to get image radius").c_str());
     }
     if (*minRadiusImg > entryRadMinPx) *minRadiusImg = entryRadMinPx;
     if (*maxRadiusImg < entryRadMaxPx) *maxRadiusImg = entryRadMaxPx;

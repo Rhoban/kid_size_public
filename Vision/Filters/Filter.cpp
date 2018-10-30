@@ -139,7 +139,7 @@ void Filter::initWindow() {
         corrected = cs.getCameraModel().toCorrectedImg(cv::Point2f(x,y));
 
         cv::Point2f selfPos = cs.robotPosFromImg(x,y);
-        Eigen::Vector3d viewVector = humanoidModel.cameraPixelToViewVector(
+        Eigen::Vector3d viewVectorInWorld = humanoidModel.cameraPixelToViewVector(
           cameraModel, Eigen::Vector2d(x,y));
 
         int B = (int)pixel[0];
@@ -165,9 +165,9 @@ void Filter::initWindow() {
         std::cout << U << "]" << std::endl;
         std::cout << "Note :  YUV format is YCrCb" << std::endl;
 
-        std::cout << "-> pos: " << ball_pos.transpose() << std::endl
-                  << "-> selfPos: " << selfPos.x << "," << selfPos.y << ")" << std::endl
-                  << "-> viewVector: " << viewVector.transpose() << std::endl
+        std::cout << "-> Ball pos in world: " << ball_pos.transpose() << std::endl
+                  << "-> Pos in self: (" << selfPos.x << "," << selfPos.y << ")" << std::endl
+                  << "-> viewVectorInWorld: " << viewVectorInWorld.transpose() << std::endl
                   << "-> radiusMin: " << radiusMin << std::endl
                   << "-> radiusMax: " << radiusMax << std::endl;
         // Draw radiusMin and radiusMax circles on the image
