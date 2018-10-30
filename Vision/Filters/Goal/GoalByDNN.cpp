@@ -137,11 +137,11 @@ void GoalByDNN::process() {
       throw std::runtime_error("GoalByDNN:: number of rois does not match number of patches");
     }
 
-    if (debugLevel > 0) {
-      std::cout << "Filter: " << name << std::endl;
-    }
-
     Benchmark::open("Analyzing patches");
+    std::ostringstream debug_message;
+    if (debugLevel > 0) {
+      debug_message << rois.size() << " patches in filter '" << name << "'" << std::endl;
+    }
     for (size_t patch_id = 0; patch_id < rois.size(); patch_id++) {
       const cv::Mat & patch = patches[patch_id];
       const cv::RotatedRect & roi = rois[patch_id].second;
@@ -149,7 +149,7 @@ void GoalByDNN::process() {
       double score = getScore(patch);
 
       if (debugLevel > 0) {
-        std::cout << "\t" << Utils::toRect(roi) << " score: " << score << std::endl;
+        debug_message << "\t" << Utils::toRect(roi) << " score: " << score << std::endl;
       }
 
       bool isValid = score > scoreThreshold;
@@ -161,6 +161,9 @@ void GoalByDNN::process() {
       else {
         drawRotatedRectangle(output, roi, cv::Scalar(0,0,255), 2);
       }
+    }
+    if (debugLevel > 0) {
+      std::cout << debug_message.str();
     }
     Benchmark::close("Analyzing patches");
   }
