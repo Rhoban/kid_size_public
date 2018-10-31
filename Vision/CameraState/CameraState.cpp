@@ -181,68 +181,30 @@ std::pair<Angle, Angle> CameraState::panTiltFromXY(const cv::Point2f &pos,
   return result;
 }
 
-Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
-                                               int *radiusMin, int *radiusMax,
-                                               double angularPitchError) const {
-  double radiusMinDouble, radiusMaxDouble;
-  Eigen::Vector3d posInWorld =
-    ballInfoFromPixel(pos,&radiusMinDouble,&radiusMaxDouble, angularPitchError);
-  if (radiusMin != nullptr) {
-    *radiusMin = std::round(radiusMinDouble);
+double CameraState::computeBallRadiusFromPixel(const cv::Point2f &pos) const {
+  Eigen::Vector2d pixel = cv2Eigen(pos);  
+  Eigen::Vector3d viewVector = _model->cameraPixelToViewVector(_cameraModel, pixel);
+
+  double entryRadMinPx, entryRadMaxPx;
+  bool success = _model->getImgRadiusFromViewVector(_cameraModel, viewVector,
+                                                    Constants::field.ballRadius,
+                                                    &entryRadMinPx, &entryRadMaxPx);
+  if (!success) {
+    logger.log((DEBUG_INFO + "Failed to get image radius").c_str());
+    return -1;
   }
-  if (radiusMax != nullptr) {
-    *radiusMax = std::round(radiusMaxDouble);
-  }
-  return posInWorld;
+
+  return (entryRadMinPx + entryRadMaxPx) / 2;
 }
 
-Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos,
-                                               double *minRadiusImg, double *maxRadiusImg,
-                                               double angularPitchError) const {
-  if (angularPitchError < 0) {
-    angularPitchError = _angularPitchErrorDefault;
-  }
-  angularPitchError = deg2rad(angularPitchError);
-
-
+Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f &pos) const {
   Eigen::Vector2d pixel = cv2Eigen(pos);
-  
-  Eigen::Vector2d panTilt = _model->cameraPixelToPanTilt(_cameraModel, pixel);
-  
-  std::map<std::string, Eigen::Vector3d> viewVectors =
-  {
-    { "up", _model->cameraPanTiltToViewVector(panTilt + Eigen::Vector2d(0.0, angularPitchError))},
-    { "center", _model->cameraPanTiltToViewVector(panTilt)},
-    { "down", _model->cameraPanTiltToViewVector(panTilt + Eigen::Vector2d(0.0, angularPitchError))}
-  };
 
-  *minRadiusImg = std::numeric_limits<double>::max();
-  *maxRadiusImg = 0;
-  for (const auto & entry : viewVectors) {
-    double entryRadMinPx, entryRadMaxPx;
-    bool success = _model->getImgRadiusFromViewVector(_cameraModel, entry.second,
-                                                      Constants::field.ballRadius,
-                                                      &entryRadMinPx, &entryRadMaxPx);
-    if (!success) {
-      logger.log((DEBUG_INFO + "Failed to get image radius").c_str());
-    }
-    if (*minRadiusImg > entryRadMinPx) *minRadiusImg = entryRadMinPx;
-    if (*maxRadiusImg < entryRadMaxPx) *maxRadiusImg = entryRadMaxPx;
-  }
-  Eigen::Vector3d ballPosInWorld;
-  bool success = _model->cameraViewVectorToBallWorld(_cameraModel,
-                                                     _model->cameraPanTiltToViewVector(panTilt),
-                                                     Constants::field.ballRadius,
-                                                     ballPosInWorld);
-  return ballPosInWorld;
-}
-
-Eigen::Vector3d CameraState::ballInfoFromPixel(const cv::Point2f &pos) const {
-  Eigen::Vector2d pixel = cv2Eigen(pos);
+  Eigen::Vector3d viewVectorInWorld = _model->cameraPixelToViewVector(_cameraModel, pixel);
 
   Eigen::Vector3d ballCenter;
   _model->cameraViewVectorToBallWorld(
-      _cameraModel, _model->cameraPixelToViewVector(_cameraModel, pixel),
+      _cameraModel, viewVectorInWorld,
       Constants::field.ballRadius, ballCenter);
 
   return ballCenter;

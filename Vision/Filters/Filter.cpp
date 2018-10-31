@@ -128,13 +128,11 @@ void Filter::initWindow() {
         const Leph::CameraModel & cameraModel = cs.getCameraModel();
         Leph::HumanoidModel & humanoidModel = cs.getHumanoidModel();
         cv::Vec3b pixel = filter->getImg()->at<cv::Vec3b>(y, x);
-        Eigen::Vector3d ball_pos;
         cv::Point2f ball_center_in_img = cv::Point2f(x,y);
-        double radiusMin, radiusMax;
         std::cout << "filter->getCS()->timestamp" << cs.getTimeStampDouble()
                   << std::endl;
-        ball_pos = cs.ballInfoFromPixel(ball_center_in_img,
-                                        &radiusMin, &radiusMax);
+        Eigen::Vector3d ball_pos = cs.ballInWorldFromPixel(ball_center_in_img);
+        double ballRadius = cs.computeBallRadiusFromPixel(ball_center_in_img);
         cv::Point2f corrected;
         corrected = cs.getCameraModel().toCorrectedImg(cv::Point2f(x,y));
 
@@ -168,14 +166,11 @@ void Filter::initWindow() {
         std::cout << "-> Ball pos in world: " << ball_pos.transpose() << std::endl
                   << "-> Pos in self: (" << selfPos.x << "," << selfPos.y << ")" << std::endl
                   << "-> viewVectorInWorld: " << viewVectorInWorld.transpose() << std::endl
-                  << "-> radiusMin: " << radiusMin << std::endl
-                  << "-> radiusMax: " << radiusMax << std::endl;
+                  << "-> ball expected radius: " << ballRadius << std::endl;
         // Draw radiusMin and radiusMax circles on the image
-        for (int radius : {radiusMin, radiusMax}) {
-          cv::circle(filter->cachedImg(),
-                     ball_center_in_img,
-                     radius,
-                     cv::Scalar(255,0,0), 2);
+        if (ballRadius > 0) {
+          cv::circle(filter->cachedImg(), ball_center_in_img,
+                     (int)ballRadius, cv::Scalar(255,0,0), 2);
         }
         filter->displayCurrent();
       }, this);

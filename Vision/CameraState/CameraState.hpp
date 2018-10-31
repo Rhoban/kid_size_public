@@ -72,21 +72,16 @@ public:
   /**
    * Compute with the model the cartesian position of the
    * ball in model world frame viewed in the image at given
-   * pixel. Also optionally assign minimum and maximum
-   * ball radius in pixels.
-   * angularPitchError is an angular pitch (tilt) error
-   * offset in degrees use to compute min and max ball radius
-   * confidence bounds
-   * A negative value of angularPitchError means that the value used
-   * for angularPitchError is set to angularPitchErrorDefault
+   * pixel.
    */
-  Eigen::Vector3d ballInfoFromPixel(const cv::Point2f &pos) const;
-  Eigen::Vector3d ballInfoFromPixel(const cv::Point2f &pos,
-                                    int *radiusMin, int *radiusMax,
-                                    double angularPitchError = -1.0) const;
-  Eigen::Vector3d ballInfoFromPixel(const cv::Point2f &pos,
-                                    double *radiusMin, double *radiusMax,
-                                    double angularPitchError = -1.0) const;
+  Eigen::Vector3d ballInWorldFromPixel(const cv::Point2f &pos) const;
+
+  /**
+   * Return the expected radius for a ball at the given pixel.
+   *
+   * If the pixel is above horizon, a negative value is returned
+   */
+  double computeBallRadiusFromPixel(const cv::Point2f &pos) const;
 
   /// Distance to ground [m]
   double getHeight();
