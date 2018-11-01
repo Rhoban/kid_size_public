@@ -131,14 +131,6 @@ void Filter::initWindow() {
         cv::Point2f ball_center_in_img = cv::Point2f(x,y);
         std::cout << "filter->getCS()->timestamp" << cs.getTimeStampDouble()
                   << std::endl;
-        Eigen::Vector3d ball_pos = cs.ballInWorldFromPixel(ball_center_in_img);
-        double ballRadius = cs.computeBallRadiusFromPixel(ball_center_in_img);
-        cv::Point2f corrected;
-        corrected = cs.getCameraModel().toCorrectedImg(cv::Point2f(x,y));
-
-        cv::Point2f selfPos = cs.robotPosFromImg(x,y);
-        Eigen::Vector3d viewVectorInWorld = humanoidModel.cameraPixelToViewVector(
-          cameraModel, Eigen::Vector2d(x,y));
 
         int B = (int)pixel[0];
         int G = (int)pixel[1];
@@ -150,7 +142,8 @@ void Filter::initWindow() {
         // Wikipedia
         int U = R * -0.14713 + G * -0.28886 + B * 0.436 + 128;
         int V = R * 0.615 + G * -0.51499 + B * -0.10001 + 128;
-
+        
+        cv::Point2f corrected = cameraModel.toCorrectedImg(cv::Point2f(x,y));
 
         std::cout << "CLICK x=" << x << " y=" << y << std::endl;
         std::cout << " -> corrected: " << corrected.x << ", " << corrected.y << std::endl;
@@ -162,17 +155,27 @@ void Filter::initWindow() {
         std::cout << V << ",";
         std::cout << U << "]" << std::endl;
         std::cout << "Note :  YUV format is YCrCb" << std::endl;
+        
+        Eigen::Vector3d viewVectorInWorld = humanoidModel.cameraPixelToViewVector(
+          cameraModel, Eigen::Vector2d(x,y));
+        std::cout << "-> viewVectorInWorld: " << viewVectorInWorld.transpose() << std::endl;
+        if (viewVectorInWorld(2) > 0) {
+          std::cout << "-> WARNING: viewVector is above horizon" << std::endl;
+        } else { 
+          Eigen::Vector3d ball_pos = cs.ballInWorldFromPixel(ball_center_in_img);
+          double ballRadius = cs.computeBallRadiusFromPixel(ball_center_in_img);
+          cv::Point2f posInSelf = cs.robotPosFromImg(x,y);
 
-        std::cout << "-> Ball pos in world: " << ball_pos.transpose() << std::endl
-                  << "-> Pos in self: (" << selfPos.x << "," << selfPos.y << ")" << std::endl
-                  << "-> viewVectorInWorld: " << viewVectorInWorld.transpose() << std::endl
-                  << "-> ball expected radius: " << ballRadius << std::endl;
-        // Draw radiusMin and radiusMax circles on the image
-        if (ballRadius > 0) {
-          cv::circle(filter->cachedImg(), ball_center_in_img,
-                     (int)ballRadius, cv::Scalar(255,0,0), 2);
+          std::cout << "-> Ball pos in world: " << ball_pos.transpose() << std::endl
+                    << "-> Pos in self: (" << posInSelf.x << "," << posInSelf.y << ")" << std::endl
+                    << "-> ball expected radius: " << ballRadius << std::endl;
+          // Draw radiusMin and radiusMax circles on the image
+          if (ballRadius > 0) {
+            cv::circle(filter->cachedImg(), ball_center_in_img,
+                       (int)ballRadius, cv::Scalar(255,0,0), 2);
+          }
+          filter->displayCurrent();
         }
-        filter->displayCurrent();
       }, this);
 }
 
