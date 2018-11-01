@@ -25,9 +25,19 @@ TagsDetector::Marker::Marker(int id, float size, const std::vector<cv::Point2f> 
   : id(id), size(size), corners(corners), rvec(rvec), tvec(tvec)
 {}
 
+cv::Point2f TagsDetector::Marker::getCenter() const
+{
+  cv::Point2f center(0,0);
+  for (const cv::Point2f corner : corners) {
+    center += corner / (float)corners.size();
+  }
+  return center;
+}
+
 TagsDetector::TagsDetector()
   : Filter("TagsDetector"),
-    detectorParameters(new cv::aruco::DetectorParameters())
+    detectorParameters(new cv::aruco::DetectorParameters()),
+    markersData({"imageIdx", "markerId", "centerX", "centerY"}, {})
 {
   periodCounter = 0;
 }
@@ -51,6 +61,8 @@ void TagsDetector::setParameters() {
   params()->define<ParamInt>("debugLevel", &debugLevel);
   period = ParamInt(1, 1, 100);
   params()->define<ParamInt>("period", &period);
+  debugLevel = ParamInt(0, 0, 1);
+  params()->define<ParamInt>("isWritingData", &isWritingData);
 }
   
 void TagsDetector::process() {
@@ -106,6 +118,32 @@ void TagsDetector::process() {
     Benchmark::open("Drawing Tags");
     cv::aruco::drawDetectedMarkers(img(), markerCorners, markerIds, cv::Scalar(0,0,255));    
     Benchmark::close("Drawing Tags");
+  }
+
+  if (isWritingData == 0) {
+    Benchmark::open("Writing Tags");
+    if (markers.size() > 0) {
+      for (const Marker & m : markers) {
+        cv::Point2f center = m.getCenter();
+        std::map<std::string, std::string> row =
+          {
+            {"imageIdx", std::to_string(dumpCounter)},
+            {"markerId", std::to_string(m.id)},
+            {"centerX", std::to_string(center.x)},
+            {"centerY", std::to_string(center.y)}
+          };
+        markersData.insertRow(row);
+      }
+    }
+    dumpCounter++;
+    // Save after every iteration (should be updated, but it would require to
+    // take care of the case where the filter is closed/destroyed or if
+    // dumpCounter is turned off)
+    markersData.writeFile("tags_detector_data.csv");
+    Benchmark::close("Writing Tags");
+  } else {
+    dumpCounter = 0;
+    markersData.clearData();
   }
 
 }
