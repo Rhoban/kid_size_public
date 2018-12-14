@@ -442,11 +442,8 @@ std::vector<GoalObservation *> LocalisationBinding::extractGoalObservations()
     cv::Point2f pos_in_self = cs->getPosInSelf(goalsLocations[i]);
     double robotHeight = cs->getHeight();
 
-    std::pair<Angle, Angle> panTiltToGoal;
-    panTiltToGoal = cs->panTiltFromXY(pos_in_self, robotHeight);
-    Angle panToGoal = panTiltToGoal.first;
-    Angle tiltToGoal = panTiltToGoal.second;
-    GoalObservation * newObs = new GoalObservation(panToGoal, tiltToGoal, robotHeight);
+    rhoban_geometry::PanTilt panTiltToGoal = cs->panTiltFromXY(pos_in_self, robotHeight);
+    GoalObservation * newObs = new GoalObservation(panTiltToGoal, robotHeight);
     // Adding new observation or merging based on similarity
     bool has_similar = false;
     for (GoalObservation * goalObs : goalObservations) {
@@ -475,15 +472,8 @@ LocalisationBinding::extractArenaCornerObservations() {
   }
   for (size_t i = 0; i < clipping_data.size(); i++) {
     if (clipping_data[i].is_obs_valid()) {
-      cv::Point2f pos_in_self = cs->getPosInSelf(clipping_data[i].getCornerInWorldFrame());
-      double robotHeight = cs->getHeight();
-      std::pair<Angle, Angle> panTiltToGoal;
-      panTiltToGoal = cs->panTiltFromXY(pos_in_self, robotHeight);
-      Angle panToGoal = panTiltToGoal.first;
-      Angle tiltToGoal = panTiltToGoal.second;
       try {
-        ArenaCornerObservation * newObs =
-          new ArenaCornerObservation(clipping_data[i], panToGoal, tiltToGoal, robotHeight);
+        ArenaCornerObservation * newObs = new ArenaCornerObservation(clipping_data[i]);
         arenaCornerObservations.push_back(newObs);
       } catch (const std::string msg) {
         fieldLogger.error("ArenaCornerObservation inconsistency; error at construction : %s", msg.c_str());
@@ -583,17 +573,15 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
       fieldObservations.push_back(obs);
       if (debugLevel > 0) {
         fieldLogger.log("Goal %d -> pan: %lf, tilt: %lf, weight: %1lf",
-                        obsId, obs->pan.getSignedValue(),
-                        obs->tilt.getSignedValue(), obs->weight);
+                        obsId, obs->panTilt.pan.getSignedValue(),
+                        obs->panTilt.tilt.getSignedValue(), obs->weight);
       }
       obsId++;
     }
     for (ArenaCornerObservation * obs : extractArenaCornerObservations()) {
       fieldObservations.push_back(obs);
       if (debugLevel > 0) {
-        fieldLogger.log("Arena Corner %d -> pan: %lf, tilt: %lf, weight: %1lf, dist: %lf",
-                        obsId, obs->getPan().getSignedValue(),
-                        obs->getTilt().getSignedValue(),
+        fieldLogger.log("Arena Corner %d -> weight: %1lf, dist: %lf",
                         obs->getWeight(),
                         obs->getBrutData().getRobotCornerDist());
       }

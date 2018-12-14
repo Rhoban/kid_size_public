@@ -8,8 +8,7 @@ namespace Localisation {
 
 class GoalObservation : public SerializableFieldObservation {
 public:
-  rhoban_utils::Angle pan;
-  rhoban_utils::Angle tilt;
+  rhoban_geometry::PanTilt panTilt;
 
   /// [m]
   double robotHeight;
@@ -42,11 +41,7 @@ public:
 public:
   GoalObservation();
 
-  /**
-   * toGoal angle is given in robot referential (left = -, right = +)
-   */
-  GoalObservation(const rhoban_utils::Angle &panToGoal,
-                  const rhoban_utils::Angle &tiltToGoal,
+  GoalObservation(const rhoban_geometry::PanTilt &panTiltToGoal,
                   double robotHeight, double weight = 1);
 
   cv::Point3f getSeenDir() const;

@@ -5,6 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <stdexcept>
 #include "scheduler/MoveScheduler.h"
+#include <rhoban_geometry/3d/pan_tilt.h>
 #include <Model/HumanoidFixedPressureModel.hpp>
 #include <Model/HumanoidModel.hpp>
 #include "rhoban_utils/timing/time_stamp.h"
@@ -29,9 +30,7 @@ namespace Utils {
 ///   - Z-axis: direction toward which the camera is pointing
 class CameraState {
 
-public:
-  typedef std::pair<rhoban_utils::Angle,rhoban_utils::Angle> PanTilt;
-  
+public:  
   CameraState(MoveScheduler *moveScheduler);
 
   const Leph::CameraModel & getCameraModel() const;
@@ -56,7 +55,7 @@ public:
   cv::Point2f getPosInSelf(const cv::Point2f & pos_in_origin) const;
 
   /// Return the [pan, tilt] pair of the ground point seen at imgX, imgY
-  PanTilt robotPanTiltFromImg(double imgX, double imgY) const;
+  rhoban_geometry::PanTilt robotPanTiltFromImg(double imgX, double imgY) const;
 
   /// Convert the position 'pos_camera' (in camera referential) to the 'world' basis
   Eigen::Vector3d getWorldPosFromCamera(const Eigen::Vector3d & pos_camera) const;
@@ -71,23 +70,13 @@ public:
    * Returns the xy position expected on the screen of the point p [m]
    * Return (-1,-1) if point p is outside of the img
    */
-  cv::Point imgXYFromRobotPosition(const cv::Point2f &p) const;
   cv::Point imgXYFromWorldPosition(const cv::Point2f &p) const;
-
-  /**
-   * Return the xy position in the robot basis, from pan, tilt respectively to
-   * the robot
-   * basis.
-   */
-  static cv::Point2f xyFromPanTilt(const rhoban_utils::Angle &pan,
-                                   const rhoban_utils::Angle &tilt,
-                                   double height);
 
   /**
    * Return the pan,tilt position respectively on the robot basis, from xy in
    * robot basis.
    */
-  static PanTilt panTiltFromXY(const cv::Point2f &pos, double height);
+  static rhoban_geometry::PanTilt panTiltFromXY(const cv::Point2f &pos, double height);
 
   /**
    * Compute with the model the cartesian position of the

@@ -5,6 +5,7 @@
 
 #include "RhIO.hpp"
 
+#include "rhoban_utils/util.h"
 #include "rhoban_utils/logging/logger.h"
 
 #include "Utils/Interface.h"
@@ -37,21 +38,23 @@ static double getScore(double error, double maxError, double tol) {
   return 1 - (error - tol) / (maxError - tol);
 }
 
-GoalObservation::GoalObservation() : GoalObservation(Angle(0), Angle(0), 0, 1) {}
+GoalObservation::GoalObservation() : GoalObservation(PanTilt(Angle(0), Angle(0)), 0, 1) {}
 
-GoalObservation::GoalObservation(const Angle &panToGoal,
-                                 const Angle &tiltToGoal,
+GoalObservation::GoalObservation(const PanTilt &panTiltToGoal,
                                  double robotHeight_,
                                  double weight_)
-  : pan(panToGoal), tilt(tiltToGoal),
+  : panTilt(panTiltToGoal),
     robotHeight(robotHeight_), weight(weight_)
 {
 }
 
 cv::Point3f GoalObservation::getSeenDir() const
 {
-  cv::Point2f seenPos = CameraState::xyFromPanTilt(pan, tilt, robotHeight);
-  return cv::Point3f(seenPos.x, seenPos.y, -robotHeight);
+  Eigen::Vector3d dir = panTilt.toViewVector();
+  if (dir.z() > 0) {
+    throw std::runtime_error(DEBUG_INFO + " direction z positive or 0 in viewVector");
+  }
+  return eigen2CV(Eigen::Vector3d(robotHeight * dir / dir.z()));
 }
 
 double GoalObservation::potential(const FieldPosition &p) const {
@@ -107,8 +110,8 @@ double GoalObservation::potential(const FieldPosition &p, bool debug) const {
 
 void GoalObservation::merge(const GoalObservation & other)
 {
-  pan  = Angle::weightedAverage(pan , weight, other.pan , other.weight);
-  tilt = Angle::weightedAverage(tilt, weight, other.tilt, other.weight);
+  panTilt.pan  = Angle::weightedAverage(panTilt.pan , weight, other.panTilt.pan , other.weight);
+  panTilt.tilt = Angle::weightedAverage(panTilt.tilt, weight, other.panTilt.tilt, other.weight);
   weight = weight + other.weight;
 }
 
@@ -182,16 +185,19 @@ std::string GoalObservation::getClassName() const { return "GoalObservation"; }
 Json::Value GoalObservation::toJson() const {
   Json::Value v;
   v["robotHeight"] = robotHeight;
-  v["pan"] = pan.getSignedValue();
-  v["tilt"] = tilt.getSignedValue();
+  v["pan"] = panTilt.pan.getSignedValue();
+  v["tilt"] = panTilt.tilt.getSignedValue();
   return v;
 }
 
 void GoalObservation::fromJson(const Json::Value & v, const std::string & dir_name) {
   (void) dir_name;
   rhoban_utils::tryRead(v,"robotHeight",&robotHeight);
+  double pan = panTilt.pan.getSignedValue();
+  double tilt = panTilt.tilt.getSignedValue();
   rhoban_utils::tryRead(v,"pan",&pan);
   rhoban_utils::tryRead(v,"tilt",&tilt);
+  panTilt = PanTilt(Angle(pan),Angle(tilt));
 }
 
 double GoalObservation::getMinScore() const {
@@ -204,8 +210,8 @@ double GoalObservation::getWeightedScore(double score) const {
 
 std::string GoalObservation::toStr() const {
   std::ostringstream oss;
-  oss << "[GoalObservation: pan=" << pan.getSignedValue()
-      << "° tilt=" << tilt.getSignedValue() << "°]";
+  oss << "[GoalObservation: pan=" << panTilt.pan.getSignedValue()
+      << "° tilt=" << panTilt.tilt.getSignedValue() << "°]";
   return oss.str();
 }
 

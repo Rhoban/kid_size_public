@@ -34,22 +34,15 @@ bool ArenaCornerObservation::debug = false;
 ArenaCornerObservation::ArenaCornerObservation() {}
 
 ArenaCornerObservation::ArenaCornerObservation(const Vision::Filters::FieldBorderData & brut_data_,
-                                               const Angle &panToArenaCorner,
-                                               const Angle &tiltToArenaCorner,
-                                               double robotHeight_,
                                                double weight_) {
   brut_data = brut_data_;
-  pan = panToArenaCorner;
-  tilt = tiltToArenaCorner;
-  robotHeight = robotHeight_;
   weight = weight_;
   sign_dot = 1;
   seg_dir = 0;
   
   if (debug) {
     std::ostringstream oss;
-    oss << "Creating obs: pan = " << pan.getSignedValue()
-        << ", tilt = " << tilt.getSignedValue();
+    oss << "Creating ArenaCornerObservation" << std::endl;
     out.log(oss.str().c_str());
   }
 
@@ -119,8 +112,6 @@ ArenaCornerObservation::ArenaCornerObservation(const Vision::Filters::FieldBorde
   }
 }
 
-Angle ArenaCornerObservation::getPan() const { return pan; }
-Angle ArenaCornerObservation::getTilt() const { return tilt; }
 double ArenaCornerObservation::getWeight() const { return weight; }
 
 Vision::Filters::FieldBorderData ArenaCornerObservation::getBrutData() {
@@ -269,17 +260,12 @@ std::string ArenaCornerObservation::getClassName() const {
 }
 
 Json::Value ArenaCornerObservation::toJson() const {
-  Json::Value v;
-  v["robotHeight"] = robotHeight;
-  v["pan"] = pan.getSignedValue();
-  v["tilt"] = tilt.getSignedValue();
-  return v;
+  return Json::Value();
 }
 
 void ArenaCornerObservation::fromJson(const Json::Value & v, const std::string & dir_name) {
-  rhoban_utils::tryRead(v,"robotHeight",&robotHeight);
-  rhoban_utils::tryRead(v,"pan",&pan);
-  rhoban_utils::tryRead(v,"tilt",&tilt);
+  (void) v;
+  (void) dir_name;
 }
 
 double ArenaCornerObservation::getMinScore() const {

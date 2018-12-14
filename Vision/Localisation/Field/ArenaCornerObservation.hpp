@@ -9,12 +9,7 @@ namespace Localisation {
 class ArenaCornerObservation : public SerializableFieldObservation {
 private:
   Vision::Filters::FieldBorderData brut_data;
-  rhoban_utils::Angle pan;
-  rhoban_utils::Angle tilt;
   double weight;
-
-  /// [m]
-  double robotHeight;
 
   std::vector<FieldPosition> candidates;
   std::vector<double> x_candidates;
@@ -34,9 +29,6 @@ public:
    * panToArenaCorner angle is given in robot referential (left = +, right = -)
    */
   ArenaCornerObservation(const Vision::Filters::FieldBorderData & brut_data_,
-                         const rhoban_utils::Angle &panToArenaCorner,
-                         const rhoban_utils::Angle &tiltToArenaCorner,
-                         double robotHeight_,
                          double weight_ = 1);
 
   virtual double potential(const FieldPosition &p) const;
@@ -45,8 +37,6 @@ public:
 		   const FieldPosition &p) const;
   double segment_potential(const FieldPosition &p) const; 
   
-  rhoban_utils::Angle getPan() const;
-  rhoban_utils::Angle getTilt() const;
   double getWeight() const;
   
   static void bindWithRhIO();
