@@ -82,8 +82,15 @@ public:
    * Compute with the model the cartesian position of the
    * ball in model world frame viewed in the image at given
    * pixel.
+   *
+   * throw a runtime_error if corresponding ray does not intersect ball plane
    */
-  Eigen::Vector3d ballInWorldFromPixel(const cv::Point2f &pos) const;
+  Eigen::Vector3d ballInWorldFromPixel(const cv::Point2f &img_pos) const;
+
+  /// Get the intersection between the ray corresponding to the pixel 'img_pos'
+  /// and the horizontal plane at plane_height
+  /// throw a runtime_error if corresponding ray does not intersect with the plane
+  Eigen::Vector3d posInWorldFromPixel(const cv::Point2f & img_pos, double plane_height = 0) const;
 
   /**
    * Return the expected radius for a ball at the given pixel.

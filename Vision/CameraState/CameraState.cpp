@@ -6,6 +6,10 @@
 #include <rhoban_utils/util.h>
 #include <rhoban_utils/logging/logger.h>
 
+#include <rhoban_geometry/3d/ray.h>
+#include <rhoban_geometry/3d/plane.h>
+#include <rhoban_geometry/3d/intersection.h>
+
 #include <cmath>
 
 #include <Eigen/StdVector>
@@ -84,20 +88,7 @@ cv::Point2f CameraState::robotPosFromImg(double imgX, double imgY) const
 }
 
 cv::Point2f CameraState::worldPosFromImg(double imgX, double imgY) const{
-
-  Eigen::Vector2d pixel(imgX, imgY);
-
-  Eigen::Vector3d viewVectorInCamera = cv2Eigen(_cameraModel.getViewVectorFromImg(cv::Point2f(imgX, imgY)));
-  Eigen::Vector3d viewVectorInWorld = cameraToWorld.linear() * viewVectorInCamera;
-
-  Eigen::Vector3d posInWorld;
-  bool success = _model->cameraViewVectorToWorld(viewVectorInWorld, posInWorld);
-  if (!success) {
-    std::ostringstream oss;
-    oss << DEBUG_INFO << "Warning asking for point above horizon ! " << imgX << " " << imgY
-        << std::endl;
-    throw std::runtime_error(oss.str());
-  }
+  Eigen::Vector3d posInWorld = posInWorldFromPixel(cv::Point2f(imgX, imgY));
 
   return cv::Point2f(posInWorld(0), posInWorld(1));
 }
@@ -192,16 +183,26 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f &pos) const {
 }
 
 Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f &pos) const {
-  Eigen::Vector2d pixel = cv2Eigen(pos);
+  return posInWorldFromPixel(pos, Constants::field.ballRadius);
+}
 
-  Eigen::Vector3d viewVectorInWorld = _model->cameraPixelToViewVector(_cameraModel, pixel);
+Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f &pos, double ground_height) const {
+  Eigen::Vector3d viewVectorInCamera = cv2Eigen(_cameraModel.getViewVectorFromImg(pos));
+  Eigen::Vector3d viewVectorInWorld = cameraToWorld.linear() * viewVectorInCamera;
 
-  Eigen::Vector3d ballCenter;
-  _model->cameraViewVectorToBallWorld(
-      _cameraModel, viewVectorInWorld,
-      Constants::field.ballRadius, ballCenter);
+  Eigen::Vector3d cameraPosInWorld = cameraToWorld * Eigen::Vector3d::Zero();
 
-  return ballCenter;
+  Ray viewRay(cameraPosInWorld, viewVectorInWorld);
+  Plane groundPlane(Eigen::Vector3d(0,0,1), ground_height);
+    
+  if (!isIntersectionPoint(viewRay, groundPlane)) {
+    std::ostringstream oss;
+    oss << DEBUG_INFO << " Point " << pos.x << " " << pos.y << " does not intersect ground"
+        << std::endl;
+    throw std::runtime_error(oss.str());
+  }
+
+  return getIntersection(viewRay, groundPlane);
 }
 
 ::rhoban_utils::TimeStamp CameraState::getTimeStamp() const {
