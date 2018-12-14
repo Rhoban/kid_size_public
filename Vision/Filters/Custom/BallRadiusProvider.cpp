@@ -46,12 +46,10 @@ void BallRadiusProvider::process() {
   // 3: Place values at key points
   for (int col : key_cols) {
     for (int row : key_rows) {
-      ///TODO: replace the current method to get something more appropriate
-      double radiusMin, radiusMax;
-      getCS().ballInfoFromPixel(cv::Point2f(col, row),
-                                &radiusMin, &radiusMax);
-      float radius = (radiusMin + radiusMax) / 2;
-      tmp_img.at<float>(row, col) = radius;
+      double ballRadius = getCS().computeBallRadiusFromPixel(cv::Point2f(col, row));
+      // For points above horizon, set ballRadius to 0
+      if (ballRadius < 0) ballRadius = 0;
+      tmp_img.at<float>(row, col) = ballRadius;
     }
   }
 

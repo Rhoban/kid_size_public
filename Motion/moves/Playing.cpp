@@ -138,6 +138,7 @@ void PlayingMove::step(float elapsed)
 
         // Once quality is good enough, go to search state
         if (decision->isFieldQualityGood && !loc->getVisualCompassStatus()) {
+            logger.log("I am now localized, going to search the ball");
             setState(STATE_SEARCH);
         }
     } else {
@@ -148,12 +149,14 @@ void PlayingMove::step(float elapsed)
 
             if (state == STATE_APPROACH) {
                 if (dist > walkBallDistance*1.1) {
+                    logger.log("Ball is now too far, going to 'walkBall'");
                     setState(STATE_WALKBALL);
                 }
             }
 
             if (state == STATE_WALKBALL) {
                 if (dist < walkBallDistance && decision->isBallQualityGood) {
+                    logger.log("I am now in range of the ball, going to 'approach'");
                     setState(STATE_APPROACH);
                 }
                 
@@ -180,10 +183,12 @@ void PlayingMove::step(float elapsed)
             }
 
             if (!decision->isBallQualityGood && state == STATE_APPROACH) {
+                logger.log("Ball has been lost while in 'approach', going to 'backward'");
                 setState(STATE_BACKWARD);
             }
         } else {
             if (!decision->shouldLetPlay && instruction.order == CaptainOrder::HandleBall) {
+                logger.log("Captain ordered me to handle the ball, going to walkball");
                 setState(STATE_WALKBALL);
             }
         }
@@ -278,11 +283,9 @@ void PlayingMove::step(float elapsed)
                         obstacles);
             }
 
-            if (!teamConfidence) {
-                if (!decision->isBallQualityGood) {
-                    logger.log("I don't see the ball, going to search");
-                    setState(STATE_SEARCH);
-                }
+            if (!teamConfidence && !decision->isBallQualityGood) {
+              logger.log("I don't see the ball, going to search");
+              setState(STATE_SEARCH);
             }
         } else {
             if (decision->shouldLetPlay || instruction.order == CaptainOrder::Place) {
@@ -306,19 +309,14 @@ void PlayingMove::step(float elapsed)
             backwardT += elapsed;
         }
 
-        if (state == STATE_SEARCH || state == STATE_BACKWARD) {
-            logger.log("Let's approach the ball, I see it");
-            /*
-            if (decision->isBallQualityGood) {
-                logger.log("Let's approach the ball, I see it");
-                setState(STATE_APPROACH);
-            }
-            */
-        } else {
+        if (state != STATE_SEARCH && state != STATE_BACKWARD) {
             if (instruction.order == CaptainOrder::SearchBall && !decision->isBallQualityGood) {
+                logger.log("Captain ordered me to search the ball and I don't find it");
                 if (backwardT < 3) {
+                    logger.log("-> Going to backward");
                     setState(STATE_BACKWARD);
                 } else {
+                    logger.log("-> Going to search");
                     setState(STATE_SEARCH);
                 }
             }
@@ -329,6 +327,7 @@ void PlayingMove::step(float elapsed)
             walk->control(true, -walk->maxStepBackward, 0, 0);
 
             if (t > 5.0) {
+                logger.log("Spent 5 seconds going backward, now moving to search");
                 setState(STATE_SEARCH);
             }
         }
@@ -336,6 +335,7 @@ void PlayingMove::step(float elapsed)
         // When field quality is low or when the robot is running visual
         // compass: go to state localize
         if (!decision->isFieldQualityGood || loc->getVisualCompassStatus()) {
+            logger.log("Requiring more field observations, going to localize");
             setState(STATE_LOCALIZE);
         }
     }

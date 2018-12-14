@@ -127,17 +127,9 @@ void Filter::initWindow() {
         const CameraState & cs = filter->getCS();
         const Leph::CameraModel & cameraModel = cs.getCameraModel();
         cv::Vec3b pixel = filter->getImg()->at<cv::Vec3b>(y, x);
-        Eigen::Vector3d ball_pos;
         cv::Point2f ball_center_in_img = cv::Point2f(x,y);
-        double radiusMin, radiusMax;
         std::cout << "filter->getCS()->timestamp" << cs.getTimeStampDouble()
                   << std::endl;
-        ball_pos = cs.ballInfoFromPixel(ball_center_in_img,
-                                        &radiusMin, &radiusMax);
-        cv::Point2f corrected;
-        corrected = cs.getCameraModel().toCorrectedImg(cv::Point2f(x,y));
-
-        cv::Point2f selfPos = cs.robotPosFromImg(x,y);
 
         int B = (int)pixel[0];
         int G = (int)pixel[1];
@@ -149,7 +141,8 @@ void Filter::initWindow() {
         // Wikipedia
         int U = R * -0.14713 + G * -0.28886 + B * 0.436 + 128;
         int V = R * 0.615 + G * -0.51499 + B * -0.10001 + 128;
-
+        
+        cv::Point2f corrected = cameraModel.toCorrectedImg(cv::Point2f(x,y));
 
         std::cout << "CLICK x=" << x << " y=" << y << std::endl;
         std::cout << " -> corrected: " << corrected.x << ", " << corrected.y << std::endl;
@@ -162,18 +155,27 @@ void Filter::initWindow() {
         std::cout << U << "]" << std::endl;
         std::cout << "Note :  YUV format is YCrCb" << std::endl;
 
-        std::cout << "-> pos: " << ball_pos.transpose() << std::endl
-                  << "-> selfPos: " << selfPos.x << "," << selfPos.y << ")" << std::endl
-                  << "-> radiusMin: " << radiusMin << std::endl
-                  << "-> radiusMax: " << radiusMax << std::endl;
-        // Draw radiusMin and radiusMax circles on the image
-        for (int radius : {radiusMin, radiusMax}) {
-          cv::circle(filter->cachedImg(),
-                     ball_center_in_img,
-                     radius,
-                     cv::Scalar(255,0,0), 2);
+        Eigen::Vector3d viewVectorInCamera = cv2Eigen(cameraModel.getViewVectorFromImg(ball_center_in_img));
+        
+        Eigen::Vector3d viewVectorInWorld = cs.cameraToWorld.linear() * viewVectorInCamera;
+        std::cout << "-> viewVectorInWorld: " << viewVectorInWorld.transpose() << std::endl;
+        if (viewVectorInWorld(2) > 0) {
+          std::cout << "-> WARNING: viewVector is above horizon" << std::endl;
+        } else { 
+          Eigen::Vector3d ball_pos = cs.ballInWorldFromPixel(ball_center_in_img);
+          double ballRadius = cs.computeBallRadiusFromPixel(ball_center_in_img);
+          cv::Point2f posInSelf = cs.robotPosFromImg(x,y);
+
+          std::cout << "-> Ball pos in world: " << ball_pos.transpose() << std::endl
+                    << "-> Pos in self: (" << posInSelf.x << "," << posInSelf.y << ")" << std::endl
+                    << "-> ball expected radius: " << ballRadius << std::endl;
+          // Draw radiusMin and radiusMax circles on the image
+          if (ballRadius > 0) {
+            cv::circle(filter->cachedImg(), ball_center_in_img,
+                       (int)ballRadius, cv::Scalar(255,0,0), 2);
+          }
+          filter->displayCurrent();
         }
-        filter->displayCurrent();
       }, this);
 }
 

@@ -2,6 +2,8 @@
 
 #include "Filters/Filter.hpp"
 
+#include "rhoban_utils/tables/string_table.h"
+
 #include <opencv2/opencv.hpp>
 #include "opencv2/core/core.hpp"
 #include "opencv2/features2d/features2d.hpp"
@@ -19,12 +21,14 @@ namespace Filters {
  */
 class TagsDetector : public Filter {
 public:
-  /// Aruco::Marker does not exit in OpenCV3
+  /// Aruco::Marker does not exist in OpenCV3
   class Marker {
   public:
     Marker();
     Marker(int id, float size, const std::vector<cv::Point2f> & corners,
            const cv::Vec3d & rvec, const cv::Vec3d & tvec);
+
+    cv::Point2f getCenter() const;
     
     /// Id of the marker
     int id;
@@ -77,6 +81,10 @@ private:
   /// 'period' images
   ParamInt period;
 
+  /// 0 -> data are not dumped
+  /// 1 -> All collected data are dumped after every image
+  ParamInt isWritingData;
+
   // Detection parameters
   cv::Ptr<cv::aruco::DetectorParameters> detectorParameters;
 
@@ -84,6 +92,11 @@ private:
 
   int periodCounter;
 
+  /// Store the image index for dumping data
+  int dumpCounter;
+
+  /// Store the markers seen until now
+  rhoban_utils::StringTable markersData;
 };
 }
 }

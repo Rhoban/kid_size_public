@@ -942,7 +942,7 @@ void Robocup::updateBallInformations() {
       }
       // Usual code
       cv::Point2f ballPix(ballsX[k], ballsY[k]);
-      Eigen::Vector3d ball_in_world = cs->ballInfoFromPixel(ballPix);
+      Eigen::Vector3d ball_in_world = cs->ballInWorldFromPixel(ballPix);
       positions.push_back(ball_in_world);
       ballSpeedEstimator->update(cs->getTimeStamp(),
                                  Eigen::Vector2d(ball_in_world(0), ball_in_world(1)));
@@ -1140,11 +1140,10 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
       continue;
     cv::Point center(ballsX[ballIndex], ballsY[ballIndex]);
     cv::circle(img, center, ballsRadius[ballIndex], cv::Scalar(100, 0, 100), 2);
-    int radiusMin = 0.0;
-    int radiusMax = 0.0;
-    cs->ballInfoFromPixel(center, &radiusMin, &radiusMax);
-    cv::circle(img, center, radiusMin, cv::Scalar(100, 200, 100), 1);
-    cv::circle(img, center, radiusMax, cv::Scalar(100, 200, 100), 1);
+    double ballRadius = cs->computeBallRadiusFromPixel(center);
+    if (ballRadius > 0) {
+      cv::circle(img, center, (int)ballRadius, cv::Scalar(100, 200, 100), 1);
+    }
   }
 
   // Drawing opponent robots
