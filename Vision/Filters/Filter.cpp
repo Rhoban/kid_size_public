@@ -160,7 +160,7 @@ void Filter::initWindow() {
         Eigen::Vector3d viewVectorInWorld = cs.cameraToWorld.linear() * viewVectorInCamera;
         std::cout << "-> viewVectorInWorld: " << viewVectorInWorld.transpose() << std::endl;
         if (viewVectorInWorld(2) > 0) {
-          std::cout << "-> WARNING: viewVector is above horizon" << std::endl;
+          std::cout << "-> ViewVector is above horizon, no additional elements" << std::endl;
         } else { 
           Eigen::Vector3d ball_pos = cs.ballInWorldFromPixel(ball_center_in_img);
           double ballRadius = cs.computeBallRadiusFromPixel(ball_center_in_img);

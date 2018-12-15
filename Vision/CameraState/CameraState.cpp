@@ -6,7 +6,6 @@
 #include <rhoban_utils/util.h>
 #include <rhoban_utils/logging/logger.h>
 
-#include <rhoban_geometry/3d/ray.h>
 #include <rhoban_geometry/3d/plane.h>
 #include <rhoban_geometry/3d/intersection.h>
 
@@ -156,7 +155,11 @@ double CameraState::getHeight() {
 
 cv::Point CameraState::imgXYFromWorldPosition(const cv::Point2f &p) const
 {
-  Eigen::Vector3d posInWorld(p.x, p.y, 0);
+  return imgXYFromWorldPosition(Eigen::Vector3d(p.x, p.y, 0));
+}
+
+cv::Point CameraState::imgXYFromWorldPosition(const Eigen::Vector3d & posInWorld) const
+{
   Eigen::Vector3d posInCamera = worldToCamera * posInWorld;
   return _cameraModel.getImgFromObject(eigen2CV(posInCamera));
 }
@@ -166,33 +169,53 @@ PanTilt CameraState::panTiltFromXY(const cv::Point2f &pos,
   return PanTilt(Eigen::Vector3d(pos.x,pos.y,-height));
 }
 
-double CameraState::computeBallRadiusFromPixel(const cv::Point2f &pos) const {
-  Eigen::Vector2d pixel = cv2Eigen(pos);  
-  Eigen::Vector3d viewVector = _model->cameraPixelToViewVector(_cameraModel, pixel);
+double CameraState::computeBallRadiusFromPixel(const cv::Point2f &ballPosImg) const {
 
-  double entryRadMinPx, entryRadMaxPx;
-  bool success = _model->getImgRadiusFromViewVector(_cameraModel, viewVector,
-                                                    Constants::field.ballRadius,
-                                                    &entryRadMinPx, &entryRadMaxPx);
-  if (!success) {
-    logger.log((DEBUG_INFO + "Failed to get image radius").c_str());
+  Ray viewRay = getRayInWorldFromPixel(ballPosImg);
+  if (viewRay.dir.z() >= 0) {
     return -1;
   }
 
-  return (entryRadMinPx + entryRadMaxPx) / 2;
+  Plane ballPlane(Eigen::Vector3d::UnitZ(), Constants::field.ballRadius);
+    
+  if (!isIntersectionPoint(viewRay, ballPlane)) {
+    return -1;
+  }
+
+  Eigen::Vector3d ballCenter = getIntersection(viewRay, ballPlane);
+
+  // Getting a perpendicular direction. We know that viewRay.dir.z<0, thus the
+  // vectors will be different
+  Eigen::Vector3d groundDir = viewRay.dir;
+  groundDir(2) = 0;
+  Eigen::Vector3d altDir = viewRay.dir.cross(groundDir);
+
+  // Getting one of the points on the side of the ball, this is not an exact
+  // method, but the approximation should be good enough
+  Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ballRadius;
+
+  // Getting pixel for ballSide
+  cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
+
+  return (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
 }
 
 Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f &pos) const {
   return posInWorldFromPixel(pos, Constants::field.ballRadius);
 }
 
-Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f &pos, double ground_height) const {
-  Eigen::Vector3d viewVectorInCamera = cv2Eigen(_cameraModel.getViewVectorFromImg(pos));
+rhoban_geometry::Ray CameraState::getRayInWorldFromPixel(const cv::Point2f & img_pos) const
+{
+  Eigen::Vector3d viewVectorInCamera = cv2Eigen(_cameraModel.getViewVectorFromImg(img_pos));
   Eigen::Vector3d viewVectorInWorld = cameraToWorld.linear() * viewVectorInCamera;
 
   Eigen::Vector3d cameraPosInWorld = cameraToWorld * Eigen::Vector3d::Zero();
 
-  Ray viewRay(cameraPosInWorld, viewVectorInWorld);
+  return Ray(cameraPosInWorld, viewVectorInWorld);
+}
+
+Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f &pos, double ground_height) const {
+  Ray viewRay = getRayInWorldFromPixel(pos);
   Plane groundPlane(Eigen::Vector3d(0,0,1), ground_height);
     
   if (!isIntersectionPoint(viewRay, groundPlane)) {

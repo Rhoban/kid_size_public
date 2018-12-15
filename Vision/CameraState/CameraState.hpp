@@ -5,6 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <stdexcept>
 #include "scheduler/MoveScheduler.h"
+#include <rhoban_geometry/3d/ray.h>
 #include <rhoban_geometry/3d/pan_tilt.h>
 #include <Model/HumanoidFixedPressureModel.hpp>
 #include <Model/HumanoidModel.hpp>
@@ -71,6 +72,7 @@ public:
    * Return (-1,-1) if point p is outside of the img
    */
   cv::Point imgXYFromWorldPosition(const cv::Point2f &p) const;
+  cv::Point imgXYFromWorldPosition(const Eigen::Vector3d & p) const;
 
   /**
    * Return the pan,tilt position respectively on the robot basis, from xy in
@@ -87,6 +89,11 @@ public:
    */
   Eigen::Vector3d ballInWorldFromPixel(const cv::Point2f &img_pos) const;
 
+  /**
+   * Return the ray starting at camera source and going toward direction of img_pos
+   */
+  rhoban_geometry::Ray getRayInWorldFromPixel(const cv::Point2f & img_pos) const;
+
   /// Get the intersection between the ray corresponding to the pixel 'img_pos'
   /// and the horizontal plane at plane_height
   /// throw a runtime_error if corresponding ray does not intersect with the plane
@@ -96,6 +103,13 @@ public:
    * Return the expected radius for a ball at the given pixel.
    *
    * If the pixel is above horizon, a negative value is returned
+   *
+   * Note: this method is an approximation, the exact method could have 4
+   * different results which are the intersection of a plane and a cone.
+   * - Circle
+   * - Ellipse
+   * - Parabole
+   * - Hyperbole
    */
   double computeBallRadiusFromPixel(const cv::Point2f &pos) const;
 
