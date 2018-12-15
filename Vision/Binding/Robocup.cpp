@@ -1149,15 +1149,22 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
   // Drawing opponent robots
   auto candidates = ballStackFilter->getCandidates();
 
-//  // TODO: to repair
-//  // Tagging horizon
-//  cv::Point horizon1, horizon2;
-//  horizon1.x = 0;
-//  horizon2.x = width - 1;
-//  horizon1.y = cs->getPixelYtAtHorizon(horizon1.x, width, height);
-//  horizon2.y = cs->getPixelYtAtHorizon(horizon2.x, width, height);
-//  // Color in BGR
-//  cv::line(img, horizon1, horizon2, cv::Scalar(255, 0, 0), 2);
+
+  double angleStep = M_PI/10;
+  std::vector<cv::Point2f> horizonKeypoints;
+  Eigen::Vector3d cameraPos = cs->getWorldPosFromCamera(Eigen::Vector3d::Zero());
+  Eigen::Vector3d cameraDir = cs->getWorldPosFromCamera(Eigen::Vector3d::UnitZ()) - cameraPos;
+  for (double yaw = -M_PI; yaw <= M_PI; yaw += angleStep) {
+    Eigen::Vector3d offset(cos(yaw), sin(yaw), 0);
+    // skip to next value if object is behind camera plane
+    if (cameraDir.dot(offset) <= 0) continue;
+    Eigen::Vector3d target = cameraPos + offset;
+    cv::Point p  = cs->imgXYFromWorldPosition(target);
+    horizonKeypoints.push_back(p);
+  }
+  for (size_t idx=1; idx<horizonKeypoints.size(); idx++) {
+    cv::line(img, horizonKeypoints[idx-1], horizonKeypoints[idx], cv::Scalar(255,0,0), 2);
+  }
 
   globalMutex.unlock();
 

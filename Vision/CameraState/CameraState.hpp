@@ -69,7 +69,7 @@ public:
 
   /*
    * Returns the xy position expected on the screen of the point p [m]
-   * Return (-1,-1) if point p is outside of the img
+   * throws exception if point is behind the camera
    */
   cv::Point imgXYFromWorldPosition(const cv::Point2f &p) const;
   cv::Point imgXYFromWorldPosition(const Eigen::Vector3d & p) const;
@@ -140,12 +140,6 @@ public:
   rhoban_utils::TimeStamp getTimeStamp() const;
   /// Return the timestamp in [ms]
   double getTimeStampDouble() const;
-
-  /**
-   * Returns the Y coordinate of the pixel on the horizon line whose position in
-   * the X coordinate is pixelX
-   */
-  double getPixelYtAtHorizon(double pixelX);
 
   MoveScheduler *_moveScheduler;
   Leph::HumanoidFixedPressureModel _pastReadModel;

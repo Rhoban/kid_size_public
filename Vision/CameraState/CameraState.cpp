@@ -236,10 +236,5 @@ double CameraState::getTimeStampDouble() const {
   return _timeStamp * 1000;
 }
 
-double CameraState::getPixelYtAtHorizon(double pixelX)
-{
-  return _model->cameraScreenHorizon(_cameraModel, pixelX);
-}
-
 }
 }
