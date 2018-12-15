@@ -1,5 +1,6 @@
 #include "Filters/Ball/BallByDNN.hpp"
 
+#include "CameraState/CameraState.hpp"
 #include "Filters/Patches/PatchProvider.hpp"
 #include "Utils/RotatedRectUtils.hpp"
 #include "Utils/Interface.h"
@@ -162,7 +163,7 @@ void BallByDNN::process() {
       bool isValid = score >= scoreThreshold;
 
       if (isValid) {
-        pushBall(Circle(cv2rg(roi.center), -1), output);
+        pushBall(Circle(cv2rg(roi.center), getCS().computeBallRadiusFromPixel(roi.center)), output);
         drawRotatedRectangle(output, roi, cv::Scalar(0,255,0), 2);
       }
       else {

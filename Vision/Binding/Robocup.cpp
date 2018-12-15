@@ -923,15 +923,15 @@ void Robocup::updateBallInformations() {
   std::vector<Eigen::Vector3d> positions;
   for (size_t k = 0; k < ballsX.size(); k++) {
     try {
+      cv::Point2f ballPix(ballsX[k], ballsY[k]);
+      Eigen::Vector3d ballInWorld = cs->ballInWorldFromPixel(ballPix);
+      Eigen::Vector3d ballInSelf = cs->worldToSelf * ballInWorld;
       if (ignoreOutOfFieldBalls) {
-        cv::Point2f posInSelf = cs->robotPosFromImg(ballsX[k], ballsY[k]);
-        double ballXSelf = posInSelf.x;
-        double ballYSelf = posInSelf.y;
         LocalisationService * localisation = _scheduler->getServices()->localisation;
         rhoban_geometry::Point robot = localisation->getFieldPos();
         Angle robotDir(rad2deg(localisation->getFieldOrientation()));
-        double ballXField = robot.x + cos(robotDir) * ballXSelf - sin(robotDir) * ballYSelf;
-        double ballYField = robot.y + sin(robotDir) * ballXSelf + cos(robotDir) * ballYSelf;
+        double ballXField = robot.x + cos(robotDir) * ballInSelf.x() - sin(robotDir) * ballInSelf.y();
+        double ballYField = robot.y + sin(robotDir) * ballInSelf.x() + cos(robotDir) * ballInSelf.y();
         // OPTION: Margin could be added here
         if (std::fabs(ballXField) > Constants::field.fieldLength/2 + Constants::field.borderStripWidth ||
             std::fabs(ballYField) > Constants::field.fieldWidth/2 + Constants::field.borderStripWidth) {
@@ -941,11 +941,9 @@ void Robocup::updateBallInformations() {
         }
       }
       // Usual code
-      cv::Point2f ballPix(ballsX[k], ballsY[k]);
-      Eigen::Vector3d ball_in_world = cs->ballInWorldFromPixel(ballPix);
-      positions.push_back(ball_in_world);
+      positions.push_back(ballInWorld);
       ballSpeedEstimator->update(cs->getTimeStamp(),
-                                 Eigen::Vector2d(ball_in_world(0), ball_in_world(1)));
+                                 Eigen::Vector2d(ballInWorld(0), ballInWorld(1)));
     } catch (const std::runtime_error &exc) {
       out.warning("Ignoring a candidate at (%f,%f) because of '%s'",
                   ballsX[k], ballsY[k], exc.what());
@@ -1072,9 +1070,10 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
       int k = 0;
       for (auto &candidate : candidates) {
         k++;
-        auto cpos = candidate.object;
+        Eigen::Vector3d cpos = candidate.object;
         try {
-          auto pos = cs->imgXYFromWorldPosition(cv::Point2f(cpos.x(), cpos.y()));
+          auto pos = cs->imgXYFromWorldPosition(cpos);
+          
           // I candidate is outside of the image, ignore it
           if (pos.x < 0 && pos.y < 0) continue;
 
@@ -1096,13 +1095,10 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
           Point ball_usable_speed = ballSpeedEstimator->getUsableSpeed();
           Eigen::Vector3d ball_speed(ball_usable_speed.x, ball_usable_speed.y, 0);
 
-          auto next_cpos = cpos +  ball_speed * elapsed;
-          cv::Point2f next_cpos_cv(next_cpos.x(), next_cpos.y());
-          auto futur_pos = cs->imgXYFromWorldPosition(next_cpos_cv);
+          Eigen::Vector3d next_cpos = cpos +  ball_speed * elapsed;
+          cv::Point2f futur_pos = cs->imgXYFromWorldPosition(next_cpos);
           cv::line(img, pos, futur_pos, cv::Scalar(255, 255, 0), 2);
-        } catch (const std::runtime_error & exc) {
-          out.warning("%s: failed ball drawing due to '%s'", DEBUG_INFO.c_str(), exc.what());
-        }
+        } catch (const std::runtime_error & exc) {}
       }
   }
   
@@ -1112,11 +1108,11 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
       int k = 0;
       for (auto &candidate : candidates) {
         k++;
-        auto cpos = candidate.object;
+        Eigen::Vector3d cpos = candidate.object;
         try {
           auto pos = cs->imgXYFromWorldPosition(cv::Point2f(cpos.x(), cpos.y()));
 
-          // I candidate is outside of the image, ignore it
+          // If candidate is outside of the image, ignore it
           if (pos.x < 0 && pos.y < 0) continue;
 
           // Draw robot candidate
@@ -1127,9 +1123,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
           ss << (candidates.size() - k);
           cv::putText(img, ss.str(), pos, cv::FONT_HERSHEY_SIMPLEX, 0.3,
                       cv::Scalar(0, 0, 0), 1);
-        } catch (const std::runtime_error & exc) {
-          out.warning("%s: failed ball drawing due to '%s'", DEBUG_INFO.c_str(), exc.what());
-        }
+        } catch (const std::runtime_error & exc) {}
       }
   }
 
@@ -1142,7 +1136,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
     cv::circle(img, center, ballsRadius[ballIndex], cv::Scalar(100, 0, 100), 2);
     double ballRadius = cs->computeBallRadiusFromPixel(center);
     if (ballRadius > 0) {
-      cv::circle(img, center, (int)ballRadius, cv::Scalar(100, 200, 100), 1);
+      cv::circle(img, center, (int)ballRadius, cv::Scalar(0, 0, 0), 2);
     }
   }
 

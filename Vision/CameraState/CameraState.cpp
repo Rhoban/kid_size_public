@@ -188,7 +188,7 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f &ballPosImg) co
   // vectors will be different
   Eigen::Vector3d groundDir = viewRay.dir;
   groundDir(2) = 0;
-  Eigen::Vector3d altDir = viewRay.dir.cross(groundDir);
+  Eigen::Vector3d altDir = viewRay.dir.cross(groundDir).normalized();
 
   // Getting one of the points on the side of the ball, this is not an exact
   // method, but the approximation should be good enough
