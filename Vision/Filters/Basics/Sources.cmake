@@ -7,6 +7,7 @@ set (SOURCES
   Erode.cpp
   Invert.cpp
   Mask.cpp
+  MovieRecorder.cpp
   Mult.cpp
   Norm.cpp
   Rescale.cpp

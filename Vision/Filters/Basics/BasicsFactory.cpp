@@ -7,6 +7,7 @@
 #include "Erode.hpp"
 #include "Invert.hpp"
 #include "Mask.hpp"
+#include "MovieRecorder.hpp"
 #include "Mult.hpp"
 #include "Norm.hpp"
 #include "Rescale.hpp"
@@ -36,6 +37,9 @@ void registerBasicsFilters(FilterFactory * ff) {
   ff->registerBuilder("Histogram", [](){return std::unique_ptr<Filter>(new Histogram());});
   ff->registerBuilder("MaskOr"   , [](){return std::unique_ptr<Filter>(new MaskOr()   );});
   ff->registerBuilder("Integral" , [](){return std::unique_ptr<Filter>(new Integral() );});
+
+  
+  ff->registerBuilder("MovieRecorder", [](){return std::unique_ptr<Filter>(new MovieRecorder());});
 }
 
 }
