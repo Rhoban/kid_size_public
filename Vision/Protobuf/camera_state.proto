@@ -1,0 +1,67 @@
+syntax="proto2";
+
+package rhoban_vision_proto;
+
+/**
+ * This file describes the principal messages used for Vision elements
+ *
+ * All notations are based on OpenCV formalism for Intrinsic and Extrinsic
+ * parameters of the camera: https://docs.opencv.org/3.4.5/d9/d0c/group__calib3d.html
+ */
+
+/**
+ * Defines the intrinsic parameters of a camera.
+ */
+message IntrinsicParameters {
+  required float focal_x = 1;
+  required float focal_y = 2;
+  required uint32 center_x = 3;
+  required uint32 center_y = 4;
+  required uint32 img_width = 5;
+  required uint32 img_height = 6;
+  repeated float parameters = 7;
+}
+
+message Pose3D {
+  /**
+   * Two valid options:
+   * Size 0: unknown information
+   * Size 6: [r11, r12, r13, r22, r23, r33]
+   */ 
+  repeated float rotation = 1;
+  /**
+   * Two valid options:
+   * Size 0: unknown information
+   * Size 3: [tx,ty,tz]
+   */
+  repeated float translation = 2;
+}
+
+/**
+ * Describe the camera and robot position using the following basis:
+ * - World: fixed reference in which the camera is evolving
+ * - Self: A basis centered on the robot
+ *   - Center: Projection of trunk of the robot on the ground
+ *   - X-axis: in front of the robot
+ *   - Y-axis: left of the robot
+ *   - Z-axis: same as world axis
+ * - Camera:
+ *   - Center: At camera optical center
+ *   - X-axis: aligned with x-axis of the image
+ *   - Y-axis: aligned with y-axis of the image
+ *   - Z-axis: direction toward which the camera is pointing
+ */
+message CameraState {
+  /**
+   * A time_stamp indicating the acquisition of the clock
+   */
+  required double time_stamp = 1;
+  /**
+   * The transformation matrix from camera referential to world referential
+   */
+  optional Pose3D camera_to_world = 2;
+  /**
+   * The transformation matrix from robot referential to world referential
+   */
+  optional Pose3D self_to_world = 3;
+}

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(kid_size)
 
+include(FindProtobuf)
+find_package(Protobuf REQUIRED)
+
 find_package(catkin REQUIRED COMPONENTS
   RhAL
   model
@@ -68,19 +71,21 @@ set(CMAKE_CXX_FLAGS
 #Included internal Directories
 set (INCLUDED_DIRECTORIES
     Motion
-    ${catkin_INCLUDE_DIRS}
-)
+    ${catkin_INCLUDE_DIRS})
+
+  
 
 if (BUILD_KID_SIZE_VISION)
   set (INCLUDED_DIRECTORIES ${INCLUDED_DIRECTORIES} Vision)
 endif()
 
-include_directories(${INCLUDED_DIRECTORIES})
+include_directories(${INCLUDED_DIRECTORIES} ${CMAKE_CURRENT_BINARY_DIR})
 
 #Linked dependency external Libraries
 set (LINKED_LIBRARIES
     pthread
     ${catkin_LIBRARIES}
+    ${PROTOBUF_LIBRARIES}
 )
 
 #Add Vision libraries
@@ -131,6 +136,16 @@ if (BUILD_KID_SIZE_VISION)
     )
 endif(BUILD_KID_SIZE_VISION)
 
+#TODO: use a scheme similar to the one used for sources if 
+set (PROTOBUF_MESSAGES
+  Vision/Protobuf/camera_state.proto
+  Vision/Protobuf/video.proto
+  )
+
+include_directories(${PROTOBUF_INCLUDE_DIR})
+protobuf_generate_cpp(PROTO_SOURCES PROTO_HEADERS ${PROTOBUF_MESSAGES})
+
+set (ALL_SOURCES ${PROTO_SOURCES})
 
 #Include Sources sub sources
 foreach (DIRECTORY ${SOURCES_DIRECTORIES})

@@ -1,5 +1,8 @@
 #include "CameraState.hpp"
 #include <iostream>
+
+#include "camera_state.pb.h"
+
 #include "Utils/HomogeneousTransform.hpp"
 #include "services/ModelService.h"
 
@@ -30,6 +33,56 @@ static rhoban_utils::Logger logger("CameraState");
 namespace Vision {
 namespace Utils {
 
+Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D & pose)
+{
+  Eigen::Matrix3d rotation = Eigen::Matrix3d::Identity();
+  Eigen::Vector3d translation = Eigen::Vector3d::Zero();
+  switch (pose.rotation_size()) {
+    case 0: break;
+    case 6:
+      rotation(0,0) = pose.rotation(0);
+      rotation(0,1) = pose.rotation(1);
+      rotation(1,0) = pose.rotation(1);
+      rotation(0,2) = pose.rotation(2);
+      rotation(2,0) = pose.rotation(2);
+      rotation(1,1) = pose.rotation(3);
+      rotation(1,2) = pose.rotation(4);
+      rotation(2,1) = pose.rotation(4);
+      rotation(2,2) = pose.rotation(5);
+      break;
+    default:
+      throw std::runtime_error(DEBUG_INFO + " invalid size for rotation: "
+                               + std::to_string(pose.rotation_size()));
+  }
+  switch (pose.translation_size()) {
+    case 0: break;
+    case 3:
+      for (int dim = 0; dim < 3; dim++) {
+        translation(dim) = pose.translation(dim);
+      }
+      break;
+    default:
+      throw std::runtime_error(DEBUG_INFO + " invalid size for translation: "
+                               + std::to_string(pose.rotation_size()));
+  }
+  return Eigen::Affine3d(rotation) * Eigen::Translation3d(translation);
+}
+
+void setProtobufFromAffine(const Eigen::Affine3d & affine, rhoban_vision_proto::Pose3D * pose)
+{
+  pose->clear_rotation();
+  pose->clear_translation();
+  pose->add_rotation(affine.linear()(0,0));
+  pose->add_rotation(affine.linear()(0,1));
+  pose->add_rotation(affine.linear()(0,2));
+  pose->add_rotation(affine.linear()(1,1));
+  pose->add_rotation(affine.linear()(1,2));
+  pose->add_rotation(affine.linear()(2,2));
+  pose->add_translation(affine.translation()(0));
+  pose->add_translation(affine.translation()(1));
+  pose->add_translation(affine.translation()(2));
+}
+
 CameraState::CameraState(MoveScheduler *moveScheduler) :
   _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
 {
@@ -42,7 +95,31 @@ CameraState::CameraState(MoveScheduler *moveScheduler) :
   _model->updateDOFPosition();
 }
 
+CameraState::CameraState(const rhoban_vision_proto::CameraState & cs) :
+  _moveScheduler(nullptr),
+  _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+{
+  importFromProtobuf(cs);
+}
+
+void CameraState::importFromProtobuf(const rhoban_vision_proto::CameraState & src)
+{
+  _timeStamp = src.time_stamp();
+  cameraToWorld = getAffineFromProtobuf(src.camera_to_world());
+  selfToWorld = getAffineFromProtobuf(src.self_to_world());
+  worldToCamera = cameraToWorld.inverse();
+  worldToSelf = selfToWorld.inverse();
+}
+
+void CameraState::exportToProtobuf(rhoban_vision_proto::CameraState * dst) const
+{
+  dst->set_time_stamp(_timeStamp);
+  setProtobufFromAffine(cameraToWorld,dst->mutable_camera_to_world());
+  setProtobufFromAffine(selfToWorld,dst->mutable_self_to_world());
+}
+
 const Leph::CameraModel & CameraState::getCameraModel() const
+
 {
   return _cameraModel;
 }

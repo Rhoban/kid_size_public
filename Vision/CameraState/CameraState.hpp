@@ -13,8 +13,19 @@
 #include <utility>
 #include <string>
 
+namespace rhoban_vision_proto {
+class Pose3D;
+class CameraState;
+}
+
 namespace Vision {
 namespace Utils {
+
+/// Convert a protobuf Pose3D to an Affine3D transform
+Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D & pose);
+
+/// Export the given Affine3D transform to a pose
+void setProtobufFromAffine(const Eigen::Affine3d & affine, rhoban_vision_proto::Pose3D * pose);
 
 
 /// Relevant basis:
@@ -33,6 +44,10 @@ class CameraState {
 
 public:  
   CameraState(MoveScheduler *moveScheduler);
+  CameraState(const rhoban_vision_proto::CameraState & cs);
+
+  void importFromProtobuf(const rhoban_vision_proto::CameraState & src);
+  void exportToProtobuf(rhoban_vision_proto::CameraState * dst) const;
 
   const Leph::CameraModel & getCameraModel() const;
 

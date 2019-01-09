@@ -1,0 +1,19 @@
+syntax="proto2";
+
+import "camera_state.proto";
+
+package rhoban_vision_proto;
+
+message VideoMetaInformation {
+  /**
+   * Definition of the camera calibration
+   */
+  optional IntrinsicParameters camera_parameters = 1;
+  /**
+   * Two valid options:
+   * - Size 0: no informations about camera position are available
+   * - Size n: With n the number of images in the video, ordering of the images
+   *           has to be the same as the order of the video
+   */
+  repeated CameraState camera_states = 2;
+}
