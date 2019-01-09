@@ -19,7 +19,7 @@ message IntrinsicParameters {
   required uint32 center_y = 4;
   required uint32 img_width = 5;
   required uint32 img_height = 6;
-  repeated float parameters = 7;
+  repeated float distortion = 7;
 }
 
 message Pose3D {

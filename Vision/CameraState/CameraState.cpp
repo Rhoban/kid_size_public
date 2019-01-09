@@ -95,11 +95,31 @@ CameraState::CameraState(MoveScheduler *moveScheduler) :
   _model->updateDOFPosition();
 }
 
-CameraState::CameraState(const rhoban_vision_proto::CameraState & cs) :
+CameraState::CameraState(const rhoban_vision_proto::IntrinsicParameters & camera_parameters,
+                         const rhoban_vision_proto::CameraState & cs) :
   _moveScheduler(nullptr),
   _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
 {
+  importFromProtobuf(camera_parameters);
   importFromProtobuf(cs);
+}
+
+void CameraState::importFromProtobuf(
+  const rhoban_vision_proto::IntrinsicParameters & camera_parameters)
+{
+  _cameraModel.setCenter(Eigen::Vector2d(camera_parameters.center_x(),
+                                         camera_parameters.center_y()));
+  _cameraModel.setFocal(Eigen::Vector2d(camera_parameters.focal_x(),
+                                        camera_parameters.focal_y()));
+  _cameraModel.setImgWidth(camera_parameters.img_width());
+  _cameraModel.setImgHeight(camera_parameters.img_height());
+  if (camera_parameters.distortion_size() != 0) {
+    Eigen::VectorXd distortion(camera_parameters.distortion_size());
+    for (int i = 0; i < camera_parameters.distortion_size(); i++) {
+      distortion(i) = camera_parameters.distortion(i);
+    }
+    _cameraModel.setDistortion(distortion);
+  }
 }
 
 void CameraState::importFromProtobuf(const rhoban_vision_proto::CameraState & src)
@@ -109,6 +129,21 @@ void CameraState::importFromProtobuf(const rhoban_vision_proto::CameraState & sr
   selfToWorld = getAffineFromProtobuf(src.self_to_world());
   worldToCamera = cameraToWorld.inverse();
   worldToSelf = selfToWorld.inverse();
+}
+
+void CameraState::exportToProtobuf(rhoban_vision_proto::IntrinsicParameters * dst) const
+{
+  dst->set_focal_x(_cameraModel.getFocalX());
+  dst->set_focal_y(_cameraModel.getFocalY());
+  dst->set_center_x(_cameraModel.getCenterX());
+  dst->set_center_y(_cameraModel.getCenterY());
+  dst->set_img_width(_cameraModel.getImgWidth());
+  dst->set_img_height(_cameraModel.getImgHeight());
+  Eigen::VectorXd distortion = _cameraModel.getDistortionCoeffsAsEigen();
+  dst->clear_distortion();
+  for (int i = 0; i < distortion.size(); i++) {
+    dst->add_distortion(distortion(i));
+  }
 }
 
 void CameraState::exportToProtobuf(rhoban_vision_proto::CameraState * dst) const

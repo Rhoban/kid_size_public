@@ -157,15 +157,16 @@ Json::Value Application::toJson() const {
 }
 
 void Application::checkConsistency() const {
-  Source::Type expected_type =
-    pathToLog == "" ? Source::Type::Online : Source::Type::Log;
+  
   std::string expected_type_name =
-    pathToLog == "" ? "Online" : "Log";
+    pathToLog == "" ? "Online" : "Log or Custom";
   std::vector<std::string> invalid_filters;
   for (const auto & entry : pipeline.filters()) {
     Source * source = dynamic_cast<Source *>(entry.second);
     if (source != nullptr) {
-      if (source->getType() != expected_type) {
+      bool bad_online = source->getType() == Filters::Source::Online && pathToLog != "";
+      bool bad_replay = source->getType() != Filters::Source::Online && pathToLog == "";
+      if (bad_online || bad_replay) {
         invalid_filters.push_back(entry.first);
       }
     }

@@ -2,6 +2,7 @@
 #include <list>
 #include <functional>
 #include <fstream>
+#include "Filters/Source/Source.hpp"
 #include "Filters/Pipeline.hpp"
 #include <iostream>
 #include "Filters/FilterFactory.hpp"
@@ -95,21 +96,33 @@ void Pipeline::step(Filter::UpdateType updateType) {
 
     filter->runStep(updateType);
 
-    if (filter->name == "source") {
+    Filters::Source * src = dynamic_cast<Filters::Source*>(filter);
+    if (src != nullptr){
       // Vital step : after processing the source filter, the timestamp of the
       // image is known
-      // and the cameraState needs to be updated. TODO detect source in a more
-      // robust way?
+      // and the cameraState needs to be updated.
       frames++;
-
-      // converting to (double) seconds (we shouldn't need the imageDelay anymore)
-      double sourcets = _timestamp.getTimeMS() - imageDelay;
-      double csTimeStampSeconds = sourcets / 1000.0;//(sourcets - imageDelay) / 1000.0;
-
-      if (cs != nullptr) {
-        cs->updateInternalModel(csTimeStampSeconds);
+    
+      switch (src->getType()) {
+        case Filters::Source::Log:
+        case Filters::Source::Online:
+        {
+          // converting to (double) seconds (we shouldn't need the imageDelay anymore)
+          double sourcets = _timestamp.getTimeMS() - imageDelay;
+          double csTimeStampSeconds = sourcets / 1000.0;
+          
+          if (cs != nullptr) {
+            cs->updateInternalModel(csTimeStampSeconds);
+          }
+          break;
+        }
+        case Filters::Source::Custom:
+          if (cs != nullptr) {
+            delete(cs);
+          }
+          setCameraState(src->buildCameraState());
+          break;
       }
-
     }
     for (auto &son : _children.at(filter->getName())) {
       std::string sonName = son->getName();

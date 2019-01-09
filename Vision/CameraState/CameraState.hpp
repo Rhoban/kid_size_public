@@ -14,6 +14,7 @@
 #include <string>
 
 namespace rhoban_vision_proto {
+class IntrinsicParameters;
 class Pose3D;
 class CameraState;
 }
@@ -44,9 +45,12 @@ class CameraState {
 
 public:  
   CameraState(MoveScheduler *moveScheduler);
-  CameraState(const rhoban_vision_proto::CameraState & cs);
+  CameraState(const rhoban_vision_proto::IntrinsicParameters & camera_parameters,
+              const rhoban_vision_proto::CameraState & cs);
 
+  void importFromProtobuf(const rhoban_vision_proto::IntrinsicParameters & camera_parameters);
   void importFromProtobuf(const rhoban_vision_proto::CameraState & src);
+  void exportToProtobuf(rhoban_vision_proto::IntrinsicParameters * dst) const;
   void exportToProtobuf(rhoban_vision_proto::CameraState * dst) const;
 
   const Leph::CameraModel & getCameraModel() const;

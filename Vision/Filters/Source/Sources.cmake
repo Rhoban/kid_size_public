@@ -2,6 +2,7 @@ set (SOURCES
   SourceFactory.cpp
   SourceLogs.cpp
   SourceOpenCV.cpp
+  SourceVideoProtobuf.cpp
 )
 
 

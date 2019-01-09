@@ -824,6 +824,12 @@ void Robocup::getUpdatedCameraStateFromPipeline() {
     }
   }
 
+  // EXPERIMENTAL:
+  //
+  // modification linked to the possibility that 'Source' filter provides the
+  // cameraState (from SourceVideoProtobuf)
+  cs = pipeline.getCameraState();
+
   csMutex.unlock();
 }
 
@@ -1153,8 +1159,10 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
     // skip to next value if object is behind camera plane
     if (cameraDir.dot(offset) <= 0) continue;
     Eigen::Vector3d target = cameraPos + offset;
-    cv::Point p  = cs->imgXYFromWorldPosition(target);
-    horizonKeypoints.push_back(p);
+    try {
+      cv::Point p  = cs->imgXYFromWorldPosition(target);
+      horizonKeypoints.push_back(p);
+    } catch (const std::runtime_error & exc) {}
   }
   for (size_t idx=1; idx<horizonKeypoints.size(); idx++) {
     cv::line(img, horizonKeypoints[idx-1], horizonKeypoints[idx], cv::Scalar(255,0,0), 2);
