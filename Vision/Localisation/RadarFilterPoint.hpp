@@ -24,6 +24,8 @@ class RadarFilterPoint : public RadarFilter<Eigen::Vector3d>
 
         virtual std::string toString(const Eigen::Vector3d &point);
 
+        virtual void updateCS(Vision::Utils::CameraState * newCS);
+
     protected:
         // Dependencies
         Vision::Utils::CameraState *cameraState;

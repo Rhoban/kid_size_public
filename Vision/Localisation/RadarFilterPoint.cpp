@@ -98,5 +98,10 @@ std::string RadarFilterPoint::toString(const Eigen::Vector3d &point)
     return ss.str();
 }
 
+void RadarFilterPoint::updateCS(Vision::Utils::CameraState * newCS)
+{
+  cameraState = newCS;
+}
+
 }
 }

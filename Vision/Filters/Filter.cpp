@@ -150,15 +150,16 @@ void Filter::initWindow() {
         std::cout << G << ",";
         std::cout << R << "]";
         
-        std::cout << " --> YUV[" << Y << ",";
+        std::cout << " --> YCrCb[" << Y << ",";
         std::cout << V << ",";
         std::cout << U << "]" << std::endl;
-        std::cout << "Note :  YUV format is YCrCb" << std::endl;
 
         Eigen::Vector3d viewVectorInCamera = cv2Eigen(cameraModel.getViewVectorFromImg(ball_center_in_img));
         
         Eigen::Vector3d viewVectorInWorld = cs.cameraToWorld.linear() * viewVectorInCamera;
         std::cout << "-> viewVectorInWorld: " << viewVectorInWorld.transpose() << std::endl;
+        std::cout << "-> camera pos in world: "
+                  << (cs.cameraToWorld * Eigen::Vector3d(0,0,0)).transpose() << std::endl;
         if (viewVectorInWorld(2) > 0) {
           std::cout << "-> ViewVector is above horizon, no additional elements" << std::endl;
         } else { 

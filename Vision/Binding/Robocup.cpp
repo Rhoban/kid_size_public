@@ -829,6 +829,8 @@ void Robocup::getUpdatedCameraStateFromPipeline() {
   // modification linked to the possibility that 'Source' filter provides the
   // cameraState (from SourceVideoProtobuf)
   cs = pipeline.getCameraState();
+  ballStackFilter->updateCS(cs);
+  robotFilter->updateCS(cs);
 
   csMutex.unlock();
 }

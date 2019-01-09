@@ -38,24 +38,21 @@ Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D & pose)
   Eigen::Matrix3d rotation = Eigen::Matrix3d::Identity();
   Eigen::Vector3d translation = Eigen::Vector3d::Zero();
   switch (pose.rotation_size()) {
-    case 0: break;
-    case 6:
-      rotation(0,0) = pose.rotation(0);
-      rotation(0,1) = pose.rotation(1);
-      rotation(1,0) = pose.rotation(1);
-      rotation(0,2) = pose.rotation(2);
-      rotation(2,0) = pose.rotation(2);
-      rotation(1,1) = pose.rotation(3);
-      rotation(1,2) = pose.rotation(4);
-      rotation(2,1) = pose.rotation(4);
-      rotation(2,2) = pose.rotation(5);
+    case 0:
       break;
+    case 4: {
+      Eigen::Quaterniond q(pose.rotation(0), pose.rotation(1),
+                           pose.rotation(2), pose.rotation(3));
+      rotation = Eigen::Matrix3d(q);
+      break;
+    }
     default:
       throw std::runtime_error(DEBUG_INFO + " invalid size for rotation: "
                                + std::to_string(pose.rotation_size()));
   }
   switch (pose.translation_size()) {
-    case 0: break;
+    case 0:
+      break;
     case 3:
       for (int dim = 0; dim < 3; dim++) {
         translation(dim) = pose.translation(dim);
@@ -63,21 +60,20 @@ Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D & pose)
       break;
     default:
       throw std::runtime_error(DEBUG_INFO + " invalid size for translation: "
-                               + std::to_string(pose.rotation_size()));
+                               + std::to_string(pose.translation_size()));
   }
-  return Eigen::Affine3d(rotation) * Eigen::Translation3d(translation);
+  return Eigen::Translation3d(translation) * Eigen::Affine3d(rotation);
 }
 
 void setProtobufFromAffine(const Eigen::Affine3d & affine, rhoban_vision_proto::Pose3D * pose)
 {
   pose->clear_rotation();
   pose->clear_translation();
-  pose->add_rotation(affine.linear()(0,0));
-  pose->add_rotation(affine.linear()(0,1));
-  pose->add_rotation(affine.linear()(0,2));
-  pose->add_rotation(affine.linear()(1,1));
-  pose->add_rotation(affine.linear()(1,2));
-  pose->add_rotation(affine.linear()(2,2));
+  Eigen::Quaterniond q(affine.linear());
+  pose->add_rotation(q.w());
+  pose->add_rotation(q.x());
+  pose->add_rotation(q.y());
+  pose->add_rotation(q.z());
   pose->add_translation(affine.translation()(0));
   pose->add_translation(affine.translation()(1));
   pose->add_translation(affine.translation()(2));
