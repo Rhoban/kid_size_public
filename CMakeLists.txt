@@ -5,6 +5,7 @@ include(FindProtobuf)
 find_package(Protobuf REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
+  hl_communication
   RhAL
   model
   robocup_referee
@@ -21,8 +22,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS Motion/
   #LIBRARIES #TODO: which libraries are published?
-  CATKIN_DEPENDS tclap RhAL model robocup_referee rhoban_graphs rhoban_team_play rhoban_random rhoban_unsorted rhoban_model_learning
-)
+  CATKIN_DEPENDS tclap RhAL model robocup_referee rhoban_graphs rhoban_team_play rhoban_random rhoban_unsorted rhoban_model_learning hl_communication
+  )
 
 #Build option
 option (BUILD_KID_SIZE_VISION "Build the Vision" ON)

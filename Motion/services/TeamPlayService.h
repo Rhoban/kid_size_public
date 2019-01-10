@@ -4,9 +4,16 @@
 #include <map>
 #include <rhoban_utils/sockets/udp_broadcast.h>
 #include <rhoban_team_play/team_play.h>
+#include <hl_communication/wrapper.pb.h>
 #include <RhIO.hpp>
 #include "services/Service.h"
 
+/**
+ * Convert a rhoban_team_play info to IdentifierMessage (possible loss)
+ */
+void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo & myInfo,
+                                 int team_id,
+                                 hl_communication::IdentifiedMessage * dst);
 /**
  * TeamPlay
  *
@@ -86,6 +93,11 @@ class TeamPlayService : public Service
         std::map<int, rhoban_team_play::TeamPlayInfo> _allInfo;
 
         /**
+         * Self Perception information
+         */
+        hl_communication::IdentifiedMessage _myMessage;
+
+        /**
          * Send and check 
          * delay in seconds
          */
@@ -121,5 +133,6 @@ class TeamPlayService : public Service
          * RhIO team command
          */
         std::string cmdTeam();
+
 };
 
