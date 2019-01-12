@@ -9,11 +9,11 @@
 #include "services/Service.h"
 
 /**
- * Convert a rhoban_team_play info to IdentifierMessage (possible loss)
+ * Convert a rhoban_team_play info to GameMsg (possible loss)
  */
 void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo & myInfo,
                                  int team_id,
-                                 hl_communication::IdentifiedMessage * dst);
+                                 hl_communication::GameMsg * dst);
 /**
  * TeamPlay
  *
@@ -93,9 +93,9 @@ class TeamPlayService : public Service
         std::map<int, rhoban_team_play::TeamPlayInfo> _allInfo;
 
         /**
-         * Self Perception information
+         * Protobuf Communication
          */
-        hl_communication::IdentifiedMessage _myMessage;
+        hl_communication::GameMsg _myMessage;
 
         /**
          * Send and check 

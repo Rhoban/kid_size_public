@@ -11,41 +11,41 @@
 
 static rhoban_utils::Logger logger("teamplay_service");
 
+using namespace hl_communication;
 using namespace rhoban_utils;
 using namespace rhoban_geometry;
 using namespace rhoban_team_play;
 
 void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo & myInfo,
                                  int team_id,
-                                 hl_communication::IdentifiedMessage * dst)
+                                 GameMsg * dst)
 {
+  dst->Clear();
+  RobotMsg * msg = dst->mutable_robot_msg();
   // Set identifier
-  dst->clear_identifier();
-  dst->mutable_identifier()->set_team_id(team_id);
-  dst->mutable_identifier()->set_robot_id(myInfo.id);
+  msg->mutable_robot_id()->set_team_id(team_id);
+  msg->mutable_robot_id()->set_robot_id(myInfo.id);
   // Set Message
-  dst->clear_message();
-  hl_communication::GameWrapper * msg = dst->mutable_message();
-  hl_communication::TeamPlay * team_play = msg->mutable_team_play();
-  team_play->set_status(hl_communication::UNSPECIFIED_STATUS);//TODO: improve
-  hl_communication::Perception * perception = msg->mutable_perception();
+  TeamPlay * team_play = msg->mutable_team_play();
+  team_play->set_status(UNSPECIFIED_STATUS);//TODO: improve
+  Perception * perception = msg->mutable_perception();
   perception->mutable_ball_in_self()->set_x(myInfo.ballX);
   perception->mutable_ball_in_self()->set_y(myInfo.ballY);
-  hl_communication::WeightedPose * self_in_field = perception->add_self_in_field();
+  WeightedPose * self_in_field = perception->add_self_in_field();
   self_in_field->set_probability(1.0);
   self_in_field->mutable_pose()->set_x(myInfo.fieldX);
   self_in_field->mutable_pose()->set_y(myInfo.fieldY);
   self_in_field->mutable_pose()->set_dir(myInfo.fieldYaw);
-  hl_communication::Intention * intention = msg->mutable_intention();
+  Intention * intention = msg->mutable_intention();
   if (myInfo.placing) {
-    hl_communication::PoseEstimation * target_pose = intention->mutable_target_pose_in_field();
+    PoseEstimation * target_pose = intention->mutable_target_pose_in_field();
     target_pose->set_x(myInfo.targetX);
     target_pose->set_y(myInfo.targetY);
-    hl_communication::PoseEstimation * local_target = intention->add_waypoints_in_field();
+    PoseEstimation * local_target = intention->add_waypoints_in_field();
     local_target->set_x(myInfo.localTargetX);
     local_target->set_y(myInfo.localTargetY);
   }
-  hl_communication::PositionEstimation * kick_target = intention->mutable_kick_target_in_field();
+  PositionEstimation * kick_target = intention->mutable_kick_target_in_field();
   kick_target->set_x(myInfo.ballTargetX);
   kick_target->set_y(myInfo.ballTargetY);
 }
