@@ -3,5 +3,5 @@ set (SOURCES
   TagsDetector.cpp
   CompassProvider.cpp
   homography_decomp.cpp
-  VisualCompass.cpp
+#  VisualCompass.cpp
 )

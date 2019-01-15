@@ -15,7 +15,7 @@
 
 #include "Filters/Ball/BallProvider.hpp"
 #include "Filters/Features/CompassProvider.hpp"
-#include "Filters/Features/VisualCompass.hpp"
+//#include "Filters/Features/VisualCompass.hpp"
 #include "Filters/Custom/FieldBorderData.hpp"
 
 #include "Filters/Features/TagsDetector.hpp"
@@ -469,7 +469,7 @@ void Robocup::step() {
     Application::step();
     activeSource = true;
     // If Vision application has finished, ask for scheduler to shut down
-    if (!isActive()) {
+    if (!isActive()) {      
       out.log("Vision exiting, asking to scheduler to shut down");
       _scheduler->askQuit();
     }
@@ -761,51 +761,52 @@ void Robocup::readPipeline() {
   }
   // /TEMP /TEMP
   clippingMutex.unlock();
-  
-  // VisualCompass
-  compassMutex.lock();
-  if (compassProviders.size() > 1) {
-    //TODO: fill vector properly in order to support multiple compassProviders
-    throw std::logic_error("Robocup: Only 1 compassProvider is supported now");
-  }
-  for (const std::string & name : compassProviders) {
-    Vision::Filter & compassFilter = pipeline.get(name);
-    try {
-      const Vision::Filters::VisualCompass & CompassProvider =
-        dynamic_cast<const Vision::Filters::VisualCompass &>(compassFilter);
-      tmporientations=CompassProvider.getCompasses();
-      tmpdispersions=CompassProvider.getDispersions();
-      radarOrientations.clear();
-      // orientations.reserve(orientations.size()+tmporientations.size());
-      // orientations.insert(orientations.end(),tmporientations.begin(),tmporientations.end());
 
-      detectedDispersions.reserve(detectedDispersions.size()+tmpdispersions.size());
-      detectedDispersions.insert(detectedDispersions.end(),tmpdispersions.begin(),tmpdispersions.end());
-
-
-      for (double angle : tmporientations) {
-        Angle yaw=cs->getYaw(); //yaw of the camera
-        Angle trunkYaw=cs->getTrunkYawInWorld(); //yaw of the trunk in the world
-        double opGoalCapOffset=0.0; //TODO
-        //angle from the visualcompass is in the anti-normal sign
-        //TODO
-        double dirGoalInCamera=rad2deg(angle)-opGoalCapOffset;
-        double dirGoalInTrunk=dirGoalInCamera+yaw.getSignedValue();
-        double dirGoalInWorld=dirGoalInTrunk+trunkYaw.getSignedValue();// Validated until here
-
-        // Compass value for the trunk in world basis
-        detectedOrientations.push_back(dirGoalInWorld);
-        radarOrientations.push_back(dirGoalInWorld);
-      }
-
-    } catch (const std::bad_cast &e) {
-
-      std::cerr
-        << "Failed to import visual compass stuff, check pipeline. Exception = "
-        << e.what() << std::endl;
-    }
-  }
-  compassMutex.unlock();
+// Disabling visualCompass temporarily to remove dependency to non free features
+//  // VisualCompass
+//  compassMutex.lock();
+//  if (compassProviders.size() > 1) {
+//    //TODO: fill vector properly in order to support multiple compassProviders
+//    throw std::logic_error("Robocup: Only 1 compassProvider is supported now");
+//  }
+//  for (const std::string & name : compassProviders) {
+//    Vision::Filter & compassFilter = pipeline.get(name);
+//    try {
+//      const Vision::Filters::VisualCompass & CompassProvider =
+//        dynamic_cast<const Vision::Filters::VisualCompass &>(compassFilter);
+//      tmporientations=CompassProvider.getCompasses();
+//      tmpdispersions=CompassProvider.getDispersions();
+//      radarOrientations.clear();
+//      // orientations.reserve(orientations.size()+tmporientations.size());
+//      // orientations.insert(orientations.end(),tmporientations.begin(),tmporientations.end());
+//
+//      detectedDispersions.reserve(detectedDispersions.size()+tmpdispersions.size());
+//      detectedDispersions.insert(detectedDispersions.end(),tmpdispersions.begin(),tmpdispersions.end());
+//
+//
+//      for (double angle : tmporientations) {
+//        Angle yaw=cs->getYaw(); //yaw of the camera
+//        Angle trunkYaw=cs->getTrunkYawInWorld(); //yaw of the trunk in the world
+//        double opGoalCapOffset=0.0; //TODO
+//        //angle from the visualcompass is in the anti-normal sign
+//        //TODO
+//        double dirGoalInCamera=rad2deg(angle)-opGoalCapOffset;
+//        double dirGoalInTrunk=dirGoalInCamera+yaw.getSignedValue();
+//        double dirGoalInWorld=dirGoalInTrunk+trunkYaw.getSignedValue();// Validated until here
+//
+//        // Compass value for the trunk in world basis
+//        detectedOrientations.push_back(dirGoalInWorld);
+//        radarOrientations.push_back(dirGoalInWorld);
+//      }
+//
+//    } catch (const std::bad_cast &e) {
+//
+//      std::cerr
+//        << "Failed to import visual compass stuff, check pipeline. Exception = "
+//        << e.what() << std::endl;
+//    }
+//  }
+//  compassMutex.unlock();
 }
 
 void Robocup::getUpdatedCameraStateFromPipeline() {
