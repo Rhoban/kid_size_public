@@ -107,7 +107,7 @@ void Application::launch() {
       elapsedTime = 1000 * (stop - start) / cv::getTickFrequency();
       playNext = false;
     }
-    int key(-1);
+    int key(255);
     if (!embedded) {
       if (!playing) {
         key = cv::waitKey();
@@ -121,7 +121,7 @@ void Application::launch() {
       }
     }
 
-    if (key != -1) {
+    if (key != 255) {
       try {
         keyBindings.at((char)key).first();
       } catch (const std::out_of_range &o) {
