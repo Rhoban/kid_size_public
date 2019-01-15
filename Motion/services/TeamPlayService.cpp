@@ -236,11 +236,13 @@ void TeamPlayService::messageSend()
         //Send UDP broadcast
         _broadcaster->broadcastMessage(
             (unsigned char*)&_selfInfo, sizeof(_selfInfo));
+        std::cout << "Sending selfInfo msg of size: " << sizeof(_selfInfo) << std::endl;
         // Convert selfInfo to Protobuf
         int teamId = getServices()->referee->teamId;
         exportTeamPlayToGameWrapper(_selfInfo, teamId, &_myMessage);
         std::string msgStr;
         _myMessage.SerializeToString(&msgStr);
+        std::cout << "Sending Protobuf msg of size: " << msgStr.size() << std::endl;
         _broadcaster->broadcastMessage((const unsigned char *)msgStr.data(), msgStr.size());
     }
 }
