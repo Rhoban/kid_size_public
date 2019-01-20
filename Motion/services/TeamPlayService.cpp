@@ -33,19 +33,19 @@ void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo & myInfo,
   perception->mutable_ball_in_self()->set_y(myInfo.ballY);
   WeightedPose * self_in_field = perception->add_self_in_field();
   self_in_field->set_probability(1.0);
-  self_in_field->mutable_pose()->set_x(myInfo.fieldX);
-  self_in_field->mutable_pose()->set_y(myInfo.fieldY);
-  self_in_field->mutable_pose()->set_dir(myInfo.fieldYaw);
+  self_in_field->mutable_pose()->mutable_position()->set_x(myInfo.fieldX);
+  self_in_field->mutable_pose()->mutable_position()->set_y(myInfo.fieldY);
+  self_in_field->mutable_pose()->mutable_dir()->set_mean(myInfo.fieldYaw);
   Intention * intention = msg->mutable_intention();
   if (myInfo.placing) {
-    PoseEstimation * target_pose = intention->mutable_target_pose_in_field();
-    target_pose->set_x(myInfo.targetX);
-    target_pose->set_y(myInfo.targetY);
-    PoseEstimation * local_target = intention->add_waypoints_in_field();
-    local_target->set_x(myInfo.localTargetX);
-    local_target->set_y(myInfo.localTargetY);
+    PoseDistribution * target_pose = intention->mutable_target_pose_in_field();
+    target_pose->mutable_position()->set_x(myInfo.targetX);
+    target_pose->mutable_position()->set_y(myInfo.targetY);
+    PoseDistribution * local_target = intention->add_waypoints_in_field();
+    local_target->mutable_position()->set_x(myInfo.localTargetX);
+    local_target->mutable_position()->set_y(myInfo.localTargetY);
   }
-  PositionEstimation * kick_target = intention->mutable_kick_target_in_field();
+  PositionDistribution * kick_target = intention->mutable_kick_target_in_field();
   kick_target->set_x(myInfo.ballTargetX);
   kick_target->set_y(myInfo.ballTargetY);
 }
