@@ -133,6 +133,12 @@ bool TeamPlayService::tick(double elapsed)
 {
     _bind->pull();
 
+    // If team id is available and team id
+    int teamId = getServices()->referee->teamId;
+    if (teamId != -1 && _protobuf_message_manager == nullptr) {
+      _protobuf_message_manager.reset(new UDPMessageManager(getDefaultTeamPort(teamId),-1));
+    }
+
     if (_isEnabled) {
         //Sending informations at fixed frequency
         if (_t >= _broadcastPeriod) {
@@ -236,14 +242,14 @@ void TeamPlayService::messageSend()
         //Send UDP broadcast
         _broadcaster->broadcastMessage(
             (unsigned char*)&_selfInfo, sizeof(_selfInfo));
-        std::cout << "Sending selfInfo msg of size: " << sizeof(_selfInfo) << std::endl;
         // Convert selfInfo to Protobuf
-        int teamId = getServices()->referee->teamId;
-        exportTeamPlayToGameWrapper(_selfInfo, teamId, &_myMessage);
-        std::string msgStr;
-        _myMessage.SerializeToString(&msgStr);
-        std::cout << "Sending Protobuf msg of size: " << msgStr.size() << std::endl;
-        _broadcaster->broadcastMessage((const unsigned char *)msgStr.data(), msgStr.size());
+        if (_protobuf_message_manager) {
+          int teamId = getServices()->referee->teamId;
+          exportTeamPlayToGameWrapper(_selfInfo, teamId, &_myMessage);
+          std::string msgStr;
+          _myMessage.SerializeToString(&msgStr);
+          _protobuf_message_manager->sendMessage(&_myMessage);
+        }
     }
 }
 

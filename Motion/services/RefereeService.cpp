@@ -8,6 +8,7 @@ static rhoban_utils::Logger out("referee");
 using namespace robocup_referee;
 
 RefereeService::RefereeService()
+  : teamId(-1)
 {
     _state = "";
     force = false;

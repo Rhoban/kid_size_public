@@ -4,6 +4,7 @@
 #include <map>
 #include <rhoban_utils/sockets/udp_broadcast.h>
 #include <rhoban_team_play/team_play.h>
+#include <hl_communication/udp_message_manager.h>
 #include <hl_communication/wrapper.pb.h>
 #include <RhIO.hpp>
 #include "services/Service.h"
@@ -85,6 +86,11 @@ class TeamPlayService : public Service
          * UDPBroadcast instance
          */
         rhoban_utils::UDPBroadcast* _broadcaster;
+
+        /**
+         * Protobuf message manager
+         */
+        std::unique_ptr<hl_communication::UDPMessageManager> _protobuf_message_manager;
 
         /**
          * Current and other robots infos
