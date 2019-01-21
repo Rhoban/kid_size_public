@@ -158,15 +158,16 @@ bool TeamPlayService::tick(double elapsed)
       logger.log("Starting to emit protobuf messages to port %d", protobuf_write_port);
       _protobuf_message_manager.reset(new UDPMessageManager(-1,protobuf_write_port));
     }
+    
+    //Sending informations at fixed frequency
+    if (_t >= _broadcastPeriod) {
+      _t -= _broadcastPeriod;
+      messageSend();
+    }
+    _t += elapsed;
+
 
     if (_isEnabled) {
-        //Sending informations at fixed frequency
-        if (_t >= _broadcastPeriod) {
-            _t -= _broadcastPeriod;
-            messageSend();
-        }
-        _t += elapsed;
-
         //Receiving informations
         TeamPlayInfo info;
         size_t len = sizeof(info);
@@ -259,9 +260,10 @@ void TeamPlayService::messageSend()
           _selfInfo.obstacles[oppIdx][1] = opponents[oppIdx].getY();
         }
 
-        //Send UDP broadcast
-        _broadcaster->broadcastMessage(
-            (unsigned char*)&_selfInfo, sizeof(_selfInfo));
+        //Send UDP broadcast only if team is enabled
+        if (_isEnabled) {
+          _broadcaster->broadcastMessage((unsigned char*)&_selfInfo, sizeof(_selfInfo));
+        }
         // Convert selfInfo to Protobuf
         if (_protobuf_message_manager) {
           int teamId = getServices()->referee->teamId;
