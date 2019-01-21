@@ -9,6 +9,8 @@
 #include "RefereeService.h"
 #include "TeamPlayService.h"
 
+#include <hl_communication/utils.h>
+
 static rhoban_utils::Logger logger("teamplay_service");
 
 using namespace hl_communication;
@@ -18,6 +20,7 @@ using namespace rhoban_team_play;
 
 void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo & myInfo,
                                  int team_id,
+                                 bool invert_field,
                                  GameMsg * dst)
 {
   dst->Clear();
@@ -32,7 +35,7 @@ void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo & myInfo,
   perception->mutable_ball_in_self()->set_x(myInfo.ballX);
   perception->mutable_ball_in_self()->set_y(myInfo.ballY);
   WeightedPose * self_in_field = perception->add_self_in_field();
-  self_in_field->set_probability(1.0);
+  self_in_field->set_probability(1.0);// Currently, only one element is specified
   self_in_field->mutable_pose()->mutable_position()->set_x(myInfo.fieldX);
   self_in_field->mutable_pose()->mutable_position()->set_y(myInfo.fieldY);
   self_in_field->mutable_pose()->mutable_dir()->set_mean(myInfo.fieldYaw);
@@ -48,6 +51,17 @@ void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo & myInfo,
   PositionDistribution * kick_target = intention->mutable_kick_target_in_field();
   kick_target->set_x(myInfo.ballTargetX);
   kick_target->set_y(myInfo.ballTargetY);
+  // If field is inverted, apply other strategy
+  if (invert_field) {
+    invertPose(self_in_field->mutable_pose());
+    invertPosition(kick_target);
+    if (myInfo.placing) {
+      invertPose(intention->mutable_target_pose_in_field());
+      for (int idx = 0; idx < intention->waypoints_in_field_size(); idx++) {
+        invertPose(intention->mutable_waypoints_in_field(idx));
+      }
+    }
+  }
 }
 
 
@@ -58,7 +72,8 @@ TeamPlayService::TeamPlayService() :
     _allInfo(),
     _t(0.0),
     _isEnabled(true),
-    _broadcastPeriod(1.0/TEAM_PLAY_FREQUENCY)
+    _broadcastPeriod(1.0/TEAM_PLAY_FREQUENCY),
+    _isFieldInverted(false)
 
 {
     //Initialize RhiO
@@ -68,6 +83,9 @@ TeamPlayService::TeamPlayService() :
     _bind->bindNew("broadcastPeriod", _broadcastPeriod, RhIO::Bind::PullOnly)
         ->comment("UDP broadcast period in seconds")
         ->defaultValue(0.2);
+    _bind->bindNew("isFieldInverted", _isFieldInverted, RhIO::Bind::PullOnly)
+        ->comment("true if robot attacks left of the team area")
+        ->defaultValue(false);
     _bind->bindFunc("team", "Display information about teamplay",
         &TeamPlayService::cmdTeam, *this);
 
@@ -247,7 +265,7 @@ void TeamPlayService::messageSend()
         // Convert selfInfo to Protobuf
         if (_protobuf_message_manager) {
           int teamId = getServices()->referee->teamId;
-          exportTeamPlayToGameWrapper(_selfInfo, teamId, &_myMessage);
+          exportTeamPlayToGameWrapper(_selfInfo, teamId, _isFieldInverted, &_myMessage);
           _protobuf_message_manager->sendMessage(&_myMessage);
         }
     }

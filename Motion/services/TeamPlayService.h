@@ -10,12 +10,6 @@
 #include "services/Service.h"
 
 /**
- * Convert a rhoban_team_play info to GameMsg (possible loss)
- */
-void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo & myInfo,
-                                 int team_id,
-                                 hl_communication::GameMsg * dst);
-/**
  * TeamPlay
  *
  * UDP broadcast playing and robot state 
@@ -134,6 +128,13 @@ class TeamPlayService : public Service
          * Is the placing aggressive or defensive?
          */
         double aggressivity;
+
+        /**
+         * For hl_communication, the direction of x-axis for field referential is
+         * based on the position of the team area. If the team attacks to the left of
+         * the team area, then the field is inverted
+         */
+        bool _isFieldInverted;
         
         /**
          * RhIO team command
