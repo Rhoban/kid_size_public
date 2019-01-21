@@ -136,7 +136,9 @@ bool TeamPlayService::tick(double elapsed)
     // If team id is available and team id
     int teamId = getServices()->referee->teamId;
     if (teamId != -1 && _protobuf_message_manager == nullptr) {
-      _protobuf_message_manager.reset(new UDPMessageManager(getDefaultTeamPort(teamId),-1));
+      int protobuf_write_port = getDefaultTeamPort(teamId);
+      logger.log("Starting to emit protobuf messages to port %d", protobuf_write_port);
+      _protobuf_message_manager.reset(new UDPMessageManager(-1,protobuf_write_port));
     }
 
     if (_isEnabled) {
@@ -246,8 +248,6 @@ void TeamPlayService::messageSend()
         if (_protobuf_message_manager) {
           int teamId = getServices()->referee->teamId;
           exportTeamPlayToGameWrapper(_selfInfo, teamId, &_myMessage);
-          std::string msgStr;
-          _myMessage.SerializeToString(&msgStr);
           _protobuf_message_manager->sendMessage(&_myMessage);
         }
     }
