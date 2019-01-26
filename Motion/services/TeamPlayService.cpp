@@ -266,6 +266,8 @@ void TeamPlayService::messageSend()
         }
         // Convert selfInfo to Protobuf
         if (_protobuf_message_manager) {
+          //TODO: check if port is appropriate for team_id, if not, destroy
+          //      protobuf_message_manager and replace it.
           int teamId = getServices()->referee->teamId;
           exportTeamPlayToGameWrapper(_selfInfo, teamId, _isFieldInverted, &_myMessage);
           _protobuf_message_manager->sendMessage(&_myMessage);
