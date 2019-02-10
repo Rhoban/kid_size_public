@@ -310,11 +310,13 @@ Point LocalisationService::getFieldPos()
 
 double LocalisationService::getFieldOrientation()
 {
+    double val = fieldOrientationWorld;
     if (Helpers::isFakeMode()) {
-        return fieldOrientationWorld + getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
+        return val  + getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
     } else {
-        return fieldOrientationWorld + getServices()->model->correctedModel().get().orientationYaw("trunk", "origin");
+        return val + getServices()->model->correctedModel().get().orientationYaw("trunk", "origin");
     }
+    return normalizeRad(val);
 }
 
 Point LocalisationService::getLeftGoalPosSelf()
