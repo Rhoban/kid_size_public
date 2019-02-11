@@ -4,6 +4,8 @@
 
 #include <ueye.h>
 
+#include <condition_variable>
+
 namespace Vision {
 namespace Filters {
 
@@ -18,7 +20,7 @@ public:
   SourceIDS();
 
   /**
-   * Close capture device
+   * Close capture device if required
    */
   virtual ~SourceIDS();
 
@@ -32,10 +34,32 @@ public:
   virtual Type getType() const override;
 
 protected:
-  /**
-   * @Inherit
-   */
+  virtual void setParameters() override;
+
   virtual void process() override;
+
+  /**
+   * Background thread which copies the content of the image received and
+   * request information on the images
+   *
+   * Before launching it, camera should be connected and capture started
+   */
+  void backgroundProcess();
+
+  /**
+   * Is connection to the camera currently active?
+   */
+  bool isConnected();
+
+  /**
+   * Initialize the connection with the camera
+   */
+  void connect();
+
+  /**
+   * Initialize the connection with the camera
+   */
+  void disconnect();
 
   /**
    * Connect to camera and start capture
@@ -43,184 +67,142 @@ protected:
   void startCamera();
 
   /**
-   * End capture and close connection to camera
+   * End capture, close connection to camera and free the buffers if required
+   * WARNING: does not support the case where buffers have been locked
    */
   void endCamera();
 
-  /// Cut current connection if active, then start a new connection
-  void reconnectCamera();
+  /**
+   * Retrieve the list of supported formats by the camera and stores it
+   */
+  void updateSupportedFormats();
 
-  /// Update the imaging mode, binning and PixelFormat of the camera
+  /**
+   * Throws a IDSException if format is not allowed
+   */
+  void setFormat(int32_t format);
+
+  /**
+   * Update the format of the camera
+   */
   void updateImageSettings();
 
-  /// Update the packet size and the packet delay to reduce image
-  /// inconsistencies
-  /// NOTE: this has to be done while the camera is not capturing
-  void updatePacketProperties();
+  /**
+   * Allocate memory buffers for the images
+   */
+  void allocateBuffers();
 
   /**
-   * Update the status of all known properties by reading the camera
+   * Set the exposure time in [ms]
    */
-  void updateProperties();
+  void setExposure(double time);
 
   /**
-   * Update the informations about all known properties by reading the camera
+   * Return current exposure time in [ms]
    */
-  void updatePropertiesInformation();
-
-  /**
-   * Dump all the current properties on the provided stream
-   */
-  void dumpProperties(std::ostream &out);
-
-  /**
-   * Dump all the properties information on the provided stream
-   */
-  void dumpPropertiesInformation(std::ostream &out);
-
-  /**
-  * Estimates the delay between the camera internal clock and the local pc clock.
-  */
-  double measureTimestampDelta();
-  
-  /**
-   * Correspondance between names and PropertyTypes
-   * throws std::out_of_range if name is not registered
-   */
-  static FlyCapture2::PropertyType getPropertyType(const std::string &name);
-
-  /**
-   * Write the property to the given stream
-   */
-  static void writeProperty(const FlyCapture2::Property &property,
-                            std::ostream &out, const std::string &prefix = "");
-
-  /**
-   * Write the property to the given stream
-   */
-  static void
-  writePropertyInformation(const FlyCapture2::PropertyInfo &property_info,
-                           std::ostream &out, const std::string &prefix = "");
+  double getExposure();
 
 protected:
-  /// Bind properties and monitoring variables to RhIO
-  void bindProperties();
-
-  /// Import properties to 'wished properties'
-  void importPropertiesFromRhIO();
-
-  /// Update monitoring variables to RhIO
+  /**
+   * Retrieve image from last buffer and related meta informations
+   */
+  void updateImage();
+  
+  /**
+   * Update monitoring variables to RhIO
+   */
   void updateRhIO();
 
-  /// Apply 'wished properties' to camera
-  void applyWishedProperties();
-  // TODO publishToRhIO
-
-  /// Set timeout for grabFrames, necessary to ensure that vision does not freeze
-  void setTimeout(int time_ms);
-
-  static bool isEquivalent(const FlyCapture2::Property &prop1,
-                           const FlyCapture2::Property &prop2);
-
-  /// Return the current frame rate
-  double getFrameRate();
-
-  /// Return the success ratio of retrieving frames
-  double getSuccessRatio();
-
-  /// Inversion of channels 1 and 2 (U and V)
-  void invertChannels(cv::Mat &image);
-
-  /// Returns a number of ms from a flycapture timestamp
-  /// Value is always in [0,128]
-  double timestamp2MS(FlyCapture2::TimeStamp ts);
-
-  /// Retrieve current mode with the current 
-  FlyCapture2::Mode getMode();
-
-  /// Retrieve current image format
-  FlyCapture2::GigEImageSettings getImageSettings();
-
-  /// Retrieve available formats
-  FlyCapture2::GigEImageSettingsInfo getImageSettingsInfo();
-
-  void setImagingMode(FlyCapture2::Mode mode);
-
-  /// Update binning properties if required
-  /// WARNING: updating binning can change the current imaging mode
-  void updateBinning(unsigned int h_binning, unsigned int v_binning);
-
-  /// Set current pixel format without changing other properties
-  /// Note: dump(getImageSettingsInfo(), std::cout) to see available formats
-  void setPixelFormat(FlyCapture2::PixelFormat pixel_format);
-
 private:
+  /**
+   * Contains an image associated with it's metadata
+   */
+  struct ImageEntry {
+    cv::Mat img;
+    UEYEIMAGEINFO image_info;
+    /**
+     * Date of reception of the signal IS_SET_EVENT_FRAME
+     */
+    rhoban_utils::TimeStamp ts;
+  };
+  
   /**
    * IDS camera
    */
   HIDS camera;
 
-  /// Is the image stream starrted
+  /**
+   * Is connected 
+   */
+  bool is_connected;
+
+  /**
+   * Is the image stream started
+   */
   bool is_capturing;
 
-  /// Number of success on RetrieveBuffer
+  /**
+   * The image currently used by the filter (foreground)
+   */
+  std::unique_ptr<ImageEntry> fg_entry;
+
+  /**
+   * The image currently used to store the background information
+   */
+  std::unique_ptr<ImageEntry> bg_entry;
+
+  /**
+   * Ensures the background thread is not overwritting an image currently in used
+   */
+  std::mutex bg_mutex;
+
+  /**
+   * Allows the 'process' thread to wait until a new image has been pushed
+   */
+  std::condition_variable bg_cond;
+
+  /**
+   * List of supported formats
+   */
+  std::vector<IMAGE_FORMAT_INFO> supported_formats;
+
+  /**
+   * Size of the image provided by the camera
+   */
+  cv::Size img_size;
+
+  /**
+   * Format of image used 
+   */
+  ParamInt format_id;
+
+  /**
+   * Exposure time in ms
+   */
+  ParamFloat exposure;
+
+  /**
+   * Number of requested frames per second
+   */
+  ParamFloat frame_rate;
+
+  // Not tested, but should work
+
+  /**
+   * Return the success ratio of retrieving frames
+   */
+  double getSuccessRatio();
+
+  /**
+   * Number of success when getting frames
+   */
   int nb_retrieve_success;
 
-  /// Number of failures on RetrieveBuffer
+  /**
+   * Number of failures while getting frames
+   * - Currently failures are throwing exceptions and values is not incremented
+   */
   int nb_retrieve_failures;
-
-  /// Last retrieval success in 'computer' time
-  ::rhoban_utils::TimeStamp last_retrieval_success;
-
-  /**
-   * The values wished for properties
-   * Property name -> Camera Property
-   */
-  std::map<std::string, FlyCapture2::Property> wished_properties;
-
-  /**
-   * Store Embedded values
-   * Property name -> Camera Property
-   */
-  std::map<std::string, FlyCapture2::Property> properties;
-
-  /**
-   * Store informations on properties (such as: is auto supported, is manual
-   * supported etc...)
-   * Property name -> Camera Property information
-   */
-  std::map<std::string, FlyCapture2::PropertyInfo> properties_information;
-
-  /**
-   * From human names to enum values
-   */
-  static std::map<std::string, FlyCapture2::PropertyType> names_to_types;
-
-  /**
-   * Measure of the time spent since the last synch occured
-   */
-  unsigned int elapsed_from_synch_ms;
-
-  /**
-   * Delta between the pc timestamp and the camera timestamp
-   */
-  double ts_delta;
-
-  /**
-   * Usefull to do stuff the first time only
-   */
-  bool first_run;
-
-  /**
-   * Previous normalized timestamp, used to verify timing errors.
-   */
-  ::rhoban_utils::TimeStamp last_ts;
-
-  /**
-   * Sometimes a custom offset needs to be added to normalized_ts to fit the
-   * modulo 128 s error which might happen
-   */
-  double custom_offset_ms;
 };
 }
 }

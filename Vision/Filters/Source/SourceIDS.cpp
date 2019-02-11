@@ -1,6 +1,7 @@
 #include "SourceIDS.hpp"
 
 #include "Filters/Pipeline.hpp"
+#include "Utils/IDSExceptions.hpp"
 
 #include "RhIO.hpp"
 
@@ -14,8 +15,12 @@
 #include <unistd.h>
 #include <iomanip>
 
+#define CHECK_CODE(code, msg) \
+  if (code != IS_SUCCESS) { throw IDSException(DEBUG_INFO + msg + ": code " + std::to_string(code));}
+
 using ::rhoban_utils::Benchmark;
 using ::rhoban_utils::TimeStamp;
+using Vision::Utils::IDSException;
 using namespace std;
 
 static rhoban_utils::Logger logger("SourceIDS");
@@ -25,429 +30,234 @@ namespace Filters {
   
 SourceIDS::SourceIDS()
     : Source("SourceIDS"), is_capturing(false), nb_retrieve_success(0),
-      nb_retrieve_failures(0),  elapsed_from_synch_ms(0),
-      ts_delta(0.0), first_run(true), last_ts(), custom_offset_ms(0.0) {
-  last_retrieval_success = TimeStamp::now();
+      nb_retrieve_failures(0) {
+  is_connected = false;
 }
 
 SourceIDS::~SourceIDS() {}
 
-double SourceIDS::getFrameRate() {
-  double fps = 0;
-  if (is_GetFramesPerSecond(camera, &val) != IS_SUCCESS) {
-    throw IDSException(DEBUG_INFO + "failed to get framerate");
-  }
-  return fps;
-}
-
-double SourceIDS::getSuccessRatio() {
-  int nb_retrievals = nb_retrieve_success + nb_retrieve_failures;
-  if (nb_retrievals == 0)
-    return 1;
-  return nb_retrieve_success / (double)nb_retrievals;
-}
-
 void SourceIDS::fromJson(const Json::Value & v, const std::string & dir_name) {
   Filter::fromJson(v, dir_name);
-  Json::Value wp_val = v["wished_properties"];
-  // If wished properties are found, use them
-  if (!wp_val.isNull()) {
-    if (!wp_val.isObject()) {
-      throw rhoban_utils::JsonParsingError("SourceIDS::fromJson: 'wished_properties' is not an object");
-    }
-    for (const auto &entry : names_to_types) {
-      const std::string &prop_name = entry.first;
-      FlyCapture2::PropertyType prop_type = entry.second;
-      Json::Value prop_val = wp_val[prop_name];
-      if (!prop_val.isNull()) {
-        wished_properties[prop_name] = propertyFromJson(prop_val, prop_type);
-      }
-    }
-  }
 }
 
 Json::Value SourceIDS::toJson() const {
   return Filter::toJson();
-  // TODO
 }
 
-string SourceIDS::getClassName() const { return "SourceIDS"; }
+string SourceIDS::getClassName() const {
+  return "SourceIDS";
+}
 
-int SourceIDS::expectedDependencies() const { return 0; }
+int SourceIDS::expectedDependencies() const {
+  return 0;
+}
 
 Source::Type SourceIDS::getType() const {
   return Type::Online;
 }
 
-void SourceIDS::updateImageSettings() {
-  // Error variable
-  setImagingMode(FlyCapture2::Mode::MODE_1);
-  updateBinning(2,2);
-  setPixelFormat(FlyCapture2::PixelFormat::PIXEL_FORMAT_444YUV8);
+void SourceIDS::setParameters() {
+  format_id = ParamInt(1,0,100);
+  exposure = ParamFloat(2.0,0.01,100);
+  frame_rate = ParamFloat(30.0,0.01,100);
+
+  params()->define<ParamInt>("formatId", &format_id);
+  params()->define<ParamFloat>("exposure", &exposure);
+  params()->define<ParamFloat>("frameRate", &frame_rate);
 }
 
-void SourceIDS::updatePacketProperties() {
-  // Prepare packets
-  // Using larger packets reduces the number of CPU interruptions
-  FlyCapture2::GigEProperty packet_size_prop;
-  packet_size_prop.propType = FlyCapture2::PACKET_SIZE;
-  packet_size_prop.value = 9000;
-  FlyCapture2::GigEProperty packet_delay_prop;
-  packet_delay_prop.propType = FlyCapture2::PACKET_DELAY;
-  // In 640*480, at 25 fps, with 3 bytes per pixel, the required bandwidth is:
-  // 640 * 480 * 25 * 3 ~= 24 * 10^6 <- 23 MB/s
-  // Some examples of combinations packet_delay, packet_size and bandwidth are
-  // provided in the Technical reference guide of blackfly:
-  // section:  "Determining Bandwidth requirements"
-  // 55 MB: (9000,1800) or (1400,255)
-  // 25 MB: (9000,5900) or (1400,900)
-  //
-  // Since no obvious relationships between Baudrate and value is exhibited,
-  // setting this value is subjet to extreme caution
-  // - If the value is too low: Risk of 'dropping frames'
-  // - If the value is too high: Unknown consequences
-  packet_delay_prop.value = 6000;
+void SourceIDS::process() {
+  // If capture is not activated yet, start camera
+  if (!is_capturing) {
+    startCamera();
+  }
 
-  // Send packets
-  FlyCapture2::Error error;
-  error = camera.SetGigEProperty(&packet_size_prop);
-  if (error != FlyCapture2::PGRERROR_OK) {
-    std::ostringstream oss;
-    oss << "SourceIDS::updatePacketProperties: failed to set packet size: "
-        << error.GetType();
+  // TODO: apply parameters changes (detect them or overwrite anyway?)
+  // - FormatId requires 
+  setExposure(exposure);
+  
+  // Grab frame from camera
+  updateImage();
+
+  // TODO improve mechanism for TimeStamps:
+  // - Require synchronization between camera clock and steady clock
+  //   - Through software (unclear if is_DeviceFeature can do it through software)
+  //   - Through hardware (using GPIO -> major changes required)
+  getPipeline()->setTimestamp(fg_entry->ts);
+
+  updateRhIO();
+}
+
+void SourceIDS::backgroundProcess() {
+  if (!is_capturing) {
+    throw IDSException(DEBUG_INFO + "capture was not started");
+  }
+  while (is_capturing) {
+    int32_t ret_code;
+    std::unique_ptr<ImageEntry> new_img(new ImageEntry);
+    // Getting id of next buffer to be written
+    int32_t buffer_id;
+    char * buffer;
+    ret_code = is_GetActSeqBuf(camera, &buffer_id, &buffer, NULL);
+    CHECK_CODE(ret_code, "failed to get next buffer");
+    // Waiting for a frame
+    double wait_time_ms = 100;
+    ret_code = is_WaitEvent(camera, IS_SET_EVENT_FRAME, wait_time_ms);
+    CHECK_CODE(ret_code, "failed to wait for event");
+    new_img->ts = TimeStamp::now();
+    // Locking memory buffer
+    ret_code = is_LockSeqBuf(camera, buffer_id, NULL);
+    CHECK_CODE(ret_code, "failed to lock seq");
+    // Retrieving image_info
+    ret_code = is_GetImageInfo(camera, buffer_id,
+                               &(new_img->image_info), sizeof(new_img->image_info));
+    CHECK_CODE(ret_code, "failed to get image information");
+    // Copying data to avoid overwrite
+    cv::Mat tmp(img_size, CV_8UC3, buffer);
+    tmp.copyTo(new_img->img);
+    // Unlocking memory buffer
+    ret_code = is_UnlockSeqBuf(camera, buffer_id, NULL);
+    CHECK_CODE(ret_code, "failed to unlock seq");
+    // Pushing data into memory and notifying eventual waiter (thread_safe)
     {
-      oss << ": Camera was capturing, stop capturing before changing packet "
-             "size";
+      std::unique_lock<std::mutex> lock(mutex);
+      bg_entry = std::move(new_img);
+      bg_cond.notify_all();
     }
-    throw Utils::IDSException(oss.str());
+    nb_retrieve_success++;
   }
-  error = camera.SetGigEProperty(&packet_delay_prop);
-  if (error != FlyCapture2::PGRERROR_OK) {
-    std::ostringstream oss;
-    oss << "SourceIDS::updatePacketProperties: failed to set packet delay";
-    if (is_capturing) {
-      oss << ": Camera was capturing, stop capturing before changing packet "
-             "size";
-    }
-    throw Utils::IDSException(oss.str());
-  }
+}
+
+
+bool SourceIDS::isConnected() {
+  return is_connected;
+}
+
+void SourceIDS::connect() {
+  int32_t ret = is_InitCamera(&camera, NULL);
+  CHECK_CODE(ret, "failed to open camera");
+  is_connected = true;
+}
+
+void SourceIDS::disconnect() {
+  int32_t ret = is_ExitCamera(camera);
+  CHECK_CODE(ret, "failed to close camera");
+  is_connected = false;
 }
 
 void SourceIDS::startCamera() {
-  FlyCapture2::Error error;
   // If connected, disconnect
-  if (camera.IsConnected()) {
-    camera.Disconnect();
+  if (isConnected()) {
+    disconnect();
   }
-  // Connect to camera
-  error = camera.Connect(0); // TODO: replace by &camera_id when implemented
-  if (error != FlyCapture2::PGRERROR_OK) {
-    const std::string message = "SourceIDS::StartCamera: Failed to connect to camera. Message: " + std::string(error.GetDescription());
-    throw Utils::IDSConnectionException(message);
-  }
-  try {
-    // Properly set up size of packet and delay between packets
-    updatePacketProperties();
-    // Set appropriate mode and size
-    updateImageSettings();
-    // Ensure that if connection is lost we will not be stopped
-    setTimeout(500);
-    // Start capture
-    while (true) {
-      error = camera.StartCapture();
-      if (error == FlyCapture2::PGRERROR_ISOCH_BANDWIDTH_EXCEEDED) {
-        throw Utils::IDSException("SourceIDS::StartCamera: bandwidth exceeded");
-      } else if (error == FlyCapture2::PGRERROR_ISOCH_ALREADY_STARTED) {
-        std::cerr << "SourceIDS::StartCamera: Isoch already started: stopping"
-                  << std::endl;
-        camera.StopCapture();
-      } else if (error != FlyCapture2::PGRERROR_OK) {
-        std::cerr << "SourceIDS::StartCamera: Failed to start image capture: '"
-                  << error.GetDescription();
-        reconnectCamera();
-      } else {
-        break;
-      }
-    }
-    logger.log("Capturing OK");
-    is_capturing = true;
-    // Update internal properties
-    updateProperties();
-    logger.log("Update properties OK");
-    updatePropertiesInformation();
-    logger.log("Update properties information OK");
-    // Apply wished properties
-    applyWishedProperties();
-    logger.log("ApplyWishedProperties OK");
-    // Once properties have been read and applied, initialize them
-    // TODO: instead, wished_properties should be filled with entries which have
-    // not been presented yet
-    wished_properties = properties;
-    // DEBUG print for properties
-    // dumpProperties(std::cout);
-    // dumpPropertiesInformation(std::cout);
-    bindProperties();
-    logger.log("bindProperties OK");
+  connect();
+  updateSupportedFormats();
+  // Set appropriate mode and size
+  updateImageSettings();
+  // Start capture
 
-    // TODO: extract code somewhere else
-    FlyCapture2::EmbeddedImageInfo embeddedInfo;
-    embeddedInfo.timestamp.onOff = true;
-    error = camera.SetEmbeddedImageInfo(&embeddedInfo);
-    if (error != FlyCapture2::PGRERROR_OK) {
-      throw Utils::IDSException("failed to set 'embedded ImageInfo'");
-    }
-    logger.log("setEmbeddedImageInfo OK");
-  } catch (const Utils::IDSException & exc) {
-    logger.error("Got a IDSException while preparing camera: '%s'",
-                 exc.what());
-    camera.Disconnect();
-    throw;
-  }
+  // TODO: handle potential errors on starting capture with a retry
+  int32_t ret_code;
+  ret_code = is_CaptureVideo(camera, IS_WAIT);
+  CHECK_CODE(ret_code, "failed to start capture");
+  is_capturing = true;
+  // TODO Update internal properties (auto white balance etc...)
+  setExposure(exposure);
 }
 
 void SourceIDS::endCamera() {
-  FlyCapture2::Error error;
-  is_capturing = false;
+  int32_t ret_code;
   if (is_capturing) {
-    camera.StopCapture();
-    if (error != FlyCapture2::PGRERROR_OK) {
-      throw Utils::IDSException(
-          "SourceIDS::endCamera: Failed to stop capture!");
+    ret_code = is_StopLiveVideo(camera, IS_WAIT);
+    CHECK_CODE(ret_code, "Failed to stop capture");
+    is_capturing = false;
+  }
+  ret_code = is_ClearSequence(camera);
+  CHECK_CODE(ret_code, "Failed to clear buffers");
+  //TODO: freeImageMem?
+  if (isConnected()) {
+    ret_code = is_ExitCamera(camera);
+    CHECK_CODE(ret_code, "Failed to exit camera");
+  }
+}
+
+void SourceIDS::updateSupportedFormats() {
+  // Getting number of supported formats
+  uint32_t entries;
+  int32_t ret_code;
+  ret_code = is_ImageFormat(camera, IMGFRMT_CMD_GET_NUM_ENTRIES, &entries, sizeof(entries));
+  // Retrieving formats
+  char formats[sizeof(IMAGE_FORMAT_LIST) + (entries-1)*sizeof(IMAGE_FORMAT_INFO)];
+  IMAGE_FORMAT_LIST *formatList = (IMAGE_FORMAT_LIST*)formats;
+  formatList->nNumListElements = entries;
+  formatList->nSizeOfListEntry = sizeof(IMAGE_FORMAT_INFO);
+  ret_code = is_ImageFormat(camera, IMGFRMT_CMD_GET_LIST, formats, sizeof(formats));
+  CHECK_CODE(ret_code, "Failed to list image formats");
+  for (uint32_t k=0; k<entries; k++) {
+    supported_formats.push_back(formatList->FormatInfo[k]);
+  }
+}
+
+void SourceIDS::setFormat(int32_t format_id) {
+  for (IMAGE_FORMAT_INFO & info : supported_formats) {
+    if (info.nFormatID == format_id) {
+      int32_t ret_code;
+      ret_code = is_ImageFormat(camera, IMGFRMT_CMD_SET_FORMAT,
+                                &info.nFormatID, sizeof(info.nFormatID));
+      CHECK_CODE(ret_code, "failed to set format");
+      img_size = cv::Size(info.nWidth, info.nHeight);
+      return;
     }
   }
-  if (camera.IsConnected()) {
-    camera.Disconnect();
+  throw IDSException(DEBUG_INFO + "cannot find format with id: " + std::to_string(format_id));
+}
+
+void SourceIDS::updateImageSettings() {
+  setFormat(format_id);
+  //TODO: how is binning applied?
+  //TODO: Simply print result of the format
+  // Setting color mode to YCbCr
+  int32_t ret_code;
+  ret_code = is_SetColorMode(camera, IS_CM_CBYCRY_PACKED);
+  CHECK_CODE(ret_code, "failed to set color_mode");
+  //TODO: try IS_CM_JPEG
+}
+
+void SourceIDS::allocateBuffers() {
+  int32_t ret;
+  ret = is_ClearSequence(camera);
+  CHECK_CODE(ret, "failed to clear sequence");
+  // Setting the ring buffer for images for the camera
+  int nb_buffers = 3;//TODO: set as parameter
+  for (int k=0; k<nb_buffers; k++) {
+    char *mem;
+    int mem_id;
+    int32_t bits_per_pixel = 16;// YCbCr -> 16 bits per pixel
+    is_AllocImageMem(camera, img_size.width, img_size.height, bits_per_pixel, &mem, &mem_id);
+    is_AddToSequence(camera, mem, mem_id);
   }
 }
 
-void SourceIDS::reconnectCamera() {
-  FlyCapture2::Error error;
-  logger.log("reconnectCamera:IsConnected()");
-  // If connected, disconnect
-  if (camera.IsConnected()) {
-    logger.log("reconnectCamera::Disconnect()");
-    camera.Disconnect();
+void SourceIDS::setExposure(double time) {
+  int32_t ret;
+  ret = is_Exposure(camera, IS_EXPOSURE_CMD_SET_EXPOSURE, &time, sizeof(double));
+  CHECK_CODE(ret, "failed to set exposure time");
+}
+
+double SourceIDS::getExposure() {
+  int32_t ret;
+  double time;
+  ret = is_Exposure(camera, IS_EXPOSURE_CMD_GET_EXPOSURE, &time, sizeof(double));
+  CHECK_CODE(ret, "failed to get exposure time");
+  return time;
+}
+
+void SourceIDS::updateImage() {
+  std::unique_lock<std::mutex> lock(bg_mutex);
+  while (!bg_entry) {
+    bg_cond.wait(lock);
   }
-  // Connect to camera
-  logger.log("reconnectCamera::Connect()");
-  error = camera.Connect(0); // TODO: replace by &camera_id when implemented
-  if (error != FlyCapture2::PGRERROR_OK) {
-    throw Utils::IDSConnectionException(
-        "SourceIDS::StartCamera: Failed to connect to camera");
-  }
-  logger.log("reconnectCamera::OK()");
-}
-
-void SourceIDS::updateProperties() {
-  for (const auto &entry : names_to_types) {
-    std::string property_name = entry.first;
-    FlyCapture2::PropertyType property_type = entry.second;
-    // Read informations from camera
-    FlyCapture2::Error error;
-    FlyCapture2::Property property;
-    property.type = property_type;
-    error = camera.GetProperty(&property);
-    if (error != FlyCapture2::PGRERROR_OK) {
-      throw Utils::IDSException("Failed to Get Property: '" + property_name +
-                               "'");
-    }
-    // Write Property inside local map
-    properties[property_name] = property;
-  }
-}
-
-void SourceIDS::updatePropertiesInformation() {
-  for (const auto &entry : names_to_types) {
-    std::string property_name = entry.first;
-    FlyCapture2::PropertyType property_type = entry.second;
-    // Read informations from camera
-    FlyCapture2::Error error;
-    FlyCapture2::PropertyInfo property_info;
-    property_info.type = property_type;
-    error = camera.GetPropertyInfo(&property_info);
-    if (error != FlyCapture2::PGRERROR_OK) {
-      throw Utils::IDSException("Failed to Get Property Information: '" +
-                               property_name + "'");
-    }
-    // Write Property inside local map
-    properties_information[property_name] = property_info;
-  }
-}
-
-void SourceIDS::dump(const FlyCapture2::Format7ImageSettings & s,
-                        std::ostream & out) {
-  out << "----------------" << std::endl;
-  out << "F7 Image Settings" << std::endl;
-  out << "----------------" << std::endl;
-  out << "mode: " << s.mode << std::endl;
-  out << "offset: (" << s.offsetX << "," << s.offsetY << ")" << std::endl;
-  out << "size: (" << s.width << "x" << s.height << ")" << std::endl;
-  out << "pixelFormat: " << pixel_format_names.at(s.pixelFormat) << std::endl;
-}
-
-void SourceIDS::dump(const FlyCapture2::GigEImageSettings & s,
-                        std::ostream & out) {
-  out << "--------------" << std::endl;
-  out << "Image Settings" << std::endl;
-  out << "--------------" << std::endl;
-  out << "offset: (" << s.offsetX << "," << s.offsetY << ")" << std::endl;
-  out << "size: (" << s.width << "x" << s.height << ")" << std::endl;
-  out << "pixelFormat: " << pixel_format_names.at(s.pixelFormat) << std::endl;
-}
-
-void SourceIDS::dump(const FlyCapture2::GigEImageSettingsInfo & image_settings_info,
-                        std::ostream & out) {
-  out << "-------------------" << std::endl;
-  out << "Image Settings Info" << std::endl;
-  out << "-------------------" << std::endl;
-  for (const auto &entry : pixel_format_names) {
-    unsigned int format_mask = entry.first;
-    const std::string & format_name = entry.second;
-    if ((format_mask & image_settings_info.pixelFormatBitField) != 0) {
-      out << "\t" << format_name << std::endl;
-    }
-  }
-}
-
-void SourceIDS::dumpProperties(std::ostream &out) {
-  out << "----------" << std::endl;
-  out << "Properties" << std::endl;
-  out << "----------" << std::endl;
-  for (const auto &entry : properties) {
-    out << entry.first << std::endl;
-    writeProperty(entry.second, out, "  ");
-  }
-}
-
-void SourceIDS::dumpPropertiesInformation(std::ostream &out) {
-  out << "---------------------" << std::endl;
-  out << "PropertiesInformation" << std::endl;
-  out << "---------------------" << std::endl;
-  for (const auto &entry : properties_information) {
-    out << entry.first << std::endl;
-    writePropertyInformation(entry.second, out, "  ");
-  }
-}
-
-FlyCapture2::PropertyType
-SourceIDS::getPropertyType(const std::string &name) {
-  try {
-    return names_to_types.at(name);
-  } catch (const std::out_of_range &exc) {
-    throw std::out_of_range("SourceIDS::getPropertyType: unknown name '" +
-                            name + "'");
-  }
-}
-
-void SourceIDS::writeProperty(const FlyCapture2::Property &property,
-                                 std::ostream &out, const std::string &prefix) {
-  out << prefix << "type            : " << property.type << std::endl;
-  out << prefix << "present         : " << property.present << std::endl;
-  out << prefix << "absolute control: " << property.absControl << std::endl;
-  out << prefix << "one push        : " << property.onePush << std::endl;
-  out << prefix << "on/off          : " << property.onOff << std::endl;
-  out << prefix << "auto            : " << property.autoManualMode << std::endl;
-  out << prefix << "value A         : " << property.valueA << std::endl;
-  out << prefix << "value B         : " << property.valueB << std::endl;
-  out << prefix << "absolute value  : " << property.absValue << std::endl;
-}
-
-void SourceIDS::writePropertyInformation(
-    const FlyCapture2::PropertyInfo &property_info, std::ostream &out,
-    const std::string &prefix) {
-  out << prefix << "type            : " << property_info.type << std::endl;
-  out << prefix << "present         : " << property_info.present << std::endl;
-  out << prefix << "support auto    : " << property_info.autoSupported
-      << std::endl;
-  out << prefix << "support manual  : " << property_info.manualSupported
-      << std::endl;
-  out << prefix << "support on/off  : " << property_info.onOffSupported
-      << std::endl;
-  out << prefix << "support one push: " << property_info.onePushSupported
-      << std::endl;
-  out << prefix << "support abs val : " << property_info.absValSupported
-      << std::endl;
-  out << prefix << "support read out: " << property_info.readOutSupported
-      << std::endl;
-  out << prefix << "min             : " << property_info.min << std::endl;
-  out << prefix << "max             : " << property_info.max << std::endl;
-  out << prefix << "abs min         : " << property_info.absMin << std::endl;
-  out << prefix << "abs max         : " << property_info.absMax << std::endl;
-  out << prefix << "Units (long)    : " << property_info.pUnits << std::endl;
-  out << prefix << "Units (short)   : " << property_info.pUnitAbbr << std::endl;
-}
-
-void SourceIDS::bindProperties() {
-  std::string filter_path = rhio_path + getName();
-
-  // Declare monitoring variables if it has not been done yet
-  std::string monitoring_path = filter_path + "/monitoring";
-  if (!RhIO::Root.childExist(monitoring_path)) {
-    // Create monitoring node
-    RhIO::Root.newChild(monitoring_path);
-    RhIO::IONode &node = RhIO::Root.child(monitoring_path);
-    // Create Value nodes
-    node.newInt("success")->defaultValue(nb_retrieve_success);
-    node.newInt("failures")->defaultValue(nb_retrieve_failures);
-    node.newFloat("ratio")->defaultValue(getSuccessRatio());
-    node.newFloat("ts_delta")->defaultValue(ts_delta);
-    node.newFloat("normalized_ts")->defaultValue(last_ts.getTimeMS());
-    node.newFloat("custom_offset")->defaultValue(custom_offset_ms);
-  }
-  // Declare all field in specific folder
-  for (const auto &entry : wished_properties) {
-    const std::string &property_name = entry.first;
-    std::string property_path = filter_path + "/" + property_name;
-    FlyCapture2::Property property = entry.second;
-    FlyCapture2::PropertyInfo property_info =
-        properties_information.at(property_name);
-    // If property has already been created, skip property
-    if (RhIO::Root.childExist(property_path))
-      continue;
-    // Create Property node
-    RhIO::Root.newChild(property_path);
-    RhIO::IONode &node = RhIO::Root.child(property_path);
-    // Create a node for each property
-    node.newBool("auto")->defaultValue(false);
-    if (property.type == FlyCapture2::WHITE_BALANCE) {
-      node.newInt("valueA")
-        ->defaultValue(property.valueA)
-        ->minimum(0)
-        ->maximum(1023);
-      node.newInt("valueB")
-        ->defaultValue(property.valueB)
-        ->minimum(0)
-        ->maximum(1023);
-    } else {
-      node.newBool("absControl")->defaultValue(true);
-      node.newFloat("absValue")
-        ->defaultValue(property.absValue)
-        ->minimum(property_info.absMin)
-        ->maximum(property_info.absMax);
-    }
-    // TODO handle other types
-  }
-}
-
-void SourceIDS::importPropertiesFromRhIO() {
-  std::string filter_path = rhio_path + getName();
-
-  // Declare all field in specific folder
-  for (auto &entry : wished_properties) {
-    const std::string &property_name = entry.first;
-    FlyCapture2::Property &property = entry.second;
-    std::string property_path = filter_path + "/" + property_name;
-    RhIO::IONode &node = RhIO::Root.child(property_path);
-    property.autoManualMode = node.getValueBool("auto").value;
-    if (property.type == FlyCapture2::WHITE_BALANCE) {
-      property.absControl = false;
-      property.valueA = node.getValueInt("valueA").value;
-      property.valueB = node.getValueInt("valueB").value;
-    } else {
-      property.absControl = node.getValueBool("absControl").value;
-      property.absValue = node.getValueFloat("absValue").value;
-    }
-  }
+  fg_entry = std::move(bg_entry);
 }
 
 void SourceIDS::updateRhIO() {
@@ -457,370 +267,15 @@ void SourceIDS::updateRhIO() {
   monitoring_node.setInt("success", nb_retrieve_success);
   monitoring_node.setInt("failures", nb_retrieve_failures);
   monitoring_node.setFloat("ratio", getSuccessRatio());
-  monitoring_node.setFloat("ts_delta", ts_delta);
-  monitoring_node.setFloat("normalized_ts", last_ts.getTimeMS());
-  monitoring_node.setFloat("custom_offset", custom_offset_ms);
 }
 
-void SourceIDS::applyWishedProperties() {
-  std::string filter_path = rhio_path + getName();
-
-  // Declare all field in specific folder
-  for (auto &entry : wished_properties) {
-    const std::string &property_name = entry.first;
-    FlyCapture2::Property &wished_property = entry.second;
-    // Lazy application of parameters
-    if (!isEquivalent(wished_property, properties.at(property_name))) {
-      std::cout << "Difference found in configuration for property: '"
-                << property_name << "'" << std::endl;
-      if (wished_property.type == FlyCapture2::WHITE_BALANCE) {
-        wished_property.absControl = false;
-      }
-      FlyCapture2::Error error;
-      // Uploading property to camera
-      error = camera.SetProperty(&wished_property, false);
-      if (error != FlyCapture2::PGRERROR_OK) {
-        dumpProperties(std::cout);
-        //dumpPropertiesInformation(std::cout);
-        std::cout << "IDSError: " <<  error.GetDescription() << std::endl;
-        std::cout << "Wished prop: ";
-        writeProperty(entry.second, std::cout, "  ");
-        throw Utils::IDSException("Failed to apply property: '" + property_name +
-                                 "'");
-      }
-      // Checking that property has properly been updated
-      error = camera.GetProperty(&(properties.at(property_name)));
-      if (error != FlyCapture2::PGRERROR_OK) {
-        throw Utils::IDSException("Failed to get property: '" + property_name +
-                                 "'");
-      }
-      std::cout << "Difference between values:"
-                << (wished_property.absValue -
-                    properties.at(property_name).absValue)
-                << std::endl;
-    }
-  }
-}
-
-void SourceIDS::setTimeout(int time_ms)
-{
-  FlyCapture2::Error error;
-  FlyCapture2::FC2Config config;
-  // Grab config
-  error = camera.GetConfiguration(&config);
-  if (error != FlyCapture2::PGRERROR_OK) {
-    std::ostringstream oss;
-    oss << "SourceIDS::setTimeout: failed to getConfig: " << error.GetDescription();
-    throw Utils::IDSException(oss.str());
-  }
-  config.grabTimeout = time_ms;
-  // Set timeout
-  error = camera.SetConfiguration(&config);
-  if (error != FlyCapture2::PGRERROR_OK) {
-    std::ostringstream oss;
-    oss << "SourceIDS::setTimeout: failed to setConfig: " << error.GetDescription();
-    throw Utils::IDSException(oss.str());
-  }
-  
-}
-
-
-// The camera clock crystal, a CITIZEN CS10‐25.000MABJTR has a drift specification of ± 50 PPM
-// Which means that after 20 minutes, we can expect the clock to drift +-60ms.
-//=> If we want a ~1ms precision, we should call this function at least every 24 seconds.
-double SourceIDS::measureTimestampDelta() {
-  // This function costs ~3ms on the fitlet.
-  
-  /**How to estimate the delay between the capture moment and the image
-   * reception moment? Sure, we have a precise, image embedded timsestamp, but
-   * the clock of the camera and the clock of the PC are not synchronized. A
-   * decent enough solution is to request the timestamp directly to the camera
-   * (and not the value embedded in an image). Approximation : if t0 is the
-   * local timestamp when we sent the order, and t1 is the local timestap when
-   * we received the camera timestamp, then the received timestamp matches
-   * (t0+t1)/2.
-   */
-
-  TimeStamp t0 = TimeStamp::now();
-  // We need to ask the camera to latch (=flush) the timestamp
-  unsigned long latch_data = 0x1 << 1;
-
-  /* tl dr do not reset_data.
-   * Weirdly enough, the timestamp embedded into the frames has 32 bits (resets every 128 secs) and 
-   * the latched camera timestamp has 64 bits. Their LSB seems to be the same. Their value seems also
-   * to be the same (modulo 128sec) UNLESS a reset was asked on the latched timsestamp which causes
-   * both timers to desynchronize.
-   */
-  /* 
-  unsigned long reset_data = 0x1;
-  error = camera.WriteGVCPRegister(0x0944, reset_data);
-  if (error != FlyCapture2::PGRERROR_OK) {
-    const std::string message = "WriteGVCPRegister failed (timestamp reset). Message: " + std::string(error.GetDescription());
-    throw IDSException(message);
-    }*/
-  
-  FlyCapture2::Error error = camera.WriteGVCPRegister(0x0944, latch_data);
-  if (error != FlyCapture2::PGRERROR_OK) {
-    const std::string message = "WriteGVCPRegister failed (timestamp latch). Message: " + std::string(error.GetDescription());
-    if (diffMs(last_retrieval_success, TimeStamp::now()) > 5000) {
-      endCamera();
-      throw Utils::IDSException("Failed to reset timestamp for more than 5 s");
-    }
-    throw Utils::IDSException(message);
-  }
-  
-  TimeStamp t1 = TimeStamp::now();
-  double elapsed = diffMs(t0, t1);
-  
-  //We can read the latched value now
-  unsigned int addressHigh = 0x0948;
-  unsigned int addressLow = 0x094C;
-  unsigned int bufferLow = 0;
-  unsigned int bufferHigh = 0;
-  error = camera.ReadGVCPRegister(addressHigh, &bufferHigh);
-  if (error != FlyCapture2::PGRERROR_OK) {
-    const std::string message = "ReadRegister failed (timestamp). Message: " + std::string(error.GetDescription());
-    throw Utils::IDSException(message);
-  }
-  error = camera.ReadGVCPRegister(addressLow, &bufferLow);
-  if (error != FlyCapture2::PGRERROR_OK) {
-    const std::string message = "ReadRegister failed (timestamp). Message: " + std::string(error.GetDescription());
-    throw Utils::IDSException(message);
-  }
-
-  //From latched timestamp to milliseconds. The timestamp increments at 125MHz
-  double low = bufferLow/(double)125000;
-  double high = bufferHigh*(((unsigned long long int)1<<32)/(double)125000);
-  double latchedMs = high + low;
-  latchedMs = fmod(latchedMs, 128000.0);
-  double localTimestamp = t0.getTimeMS() + elapsed/2;
-  double delta = localTimestamp - latchedMs;
-
-  return delta;
-}
-  
-void SourceIDS::process() {
-  FlyCapture2::Image fc_image;
-  // If capture is not activated yet, start camera
-  if (!is_capturing) {
-    startCamera();
-  }
-  
-  // Import parameters from> rhio and apply them if necessary
-  importPropertiesFromRhIO();
-  applyWishedProperties();
-  
-  // Show elapsed time since last call
-  TimeStamp now = TimeStamp::now();
-  //TODO require to store lastRetrievalAttempt
-  //     - (accumulation on elapsed when failing retrieval)
-  double elapsed = diffMs(last_retrieval_success, now);
-  elapsed_from_synch_ms = elapsed_from_synch_ms + elapsed;
-
-  // TODO set as a json parameter?
-  if((elapsed_from_synch_ms > 10000) | first_run) {
-    if (first_run) {
-      first_run = false;
-      last_ts = TimeStamp::fromMS(0);
-    }
-
-    elapsed_from_synch_ms = 0;
-    // Re-synch the pc timestamp with the camera timestamp
-    ts_delta = measureTimestampDelta();
-  }
-  
-  // Grab frame from camera
-  FlyCapture2::Error error = camera.RetrieveBuffer(&fc_image);
-
-  if (error == FlyCapture2::PGRERROR_TIMEOUT) {
-    endCamera();
-    throw Utils::IDSException("RetrieveBuffer timed out");
-  }
-  else if (error != FlyCapture2::PGRERROR_OK) {
-    std::ostringstream oss;
-    oss << "Failed buffer retrieval: '" << error.GetDescription() << "'";
-    // Detailed error
-    //oss << "Failed to retrieve buffer from IDS: | "
-    //    << "Error description: " << error.GetDescription() << " | "
-    //    << "Elapsed time since last retrieval: " << elapsed << " ms |"
-    //    << "Elapsed from synch " << elapsed_from_synch_ms;
-    nb_retrieve_failures++;
-    updateRhIO();
-    throw Utils::IDSException(oss.str());
-  }
-  last_retrieval_success = now;
-  nb_retrieve_success++;
-
-  Benchmark::open("Copy image");
-  unsigned int bytes_per_row =
-      fc_image.GetReceivedDataSize() / fc_image.GetRows();
-  cv::Mat tmp_img = cv::Mat(fc_image.GetRows(), fc_image.GetCols(), CV_8UC3,
-                            fc_image.GetData(), bytes_per_row)
-                        .clone();
-  // TODO : skip the invertChannels step to reduce CPU usage.
-  invertChannels(tmp_img);
-  img() = tmp_img;
-  Benchmark::close("Copy image");
-
-  // TimeStamp
-  FlyCapture2::TimeStamp ts = fc_image.GetTimeStamp();
-
-  double image_ts_ms = timestamp2MS(ts);
-  double normalized_frame_ts = image_ts_ms + ts_delta;
-
-  double now_ms = TimeStamp::now().getTimeMS();
-
-  custom_offset_ms = 0;
-  if ((now_ms - normalized_frame_ts) > 128000) {
-    // ts_delta was measured before the 128000ms counter reseted.
-    // Meanwhile, the ts of the current image reseted.
-    custom_offset_ms = 128000;
-  }
-  normalized_frame_ts += custom_offset_ms;
-
-  // Never allow to publish images more recent than current time!
-  double frame_age_ms = now_ms - normalized_frame_ts;
-  if (frame_age_ms < 0) {
-    std::ostringstream oss;
-    oss << "SourceIDS::process: frame is dated from "
-        << (-frame_age_ms) << " ms in the future -> refused";
-    measureTimestampDelta();
-    throw Utils::IDSException(oss.str());
-  }
-  if (frame_age_ms > 128000) {
-    std::ostringstream oss;
-    oss << "SourceIDS::process: frame is dated from "
-        << frame_age_ms << " ms in the past -> too old";
-    measureTimestampDelta();
-    throw Utils::IDSException(oss.str());
-  }
-
-  getPipeline()->setTimestamp(TimeStamp::fromMS(normalized_frame_ts));
-
-  double elapsed_ms = normalized_frame_ts - last_ts.getTimeMS();
-  if (elapsed_ms <= 0) {
-    updateRhIO();
-    std::ostringstream oss;
-    oss << "Invalid elapsed time: " << elapsed_ms
-        << " (Elapsed from sync " << elapsed_from_synch_ms << ")";
-    throw Utils::IDSException(oss.str());
-  } else if (elapsed_ms > 500) {
-    std::cout << "SourceIDS:: Warning: Elapsed time: " << elapsed_ms << " ms" << std::endl;
-  }
-  last_ts = TimeStamp::fromMS(normalized_frame_ts);
-
-  updateRhIO();   
-}
-
-void SourceIDS::invertChannels(cv::Mat &frame) {
-  uint8_t *data = (uint8_t *)frame.data;
-
-  for (int i = 0; i < frame.cols * frame.rows; i++) {
-    // According to: https://www.ptgrey.com/KB/10092
-    // Format of IDS is UYV, but definition of U and V might be swapped
-    uint8_t V = data[3 * i + 0];
-    uint8_t Y = data[3 * i + 1];
-    uint8_t U = data[3 * i + 2];
-    data[3 * i + 0] = Y;
-    data[3 * i + 1] = U;
-    data[3 * i + 2] = V;
-  }
-}
-
-bool SourceIDS::isEquivalent(const FlyCapture2::Property &prop1,
-                                const FlyCapture2::Property &prop2) {
-  if (prop1.type == FlyCapture2::WHITE_BALANCE) {
-    return prop1.valueA == prop2.valueA &&
-      prop1.valueB == prop2.valueB &&
-      prop1.autoManualMode == prop2.autoManualMode;
-  }
-  double abs_value_tol = 0.02; // TODO! Use something specific to each property
-  return (prop1.absControl == prop2.absControl &&
-          prop1.autoManualMode == prop2.autoManualMode &&
-          std::fabs(prop1.absValue - prop2.absValue) <= abs_value_tol);
-}
-
-double SourceIDS::timestamp2MS(FlyCapture2::TimeStamp ts) {
-  // Second_count increments from 0 to 127, counting the number of seconds.
-  // Encoded on 7 bits.
-  // Cycle_count increments from 0 to 7999, which equals one second. Encoded on
-  // 13 bits, but resets after 7999.
-  // Cycle offset is encoded on 12 bits. It's the most accurate
-  // portion of the timestamp, reseting every 125us. However, the Timestamp Tick
-  // Frequency is by default 125MHz, which would give a reset of the 12 last bits every 62.5us.
-  unsigned int second_count = ts.cycleSeconds;
-  unsigned int cycle_count = ts.cycleCount;
-  unsigned int cycle_offset = ts.cycleOffset;
-  double ms = 1000*((double)second_count + (double)cycle_count/8000.0 + (double)cycle_offset*0.000000030517578125);
-
-  return ms;
-}
-
-FlyCapture2::Mode SourceIDS::getMode() {
-  FlyCapture2::Mode image_mode;
-  FlyCapture2::Error error = camera.GetGigEImagingMode(&image_mode);
-  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw Utils::IDSException(DEBUG_INFO + error.GetDescription());
-  }
-  return image_mode;
-}
-
-FlyCapture2::GigEImageSettings SourceIDS::getImageSettings() {
-  FlyCapture2::GigEImageSettings settings;
-  FlyCapture2::Error error = camera.GetGigEImageSettings(&settings);
-  if ( error != FlyCapture2::ErrorType::PGRERROR_OK ) {
-    throw Utils::IDSException(DEBUG_INFO + error.GetDescription());
-  }
-  return settings;
-}
-
-FlyCapture2::GigEImageSettingsInfo SourceIDS::getImageSettingsInfo() {
-  FlyCapture2::GigEImageSettingsInfo infos;
-  FlyCapture2::Error error = camera.GetGigEImageSettingsInfo(&infos);
-  if ( error != FlyCapture2::ErrorType::PGRERROR_OK ) {
-    throw Utils::IDSException(DEBUG_INFO + error.GetDescription());
-  }
-  return infos;
-}
-
-void SourceIDS::setImagingMode(FlyCapture2::Mode mode) {
-  FlyCapture2::Error error = camera.SetGigEImagingMode(mode);
-  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw Utils::IDSException(DEBUG_INFO + error.GetDescription());
-  }
-}
-
-void SourceIDS::updateBinning(unsigned int h_binning, unsigned int v_binning) {
-  // Retrieving current binning properties
-  unsigned int current_h_binning = 0;
-  unsigned int current_v_binning = 0;
-  FlyCapture2::Error error;
-  error = camera.GetGigEImageBinningSettings(&current_h_binning,
-                                             &current_v_binning);
-  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw Utils::IDSException(DEBUG_INFO + "Error getting current binning settings"
-                          + error.GetDescription());
-  }
-
-  // Setting binning
-  if (h_binning != current_h_binning || v_binning != current_v_binning) {
-    error = camera.SetGigEImageBinningSettings(h_binning, v_binning);
-    if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-      throw Utils::IDSException(DEBUG_INFO + "Error setting binning settings"
-                            + error.GetDescription());
-    }
-  }
-}
-
-void SourceIDS::setPixelFormat(FlyCapture2::PixelFormat pixel_format) {
-  struct FlyCapture2::GigEImageSettings image_settings = getImageSettings();
-  image_settings.pixelFormat = pixel_format;
-  FlyCapture2::Error error = camera.SetGigEImageSettings(&image_settings);
-  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw Utils::IDSException(DEBUG_INFO + "Error setting image settings: "
-                          + error.GetDescription());
-  }
+double SourceIDS::getSuccessRatio() {
+  int nb_retrievals = nb_retrieve_success + nb_retrieve_failures;
+  if (nb_retrievals == 0)
+    return 1;
+  return nb_retrieve_success / (double)nb_retrievals;
 }
 
 }
 }
+
