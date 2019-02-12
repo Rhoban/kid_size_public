@@ -9,6 +9,9 @@
 #ifdef KID_SIZE_USES_FLYCAPTURE
   #include "SourcePtGrey.hpp"
 #endif
+#ifdef KID_SIZE_USES_IDS
+  #include "SourceIDS.hpp"
+#endif
 
 namespace Vision {
 namespace Filters {
@@ -20,6 +23,9 @@ void registerSourceFilters(FilterFactory * ff) {
                       [](){return std::unique_ptr<Filter>(new SourceVideoProtobuf);});
 #ifdef KID_SIZE_USES_FLYCAPTURE
   ff->registerBuilder("SourcePtGrey", [](){return std::unique_ptr<Filter>(new SourcePtGrey);});
+#endif
+#ifdef KID_SIZE_USES_IDS
+  ff->registerBuilder("SourceIDS", [](){return std::unique_ptr<Filter>(new SourceIDS);});
 #endif
 }
 

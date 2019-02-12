@@ -99,6 +99,13 @@ if (BUILD_KID_SIZE_VISION)
             flycapture
         )
     endif(KID_SIZE_USES_FLYCAPTURE)
+    if (KID_SIZE_USES_IDS)
+        add_definitions(-DKID_SIZE_USES_IDS)
+        set (LINKED_LIBRARIES
+            ${LINKED_LIBRARIES}
+            ueye_api
+        )
+    endif(KID_SIZE_USES_IDS)
 endif (BUILD_KID_SIZE_VISION)
 
 
