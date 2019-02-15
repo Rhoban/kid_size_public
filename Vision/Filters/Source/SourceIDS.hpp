@@ -93,6 +93,11 @@ protected:
   void allocateBuffers();
 
   /**
+   * Set the frame rate [Hz]
+   */
+  void setFrameRate(double fps);
+
+  /**
    * Set the exposure time in [ms]
    */
   void setExposure(double time);
@@ -112,6 +117,11 @@ protected:
    * Update monitoring variables to RhIO
    */
   void updateRhIO();
+
+  /**
+   * Print all the allowed formats to output stream
+   */
+  void printSupportedFormats(std::ostream * out) const;
 
 private:
   /**
@@ -151,6 +161,11 @@ private:
    */
   std::unique_ptr<ImageEntry> bg_entry;
 
+  /**
+   * The thread polling images from the camera
+   */
+  std::thread bg_thread;
+  
   /**
    * Ensures the background thread is not overwritting an image currently in used
    */
@@ -204,5 +219,8 @@ private:
    */
   int nb_retrieve_failures;
 };
+
+std::ostream& operator<<(std::ostream& os, const IMAGE_FORMAT_INFO & format);
+
 }
 }

@@ -73,7 +73,8 @@ void SourceIDS::process() {
   }
 
   // TODO: apply parameters changes (detect them or overwrite anyway?)
-  // - FormatId requires 
+  // - Note: order matters
+  setFrameRate(frame_rate);
   setExposure(exposure);
   
   // Grab frame from camera
@@ -92,8 +93,10 @@ void SourceIDS::backgroundProcess() {
   if (!is_capturing) {
     throw IDSException(DEBUG_INFO + "capture was not started");
   }
+  int32_t ret_code;
+  ret_code = is_EnableEvent(camera, IS_SET_EVENT_FRAME);
+  CHECK_CODE(ret_code, "failed to set event frame");
   while (is_capturing) {
-    int32_t ret_code;
     std::unique_ptr<ImageEntry> new_img(new ImageEntry);
     // Getting id of next buffer to be written
     int32_t buffer_id;
@@ -101,7 +104,7 @@ void SourceIDS::backgroundProcess() {
     ret_code = is_GetActSeqBuf(camera, &buffer_id, &buffer, NULL);
     CHECK_CODE(ret_code, "failed to get next buffer");
     // Waiting for a frame
-    double wait_time_ms = 100;
+    double wait_time_ms = 5000;//TODO: should depend on frame_rate
     ret_code = is_WaitEvent(camera, IS_SET_EVENT_FRAME, wait_time_ms);
     CHECK_CODE(ret_code, "failed to wait for event");
     new_img->ts = TimeStamp::now();
@@ -114,7 +117,7 @@ void SourceIDS::backgroundProcess() {
     CHECK_CODE(ret_code, "failed to get image information");
     // Copying data to avoid overwrite
     cv::Mat tmp(img_size, CV_8UC3, buffer);
-    tmp.copyTo(new_img->img);
+    new_img->img = tmp.clone();
     // Unlocking memory buffer
     ret_code = is_UnlockSeqBuf(camera, buffer_id, NULL);
     CHECK_CODE(ret_code, "failed to unlock seq");
@@ -134,15 +137,21 @@ bool SourceIDS::isConnected() {
 }
 
 void SourceIDS::connect() {
+  if (isConnected()) {
+    throw std::logic_error(DEBUG_INFO + "camera is already connected");
+  }
+  camera = 1;
   int32_t ret = is_InitCamera(&camera, NULL);
   CHECK_CODE(ret, "failed to open camera");
   is_connected = true;
+  logger.log("Connection success");
 }
 
 void SourceIDS::disconnect() {
   int32_t ret = is_ExitCamera(camera);
   CHECK_CODE(ret, "failed to close camera");
   is_connected = false;
+  logger.log("Disconnection success");
 }
 
 void SourceIDS::startCamera() {
@@ -155,6 +164,7 @@ void SourceIDS::startCamera() {
   // Set appropriate mode and size
   updateImageSettings();
   // Start capture
+  allocateBuffers();
 
   // TODO: handle potential errors on starting capture with a retry
   int32_t ret_code;
@@ -162,7 +172,10 @@ void SourceIDS::startCamera() {
   CHECK_CODE(ret_code, "failed to start capture");
   is_capturing = true;
   // TODO Update internal properties (auto white balance etc...)
+  setFrameRate(frame_rate);
   setExposure(exposure);
+
+  bg_thread = std::thread([this](){this->backgroundProcess();});
 }
 
 void SourceIDS::endCamera() {
@@ -171,6 +184,9 @@ void SourceIDS::endCamera() {
     ret_code = is_StopLiveVideo(camera, IS_WAIT);
     CHECK_CODE(ret_code, "Failed to stop capture");
     is_capturing = false;
+    if (bg_thread.joinable()) {
+      bg_thread.join();
+    }
   }
   ret_code = is_ClearSequence(camera);
   CHECK_CODE(ret_code, "Failed to clear buffers");
@@ -196,6 +212,7 @@ void SourceIDS::updateSupportedFormats() {
   for (uint32_t k=0; k<entries; k++) {
     supported_formats.push_back(formatList->FormatInfo[k]);
   }
+  printSupportedFormats(&std::cout);
 }
 
 void SourceIDS::setFormat(int32_t format_id) {
@@ -215,12 +232,11 @@ void SourceIDS::setFormat(int32_t format_id) {
 void SourceIDS::updateImageSettings() {
   setFormat(format_id);
   //TODO: how is binning applied?
-  //TODO: Simply print result of the format
-  // Setting color mode to YCbCr
-  int32_t ret_code;
-  ret_code = is_SetColorMode(camera, IS_CM_CBYCRY_PACKED);
-  CHECK_CODE(ret_code, "failed to set color_mode");
+  //TODO: add choice of color_format
   //TODO: try IS_CM_JPEG
+  int32_t ret_code;
+  ret_code = is_SetColorMode(camera, IS_CM_BGR8_PACKED);
+  CHECK_CODE(ret_code, "failed to set color_mode");
 }
 
 void SourceIDS::allocateBuffers() {
@@ -232,10 +248,20 @@ void SourceIDS::allocateBuffers() {
   for (int k=0; k<nb_buffers; k++) {
     char *mem;
     int mem_id;
-    int32_t bits_per_pixel = 16;// YCbCr -> 16 bits per pixel
+    int32_t bits_per_pixel = 24;// RGB8 -> 24 bits per pixel
     is_AllocImageMem(camera, img_size.width, img_size.height, bits_per_pixel, &mem, &mem_id);
     is_AddToSequence(camera, mem, mem_id);
   }
+}
+
+void SourceIDS::setFrameRate(double fps) {
+  int32_t ret;
+  double real_fps;
+  ret = is_SetFrameRate(camera, fps, &real_fps);
+  CHECK_CODE(ret, "failed to set fps to " + std::to_string(fps));
+  std::string msg =
+    "Fps set to " + std::to_string(real_fps) + " (required: " + std::to_string(fps) + ")";
+  logger.log(msg.c_str());
 }
 
 void SourceIDS::setExposure(double time) {
@@ -258,15 +284,23 @@ void SourceIDS::updateImage() {
     bg_cond.wait(lock);
   }
   fg_entry = std::move(bg_entry);
+  img() = fg_entry->img;
 }
 
 void SourceIDS::updateRhIO() {
-  std::string filter_path = rhio_path + getName();
+//  std::string filter_path = rhio_path + getName();
+//
+//  RhIO::IONode &monitoring_node = RhIO::Root.child(filter_path + "/monitoring");
+//  monitoring_node.setInt("success", nb_retrieve_success);
+//  monitoring_node.setInt("failures", nb_retrieve_failures);
+//  monitoring_node.setFloat("ratio", getSuccessRatio());
+}
 
-  RhIO::IONode &monitoring_node = RhIO::Root.child(filter_path + "/monitoring");
-  monitoring_node.setInt("success", nb_retrieve_success);
-  monitoring_node.setInt("failures", nb_retrieve_failures);
-  monitoring_node.setFloat("ratio", getSuccessRatio());
+void SourceIDS::printSupportedFormats(std::ostream * out) const
+{
+  for (const IMAGE_FORMAT_INFO & info : supported_formats) {
+    (*out) << info << std::endl;
+  }
 }
 
 double SourceIDS::getSuccessRatio() {
@@ -274,6 +308,18 @@ double SourceIDS::getSuccessRatio() {
   if (nb_retrievals == 0)
     return 1;
   return nb_retrieve_success / (double)nb_retrievals;
+}
+
+std::ostream& operator<<(std::ostream& os, const IMAGE_FORMAT_INFO & format) {
+  os << "(id:" << format.nFormatID << ","
+     << " size:"<< format.nWidth << "x"<< format.nHeight << ","
+     << " aoiStart:(" << format.nX0 << "," << format.nY0 << "),"
+     << " captureModes:" << format.nSupportedCaptureModes << ","
+     << " binningMode:" << format.nBinningMode << ","
+     << " subsamplingMode:" << format.nSubsamplingMode << ","
+     << " formatName:" << format.strFormatName << ","
+     << " scalingFactor:" << format.dSensorScalerFactor << ")";
+  return os;
 }
 
 }
