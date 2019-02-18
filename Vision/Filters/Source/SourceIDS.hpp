@@ -73,6 +73,17 @@ protected:
   void endCamera();
 
   /**
+   * Allocate image buffers and starts the capture
+   */
+  void startCapture();
+
+  /**
+   * End the capture and free the image buffers but do not close connection with the camera
+   * WARNING: does not support the case where buffers have been locked
+   */
+  void stopCapture();
+
+  /**
    * Retrieve the list of supported formats by the camera and stores it
    */
   void updateSupportedFormats();
@@ -83,14 +94,27 @@ protected:
   void setFormat(int32_t format);
 
   /**
-   * Update the format of the camera
+   * Update the format of the camera and all the parameters which requires the
+   * camera to be disconnected (format_id, color_format)
    */
   void updateImageSettings();
+
+  /**
+   * Return true if some parameters changes require to stop the capture in order
+   * to update the image settings
+   */
+  bool requireImageSettingsUpdate();
 
   /**
    * Allocate memory buffers for the images
    */
   void allocateBuffers();
+
+  /**
+   * Update all the internal parameters of the camera which do not require a
+   * camera restart (FrameRate, Exposure)
+   */
+  void updateLiveParameters();
 
   /**
    * Set the frame rate [Hz]
@@ -112,7 +136,12 @@ protected:
    * Retrieve image from last buffer and related meta informations
    */
   void updateImage();
-  
+
+  /**
+   * Create the nodes of monitoring in RhIO
+   */
+  void bindRhIO();
+
   /**
    * Update monitoring variables to RhIO
    */
@@ -192,14 +221,32 @@ private:
   ParamInt format_id;
 
   /**
+   * The last format_id applied succesfully to the camera
+   * Negative value -> no format_id has been succesfully applied
+   */
+  int last_format_id;
+
+  /**
    * Exposure time in ms
    */
   ParamFloat exposure;
 
   /**
+   * The last exposure applied succesfully to the camera
+   * Negative value -> no exposure has been succesfully applied
+   */
+  float last_exposure;
+
+  /**
    * Number of requested frames per second
    */
   ParamFloat frame_rate;
+
+  /**
+   * The last frame_rate applied successfully to the camera
+   * Negative value -> no frame_rate has been succesfully applied
+   */
+  float last_frame_rate;
 
   // Not tested, but should work
 
