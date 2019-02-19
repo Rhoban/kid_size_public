@@ -312,9 +312,9 @@ double LocalisationService::getFieldOrientation()
 {
     double val = fieldOrientationWorld;
     if (Helpers::isFakeMode()) {
-        return val  + getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
+        val += getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
     } else {
-        return val + getServices()->model->correctedModel().get().orientationYaw("trunk", "origin");
+        val += getServices()->model->correctedModel().get().orientationYaw("trunk", "origin");
     }
     return normalizeRad(val);
 }
