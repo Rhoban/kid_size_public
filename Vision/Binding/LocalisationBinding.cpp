@@ -572,9 +572,11 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
     for (GoalObservation * obs : extractGoalObservations()) {
       fieldObservations.push_back(obs);
       if (debugLevel > 0) {
-        fieldLogger.log("Goal %d -> pan: %lf, tilt: %lf, weight: %1lf",
+        cv::Point3f pos = obs->getSeenDir();
+        fieldLogger.log("Goal %d -> pan: %lf, tilt: %lf, weight: %1lf, pos: %lf, %lf, %lf",
                         obsId, obs->panTilt.pan.getSignedValue(),
-                        obs->panTilt.tilt.getSignedValue(), obs->weight);
+                        obs->panTilt.tilt.getSignedValue(), obs->weight,
+                        pos.x, pos.y, pos.z);
       }
       obsId++;
     }

@@ -54,7 +54,8 @@ cv::Point3f GoalObservation::getSeenDir() const
   if (dir.z() > 0) {
     throw std::runtime_error(DEBUG_INFO + " direction z positive or 0 in viewVector");
   }
-  return eigen2CV(Eigen::Vector3d(robotHeight * dir / dir.z()));
+  double scale = robotHeight / std::fabs(dir.z());
+  return eigen2CV(Eigen::Vector3d(scale * dir));
 }
 
 double GoalObservation::potential(const FieldPosition &p) const {
