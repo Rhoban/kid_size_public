@@ -39,6 +39,13 @@ void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo & myInfo,
   self_in_field->mutable_pose()->mutable_position()->set_x(myInfo.fieldX);
   self_in_field->mutable_pose()->mutable_position()->set_y(myInfo.fieldY);
   self_in_field->mutable_pose()->mutable_dir()->set_mean(myInfo.fieldYaw);
+  // Hack values to provide date to students
+  double uncertainty_pos = 0.5 + (1 - myInfo.fieldQ) * 2.0;
+  double uncertainty_dir = 5 * M_PI / 180 + (1 - myInfo.fieldConsistency) * 30 * M_PI / 180;
+  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(uncertainty_pos);
+  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(uncertainty_pos);
+  self_in_field->mutable_pose()->mutable_dir()->set_std_dev(uncertainty_dir);
+  
   Intention * intention = msg->mutable_intention();
   if (myInfo.placing) {
     PoseDistribution * target_pose = intention->mutable_target_pose_in_field();
