@@ -28,7 +28,7 @@ catkin_package(
 #Build option
 option (BUILD_KID_SIZE_VISION "Build the Vision" ON)
 option (KID_SIZE_USES_FLYCAPTURE "Use flycapture to build the vision" ON)
-option (KID_SIZE_USES_IDS "Enable support for ids imaging cameras" ON)
+option (KID_SIZE_USES_IDS "Enable support for ids imaging cameras" OFF)
 option (BUILD_VISION_OPENCL "Build vision with OpenCL support" OFF)
 option (BUILD_KID_SIZE_PROGRAM_VISION "Enable the build of Vision Programs" OFF)
 option (BUILD_KID_SIZE_PROGRAM_STRATEGY "Enable the build of Strategy programs" OFF)
