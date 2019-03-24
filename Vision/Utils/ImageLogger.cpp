@@ -67,6 +67,8 @@ void ImageLogger::initSession(const std::string & session_local_path) {
   if (!description_file.good()) {
     throw std::runtime_error(DEBUG_INFO + "Failed to open file: '" + file_path + "'");
   }
+  int64_t clock_offset = rhoban_utils::getSteadyClockOffset();
+  description_file << "clock_offset:" << clock_offset << std::endl;
 }
 
 const std::string & ImageLogger::getSessionPath() {

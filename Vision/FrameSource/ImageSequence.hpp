@@ -8,6 +8,7 @@ namespace Utils {
 class ImageSequence {
 private:
   int frameNo, nextFrameNo;
+  int64_t clock_offset;
   cv::Mat img;
   std::string prefix;
   std::string suffix;

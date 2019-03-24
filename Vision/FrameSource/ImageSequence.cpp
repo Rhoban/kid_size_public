@@ -63,8 +63,18 @@ void ImageSequence::loadImages(const std::string &fileName) {
   }
   // Read file
   std::string line;
+  bool first_line = true;
   while (getline(in, line)) {
     std::vector<std::string> values;
+    // First line might contain clock_offset information
+    if (first_line) {
+      if (line.find("clock_offset:") != std::string::npos) {
+        rhoban_utils::split(line, ':', values);
+        clock_offset = std::stol(values[1]);
+        continue;
+      }
+      first_line = false;
+    }
     rhoban_utils::split(line, ',', values);
     timestamps.push_back(std::stoul(values[0]));
     images.push_back(values[1]);

@@ -16,4 +16,9 @@ message VideoMetaInformation {
    *           has to be the same as the order of the video
    */
   repeated CameraState camera_states = 2;
+  /**
+   * Offset between clock used for internal time_stamps and UTC time_stamp [us]:
+   * frame.time_stamp + time_offset = utc_time_stamp
+   */
+  optional int64 time_offset = 3;
 }

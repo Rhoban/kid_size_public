@@ -171,6 +171,8 @@ public:
   Eigen::Affine3d selfToWorld;
   Eigen::Affine3d worldToCamera;
   Eigen::Affine3d cameraToWorld;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 }
 }
