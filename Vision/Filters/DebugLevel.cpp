@@ -11,10 +11,10 @@ Json::Value DebugLevel::toJson() const {
   return v;
 }
 
-void DebugLevel::fromJson(const Json::Value & v, const std::string & dir_name) {
-  rhoban_utils::tryRead(v,"threads",&threads);
-  rhoban_utils::tryRead(v,"graphics",&graphics);
-  rhoban_utils::tryRead(v,"parameters",&parameters);
-  rhoban_utils::tryRead(v,"perfs",&perfs);
+void DebugLevel::fromJson(const Json::Value& v, const std::string& dir_name) {
+  rhoban_utils::tryRead(v, "threads", &threads);
+  rhoban_utils::tryRead(v, "graphics", &graphics);
+  rhoban_utils::tryRead(v, "parameters", &parameters);
+  rhoban_utils::tryRead(v, "perfs", &perfs);
 }
-}
+}  // namespace Vision

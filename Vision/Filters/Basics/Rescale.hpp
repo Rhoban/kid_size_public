@@ -11,12 +11,12 @@ namespace Filters {
  * Divide the width and the height of the given image by a ratio
  */
 class Rescale : public Filter {
-public:
+ public:
   Rescale() : Filter("Rescale") {}
 
   virtual std::string getClassName() const override { return "Rescale"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -24,8 +24,8 @@ protected:
 
   virtual void setParameters() override;
 
-private:
+ private:
   ParamFloat _ratio;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

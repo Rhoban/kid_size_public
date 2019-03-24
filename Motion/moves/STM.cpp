@@ -2,19 +2,23 @@
 
 void STM::setState(std::string state_)
 {
-    if (state != state_) {
-        nextState = state_;
-        exitState(state);
-        state = state_;
-        enterState(state);
-    }
+  if (state != state_)
+  {
+    nextState = state_;
+    exitState(state);
+    state = state_;
+    enterState(state);
+  }
 }
 
 std::string STM::getStatus() const
 {
-  if (isRunning()) {
+  if (isRunning())
+  {
     return state;
-  } else {
+  }
+  else
+  {
     return "-";
   }
 }

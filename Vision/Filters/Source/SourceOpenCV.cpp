@@ -7,23 +7,15 @@
 namespace Vision {
 namespace Filters {
 
-SourceOpenCV::SourceOpenCV() : Source("SourceOpenCV"), device_index(-1)
-{
-}
+SourceOpenCV::SourceOpenCV() : Source("SourceOpenCV"), device_index(-1) {}
 
 SourceOpenCV::~SourceOpenCV() {}
 
-Source::Type SourceOpenCV::getType() const {
-  return Type::Online;
-}
+Source::Type SourceOpenCV::getType() const { return Type::Online; }
 
-std::string SourceOpenCV::getClassName() const {
-  return "SourceOpenCV";
-}
+std::string SourceOpenCV::getClassName() const { return "SourceOpenCV"; }
 
-int SourceOpenCV::expectedDependencies() const {
-  return 0;
-}
+int SourceOpenCV::expectedDependencies() const { return 0; }
 
 void SourceOpenCV::process() {
   if (!capture_device.isOpened()) {
@@ -35,9 +27,9 @@ void SourceOpenCV::process() {
   getPipeline()->setTimestamp(rhoban_utils::TimeStamp::now());
 }
 
-void SourceOpenCV::fromJson(const Json::Value & v, const std::string & dir_name) {
+void SourceOpenCV::fromJson(const Json::Value& v, const std::string& dir_name) {
   Source::fromJson(v, dir_name);
-  rhoban_utils::tryRead(v, "device_name" , &device_name );
+  rhoban_utils::tryRead(v, "device_name", &device_name);
   rhoban_utils::tryRead(v, "device_index", &device_index);
 
   bool index_provided = device_index >= 0;
@@ -49,19 +41,17 @@ void SourceOpenCV::fromJson(const Json::Value & v, const std::string & dir_name)
 
   // Checking invalid json format
   if (index_provided && name_provided) {
-    throw rhoban_utils::JsonParsingError(DEBUG_INFO + " both device_name and device_index provided,"
-                                         + " they are mutually exclusive");
+    throw rhoban_utils::JsonParsingError(DEBUG_INFO + " both device_name and device_index provided," +
+                                         " they are mutually exclusive");
   } else if ((!index_provided) && (!name_provided)) {
-    throw rhoban_utils::JsonParsingError(DEBUG_INFO +
-                                         " none of device_name or device_index is provided.");
+    throw rhoban_utils::JsonParsingError(DEBUG_INFO + " none of device_name or device_index is provided.");
   } else if (name_provided) {
-    if (! capture_device.open(device_name)) {
+    if (!capture_device.open(device_name)) {
       throw std::runtime_error(DEBUG_INFO + " failed to open device '" + device_name + "'");
     }
   } else {
-    if (! capture_device.open(device_index + cv::CAP_ANY)) {
-      throw std::runtime_error(DEBUG_INFO
-                               + " failed to open device " + std::to_string(device_index) + "");
+    if (!capture_device.open(device_index + cv::CAP_ANY)) {
+      throw std::runtime_error(DEBUG_INFO + " failed to open device " + std::to_string(device_index) + "");
     }
   }
 }
@@ -72,9 +62,5 @@ Json::Value SourceOpenCV::toJson() const {
   return v;
 }
 
-
-
-
-
-}
-}
+}  // namespace Filters
+}  // namespace Vision

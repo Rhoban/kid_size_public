@@ -23,7 +23,8 @@
 /// |                                  |                     |  ]   |
 /// |                                  |                     |      |
 ///  ---------------------------------------------------------------
-class CorridorProfile : public rhoban_utils::JsonSerializable {
+class CorridorProfile : public rhoban_utils::JsonSerializable
+{
 public:
   CorridorProfile();
 
@@ -31,8 +32,7 @@ public:
 
   virtual std::string getClassName() const override;
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value & json_value,
-                        const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value& json_value, const std::string& dir_name) override;
 
 private:
   std::vector<double> x_limits;

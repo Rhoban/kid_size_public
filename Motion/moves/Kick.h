@@ -20,12 +20,12 @@ public:
   void loadCompiledKicks();
   void loadKick(std::string filename);
 
-  void set(bool left, const std::string & kickName);
+  void set(bool left, const std::string& kickName);
 
-  static std::string getPath(const std::string kickName, bool left=false);
-  static std::string getCompiledPath(const std::string kickName, bool left=false);
+  static std::string getPath(const std::string kickName, bool left = false);
+  static std::string getCompiledPath(const std::string kickName, bool left = false);
+
 protected:
-
   typedef std::map<std::string, rhoban_utils::Function> Splines;
 
   bool useManualT;
@@ -34,7 +34,7 @@ protected:
   double t, tMax;
   double dt;
   double applyKickRatio;
-        
+
   // Kick mode
   bool left, generated;
 
@@ -50,7 +50,6 @@ protected:
 
   // The collection of available kicks
   csa_mdp::KickModelCollection kmc;
-  
 
   void apply();
 };

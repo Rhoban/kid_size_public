@@ -5,7 +5,7 @@
 #include <services/TeamPlayService.h>
 
 #include "rhoban_csa_mdp/core/policy.h"
-#include "problems/kick_controler.h"//from csa_mdp_experiments
+#include "problems/kick_controler.h"  //from csa_mdp_experiments
 
 #include "rhoban_utils/angle.h"
 

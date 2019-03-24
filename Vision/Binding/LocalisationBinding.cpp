@@ -37,35 +37,33 @@ using Vision::Utils::CameraState;
 
 static rhoban_utils::Logger fieldLogger("RobocupFieldPF");
 
-namespace Vision
-{
+namespace Vision {
 
-LocalisationBinding::LocalisationBinding(MoveScheduler * scheduler_,
-                                         Robocup * vision_binding_)
-  : vision_binding(vision_binding_),
-    scheduler(scheduler_),
-    nb_particles_ff(5000),
-    toGoalQ(-1), robotQ(-1),
-    enableFieldFilter(true),
-    isGoalKeeper(false),
-    consistencyEnabled(false),
-    consistencyScore(1),
-    consistencyStepCost(0.01),
-    consistencyBadObsCost(0.02),
-    consistencyGoodObsGain(0.05),
-    consistencyResetInterval(30),
-    consistencyMaxNoise(3.0),
-    cs(new CameraState(scheduler_)),
-    period(1.0),
-    maxNoiseBoost(10.0),
-    noiseBoostDuration(5),
-    isUsingVisualCompass(false),
-    nbVCObs(0),
-    minVCObs(1),
-    isForbidden(false),
-    bind(nullptr),
-    _runThread(nullptr)
-{
+LocalisationBinding::LocalisationBinding(MoveScheduler *scheduler_, Robocup *vision_binding_)
+    : vision_binding(vision_binding_),
+      scheduler(scheduler_),
+      nb_particles_ff(5000),
+      toGoalQ(-1),
+      robotQ(-1),
+      enableFieldFilter(true),
+      isGoalKeeper(false),
+      consistencyEnabled(false),
+      consistencyScore(1),
+      consistencyStepCost(0.01),
+      consistencyBadObsCost(0.02),
+      consistencyGoodObsGain(0.05),
+      consistencyResetInterval(30),
+      consistencyMaxNoise(3.0),
+      cs(new CameraState(scheduler_)),
+      period(1.0),
+      maxNoiseBoost(10.0),
+      noiseBoostDuration(5),
+      isUsingVisualCompass(false),
+      nbVCObs(0),
+      minVCObs(1),
+      isForbidden(false),
+      bind(nullptr),
+      _runThread(nullptr) {
   scheduler->getServices()->localisation->setLocBinding(this);
   field_filter = new Localisation::FieldPF();
 
@@ -79,16 +77,13 @@ LocalisationBinding::LocalisationBinding(MoveScheduler * scheduler_,
   _runThread = new std::thread(std::bind(&LocalisationBinding::run, this));
 }
 
-LocalisationBinding::~LocalisationBinding()
-{
-}
+LocalisationBinding::~LocalisationBinding() {}
 
-void LocalisationBinding::run()
-{
-  while(true) {
+void LocalisationBinding::run() {
+  while (true) {
     step();
     if (scheduler->isFakeMode()) {
-      while(true) {
+      while (true) {
         // Here, we check if there is a premature exit or if enough time ha
         // been elapsed according to vision TimeStamps
         double elapsed = diffSec(currTS, getNowTS());
@@ -98,19 +93,18 @@ void LocalisationBinding::run()
         // Sleep for 10 ms
         usleep(10 * 1000);
       }
-    }
-    else {
+    } else {
       double elapsed = diffSec(currTS, getNowTS());
       fieldLogger.log("Step time: %lf", elapsed);
       if (elapsed < period) {
         int sleep_us = (int)((period - elapsed) * 1000 * 1000);
-        // Sleep a total time of sleep_us by small intervals and interrupt if 
+        // Sleep a total time of sleep_us by small intervals and interrupt if
         // there is a reset pending
-        int count = sleep_us/10000;
-        for (int k=0; k<count; k++) {
+        int count = sleep_us / 10000;
+        for (int k = 0; k < count; k++) {
           bool referee_allow_playing = refereeAllowsToPlay();
           bool premature_exit = field_filter->isResetPending() && referee_allow_playing;
-          if  (premature_exit) {
+          if (premature_exit) {
             fieldLogger.log("Premature exit from sleep (reset pending)");
             break;
           }
@@ -121,17 +115,15 @@ void LocalisationBinding::run()
   }
 }
 
-void LocalisationBinding::init()
-{
+void LocalisationBinding::init() {
   initRhIO();
   importFromRhIO();
   field_filter->initializeAtUniformRandom(nb_particles_ff);
 }
 
-//TODO: eventually build Image handlers
+// TODO: eventually build Image handlers
 
-void LocalisationBinding::initRhIO()
-{
+void LocalisationBinding::initRhIO() {
   // Only bind once
   if (bind != nullptr) {
     return;
@@ -140,57 +132,51 @@ void LocalisationBinding::initRhIO()
   bind = new RhIO::Bind("localisation");
 
   // Init interface with RhIO
-  RhIO::Root.newCommand("localisation/resetFilters",
-                 "Reset all particle filters to an uniform distribution",
-                 [this](const std::vector<std::string> &args)
-                            -> std::string {
-                              lastFieldReset = getNowTS();
-                              currTS = lastFieldReset;
-                              lastUniformReset = lastFieldReset;
-                              vision_binding->ballStackFilter->clear();
-                              vision_binding->clearRememberObservations = true;
-                              vcCounterMutex.lock();
-                              nbVCObs = 0;
-                              consistencyScore = 0;
-                              field_filter->askForReset();
-                              vcCounterMutex.unlock();
-                              return "Field have been reset";
-                 });
+  RhIO::Root.newCommand("localisation/resetFilters", "Reset all particle filters to an uniform distribution",
+                        [this](const std::vector<std::string> &args) -> std::string {
+                          lastFieldReset = getNowTS();
+                          currTS = lastFieldReset;
+                          lastUniformReset = lastFieldReset;
+                          vision_binding->ballStackFilter->clear();
+                          vision_binding->clearRememberObservations = true;
+                          vcCounterMutex.lock();
+                          nbVCObs = 0;
+                          consistencyScore = 0;
+                          field_filter->askForReset();
+                          vcCounterMutex.unlock();
+                          return "Field have been reset";
+                        });
+  RhIO::Root.newCommand("localisation/bordersReset", "Reset on the borders",
+                        [this](const std::vector<std::string> &args) -> std::string {
+                          fieldReset(FieldPF::ResetType::Borders);
+                          return "Field have been reset";
+                        });
+  RhIO::Root.newCommand("localisation/fallReset", "Apply a fall event on field particle filter",
+                        [this](const std::vector<std::string> &args) -> std::string {
+                          fieldReset(FieldPF::ResetType::Fall);
+                          return "Field have been reset";
+                        });
   RhIO::Root.newCommand(
-    "localisation/bordersReset",
-    "Reset on the borders",
-    [this](const std::vector<std::string> &args) -> std::string {
-      fieldReset(FieldPF::ResetType::Borders);
-      return "Field have been reset";
-    });
-  RhIO::Root.newCommand(
-    "localisation/fallReset", "Apply a fall event on field particle filter",
-    [this](const std::vector<std::string> &args) -> std::string {
-      fieldReset(FieldPF::ResetType::Fall);
-      return "Field have been reset";
-    });
-  RhIO::Root.newCommand(
-    "localisation/customReset",
-    "Reset the field particle filter at the custom position with custom noise [m,deg]",
-    [this](const std::vector<std::string> &args) -> std::string {
-      unsigned int k = 0;
-      
-      auto rhioNode = &(RhIO::Root.child("/localisation/field/fieldPF"));
-      for (std::string item : {"customX", "customY", "customTheta", "customNoise", "customThetaNoise"}) {
-        if (args.size() > k) {
-          rhioNode->setFloat(item, atof(args[k].c_str()));
+      "localisation/customReset", "Reset the field particle filter at the custom position with custom noise [m,deg]",
+      [this](const std::vector<std::string> &args) -> std::string {
+        unsigned int k = 0;
+
+        auto rhioNode = &(RhIO::Root.child("/localisation/field/fieldPF"));
+        for (std::string item : {"customX", "customY", "customTheta", "customNoise", "customThetaNoise"}) {
+          if (args.size() > k) {
+            rhioNode->setFloat(item, atof(args[k].c_str()));
+          }
+          k++;
         }
-        k++;
-      }
-      lastFieldReset = getNowTS();
-      currTS = lastFieldReset;
-      vcCounterMutex.lock();
-      nbVCObs = minVCObs;
-      consistencyScore = 1;
-      field_filter->askForReset(FieldPF::ResetType::Custom);
-      vcCounterMutex.unlock();
-      return "Field have been reset";
-    });
+        lastFieldReset = getNowTS();
+        currTS = lastFieldReset;
+        vcCounterMutex.lock();
+        nbVCObs = minVCObs;
+        consistencyScore = 1;
+        field_filter->askForReset(FieldPF::ResetType::Custom);
+        vcCounterMutex.unlock();
+        return "Field have been reset";
+      });
   // Number of particles in the field filter
   bind->bindNew("field/nbParticles", nb_particles_ff, RhIO::Bind::PullOnly)
       ->defaultValue(nb_particles_ff)
@@ -199,12 +185,10 @@ void LocalisationBinding::initRhIO()
   bind->bindNew("consistency/enabled", consistencyEnabled, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyEnabled)
       ->comment("Is consistency check enabled? (If disable, consistencyScore is not updated)");
-  bind->bindNew("consistency/elapsedSinceReset", elapsedSinceReset,
-                RhIO::Bind::PushOnly)
+  bind->bindNew("consistency/elapsedSinceReset", elapsedSinceReset, RhIO::Bind::PushOnly)
       ->defaultValue(0)
       ->comment("Elapsed time since last reset (from any source) [s]");
-  bind->bindNew("consistency/elapsedSinceUniformReset", elapsedSinceUniformReset,
-                RhIO::Bind::PushOnly)
+  bind->bindNew("consistency/elapsedSinceUniformReset", elapsedSinceUniformReset, RhIO::Bind::PushOnly)
       ->defaultValue(0)
       ->comment("Elapsed time since last uniform reset (from any source) [s]");
   bind->bindNew("consistency/score", consistencyScore, RhIO::Bind::PushOnly)
@@ -240,7 +224,7 @@ void LocalisationBinding::initRhIO()
       ->maximum(30.0)
       ->minimum(1.0)
       ->comment("Maximal multiplier for exploration in boost mode");
-  bind->bindNew("field/noiseBoostDuration",noiseBoostDuration, RhIO::Bind::PullOnly)
+  bind->bindNew("field/noiseBoostDuration", noiseBoostDuration, RhIO::Bind::PullOnly)
       ->defaultValue(noiseBoostDuration)
       ->maximum(30.0)
       ->minimum(0.0)
@@ -265,7 +249,6 @@ void LocalisationBinding::initRhIO()
   GoalObservation::bindWithRhIO();
   TagsObservation::bindWithRhIO();
   CompassObservation::bindWithRhIO();
-
 }
 
 void LocalisationBinding::importFromRhIO() {
@@ -288,18 +271,15 @@ void LocalisationBinding::publishToRhIO() {
     int width = 1040;
     int height = 740;
     cv::Mat topView = getTopView(width, height);
-    RhIO::Root.framePush("/localisation/TopView", width, height, topView.data,
-                         width * height * 3);
+    RhIO::Root.framePush("/localisation/TopView", width, height, topView.data, width * height * 3);
   }
 }
 
-void LocalisationBinding::step()
-{
+void LocalisationBinding::step() {
   importFromRhIO();
 
   currTS = getNowTS();
   cs->updateInternalModel(currTS.getTimeMS() / 1000);
-
 
   elapsedSinceReset = diffSec(lastFieldReset, currTS);
   elapsedSinceUniformReset = diffSec(lastUniformReset, currTS);
@@ -309,7 +289,7 @@ void LocalisationBinding::step()
 
   // Get information from the referee
   bool refereeAllowTicks = refereeAllowsToPlay();
-  
+
   // When the robot is penalized do not update anything, but increase reactivity
   if (!refereeAllowTicks) {
     lastForbidden = currTS;
@@ -329,7 +309,7 @@ void LocalisationBinding::step()
     FieldPF::ResetType pending_reset = field_filter->getPendingReset();
     if (pending_reset == FieldPF::ResetType::Custom) {
       field_filter->applyPendingReset();
-    } 
+    }
 
     importFiltersResults();
     publishToLoc();
@@ -338,7 +318,7 @@ void LocalisationBinding::step()
   }
 
   // Determining if the robot is fallen
-  DecisionService * decisionService = scheduler->getServices()->decision;
+  DecisionService *decisionService = scheduler->getServices()->decision;
   if (decisionService->isFallen) {
     if (debugLevel > 0) {
       fieldLogger.log("Robot is fallen, forbidding ticks");
@@ -349,7 +329,7 @@ void LocalisationBinding::step()
 
   FieldPF::ResetType pending_reset = field_filter->getPendingReset();
   double elapsed_since_forbidden = diffSec(lastForbidden, currTS);
-  double start_without_reset_delay = 10;//[s]: to free the robot if it is not allowed to play
+  double start_without_reset_delay = 10;  //[s]: to free the robot if it is not allowed to play
   // Wait a proper reset for some time
   // (avoid starting a tick before receiving informations from 'robocup' move)
   if (isForbidden && elapsed_since_forbidden < start_without_reset_delay &&
@@ -372,8 +352,7 @@ void LocalisationBinding::step()
 
   // Determine if a visualCompass is required
   if (debugLevel > 0) {
-    fieldLogger.log("consistency: %d | nbVCObs: %d | minVCObs: %d",
-                    consistencyEnabled, nbVCObs, minVCObs);
+    fieldLogger.log("consistency: %d | nbVCObs: %d | minVCObs: %d", consistencyEnabled, nbVCObs, minVCObs);
   }
   // setVisualCompassStatus(consistencyEnabled && nbVCObs < minVCObs);
   setVisualCompassStatus(false);
@@ -387,8 +366,7 @@ void LocalisationBinding::step()
   // Update consistency
   if (consistencyEnabled) {
     applyWatcher(observations);
-  }
-  else {
+  } else {
     consistencyScore = 0;
   }
 
@@ -397,7 +375,7 @@ void LocalisationBinding::step()
 
   // Avoid memory leaks
   for (size_t id = 0; id < observations.size(); id++) {
-    delete(observations[id]);
+    delete (observations[id]);
   }
 
   importFiltersResults();
@@ -413,8 +391,7 @@ TimeStamp LocalisationBinding::getNowTS() {
   return TimeStamp::now();
 }
 
-void LocalisationBinding::setVisualCompassStatus(bool active)
-{
+void LocalisationBinding::setVisualCompassStatus(bool active) {
   // When status changes, update filters and localisationService
   if (active != isUsingVisualCompass) {
     if (debugLevel > 0) {
@@ -423,19 +400,17 @@ void LocalisationBinding::setVisualCompassStatus(bool active)
     isUsingVisualCompass = active;
     try {
       std::string visualCompassPath = "Vision/visualCompass";
-      RhIO::IONode & visualCompassNode = RhIO::Root.child(visualCompassPath);
+      RhIO::IONode &visualCompassNode = RhIO::Root.child(visualCompassPath);
       int enabled = active ? 1 : 0;
       visualCompassNode.setInt("enabled", enabled);
       scheduler->getServices()->localisation->setVisualCompassStatus(active);
-    } catch (const std::logic_error & error) {
-      fieldLogger.error("Unable to enable/disable visualCompass: (%s)",
-                        error.what());
+    } catch (const std::logic_error &error) {
+      fieldLogger.error("Unable to enable/disable visualCompass: (%s)", error.what());
     }
   }
 }
 
-std::vector<GoalObservation *> LocalisationBinding::extractGoalObservations()
-{
+std::vector<GoalObservation *> LocalisationBinding::extractGoalObservations() {
   std::vector<GoalObservation *> goalObservations;
   // Goal Observations
   for (size_t i = 0; i < goalsLocations.size(); i++) {
@@ -443,19 +418,18 @@ std::vector<GoalObservation *> LocalisationBinding::extractGoalObservations()
     double robotHeight = cs->getHeight();
 
     rhoban_geometry::PanTilt panTiltToGoal = cs->panTiltFromXY(pos_in_self, robotHeight);
-    GoalObservation * newObs = new GoalObservation(panTiltToGoal, robotHeight);
+    GoalObservation *newObs = new GoalObservation(panTiltToGoal, robotHeight);
     // Adding new observation or merging based on similarity
     bool has_similar = false;
-    for (GoalObservation * goalObs : goalObservations) {
+    for (GoalObservation *goalObs : goalObservations) {
       if (GoalObservation::isSimilar(*newObs, *goalObs)) {
         has_similar = true;
         goalObs->merge(*newObs);
       }
     }
     if (has_similar) {
-      delete(newObs);
-    }
-    else {
+      delete (newObs);
+    } else {
       goalObservations.push_back(newObs);
     }
   }
@@ -463,9 +437,8 @@ std::vector<GoalObservation *> LocalisationBinding::extractGoalObservations()
   return goalObservations;
 }
 
-std::vector<ArenaCornerObservation *>
-LocalisationBinding::extractArenaCornerObservations() {
-  // Introduction des observations des coins du terrain 
+std::vector<ArenaCornerObservation *> LocalisationBinding::extractArenaCornerObservations() {
+  // Introduction des observations des coins du terrain
   std::vector<ArenaCornerObservation *> arenaCornerObservations;
   if (debugLevel > 0) {
     fieldLogger.log("retrieving arenaCornerObs : %d\n", (int)clipping_data.size());
@@ -473,7 +446,7 @@ LocalisationBinding::extractArenaCornerObservations() {
   for (size_t i = 0; i < clipping_data.size(); i++) {
     if (clipping_data[i].is_obs_valid()) {
       try {
-        ArenaCornerObservation * newObs = new ArenaCornerObservation(clipping_data[i]);
+        ArenaCornerObservation *newObs = new ArenaCornerObservation(clipping_data[i]);
         arenaCornerObservations.push_back(newObs);
       } catch (const std::string msg) {
         fieldLogger.error("ArenaCornerObservation inconsistency; error at construction : %s", msg.c_str());
@@ -482,77 +455,68 @@ LocalisationBinding::extractArenaCornerObservations() {
   }
   return arenaCornerObservations;
 }
-  
-std::vector<TagsObservation *> LocalisationBinding::extractTagsObservations()
-{
+
+std::vector<TagsObservation *> LocalisationBinding::extractTagsObservations() {
   std::vector<TagsObservation *> tagsObservations;
-  std::map<int,std::vector<Eigen::Vector3d>> tagsInSelf;
+  std::map<int, std::vector<Eigen::Vector3d>> tagsInSelf;
   for (size_t markerId = 0; markerId < markerIndices.size(); markerId++) {
     Eigen::Vector3d pos_in_world = markerPositions[markerId];
     Eigen::Vector3d pos_in_self = cs->getSelfFromWorld(pos_in_world);
     tagsInSelf[markerIndices[markerId]].push_back(pos_in_self);
   }
-  for (const std::pair<int, std::vector<Eigen::Vector3d>> & entry : tagsInSelf) {
+  for (const std::pair<int, std::vector<Eigen::Vector3d>> &entry : tagsInSelf) {
     int nb_obs = entry.second.size();
     // Compute mean
     Eigen::Vector3d mean = Eigen::Vector3d::Zero();
-    for (const Eigen::Vector3d & pos : entry.second) {
+    for (const Eigen::Vector3d &pos : entry.second) {
       mean += pos;
     }
     mean /= nb_obs;
     // Compute stddev
     Eigen::Vector3d err2 = Eigen::Vector3d::Zero();
-    for (const Eigen::Vector3d & pos : entry.second) {
+    for (const Eigen::Vector3d &pos : entry.second) {
       Eigen::Vector3d diff = pos - mean;
       err2 += diff.cwiseProduct(diff);
     }
     Eigen::Vector3d dev = (err2 / nb_obs).cwiseSqrt();
     cv::Point3f cv_pos = Utils::eigenToCV(mean);
     cv::Point3f cv_dev = Utils::eigenToCV(dev);
-    tagsObservations.push_back(new TagsObservation(entry.first, cv_pos, cv_dev,
-                                                   cs->getHeight(),
-                                                   entry.second.size()));
+    tagsObservations.push_back(new TagsObservation(entry.first, cv_pos, cv_dev, cs->getHeight(), entry.second.size()));
   }
   return tagsObservations;
 }
 
-std::vector<CompassObservation *> LocalisationBinding::extractCompassObservations()
-{
+std::vector<CompassObservation *> LocalisationBinding::extractCompassObservations() {
   std::vector<CompassObservation *> compassObservations;
-  for(size_t it=0; it<compassOrientations.size();it++)
-  {
-    //FIXME Hard ignore the dispersion <0.5
+  for (size_t it = 0; it < compassOrientations.size(); it++) {
+    // FIXME Hard ignore the dispersion <0.5
     // (currently ignore all results where homography failed)
-    if(compassQuality[it]>0.5)
-    {
-      Angle trunkYaw=cs->getTrunkYawInWorld();
-      double compassInTrunk = compassOrientations[it]-trunkYaw.getSignedValue();
+    if (compassQuality[it] > 0.5) {
+      Angle trunkYaw = cs->getTrunkYawInWorld();
+      double compassInTrunk = compassOrientations[it] - trunkYaw.getSignedValue();
       compassObservations.push_back(new CompassObservation(compassInTrunk));
     }
   }
   return compassObservations;
 }
 
-void LocalisationBinding::stealFromVision()
-{
+void LocalisationBinding::stealFromVision() {
   // Declaring local unused variables to fit signature
-  std::vector<std::pair<float, float> > markerCenters;
-  std::vector<std::pair<float, float> > markerCentersUndistorded;
+  std::vector<std::pair<float, float>> markerCenters;
+  std::vector<std::pair<float, float>> markerCentersUndistorded;
   // Stealing data
-  double tagTimestamp = 0;// Unused
+  double tagTimestamp = 0;  // Unused
   goalsLocations = vision_binding->stealGoals();
-  vision_binding->stealTags(markerIndices, markerPositions,
-                            markerCenters, markerCentersUndistorded, &tagTimestamp);
-  vision_binding->stealCompasses(compassOrientations,compassQuality);
+  vision_binding->stealTags(markerIndices, markerPositions, markerCenters, markerCentersUndistorded, &tagTimestamp);
+  vision_binding->stealCompasses(compassOrientations, compassQuality);
   clipping_data = vision_binding->stealClipping();
   if (debugLevel > 0) {
-    fieldLogger.log("Nb observations stolen: (%d goals, %d markers, %d compass)",
-                    goalsLocations.size(), markerPositions.size(), compassOrientations.size());
+    fieldLogger.log("Nb observations stolen: (%d goals, %d markers, %d compass)", goalsLocations.size(),
+                    markerPositions.size(), compassOrientations.size());
   }
 }
 
-LocalisationBinding::ObservationVector LocalisationBinding::extractObservations()
-{
+LocalisationBinding::ObservationVector LocalisationBinding::extractObservations() {
   // Declaration of the vectors used
   ObservationVector fieldObservations;
   std::vector<GoalObservation *> goalObservations;
@@ -560,52 +524,48 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
   std::vector<CompassObservation *> compassObservations;
 
   if (isUsingVisualCompass) {
-    for(CompassObservation *obs: extractCompassObservations()) {
+    for (CompassObservation *obs : extractCompassObservations()) {
       fieldObservations.push_back(obs);
       vcCounterMutex.lock();
       nbVCObs++;
       vcCounterMutex.unlock();
     }
-  }
-  else {
+  } else {
     int obsId = 0;
-    for (GoalObservation * obs : extractGoalObservations()) {
+    for (GoalObservation *obs : extractGoalObservations()) {
       fieldObservations.push_back(obs);
       if (debugLevel > 0) {
         cv::Point3f pos = obs->getSeenDir();
-        fieldLogger.log("Goal %d -> pan: %lf, tilt: %lf, weight: %1lf, pos: %lf, %lf, %lf",
-                        obsId, obs->panTilt.pan.getSignedValue(),
-                        obs->panTilt.tilt.getSignedValue(), obs->weight,
-                        pos.x, pos.y, pos.z);
+        fieldLogger.log("Goal %d -> pan: %lf, tilt: %lf, weight: %1lf, pos: %lf, %lf, %lf", obsId,
+                        obs->panTilt.pan.getSignedValue(), obs->panTilt.tilt.getSignedValue(), obs->weight, pos.x,
+                        pos.y, pos.z);
       }
       obsId++;
     }
-    for (ArenaCornerObservation * obs : extractArenaCornerObservations()) {
+    for (ArenaCornerObservation *obs : extractArenaCornerObservations()) {
       fieldObservations.push_back(obs);
       if (debugLevel > 0) {
-        fieldLogger.log("Arena Corner %d -> weight: %1lf, dist: %lf",
-                        obs->getWeight(),
+        fieldLogger.log("Arena Corner %d -> weight: %1lf, dist: %lf", obs->getWeight(),
                         obs->getBrutData().getRobotCornerDist());
       }
       obsId++;
     }
 
-    for (TagsObservation * obs : extractTagsObservations()) {
+    for (TagsObservation *obs : extractTagsObservations()) {
       fieldObservations.push_back(obs);
       if (debugLevel > 0) {
-        fieldLogger.log("Tags %d -> id: %d, pos: (%.3lf, %.3lf, %.3lf), "
-                        "dev: (%.3lf, %.3lf, %.3lf), height: %lf  weight: %lf",
-                        obsId, obs->id,
-                        obs->seenPos.x, obs->seenPos.y, obs->seenPos.z,
-                        obs->stdDev.x, obs->stdDev.y, obs->stdDev.z,
-                        obs->robotHeight, obs->weight);
+        fieldLogger.log(
+            "Tags %d -> id: %d, pos: (%.3lf, %.3lf, %.3lf), "
+            "dev: (%.3lf, %.3lf, %.3lf), height: %lf  weight: %lf",
+            obsId, obs->id, obs->seenPos.x, obs->seenPos.y, obs->seenPos.z, obs->stdDev.x, obs->stdDev.y, obs->stdDev.z,
+            obs->robotHeight, obs->weight);
       }
       obsId++;
     }
   }
 
   // Add field observation, but only if we have some other observations
-  if (fieldObservations.size()>0) {
+  if (fieldObservations.size() > 0) {
     fieldObservations.push_back(new FieldObservation(isGoalKeeper));
   }
 
@@ -613,9 +573,8 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
 }
 
 void LocalisationBinding::updateFilter(
-  const std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition> *> & obs)
-{
-  ModelService * model_service = scheduler->getServices()->model;
+    const std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition> *> &obs) {
+  ModelService *model_service = scheduler->getServices()->model;
 
   // Check if base has been updated since last tick:
   bool isWalkEnabled = model_service->wasReadBaseUpdate();
@@ -624,15 +583,14 @@ void LocalisationBinding::updateFilter(
     isWalkEnabled = true;
   }
 
-  //ComputedOdometry
+  // ComputedOdometry
   double odom_start = lastTS.getTimeMS() / 1000.0;
   double odom_end = currTS.getTimeMS() / 1000.0;
   double elapsed = diffSec(lastTS, currTS);
   FieldPF::ResetType pending_reset = field_filter->getPendingReset();
   // If a reset has been asked, use odometry since reset.
   // Specific case for fall_reset, we still want to use the odometry prior to the reset
-  if (pending_reset != FieldPF::ResetType::None &&
-      pending_reset != FieldPF::ResetType::Fall) {
+  if (pending_reset != FieldPF::ResetType::None && pending_reset != FieldPF::ResetType::Fall) {
     // Specific case for resets, we don't want to integrate motion before reset
     odom_start = lastFieldReset.getTimeMS() / 1000.0;
   }
@@ -643,8 +601,7 @@ void LocalisationBinding::updateFilter(
   robotMove.y = odo(1);
   double orientationChange = rad2deg(odo(2));
   if (std::fabs(orientationChange) > 90) {
-    fieldLogger.warning("unlikely orientation change received from odometry: %f deg",
-                        orientationChange);
+    fieldLogger.warning("unlikely orientation change received from odometry: %f deg", orientationChange);
   }
 
   // Use a boost of noise after an uniformReset
@@ -652,38 +609,32 @@ void LocalisationBinding::updateFilter(
   if (elapsedSinceUniformReset < noiseBoostDuration) {
     double ratio = elapsedSinceUniformReset / noiseBoostDuration;
     noiseGain = maxNoiseBoost * (1 - ratio) + ratio;
-    fieldLogger.log("Using noise boost gain: %lf (%lf[s] elapsed)",
-                    noiseGain, elapsedSinceUniformReset);
+    fieldLogger.log("Using noise boost gain: %lf (%lf[s] elapsed)", noiseGain, elapsedSinceUniformReset);
   } else if (consistencyEnabled) {
-    noiseGain = 1 + (1-consistencyScore) * (consistencyMaxNoise - 1);
-    fieldLogger.log("Using consistency boost gain: %lf (score: %lf)",
-                    noiseGain, consistencyScore);
+    noiseGain = 1 + (1 - consistencyScore) * (consistencyMaxNoise - 1);
+    fieldLogger.log("Using consistency boost gain: %lf (score: %lf)", noiseGain, consistencyScore);
   }
 
   RobotController rc(cv2rg(robotMove), orientationChange, noiseGain);
-
 
   // Update the filter if one of the following conditions are met:
   // - An observation has been found
   // - Walk was enabled at least once since the last tick
   // - A reset has been required
   // - The robot was fallen since last tick
-  DecisionService * decision = scheduler->getServices()->decision;
+  DecisionService *decision = scheduler->getServices()->decision;
   bool isResetPending = field_filter->isResetPending();
   bool hasFallenRecently = decision->timeSinceFall < elapsed;
-  if (enableFieldFilter &&
-      (obs.size() > 0 || isWalkEnabled || isResetPending || hasFallenRecently))
-  {
-    double max_step_time = 5;// Avoiding to have a huge exploration which causes errors
+  if (enableFieldFilter && (obs.size() > 0 || isWalkEnabled || isResetPending || hasFallenRecently)) {
+    double max_step_time = 5;  // Avoiding to have a huge exploration which causes errors
     if (elapsed > max_step_time) {
       fieldLogger.warning("Large time elapsed in fieldFilter: %f [s]", elapsed);
     }
     filterMutex.lock();
     field_filter->resize(nb_particles_ff);
-    field_filter->step(rc, obs, std::min(max_step_time,elapsed));
+    field_filter->step(rc, obs, std::min(max_step_time, elapsed));
     filterMutex.unlock();
-  }
-  else if (debugLevel > 0) {
+  } else if (debugLevel > 0) {
     std::stringstream oss;
     oss << "skipping step: ";
     if (!enableFieldFilter) oss << "field disabled, ";
@@ -700,8 +651,7 @@ void LocalisationBinding::updateFilter(
   lastTS = currTS;
 }
 
-void LocalisationBinding::publishToLoc()
-{
+void LocalisationBinding::publishToLoc() {
   LocalisationService *loc = scheduler->getServices()->localisation;
 
   // update the loc service
@@ -710,22 +660,19 @@ void LocalisationBinding::publishToLoc()
   cv::Point2d c = field_filter->getCenterPositionInSelf();
   Angle o = field_filter->getOrientation();
 
-  loc->setPosSelf(Eigen::Vector3d(lg.x, lg.y, 0),
-                  Eigen::Vector3d(rg.x, rg.y, 0), Eigen::Vector3d(c.x, c.y, 0),
-                  deg2rad(o.getValue()),
-                  robotQ, consistencyScore, consistencyEnabled);
+  loc->setPosSelf(Eigen::Vector3d(lg.x, lg.y, 0), Eigen::Vector3d(rg.x, rg.y, 0), Eigen::Vector3d(c.x, c.y, 0),
+                  deg2rad(o.getValue()), robotQ, consistencyScore, consistencyEnabled);
 }
 
 void LocalisationBinding::applyWatcher(
-  const std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition> *> & obs)
-{
+    const std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition> *> &obs) {
   // Apply HighLevel PF
   double stepDeltaScore = -consistencyStepCost;
   const auto &particle = field_filter->getRepresentativeParticle();
   std::vector<rhoban_unsorted::BoundedScoreObservation<FieldPosition> *> castedObservations;
   int obsId = 0;
   for (rhoban_unsorted::Observation<FieldPosition> *o : obs) {
-    GoalObservation * goalObs = dynamic_cast<GoalObservation *>(o);
+    GoalObservation *goalObs = dynamic_cast<GoalObservation *>(o);
     // Ignore non goal observations for quality check
     if (goalObs == nullptr) {
       continue;
@@ -735,8 +682,8 @@ void LocalisationBinding::applyWatcher(
     double minScore = goalObs->getMinScore();
     // Debug
     if (debugLevel > 0) {
-      fieldLogger.log("Observation %d: %s -> score: %f , minScore: %f",
-                      obsId, goalObs->toStr().c_str(), score, minScore);
+      fieldLogger.log("Observation %d: %s -> score: %f , minScore: %f", obsId, goalObs->toStr().c_str(), score,
+                      minScore);
     }
     obsId++;
     // If score <= minScore, then observation is so different from expected result
@@ -747,15 +694,14 @@ void LocalisationBinding::applyWatcher(
       stepDeltaScore += consistencyGoodObsGain;
     } else {
       stepDeltaScore -= consistencyBadObsCost;
-    }      
+    }
   }
 
   /// Update consistency score
   consistencyScore += stepDeltaScore;
-  consistencyScore = std::min(1.0,std::max(0.0, consistencyScore));
+  consistencyScore = std::min(1.0, std::max(0.0, consistencyScore));
   if (debugLevel > 0) {
-    fieldLogger.log("Updating consistency: deltaStep: %f | new consistency: %f",
-                    stepDeltaScore, consistencyScore);
+    fieldLogger.log("Updating consistency: deltaStep: %f | new consistency: %f", stepDeltaScore, consistencyScore);
   }
 
   /// Reset of the particle filter requires several conditions
@@ -764,8 +710,8 @@ void LocalisationBinding::applyWatcher(
   /// - There is no reset pending on the robot
   bool resetAllowed = elapsedSinceUniformReset > consistencyResetInterval;
   bool lowConsistency = consistencyScore <= 0;
-  fieldLogger.error("resetAllowed: %d, consistency: %f (elapsed since UR: %f)",
-                    resetAllowed, consistencyScore, elapsedSinceUniformReset);
+  fieldLogger.error("resetAllowed: %d, consistency: %f (elapsed since UR: %f)", resetAllowed, consistencyScore,
+                    elapsedSinceUniformReset);
   if (resetAllowed && lowConsistency && !field_filter->isResetPending()) {
     lastFieldReset = getNowTS();
     lastUniformReset = lastFieldReset;
@@ -778,8 +724,7 @@ void LocalisationBinding::applyWatcher(
     if (debugLevel > 0) {
       std::ostringstream msg;
       msg << "Asking for a full reset: " << std::endl;
-      msg << "consistencyScore: " << consistencyScore
-          << " robotQ: " << robotQ;
+      msg << "consistencyScore: " << consistencyScore << " robotQ: " << robotQ;
       fieldLogger.log(msg.str().c_str());
     }
   }
@@ -806,8 +751,8 @@ cv::Mat LocalisationBinding::getTopView(int width, int height) {
   return img;
 }
 
-void LocalisationBinding::fieldReset(Localisation::FieldPF::ResetType type, float x,
-                                     float y, float noise, float theta, float thetaNoise) {
+void LocalisationBinding::fieldReset(Localisation::FieldPF::ResetType type, float x, float y, float noise, float theta,
+                                     float thetaNoise) {
   lastFieldReset = getNowTS();
 
   if (type == Localisation::FieldPF::ResetType::Custom) {
@@ -833,16 +778,14 @@ void LocalisationBinding::fieldReset(Localisation::FieldPF::ResetType type, floa
   vcCounterMutex.unlock();
 }
 
-
-bool LocalisationBinding::refereeAllowsToPlay()
-{
+bool LocalisationBinding::refereeAllowsToPlay() {
   // On fake mode, always allow robot to play
   if (scheduler->isFakeMode()) return true;
 
-  RefereeService * referee = scheduler->getServices()->referee;
+  RefereeService *referee = scheduler->getServices()->referee;
   bool allowedPhase = referee->isPlacingPhase() || referee->isFreezePhase();
   bool penalized = referee->isPenalized();
   return referee->isPlaying() || (allowedPhase && !penalized);
 }
 
-}
+}  // namespace Vision

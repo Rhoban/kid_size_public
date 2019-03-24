@@ -30,8 +30,6 @@ double GoalObservation::maxCartError = 1.0;
 double GoalObservation::tolCartError = 0.2;
 double GoalObservation::similarPosLimit = 0.5;
 
-
-
 static double getScore(double error, double maxError, double tol) {
   if (error >= maxError) return 0;
   if (error <= tol) return 1;
@@ -40,16 +38,10 @@ static double getScore(double error, double maxError, double tol) {
 
 GoalObservation::GoalObservation() : GoalObservation(PanTilt(Angle(0), Angle(0)), 0, 1) {}
 
-GoalObservation::GoalObservation(const PanTilt &panTiltToGoal,
-                                 double robotHeight_,
-                                 double weight_)
-  : panTilt(panTiltToGoal),
-    robotHeight(robotHeight_), weight(weight_)
-{
-}
+GoalObservation::GoalObservation(const PanTilt &panTiltToGoal, double robotHeight_, double weight_)
+    : panTilt(panTiltToGoal), robotHeight(robotHeight_), weight(weight_) {}
 
-cv::Point3f GoalObservation::getSeenDir() const
-{
+cv::Point3f GoalObservation::getSeenDir() const {
   Eigen::Vector3d dir = panTilt.toViewVector();
   if (dir.z() > 0) {
     throw std::runtime_error(DEBUG_INFO + " direction z positive or 0 in viewVector");
@@ -58,9 +50,7 @@ cv::Point3f GoalObservation::getSeenDir() const
   return eigen2CV(Eigen::Vector3d(scale * dir));
 }
 
-double GoalObservation::potential(const FieldPosition &p) const {
-  return potential(p, false);
-}
+double GoalObservation::potential(const FieldPosition &p) const { return potential(p, false); }
 
 double GoalObservation::potential(const FieldPosition &p, bool debug) const {
   double bestScore = 0;
@@ -68,8 +58,7 @@ double GoalObservation::potential(const FieldPosition &p, bool debug) const {
 
   std::ostringstream oss;
   if (debug) {
-    oss << "Debugging potential for particle (" << p.x() << ", " << p.y()
-        << ", " << p.getOrientation().getSignedValue()
+    oss << "Debugging potential for particle (" << p.x() << ", " << p.y() << ", " << p.getOrientation().getSignedValue()
         << ") -> seenDir: " << seenDir << std::endl;
   }
 
@@ -82,7 +71,7 @@ double GoalObservation::potential(const FieldPosition &p, bool debug) const {
     // Computing errors
     double dx = expectedPos.x - seenDir.x;
     double dy = expectedPos.y - seenDir.y;
-    double cartDiff = sqrt(dx*dx + dy*dy);
+    double cartDiff = sqrt(dx * dx + dy * dy);
     // aDiff is always positive (angleBetween)
     double aDiff = angleBetween(seenDir, expectedDir).getSignedValue();
     // Computing scores
@@ -106,26 +95,23 @@ double GoalObservation::potential(const FieldPosition &p, bool debug) const {
     out.log("%s", oss.str().c_str());
   }
 
-  return getWeightedScore(bestScore * (1-pError) + pError);
+  return getWeightedScore(bestScore * (1 - pError) + pError);
 }
 
-void GoalObservation::merge(const GoalObservation & other)
-{
-  panTilt.pan  = Angle::weightedAverage(panTilt.pan , weight, other.panTilt.pan , other.weight);
+void GoalObservation::merge(const GoalObservation &other) {
+  panTilt.pan = Angle::weightedAverage(panTilt.pan, weight, other.panTilt.pan, other.weight);
   panTilt.tilt = Angle::weightedAverage(panTilt.tilt, weight, other.panTilt.tilt, other.weight);
   weight = weight + other.weight;
 }
 
-bool GoalObservation::isSimilar(const GoalObservation & o1,
-                                const GoalObservation & o2)
-{
+bool GoalObservation::isSimilar(const GoalObservation &o1, const GoalObservation &o2) {
   cv::Point3f seenDir1 = o1.getSeenDir();
   cv::Point3f seenDir2 = o2.getSeenDir();
   Angle aDiff = angleBetween(seenDir1, seenDir2);
   double dx = seenDir1.x - seenDir2.x;
   double dy = seenDir1.y - seenDir2.y;
-  double dist = dx*dx + dy*dy;
-  bool angleSimilar = aDiff.getValue() < similarAngleLimit;// aDiff is in [0,180]
+  double dist = dx * dx + dy * dy;
+  bool angleSimilar = aDiff.getValue() < similarAngleLimit;  // aDiff is in [0,180]
   bool posSimilar = dist < similarPosLimit;
   return angleSimilar || posSimilar;
 }
@@ -191,30 +177,25 @@ Json::Value GoalObservation::toJson() const {
   return v;
 }
 
-void GoalObservation::fromJson(const Json::Value & v, const std::string & dir_name) {
-  (void) dir_name;
-  rhoban_utils::tryRead(v,"robotHeight",&robotHeight);
+void GoalObservation::fromJson(const Json::Value &v, const std::string &dir_name) {
+  (void)dir_name;
+  rhoban_utils::tryRead(v, "robotHeight", &robotHeight);
   double pan = panTilt.pan.getSignedValue();
   double tilt = panTilt.tilt.getSignedValue();
-  rhoban_utils::tryRead(v,"pan",&pan);
-  rhoban_utils::tryRead(v,"tilt",&tilt);
-  panTilt = PanTilt(Angle(pan),Angle(tilt));
+  rhoban_utils::tryRead(v, "pan", &pan);
+  rhoban_utils::tryRead(v, "tilt", &tilt);
+  panTilt = PanTilt(Angle(pan), Angle(tilt));
 }
 
-double GoalObservation::getMinScore() const {
-  return getWeightedScore(pError);
-}
+double GoalObservation::getMinScore() const { return getWeightedScore(pError); }
 
-double GoalObservation::getWeightedScore(double score) const {
-  return pow(score, 1 + (weight-1) * weightRatio);
-}
+double GoalObservation::getWeightedScore(double score) const { return pow(score, 1 + (weight - 1) * weightRatio); }
 
 std::string GoalObservation::toStr() const {
   std::ostringstream oss;
-  oss << "[GoalObservation: pan=" << panTilt.pan.getSignedValue()
-      << "° tilt=" << panTilt.tilt.getSignedValue() << "°]";
+  oss << "[GoalObservation: pan=" << panTilt.pan.getSignedValue() << "° tilt=" << panTilt.tilt.getSignedValue() << "°]";
   return oss.str();
 }
 
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

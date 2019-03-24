@@ -9,7 +9,6 @@ namespace Filters {
  * Recognize Border of the Field and compute the clipping
  */
 class ClippingByBorder : public Filter {
-
  public:
   ClippingByBorder();
   ~ClippingByBorder();
@@ -30,5 +29,5 @@ class ClippingByBorder : public Filter {
   ParamFloat vshift_ratio;
 };
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

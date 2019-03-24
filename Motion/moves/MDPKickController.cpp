@@ -15,7 +15,6 @@
 #include "policies/ok_seed.h"
 #include "rhoban_csa_mdp/core/policy_factory.h"
 
-
 #include "robocup_referee/constants.h"
 
 using csa_mdp::ExpertApproach;
@@ -36,29 +35,23 @@ MDPKickController::MDPKickController()
   // Binding commands
   bind->bindFunc("kick_controler_update_policy", "Update the policy used for kick_controler",
                  &MDPKickController::updatePolicy, *this);
-  bind->bindFunc("kick_controler_update_problem",
-                 "Update the problem used for kick_controler",
+  bind->bindFunc("kick_controler_update_problem", "Update the problem used for kick_controler",
                  &MDPKickController::updateProblem, *this);
   // Bind members
   bind->bindNew("policy_file", policy_file, RhIO::Bind::PullOnly)
-    ->defaultValue("KickControllerPolicy.json")
-    ->persisted(true);
+      ->defaultValue("KickControllerPolicy.json")
+      ->persisted(true);
   bind->bindNew("problem_file", problem_file, RhIO::Bind::PullOnly)
-    ->defaultValue("KickControllerProblem.json")
-    ->persisted(true);
-  bind->bindNew("update_period", update_period, RhIO::Bind::PullOnly)
-    ->defaultValue(5.0)
-    ->persisted(true);
+      ->defaultValue("KickControllerProblem.json")
+      ->persisted(true);
+  bind->bindNew("update_period", update_period, RhIO::Bind::PullOnly)->defaultValue(5.0)->persisted(true);
   // Bind monitorable values
-  bind->bindNew("time_since_update", time_since_update, RhIO::Bind::PushOnly)
-    ->defaultValue(0);
+  bind->bindNew("time_since_update", time_since_update, RhIO::Bind::PushOnly)->defaultValue(0);
 
   bind->pull();
 
   // Add custom policies
-  PolicyFactory::registerExtraBuilder("OKSeed",
-                                      []() {return std::unique_ptr<Policy>(new OKSeed);});
-
+  PolicyFactory::registerExtraBuilder("OKSeed", []() { return std::unique_ptr<Policy>(new OKSeed); });
 
   updatePolicy();
   updateProblem();
@@ -72,13 +65,12 @@ std::string MDPKickController::getName()
 void MDPKickController::onStart()
 {
   bind->pull();
-  
-  logger.log("MDPKickController Starting: policy '%s' and problem '%s'",
-             policy_file.c_str(),
-             problem_file.c_str());
+
+  logger.log("MDPKickController Starting: policy '%s' and problem '%s'", policy_file.c_str(), problem_file.c_str());
 
   // Ensuring that policy has been loaded and resetting it (it does matter for expert approach)
-  if (!policy) throw std::logic_error("MDPKickController: Policy is not loaded yet");
+  if (!policy)
+    throw std::logic_error("MDPKickController: Policy is not loaded yet");
   policy->init();
 }
 
@@ -93,7 +85,8 @@ void MDPKickController::step(float elapsed)
   time_since_update += elapsed;
 
   // Waiting 'update_period' before updating actions
-  if (time_since_update < update_period) {
+  if (time_since_update < update_period)
+  {
     bind->push();
     return;
   }
@@ -108,7 +101,8 @@ void MDPKickController::step(float elapsed)
   int kicker_id(0), kick_option(0);
   problem.analyzeActionId(action_id, &kicker_id, &kick_option);
 
-  if (kicker_id > 0) {
+  if (kicker_id > 0)
+  {
     throw std::runtime_error("kicker_id > 0 not handled actually");
   }
 
@@ -119,18 +113,21 @@ void MDPKickController::step(float elapsed)
   /// If ball is outside of bound use simple custom actions
   double ball_x = state(0);
   double ball_y = state(1);
-  if (ball_x > Constants::field.fieldLength / 2) {
+  if (ball_x > Constants::field.fieldLength / 2)
+  {
     // Ball is outside of opponent line
     double y_limit = (Constants::field.goalWidth / 2);
-    if (std::fabs(ball_y) < y_limit) {
+    if (std::fabs(ball_y) < y_limit)
+    {
       // Ball is roughly centered -> shoot toward goal
       kick_dir = 0;
-      allowed_kicks = {"classic", "lateral"};
+      allowed_kicks = { "classic", "lateral" };
     }
-    else {
+    else
+    {
       // Ball is not centered -> center the ball slightly behind
       kick_dir = ball_y > 0 ? -120 : 120;
-      allowed_kicks = {"classic", "lateral"};
+      allowed_kicks = { "classic", "lateral" };
     }
   }
 
@@ -142,8 +139,8 @@ Eigen::VectorXd MDPKickController::getState()
   // Access localisation service
   auto loc = getServices()->localisation;
   // Getting ball properties
-  Point ball_pos   = loc->getBallPosField();
-  Point robot_pos  = loc->getFieldPos();
+  Point ball_pos = loc->getBallPosField();
+  Point robot_pos = loc->getFieldPos();
   double robot_dir = loc->getFieldOrientation();
   // Building current state
   Eigen::VectorXd state(5);
@@ -160,13 +157,15 @@ void MDPKickController::updatePolicy()
 {
   bind->pull();
   logger.log("Loading policy at '%s'", policy_file.c_str());
-  try {
+  try
+  {
     policy = PolicyFactory().buildFromJsonFile(policy_file);
     policy->setActionLimits(problem.getActionsLimits());
-    //displayProblemLimits();
+    // displayProblemLimits();
   }
-  catch (const std::runtime_error & exc) {
-    logger.warning("%s",exc.what());
+  catch (const std::runtime_error& exc)
+  {
+    logger.warning("%s", exc.what());
   }
 }
 
@@ -174,19 +173,22 @@ void MDPKickController::updateProblem()
 {
   bind->pull();
   logger.log("Loading problem at '%s'", problem_file.c_str());
-  try {
+  try
+  {
     problem = csa_mdp::KickControler();
     problem.loadFile(problem_file);
-    if (problem.getNbPlayers() > 1) {
+    if (problem.getNbPlayers() > 1)
+    {
       throw std::runtime_error("MDPKickController::updateProblem: problem has more than 1 player");
     }
     if (policy)
     {
       policy->setActionLimits(problem.getActionsLimits());
     }
-    //displayProblemLimits();
+    // displayProblemLimits();
   }
-  catch (const std::runtime_error & exc) {
+  catch (const std::runtime_error& exc)
+  {
     logger.warning("%s", exc.what());
   }
 }
@@ -196,8 +198,8 @@ void MDPKickController::displayProblemLimits()
   std::cout << "StateLimits" << std::endl;
   std::cout << problem.getStateLimits() << std::endl;
   std::cout << "ActionLimits" << std::endl;
-  for (int action_id = 0; action_id < problem.getNbActions(); action_id++) {
-    std::cout << "-> " << action_id << ": " << std::endl
-              << problem.getActionLimits(action_id) << std::endl;
+  for (int action_id = 0; action_id < problem.getNbActions(); action_id++)
+  {
+    std::cout << "-> " << action_id << ": " << std::endl << problem.getActionLimits(action_id) << std::endl;
   }
 }

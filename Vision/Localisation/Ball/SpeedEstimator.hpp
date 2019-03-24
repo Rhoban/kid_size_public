@@ -15,23 +15,22 @@ class Bind;
 namespace Vision {
 namespace Localisation {
 class SpeedEstimator {
-public:
+ public:
   SpeedEstimator();
 
   // Insert the value if it is not equivalent to the last on
-  void update(const rhoban_utils::TimeStamp & ts,
-              const Eigen::Vector2d & pos);
+  void update(const rhoban_utils::TimeStamp& ts, const Eigen::Vector2d& pos);
 
-  Eigen::Vector2d getSpeed(); // in m/s, in world referential
+  Eigen::Vector2d getSpeed();  // in m/s, in world referential
   double getQuality();
 
   Eigen::Vector2d getUsableSpeed();
 
-private:
+ private:
   typedef std::pair<rhoban_utils::TimeStamp, Eigen::Vector2d> TimedPosition;
   typedef std::pair<Eigen::Vector2d, double> WeightedSpeed;
 
-  RhIO::Bind * bind;
+  RhIO::Bind* bind;
 
   /// Positions are stored in world referential (most recent entry front)
   std::deque<TimedPosition> positions;
@@ -77,5 +76,5 @@ private:
   void updateMeasuredSpeeds();
 };
 
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

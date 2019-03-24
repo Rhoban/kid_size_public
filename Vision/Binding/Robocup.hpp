@@ -26,7 +26,7 @@ namespace Localisation {
 class BallStackFilter;
 class RobotFilter;
 class SpeedEstimator;
-}
+}  // namespace Localisation
 
 /**
  * Robocup
@@ -36,9 +36,9 @@ class SpeedEstimator;
  * framework
  */
 class Robocup : public Vision::Application::Application {
-  friend class Vision::RobocupBenchmark; // RobocupBenchmark need an access
-  friend class Vision::LogBenchmark;     // LogBenchmark need an access
-private:
+  friend class Vision::RobocupBenchmark;  // RobocupBenchmark need an access
+  friend class Vision::LogBenchmark;      // LogBenchmark need an access
+ private:
   /**
    * Note on mutex:
    * - globalMutex:
@@ -64,7 +64,7 @@ private:
 
   mutable std::mutex csMutex;
 
-  int imageDelay; // Delay between the image capture time [ms]
+  int imageDelay;  // Delay between the image capture time [ms]
 
   // Logging
   Utils::ImageLogger manual_logger;
@@ -92,14 +92,14 @@ private:
   void initImageHandlers();
 
   void initObservationTypes();
-  
+
   void initRhIO();
   void publishToRhIO();
   void importFromRhIO();
 
   MoveScheduler *_scheduler;
 
-public:
+ public:
   // Properties for monitoring images
   std::vector<SpecialImageHandler> imageHandlers;
 
@@ -134,7 +134,7 @@ public:
   virtual void step() override;
   virtual void finish() override;
 
-  void startLogging(unsigned int timeMS, const std::string & logDir);
+  void startLogging(unsigned int timeMS, const std::string &logDir);
   void endLogging();
 
   // How many frames were captured?
@@ -152,9 +152,9 @@ public:
   void robotsClear();
 
   /// Asks the model to start a logging session with given path as a target
-  void startLoggingLowLevel(const std::string & path);
+  void startLoggingLowLevel(const std::string &path);
   /// Asks the model to end and save a session with given path
-  void stopLoggingLowLevel(const std::string & path);
+  void stopLoggingLowLevel(const std::string &path);
   /// Tells the model to read the low level values from a log file instead than
   /// from the actual low level
   void setLogMode(const std::string path);
@@ -166,17 +166,14 @@ public:
 
   /// Get all goals currently stored and remove them from the list
   std::vector<cv::Point2f> stealGoals();
-  
+
   /// Lock mutex on tags, retrieve indices and position of tags
   /// Finally clear all memory about tags
-  void stealTags(std::vector<int> & indices,
-                 std::vector<Eigen::Vector3d> & positions,
-                 std::vector<std::pair<float, float> > & centers,
-                 std::vector<std::pair<float, float> > & undistorded_centers,
-                 double * timestamp);
+  void stealTags(std::vector<int> &indices, std::vector<Eigen::Vector3d> &positions,
+                 std::vector<std::pair<float, float>> &centers,
+                 std::vector<std::pair<float, float>> &undistorded_centers, double *timestamp);
 
-
-  //steal the observations from the visual compass
+  // steal the observations from the visual compass
   void stealCompasses(std::vector<double> &orientations, std::vector<double> &dispersions);
 
   /// Get all clipping loc info currently stored and remove them from the list
@@ -190,19 +187,18 @@ public:
   cv::Mat getTaggedImg(int width, int height);
   cv::Mat getRadarImg(int width, int height);
 
-  cv::Mat getImg(const std::string &name, int wishedWidth, int wishedHeight,
-                 bool gray);
+  cv::Mat getImg(const std::string &name, int wishedWidth, int wishedHeight, bool gray);
 
   const Pipeline &getPipeline() const { return pipeline; }
 
   /* JSON STUFF */
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value &v, const std::string &dir_name) override;
   virtual std::string getClassName() const override { return "vision_config"; }
 
-  //TODO : move this into radar refactoring
-  std::vector<cv::Point2f> keepFrontRobots(std::vector<cv::Point2f> & robots);
-  
+  // TODO : move this into radar refactoring
+  std::vector<cv::Point2f> keepFrontRobots(std::vector<cv::Point2f> &robots);
+
   void closeCamera();
 
   /// Uses MoveScheduler to check current mode (fake or active)
@@ -220,14 +216,14 @@ public:
 
   // BALL
   /// Ball position filter
-  Localisation::BallStackFilter * ballStackFilter;
+  Localisation::BallStackFilter *ballStackFilter;
   //  Opponent robots filter
-  Localisation::RobotFilter * robotFilter;
+  Localisation::RobotFilter *robotFilter;
   /// Ball speed estimator
-  Localisation::SpeedEstimator * ballSpeedEstimator;
+  Localisation::SpeedEstimator *ballSpeedEstimator;
 
   // Sensors and related
-  Utils::CameraState * cs;
+  Utils::CameraState *cs;
   ::rhoban_utils::TimeStamp lastTS, sourceTS;
 
   bool ballDetected;
@@ -243,13 +239,13 @@ public:
   /// vision tick
   bool clearRememberObservations;
 
-private:
+ private:
   /// Detected positions for goals in "origin" basis
   std::vector<cv::Point2f> detectedGoals;
 
   /// Detected robots in "origin" basis
   std::vector<cv::Point2f> detectedRobots;
-  
+
   std::vector<std::string> observationTypes;
 
   /// For each type of observation, the map contains a list of
@@ -268,11 +264,11 @@ private:
   /// Positions of the tags detected (in world frame)
   std::vector<Eigen::Vector3d> detectedTagsPositions;
   /// Positions of the center of the tags on the image (x, y), range [-1, 1]
-  std::vector<std::pair<float, float> > detectedTagsCenters;
+  std::vector<std::pair<float, float>> detectedTagsCenters;
   /// Positions of the center of the tags on the undistort image (x, y), range [-1, 1]
-  std::vector<std::pair<float, float> > detectedTagsCentersUndistort;
+  std::vector<std::pair<float, float>> detectedTagsCentersUndistort;
   /// timestamp of the tag detection
-  double detectedTimestamp=0.0;
+  double detectedTimestamp = 0.0;
 
   /// Controls access to the tags
   mutable std::mutex tagsMutex;
@@ -280,7 +276,7 @@ private:
   /// Controls access to the visualcompass
   mutable std::mutex compassMutex;
 
-  //Orientations and corresponding dispersions (quality) for the visual compass
+  // Orientations and corresponding dispersions (quality) for the visual compass
   std::vector<double> detectedOrientations;
   std::vector<double> detectedDispersions;
 
@@ -290,11 +286,11 @@ private:
 
   /// key: featureName
   /// values: feature providers
-  std::map<std::string,std::vector<std::string>> featureProviders;
+  std::map<std::string, std::vector<std::string>> featureProviders;
 
   // clipping data for the localisation
   std::vector<Vision::Filters::FieldBorderData> clipping_data;
-  
+
   /// Was robot handled at previous step
   bool wasHandled;
 
@@ -304,4 +300,4 @@ private:
   /// Are the ball outside of the field (according to localization) ignored
   bool ignoreOutOfFieldBalls;
 };
-}
+}  // namespace Vision

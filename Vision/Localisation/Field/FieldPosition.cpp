@@ -21,19 +21,14 @@ FieldPosition::~FieldPosition() {}
 
 Angle FieldPosition::getOrientation() const { return Angle(values[2]); }
 
-Point FieldPosition::getRobotPosition() const {
-  return Point(values[0], values[1]);
-}
+Point FieldPosition::getRobotPosition() const { return Point(values[0], values[1]); }
 
-cv::Point2f FieldPosition::getRobotPositionCV() const {
-  return cv::Point2f(values[0], values[1]);
-}
+cv::Point2f FieldPosition::getRobotPositionCV() const { return cv::Point2f(values[0], values[1]); }
 
-Point FieldPosition::getFieldPosInSelf(const Point & pos_in_field) const {
+Point FieldPosition::getFieldPosInSelf(const Point &pos_in_field) const {
   Point offset = pos_in_field - Point(x(), y());
   return offset.rotation(-getOrientation());
 }
-
 
 // dist is given in the robot referential
 void FieldPosition::move(Point &dist) {
@@ -43,13 +38,10 @@ void FieldPosition::move(Point &dist) {
   values[1] = newPos.y;
 }
 
-void FieldPosition::rotate(const Angle &rotation) {
-  values[2] = (getOrientation() + rotation).getSignedValue();
-}
+void FieldPosition::rotate(const Angle &rotation) { values[2] = (getOrientation() + rotation).getSignedValue(); }
 
-void FieldPosition::tag(cv::Mat &img, Angle pan, const cv::Scalar &color,
-                        int thickness) const {
-  double vecLength = 0.2;/// [m]
+void FieldPosition::tag(cv::Mat &img, Angle pan, const cv::Scalar &color, int thickness) const {
+  double vecLength = 0.2;  /// [m]
   cv::Point2f src = getRobotPositionCV();
   Angle orientation = getOrientation() + pan;
   double dx = cos(orientation);
@@ -59,13 +51,13 @@ void FieldPosition::tag(cv::Mat &img, Angle pan, const cv::Scalar &color,
   cv::Point2f srcImg = Field::Field::fieldToImg(img, src);
   cv::Point2f endImg = Field::Field::fieldToImg(img, src + delta);
 
-//  std::cout << "src: " << src.x << ", " << src.y << std::endl;
-//  std::cout << "dst: " << src.x << ", " << src.y << std::endl;
+  //  std::cout << "src: " << src.x << ", " << src.y << std::endl;
+  //  std::cout << "dst: " << src.x << ", " << src.y << std::endl;
 
   // circle(img, srcImg, radius, color, CV_FILLED);
   circle(img, srcImg, radius, color, thickness);
   line(img, srcImg, endImg, color, thickness);
 }
 
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

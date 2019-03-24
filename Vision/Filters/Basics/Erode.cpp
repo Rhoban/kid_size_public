@@ -19,5 +19,5 @@ void Erode::process() {
   cv::Mat kernel = getStructuringElement(shape, cv::Size(kWidth, kHeight));
   erode(*(getDependency().getImg()), img(), kernel);
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

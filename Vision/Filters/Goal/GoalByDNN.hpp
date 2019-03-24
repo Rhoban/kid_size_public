@@ -11,15 +11,15 @@ namespace Filters {
 /// Simplest filter for detecting the ball
 /// - Takes a binary image as input and use the barycenter as a ball candidate
 class GoalByDNN : public GoalProvider {
-public:
+ public:
   GoalByDNN();
 
   virtual std::string getClassName() const;
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
   virtual int expectedDependencies() const;
 
-protected:
+ protected:
   virtual void process() override;
   virtual void setParameters() override;
 
@@ -27,9 +27,9 @@ protected:
   void updateNN();
 
   /// Use the neural network to get the patch score
-  double getScore(const cv::Mat & patch);
+  double getScore(const cv::Mat& patch);
 
-private:
+ private:
   /// The neural network used to predict if the patch is a 'ball patch'
   tiny_dnn::network<tiny_dnn::sequential> nn;
 
@@ -49,5 +49,5 @@ private:
   /// Minimal score for recognizing the ball
   ParamFloat scoreThreshold;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -6,122 +6,122 @@
 
 namespace RhIO
 {
-    class Bind;
+class Bind;
 }
 
 class RefereeService : public Service, public robocup_referee::RefereeClient
 {
-    public:
-        RefereeService();
-        ~RefereeService();
+public:
+  RefereeService();
+  ~RefereeService();
 
-        /**
-         * Updating the playing flag
-         */
-        void checkPlaying();
+  /**
+   * Updating the playing flag
+   */
+  void checkPlaying();
 
-        /**
-         * Am I playing ?
-         * (This is false when penalized)
-         */
-        bool isPlaying();
+  /**
+   * Am I playing ?
+   * (This is false when penalized)
+   */
+  bool isPlaying();
 
-        /**
-         * Is the game playing ?
-         * (This is true even when penalized)
-         */
-        bool isGamePlaying();
+  /**
+   * Is the game playing ?
+   * (This is true even when penalized)
+   */
+  bool isGamePlaying();
 
-        /// This phase happens only at the beginning of the game
-        bool isInitialPhase();
+  /// This phase happens only at the beginning of the game
+  bool isInitialPhase();
 
-        /// During this phase robots are allowed to move to their own field
-        bool isPlacingPhase();
+  /// During this phase robots are allowed to move to their own field
+  bool isPlacingPhase();
 
-        /// During this phase robot should freeze
-        bool isFreezePhase();
+  /// During this phase robot should freeze
+  bool isFreezePhase();
 
-        /// End of game / end of half
-        bool isFinishedPhase();
+  /// End of game / end of half
+  bool isFinishedPhase();
 
-        /**
-         * Is it the begining of the game?
-         */
-        bool isBegining();
+  /**
+   * Is it the begining of the game?
+   */
+  bool isBegining();
 
-        /**
-         * Time since playing (reseted if penalized)
-         */
-        double getTimeSincePlaying();
+  /**
+   * Time since playing (reseted if penalized)
+   */
+  double getTimeSincePlaying();
 
-        /**
-         * Should we avoid touching the ball, regarding the rules annd the
-         * current referee state?
-         */
-        bool shouldLetPlay();
+  /**
+   * Should we avoid touching the ball, regarding the rules annd the
+   * current referee state?
+   */
+  bool shouldLetPlay();
 
-        /**
-         * Am I penalized?
-         */
-        bool isPenalized();
+  /**
+   * Am I penalized?
+   */
+  bool isPenalized();
 
-        /**
-         * Is the given player penalized?
-         */
-        bool isPenalized(int id);
+  /**
+   * Is the given player penalized?
+   */
+  bool isPenalized(int id);
 
-        /**
-         * Is our team taking the kickoff?
-         */
-        bool myTeamKickOff();
+  /**
+   * Is our team taking the kickoff?
+   */
+  bool myTeamKickOff();
 
-        /**
-         * Are we in a dropped ball scenario ?
-         */
-        bool isDroppedBall();
+  /**
+   * Are we in a dropped ball scenario ?
+   */
+  bool isDroppedBall();
 
-        /**
-         * Is there a free kick right now?
-         */
-        bool isFreeKick();
+  /**
+   * Is there a free kick right now?
+   */
+  bool isFreeKick();
 
-        /**
-         * Is the free kick for our team?
-         */
-        bool myTeamFreeKick();
+  /**
+   * Is the free kick for our team?
+   */
+  bool myTeamFreeKick();
 
-        /**
-         * Secondary time
-         */
-        int getSecondaryTime();
+  /**
+   * Secondary time
+   */
+  int getSecondaryTime();
 
-        void resetTimer();
+  void resetTimer();
 
-        int gameTime();
+  int gameTime();
 
-        bool tick(double elapsed) override;
-        double timeSincePlaying;
-        double timeSinceGamePlaying;
-        int remaining;
+  bool tick(double elapsed) override;
+  double timeSincePlaying;
+  double timeSinceGamePlaying;
+  int remaining;
 
-        int id, teamId;
-        int alive;
-        bool force, playing, gamePlaying;
+  int id, teamId;
+  int alive;
+  bool force, playing, gamePlaying;
 
-        bool wasPenalized;
+  bool wasPenalized;
 
-        bool dumpGameState;
+  bool dumpGameState;
 
-    protected:
-        RhIO::Bind *bind;
-        float beginDuration;
+protected:
+  RhIO::Bind* bind;
+  float beginDuration;
 
-        /**
-         * Textual referee state
-         */
-        std::string _state;
+  /**
+   * Textual referee state
+   */
+  std::string _state;
 
-        std::string cmdPlaying();
+  std::string cmdPlaying();
 
-        void setTextualState();
+  void setTextualState();
 };

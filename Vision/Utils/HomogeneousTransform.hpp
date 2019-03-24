@@ -8,10 +8,10 @@ namespace Vision {
 namespace Utils {
 
 class HT {
-public:
+ public:
   static cv::Mat rotX(const rhoban_utils::Angle &theta);
   static cv::Mat rotY(const rhoban_utils::Angle &theta);
   static cv::Mat rotZ(const rhoban_utils::Angle &theta);
 };
-}
-}
+}  // namespace Utils
+}  // namespace Vision

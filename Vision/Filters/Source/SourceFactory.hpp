@@ -4,7 +4,7 @@ namespace Filters {
 
 class FilterFactory;
 
-void registerSourceFilters(FilterFactory * ff);
+void registerSourceFilters(FilterFactory* ff);
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

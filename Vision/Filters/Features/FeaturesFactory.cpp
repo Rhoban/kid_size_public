@@ -7,11 +7,10 @@
 
 namespace Vision {
 namespace Filters {
-void registerFeaturesFilters(FilterFactory * ff)
-{
-//  ff->registerBuilder("VisualCompass", [](){return std::unique_ptr<Filter>(new VisualCompass);});
-  ff->registerBuilder("TagsDetector" , [](){return std::unique_ptr<Filter>(new TagsDetector );});
+void registerFeaturesFilters(FilterFactory* ff) {
+  //  ff->registerBuilder("VisualCompass", [](){return std::unique_ptr<Filter>(new VisualCompass);});
+  ff->registerBuilder("TagsDetector", []() { return std::unique_ptr<Filter>(new TagsDetector); });
 }
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

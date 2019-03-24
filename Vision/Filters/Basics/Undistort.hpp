@@ -2,7 +2,6 @@
 
 #include "Filters/Filter.hpp"
 
-
 namespace Vision {
 namespace Filters {
 
@@ -11,7 +10,7 @@ namespace Filters {
  * Corrects an image
  */
 class Undistort : public Filter {
-public:
+ public:
   Undistort();
 
   virtual std::string getClassName() const override { return "Undistort"; }
@@ -22,7 +21,7 @@ public:
 
   cv::Mat undistortOneShot(cv::Mat);
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -30,10 +29,10 @@ protected:
 
   virtual void setParameters() override;
 
-private:
+ private:
   bool _first = true;
   cv::Mat _map1, _map2, _map1Inverted;
   cv::UMat map1, map2;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

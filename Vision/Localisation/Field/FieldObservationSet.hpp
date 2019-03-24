@@ -4,7 +4,7 @@ namespace Vision {
 namespace Localisation {
 
 class FieldObservationSet : public rhoban_utils::JsonSerializable {
-public:
+ public:
   std::vector<SerializableFieldObservation *> observations;
 
   ~FieldObservationSet();
@@ -13,8 +13,8 @@ public:
 
   std::string getClassName() const override;
   Json::Value toJson() const override;
-  void fromJson(const Json::Value & v, const std::string & dir_name) override;
-  void treatObservationNode(const Json::Value & v, const std::string & dir_name);
+  void fromJson(const Json::Value &v, const std::string &dir_name) override;
+  void treatObservationNode(const Json::Value &v, const std::string &dir_name);
 };
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

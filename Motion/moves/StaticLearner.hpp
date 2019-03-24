@@ -15,10 +15,10 @@ class StaticLearner : public Move
 public:
   StaticLearner();
   std::string getName();
-  
+
   void onStart();
   void onStop();
-  
+
   void step(float elapsed);
 
   bool _staticOn;
@@ -33,15 +33,15 @@ public:
   bool _snapshot;
   bool _goToOn;
   bool _goToIndex;
-private:
 
-  void savePositions(int position=-1);
+private:
+  void savePositions(int position = -1);
 
   void followPresentPositions();
   void followPresentPositionsArms();
   void followPresentPositionsLeftLeg();
   void followPresentPositionsRightLeg();
-  
+
   void setPLegs();
 
   void setPArms();
@@ -51,10 +51,10 @@ private:
   void calculateExtraAngles();
   void addExtraAngles();
   void goToPositions(int index);
-  
+
   int _oldPointIndex;
   bool _oldStaticOn;
-  
+
   // Name helpers
   std::vector<std::string> _dofNames;
   std::vector<std::string> _legsDofNames;
@@ -73,5 +73,4 @@ private:
 
   // Map of dofName -> actual goal position
   std::map<std::string, float> _mapOfActualGoalPosition;
-
 };

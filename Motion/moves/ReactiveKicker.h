@@ -6,10 +6,11 @@ class Walk;
 
 /// This class simply launches a kick if the ball is estimated to be
 /// inside the kick zone
-class ReactiveKicker : public ApproachMove {
+class ReactiveKicker : public ApproachMove
+{
 public:
-  ReactiveKicker(Walk * walk);
-  
+  ReactiveKicker(Walk* walk);
+
   /// Implement Move
   virtual std::string getName() override;
   virtual void onStart() override;

@@ -2,7 +2,7 @@
 
 #include "moves/Move.h"
 
-#include "problems/kick_controler.h"//from csa_mdp_experiments
+#include "problems/kick_controler.h"  //from csa_mdp_experiments
 
 #include "rhoban_utils/angle.h"
 
@@ -19,10 +19,10 @@ public:
   /// Return the wished direction for the next kick
   rhoban_utils::Angle getKickDir() const;
 
-  /// Returns the accepted tolerance for the next kick +/- [deg] 
+  /// Returns the accepted tolerance for the next kick +/- [deg]
   double getTolerance() const;
 
-  const std::vector<std::string> & getAllowedKicks() const;
+  const std::vector<std::string>& getAllowedKicks() const;
 
 protected:
   /// Which kicks are currently allowed by the kick_controler

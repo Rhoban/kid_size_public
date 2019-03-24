@@ -21,14 +21,14 @@ class CameraState;
 
 class Pipeline;
 
-
 enum ParameterType { DEFAULT, OUTPUT, INPUT, PARAM };
 
 /**
  * Structure for filter parameter with
  * minimun and maximum bounds
  */
-template <class T> struct Parameter {
+template <class T>
+struct Parameter {
   T value;
   T min;
   T max;
@@ -50,22 +50,22 @@ template <class T> struct Parameter {
 
   bool exportToRhIO() {
     switch (type) {
-    case DEFAULT:
-    case OUTPUT:
-      return true;
-    default:
-      return false;
+      case DEFAULT:
+      case OUTPUT:
+        return true;
+      default:
+        return false;
     }
   }
 
   bool importFromRhIO() {
     switch (type) {
-    case DEFAULT:
-    case PARAM:
-    case INPUT:
-      return true;
-    default:
-      return false;
+      case DEFAULT:
+      case PARAM:
+      case INPUT:
+        return true;
+      default:
+        return false;
     }
   }
 };
@@ -90,7 +90,7 @@ typedef Parameter<float> ParamFloat;
  * pipeline (acyclic directed graph)
  */
 class Filter : public rhoban_utils::JsonSerializable {
-public:
+ public:
   enum UpdateType { backward, forward, steady };
 
   /// Is the image displayed using openCV
@@ -100,8 +100,7 @@ public:
    * Typedef for Parameter Container and
    * dependency container
    */
-  typedef ParamsContainer<bool, int, long, float, double, ParamInt, ParamFloat,
-                          std::vector<double>> Parameters;
+  typedef ParamsContainer<bool, int, long, float, double, ParamInt, ParamFloat, std::vector<double>> Parameters;
   typedef std::vector<std::string> Dependencies;
 
   /**
@@ -151,7 +150,7 @@ public:
   void initWindow();
 
   // Json stuff
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name);
+  virtual void fromJson(const Json::Value &v, const std::string &dir_name);
   virtual Json::Value toJson() const;
   virtual std::string getClassName() const { return "Filter"; }
   virtual int expectedDependencies() const { return 1; }
@@ -166,7 +165,7 @@ public:
 
   static bool GPU_ON;
 
-protected:
+ protected:
   // If an image is shown by a filter, then its name should be here
   static std::vector<std::string> listOfPresentWindows;
 
@@ -179,7 +178,6 @@ protected:
   virtual void initRhIO(const std::string &path);
   virtual void importFromRhIO(const std::string &path);
   virtual void publishToRhIO(const std::string &path);
-
 
   /**
    * Return the Filter registered
@@ -200,8 +198,8 @@ protected:
    */
   cv::Mat &img();
 
-  /// Access to the cached Image 
-  cv::Mat & cachedImg();
+  /// Access to the cached Image
+  cv::Mat &cachedImg();
 
   /**
    * Filter implementation called by run (switch to next image)
@@ -224,21 +222,22 @@ protected:
    */
   unsigned long now() const;
 
-
   /// Read only values of Parameters and not min or max
-  template <typename T> void tryParametersUpdate(const Json::Value & v, const std::string & key) {
+  template <typename T>
+  void tryParametersUpdate(const Json::Value &v, const std::string &key) {
     std::map<std::string, T> parameters;
     rhoban_utils::tryReadMap(v, key, &parameters);
-    for (const auto & pair : parameters) {
+    for (const auto &pair : parameters) {
       params()->set<Parameter<T>>(pair.first) = pair.second;
     }
   }
 
   /// Write only values of Parameters and not min or max
-  template <typename T> Json::Value parameters2Json() const {
+  template <typename T>
+  Json::Value parameters2Json() const {
     // Converting the ParameterMap to a map of basic type
     std::map<std::string, T> values;
-    for (const auto & pair : params()->params<Parameter<T>>().getMap()) {
+    for (const auto &pair : params()->params<Parameter<T>>().getMap()) {
       values[pair.first] = pair.second.value;
     }
     return rhoban_utils::map2Json(values);
@@ -251,14 +250,13 @@ protected:
   Dependencies _dependencies;
 
   /**
-     * List of Regions of interest
-     */
+   * List of Regions of interest
+   */
   std::vector<std::pair<float, cv::RotatedRect>>
-      _rois; //<roi, quality> (.boundingRect() on a RotatedRect to get a Rect)
+      _rois;  //<roi, quality> (.boundingRect() on a RotatedRect to get a Rect)
   std::vector<std::pair<float, rhoban_geometry::Circle>> _circleRois;
 
-protected:
-
+ protected:
   /// Display the image
   void displayCurrent();
 
@@ -331,4 +329,4 @@ protected:
    */
   void waitDependencies() const;
 };
-}
+}  // namespace Vision

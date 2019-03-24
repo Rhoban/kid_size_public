@@ -13,10 +13,10 @@ namespace Filters {
  * (order do not matter)
  */
 class AbsDiff : public Filter {
-public:
+ public:
   AbsDiff() : Filter("absDiff") {}
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -25,7 +25,7 @@ protected:
   virtual std::string getClassName() const override { return "AbsDiff"; }
   virtual int expectedDependencies() const override { return 2; }
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision
 
 #endif

@@ -19,5 +19,5 @@ void Dilate::process() {
   cv::Mat kernel = getStructuringElement(shape, cv::Size(kWidth, kHeight));
   dilate(*(getDependency().getImg()), img(), kernel);
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

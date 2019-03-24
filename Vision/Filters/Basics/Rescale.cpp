@@ -14,5 +14,5 @@ void Rescale::process() {
   cv::Mat src = *(getDependency().getImg());
   cv::resize(src, img(), cv::Size(src.cols / _ratio, src.rows / _ratio));
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

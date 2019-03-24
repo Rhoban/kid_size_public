@@ -11,12 +11,12 @@ namespace Filters {
  * Dilate the image with a kernel of a given width, height and shape
  */
 class Dilate : public Filter {
-public:
+ public:
   Dilate() : Filter("Dilate") {}
 
   virtual std::string getClassName() const override { return "Dilate"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -24,7 +24,7 @@ protected:
 
   virtual void setParameters() override;
 
-private:
+ private:
   /**
    * Shape :
    * 0 - Rect
@@ -35,5 +35,5 @@ private:
   ParamInt kWidth;
   ParamInt kHeight;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

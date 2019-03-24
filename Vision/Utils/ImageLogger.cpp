@@ -8,40 +8,34 @@
 namespace Vision {
 namespace Utils {
 
-ImageLogger::ImageLogger(const std::string & logger_prefix, bool store_images, int max_img)
-  : logger_prefix(logger_prefix),
-    store_images(store_images),
-    max_img(max_img)
-{
-}
+ImageLogger::ImageLogger(const std::string& logger_prefix, bool store_images, int max_img)
+    : logger_prefix(logger_prefix), store_images(store_images), max_img(max_img) {}
 
-bool ImageLogger::isActive() const {
-  return session_path != "";
-}
+bool ImageLogger::isActive() const { return session_path != ""; }
 
-void ImageLogger::pushEntry(const ImageLogger::Entry & cst_entry) {
+void ImageLogger::pushEntry(const ImageLogger::Entry& cst_entry) {
   // Start session if required
   if (!isActive()) {
     initSession();
   }
   // If too much images have been written, throw a SizeLimitException
-  if (img_index >= max_img)  {
+  if (img_index >= max_img) {
     throw SizeLimitException(DEBUG_INFO + " max images reached");
   }
   // Store or write imaged depending on mode
   Entry entry(cst_entry.first, cst_entry.second.clone());
-  
+
   if (store_images) {
-      entries_map[img_index] = entry;
+    entries_map[img_index] = entry;
   } else {
-      writeEntry(img_index, entry);
+    writeEntry(img_index, entry);
   }
   img_index++;
 }
 
 void ImageLogger::endSession() {
   if (entries_map.size() != 0) {
-    for (const auto & pair : entries_map) {
+    for (const auto& pair : entries_map) {
       writeEntry(pair.first, pair.second);
     }
   }
@@ -51,7 +45,7 @@ void ImageLogger::endSession() {
   img_index = 0;
 }
 
-void ImageLogger::initSession(const std::string & session_local_path) {
+void ImageLogger::initSession(const std::string& session_local_path) {
   if (session_local_path != "") {
     session_path = logger_prefix + "/" + session_local_path;
   } else {
@@ -71,16 +65,13 @@ void ImageLogger::initSession(const std::string & session_local_path) {
   description_file << "clock_offset:" << clock_offset << std::endl;
 }
 
-const std::string & ImageLogger::getSessionPath() {
-  return session_path;
-}
+const std::string& ImageLogger::getSessionPath() { return session_path; }
 
-
-void ImageLogger::writeEntry(int idx, const Entry & e) {
+void ImageLogger::writeEntry(int idx, const Entry& e) {
   // Building image name
   int nb_digits = std::log10(max_img);
   int currentDigits = 1;
-  if (idx > 0 ) {
+  if (idx > 0) {
     currentDigits = std::log10(idx);
   }
   std::ostringstream image_path_oss;
@@ -95,5 +86,5 @@ void ImageLogger::writeEntry(int idx, const Entry & e) {
   description_file << (unsigned long)e.first.getTimeMS() << "," << img_name << std::endl;
 }
 
-}
-}
+}  // namespace Utils
+}  // namespace Vision

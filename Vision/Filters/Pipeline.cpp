@@ -10,18 +10,15 @@
 
 #include "rhoban_utils/timing/benchmark.h"
 
-using Vision::Utils::CameraState;
 using ::rhoban_utils::TimeStamp;
+using Vision::Utils::CameraState;
 
 using namespace std;
 using namespace rhoban_utils;
 
 namespace Vision {
 
-Pipeline::Pipeline()
-  : _filters(), _rootFilters(), _children(), _filterThread(), _timestamp() {
-  cs = NULL;
-}
+Pipeline::Pipeline() : _filters(), _rootFilters(), _children(), _filterThread(), _timestamp() { cs = NULL; }
 
 Pipeline::~Pipeline() {
   // Free Filters
@@ -41,8 +38,7 @@ void Pipeline::add(Filter *filter) {
     throw std::logic_error("Pipeline null filter");
   }
   if (_filters.count(filter->getName()) != 0) {
-    throw std::logic_error("Pipeline filter name already register: '" +
-                           filter->getName() + "'");
+    throw std::logic_error("Pipeline filter name already register: '" + filter->getName() + "'");
   }
 
   _filters[filter->getName()] = filter;
@@ -53,7 +49,7 @@ void Pipeline::add(Filter *filter) {
   }
 }
 
-void Pipeline::add(std::vector<std::unique_ptr<Filter>> * filters) {
+void Pipeline::add(std::vector<std::unique_ptr<Filter>> *filters) {
   for (size_t idx = 0; idx < filters->size(); idx++) {
     add((*filters)[idx].release());
   }
@@ -63,8 +59,7 @@ const Filter &Pipeline::get(const std::string &name) const {
   try {
     return *(_filters.at(name));
   } catch (const std::out_of_range &e) {
-    throw std::runtime_error("No filters named '" + name +
-                             "' found in pipeline");
+    throw std::runtime_error("No filters named '" + name + "' found in pipeline");
   }
 }
 Filter &Pipeline::get(const std::string &name) {
@@ -72,14 +67,11 @@ Filter &Pipeline::get(const std::string &name) {
     return *(_filters.at(name));
   } catch (const std::out_of_range &e) {
     cout << "No filters named '" + name + "' found in pipeline" << endl;
-    throw std::runtime_error("No filters named '" + name +
-                             "' found in pipeline");
+    throw std::runtime_error("No filters named '" + name + "' found in pipeline");
   }
 }
 
-bool Pipeline::isFilterPresent(const std::string &name) {
-  return _filters.find(name) != _filters.end();
-}
+bool Pipeline::isFilterPresent(const std::string &name) { return _filters.find(name) != _filters.end(); }
 
 const Pipeline::FiltersMap &Pipeline::filters() const { return _filters; }
 Pipeline::FiltersMap &Pipeline::filters() { return _filters; }
@@ -93,24 +85,22 @@ void Pipeline::step(Filter::UpdateType updateType) {
   std::list<Filter *> list;
   std::map<std::string, int> dependenciesSolved;
   for (Filter *filter : _rootFilters) {
-
     filter->runStep(updateType);
 
-    Filters::Source * src = dynamic_cast<Filters::Source*>(filter);
-    if (src != nullptr){
+    Filters::Source *src = dynamic_cast<Filters::Source *>(filter);
+    if (src != nullptr) {
       // Vital step : after processing the source filter, the timestamp of the
       // image is known
       // and the cameraState needs to be updated.
       frames++;
-    
+
       switch (src->getType()) {
         case Filters::Source::Log:
-        case Filters::Source::Online:
-        {
+        case Filters::Source::Online: {
           // converting to (double) seconds (we shouldn't need the imageDelay anymore)
           double sourcets = _timestamp.getTimeMS() - imageDelay;
           double csTimeStampSeconds = sourcets / 1000.0;
-          
+
           if (cs != nullptr) {
             cs->updateInternalModel(csTimeStampSeconds);
           }
@@ -118,7 +108,7 @@ void Pipeline::step(Filter::UpdateType updateType) {
         }
         case Filters::Source::Custom:
           if (cs != nullptr) {
-            delete(cs);
+            delete (cs);
           }
           setCameraState(src->buildCameraState());
           break;
@@ -128,8 +118,7 @@ void Pipeline::step(Filter::UpdateType updateType) {
       std::string sonName = son->getName();
 
       dependenciesSolved[sonName]++;
-      if ((size_t)dependenciesSolved[sonName] ==
-          _filters[sonName]->_dependencies.size()) {
+      if ((size_t)dependenciesSolved[sonName] == _filters[sonName]->_dependencies.size()) {
         list.push_back(son);
       }
     }
@@ -138,15 +127,13 @@ void Pipeline::step(Filter::UpdateType updateType) {
   // And sweep through topological order
   // Do no process a filter twice
   while (!list.empty()) {
-
     Filter *filter = list.front();
     filter->runStep();
 
     for (auto &son : _children.at(filter->getName())) {
       std::string sonName = son->getName();
       dependenciesSolved[sonName]++;
-      if ((size_t)dependenciesSolved[sonName] ==
-          _filters[sonName]->_dependencies.size()) {
+      if ((size_t)dependenciesSolved[sonName] == _filters[sonName]->_dependencies.size()) {
         list.push_back(son);
       }
     }
@@ -154,9 +141,7 @@ void Pipeline::step(Filter::UpdateType updateType) {
   }
 }
 
-void Pipeline::runStep() {
-  step(Filter::UpdateType::forward);
-}
+void Pipeline::runStep() { step(Filter::UpdateType::forward); }
 
 void Pipeline::resolveDependencies() {
   if (_children.size() != 0) {
@@ -181,12 +166,10 @@ void Pipeline::resolveDependencies() {
       _filters.at(father);
     } catch (const std::out_of_range &exc) {
       std::ostringstream oss;
-      oss << "Unknown dependency '" << father
-          << "', required from the following filters: ( ";
+      oss << "Unknown dependency '" << father << "', required from the following filters: ( ";
       for (size_t index = 0; index < pair.second.size(); index++) {
         oss << "'" << pair.second[index]->getName() << "'";
-        if (index != pair.second.size() - 1)
-          oss << ",";
+        if (index != pair.second.size() - 1) oss << ",";
       }
       oss << ")";
       throw std::runtime_error(oss.str());
@@ -202,7 +185,7 @@ Json::Value Pipeline::toJson() const {
   return v;
 }
 
-void Pipeline::addFiltersFromJson(const Json::Value & v, const std::string & dir_name) {
+void Pipeline::addFiltersFromJson(const Json::Value &v, const std::string &dir_name) {
   Filters::FilterFactory ff;
   std::vector<std::unique_ptr<Filter>> result;
   if (v.isArray()) {
@@ -210,9 +193,8 @@ void Pipeline::addFiltersFromJson(const Json::Value & v, const std::string & dir
       add(ff.build(v[idx], dir_name).release());
     }
   } else if (v.isObject()) {
-    if (!v.isMember("filters") && ! v.isMember("paths")) {
-      throw JsonParsingError(DEBUG_INFO +
-                             " pipeline should contain either 'filters' or 'paths'");
+    if (!v.isMember("filters") && !v.isMember("paths")) {
+      throw JsonParsingError(DEBUG_INFO + " pipeline should contain either 'filters' or 'paths'");
     }
     if (v.isMember("filters")) {
       if (!v["filters"].isArray()) {
@@ -220,31 +202,29 @@ void Pipeline::addFiltersFromJson(const Json::Value & v, const std::string & dir
       }
       try {
         addFiltersFromJson(v["filters"], dir_name);
-      } catch (const JsonParsingError & err) {
+      } catch (const JsonParsingError &err) {
         throw JsonParsingError(std::string(err.what()) + " in 'filters'");
       }
     }
     std::vector<std::string> paths;
     rhoban_utils::tryReadVector(v, "paths", &paths);
-    for (const std::string & path : paths) {
+    for (const std::string &path : paths) {
       std::string file_path = dir_name + path;
       std::string read_dir_path = rhoban_utils::getDirName(file_path);
-      Json::Value path_value =  file2Json(file_path);
+      Json::Value path_value = file2Json(file_path);
       try {
         std::cout << "adding from " << file_path << std::endl;
         addFiltersFromJson(path_value, read_dir_path);
-      } catch (const JsonParsingError & err) {
+      } catch (const JsonParsingError &err) {
         throw JsonParsingError(std::string(err.what()) + " in '" + file_path + "'");
       }
     }
   } else {
-    throw rhoban_utils::JsonParsingError(DEBUG_INFO +
-                                         " pipeline is not an array neither an object");
+    throw rhoban_utils::JsonParsingError(DEBUG_INFO + " pipeline is not an array neither an object");
   }
 }
-                                                     
 
-void Pipeline::fromJson(const Json::Value & v, const std::string & dir_name) {
+void Pipeline::fromJson(const Json::Value &v, const std::string &dir_name) {
   addFiltersFromJson(v, dir_name);
   std::cout << "There is now " << _filters.size() << " filters." << std::endl;
 
@@ -254,12 +234,8 @@ void Pipeline::fromJson(const Json::Value & v, const std::string & dir_name) {
   }
 }
 
-void Pipeline::setTimestamp(const ::rhoban_utils::TimeStamp &ts) {
-  _timestamp = ts;
-}
-  
-const rhoban_utils::TimeStamp& Pipeline::getTimestamp() const {
-  return _timestamp;
-}
-  
-}
+void Pipeline::setTimestamp(const ::rhoban_utils::TimeStamp &ts) { _timestamp = ts; }
+
+const rhoban_utils::TimeStamp &Pipeline::getTimestamp() const { return _timestamp; }
+
+}  // namespace Vision

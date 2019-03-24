@@ -8,7 +8,7 @@
 namespace Vision {
 namespace Application {
 class Application : public rhoban_utils::JsonSerializable {
-public:
+ public:
   Application();
   virtual ~Application();
 
@@ -21,14 +21,14 @@ public:
   virtual void printHelp();
 
   // Json stuff
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value &v, const std::string &dir_name) override;
   virtual Json::Value toJson() const override;
   virtual std::string getClassName() const override { return "Application"; }
 
   /// Throws a logic_error if content is inconsistent (replay vs realtime)
   void checkConsistency() const;
 
-protected:
+ protected:
   // Pair of callback and comment
   typedef std::pair<std::function<void()>, std::string> KeyAction;
 
@@ -42,7 +42,7 @@ protected:
   Filter::UpdateType updateType;
   bool playNext;
   bool playing;
-  bool embedded; // No waitkey allowed on embedded version
+  bool embedded;  // No waitkey allowed on embedded version
   bool gpuOn;
   bool end;
   std::string pathToLog;
@@ -53,5 +53,5 @@ protected:
 
   bool exit_on_stream_end;
 };
-}
-}
+}  // namespace Application
+}  // namespace Vision

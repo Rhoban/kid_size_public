@@ -24,7 +24,7 @@ void ColorBounding::setParameters() {
 void ColorBounding::process() {
   cv::Mat src = *(getDependency().getImg());
 
-  cv::Mat temp(src.size(), 0, cv::Scalar(0)); // Unsigned char mat
+  cv::Mat temp(src.size(), 0, cv::Scalar(0));  // Unsigned char mat
   cv::Scalar lowLimit = cv::Scalar(minY, minU, minV);
   cv::Scalar highLimit = cv::Scalar(maxY, maxU, maxV);
 
@@ -32,5 +32,5 @@ void ColorBounding::process() {
 
   img() = temp;
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

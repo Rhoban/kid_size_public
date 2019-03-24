@@ -9,23 +9,20 @@
 class Walk;
 class PushRecovery3 : public Move
 {
-  
 public:
-  
-  PushRecovery3(Walk *walk);
-  
+  PushRecovery3(Walk* walk);
+
   void onStart();
   void onStop();
   std::string getName();
   void step(float elapsed);
 
   Eigen::Vector3d nextStepPosition();
-  
+
 protected:
-  
-  Walk *walk;
-  
-  bool pushWalkEnable; 
+  Walk* walk;
+
+  bool pushWalkEnable;
   bool enableLog;
   bool saved;
   bool loaded;
@@ -35,7 +32,7 @@ protected:
   bool recoverFall;
   bool triggerLeftFoot;
   bool triggerRightFoot;
-  
+
   double logTime;
   double t;
   double thresholdNominalScore;
@@ -52,10 +49,10 @@ protected:
   double offsetAnkle;
 
   double tMove;
-  double perturbationLastIteration;// To avoid outliers
+  double perturbationLastIteration;  // To avoid outliers
 
   bool enableReaction;
-  
+
   std::deque<double> meanAccXQueue;
 
   double thresholdMeanAccX;
@@ -65,5 +62,4 @@ protected:
   double offsetTrunkPitch;
 
   double offsetTrunkZ;
-  
 };

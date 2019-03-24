@@ -7,13 +7,11 @@ namespace Filters {
 
 std::map<std::string, int> ColorConverter::strToCVCode;
 
-void ColorConverter::process() {
-  cv::cvtColor(*(getDependency().getImg()), img(), getConvCode());
-}
+void ColorConverter::process() { cv::cvtColor(*(getDependency().getImg()), img(), getConvCode()); }
 
-void ColorConverter::fromJson(const Json::Value & v, const std::string & dir_name) {
+void ColorConverter::fromJson(const Json::Value &v, const std::string &dir_name) {
   Filter::fromJson(v, dir_name);
-  rhoban_utils::tryRead(v,"conversion",&conversion);
+  rhoban_utils::tryRead(v, "conversion", &conversion);
 }
 
 Json::Value ColorConverter::toJson() const {
@@ -43,5 +41,5 @@ void ColorConverter::buildMap() {
   strToCVCode["RGB2YCrCb"] = CV_RGB2YCrCb;
   strToCVCode["BGR2YCrCb"] = CV_BGR2YCrCb;
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

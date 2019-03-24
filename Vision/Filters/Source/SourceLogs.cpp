@@ -25,15 +25,14 @@ void SourceLogs::updateImg() {
   if (display) {
     std::cout << "Displaying image : " << images.getIndex() << std::endl;
     std::cout << "-> Time: " << images.getTimestamp() << std::endl;
-
   }
   getPipeline()->setTimestamp(::rhoban_utils::TimeStamp::fromMS(images.getTimestamp()));
 }
 
-void SourceLogs::fromJson(const Json::Value & v, const std::string & dir_name) {
+void SourceLogs::fromJson(const Json::Value& v, const std::string& dir_name) {
   Filter::fromJson(v, dir_name);
-  rhoban_utils::tryRead(v,"startIndex",&startIndex);
-  rhoban_utils::tryRead(v,"imagesFile",&imagesFile);
+  rhoban_utils::tryRead(v, "startIndex", &startIndex);
+  rhoban_utils::tryRead(v, "imagesFile", &imagesFile);
   openImageSequence();
 }
 
@@ -44,10 +43,7 @@ Json::Value SourceLogs::toJson() const {
   return v;
 }
 
-Source::Type SourceLogs::getType() const {
-  return Type::Log;
-}
-
+Source::Type SourceLogs::getType() const { return Type::Log; }
 
 std::string SourceLogs::getImgName() const { return images.imgOriginalName(); }
 
@@ -60,11 +56,8 @@ void SourceLogs::previous() {
   updateImg();
 }
 
-void SourceLogs::update() {
-  updateImg();
-}
+void SourceLogs::update() { updateImg(); }
 
-}
+}  // namespace Filters
 
-
-}
+}  // namespace Vision

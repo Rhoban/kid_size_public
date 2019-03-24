@@ -15,11 +15,11 @@ namespace Filters {
  * No dependency filter providing frames coming from the specified folder
  */
 class SourceLogs : public Source {
-public:
+ public:
   SourceLogs() : Source("SourceLogs") {}
 
   // JSON stuff
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name);
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name);
   virtual Json::Value toJson() const;
   virtual std::string getClassName() const override { return "SourceLogs"; }
   virtual int expectedDependencies() const override { return 0; }
@@ -35,7 +35,7 @@ public:
   void previous() override;
   void updateImg();
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -43,11 +43,11 @@ protected:
 
   void openImageSequence();
 
-private:
+ private:
   int startIndex;
   std::string imagesFile;
 
   Utils::ImageSequence images;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

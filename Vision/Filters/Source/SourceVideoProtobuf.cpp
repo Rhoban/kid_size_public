@@ -10,16 +10,10 @@
 
 #include <stdexcept>
 
-
 namespace Vision {
 namespace Filters {
 
-SourceVideoProtobuf::SourceVideoProtobuf() :
-  Source("SourceVideoProtobuf"),
-  startIndex(0),
-  index(0)
-{
-}
+SourceVideoProtobuf::SourceVideoProtobuf() : Source("SourceVideoProtobuf"), startIndex(0), index(0) {}
 
 void SourceVideoProtobuf::openVideo() {
   if (!video.open(videoPath)) {
@@ -37,20 +31,17 @@ void SourceVideoProtobuf::loadMetaInformation() {
   }
 }
 
-Utils::CameraState * SourceVideoProtobuf::buildCameraState() {
+Utils::CameraState* SourceVideoProtobuf::buildCameraState() {
   if (index < 0 || index >= videoMetaInformation.camera_states_size()) {
     throw std::runtime_error(DEBUG_INFO + " invalid index: " + std::to_string(index));
   }
   if (!videoMetaInformation.has_camera_parameters()) {
     throw std::runtime_error(DEBUG_INFO + " camera_parameters were not provided");
   }
-  return new Utils::CameraState(videoMetaInformation.camera_parameters(),
-                                videoMetaInformation.camera_states(index));
+  return new Utils::CameraState(videoMetaInformation.camera_parameters(), videoMetaInformation.camera_states(index));
 }
 
-void SourceVideoProtobuf::process() {
-  updateImg();
-}
+void SourceVideoProtobuf::process() { updateImg(); }
 
 void SourceVideoProtobuf::updateImg() {
   index = (int)video.get(cv::CAP_PROP_POS_FRAMES);
@@ -63,16 +54,16 @@ void SourceVideoProtobuf::updateImg() {
   }
 }
 
-void SourceVideoProtobuf::fromJson(const Json::Value & v, const std::string & dir_name) {
+void SourceVideoProtobuf::fromJson(const Json::Value& v, const std::string& dir_name) {
   Filter::fromJson(v, dir_name);
-  rhoban_utils::tryRead(v,"startIndex",&startIndex);
-  rhoban_utils::tryRead(v,"videoPath",&videoPath);
-  rhoban_utils::tryRead(v,"metaInformationPath",&metaInformationPath);
+  rhoban_utils::tryRead(v, "startIndex", &startIndex);
+  rhoban_utils::tryRead(v, "videoPath", &videoPath);
+  rhoban_utils::tryRead(v, "metaInformationPath", &metaInformationPath);
   openVideo();
   loadMetaInformation();
-  
+
   if (startIndex != 0) {
-    setIndex(startIndex -1);
+    setIndex(startIndex - 1);
     updateImg();
   }
 }
@@ -85,26 +76,14 @@ Json::Value SourceVideoProtobuf::toJson() const {
   return v;
 }
 
-std::string SourceVideoProtobuf::getClassName() const
-{
-  return "SourceVideoProtobuf";
-}
+std::string SourceVideoProtobuf::getClassName() const { return "SourceVideoProtobuf"; }
 
-int SourceVideoProtobuf::expectedDependencies() const
-{
-  return 0;
-}
+int SourceVideoProtobuf::expectedDependencies() const { return 0; }
 
-Source::Type SourceVideoProtobuf::getType() const {
-  return Type::Custom;
-}
+Source::Type SourceVideoProtobuf::getType() const { return Type::Custom; }
 
-int SourceVideoProtobuf::getIndex() const {
-  return index;
-}
-int SourceVideoProtobuf::getNbFrames() const {
-  return (int)video.get(cv::CAP_PROP_FRAME_COUNT);
-}
+int SourceVideoProtobuf::getIndex() const { return index; }
+int SourceVideoProtobuf::getNbFrames() const { return (int)video.get(cv::CAP_PROP_FRAME_COUNT); }
 
 void SourceVideoProtobuf::setIndex(int target_index) {
   if (!video.set(cv::CAP_PROP_POS_FRAMES, target_index)) {
@@ -112,12 +91,10 @@ void SourceVideoProtobuf::setIndex(int target_index) {
   }
 }
 
-bool SourceVideoProtobuf::isValid() const {
-  return video.isOpened();
-}
+bool SourceVideoProtobuf::isValid() const { return video.isOpened(); }
 
 void SourceVideoProtobuf::previous() {
-  setIndex(index-1);
+  setIndex(index - 1);
   updateImg();
 }
 
@@ -126,7 +103,6 @@ void SourceVideoProtobuf::update() {
   updateImg();
 }
 
-}
+}  // namespace Filters
 
-
-}
+}  // namespace Vision

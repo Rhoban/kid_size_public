@@ -12,134 +12,129 @@
 /**
  * TeamPlay
  *
- * UDP broadcast playing and robot state 
+ * UDP broadcast playing and robot state
  * to others players and monitoring
  */
 class TeamPlayService : public Service
 {
-    public:
+public:
+  /**
+   * Initialization
+   */
+  TeamPlayService();
 
-        /**
-         * Initialization
-         */
-        TeamPlayService();
+  /**
+   * Destructor
+   */
+  virtual ~TeamPlayService();
 
-        /**
-         * Destructor
-         */
-        virtual ~TeamPlayService();
+  /**
+   * Return the robot teamplay id
+   */
+  int myId();
 
-        /**
-         * Return the robot teamplay id
-         */
-        int myId();
-        
-        /**
-         * Access a teamplay info 
-         * struct of current robot
-         */
-        const rhoban_team_play::TeamPlayInfo& selfInfo() const;
-        rhoban_team_play::TeamPlayInfo& selfInfo();
+  /**
+   * Access a teamplay info
+   * struct of current robot
+   */
+  const rhoban_team_play::TeamPlayInfo& selfInfo() const;
+  rhoban_team_play::TeamPlayInfo& selfInfo();
 
-        /**
-         * Access to container to information 
-         * on available other players
-         */
-        const std::map<int, rhoban_team_play::TeamPlayInfo>& allInfo() const;
+  /**
+   * Access to container to information
+   * on available other players
+   */
+  const std::map<int, rhoban_team_play::TeamPlayInfo>& allInfo() const;
 
-        /**
-         * Read/Write network and 
-         * update outputs
-         */
-        bool tick(double elapsed);
+  /**
+   * Read/Write network and
+   * update outputs
+   */
+  bool tick(double elapsed);
 
-        /**
-         * Is team play enabled ?
-         */
-        bool isEnabled();
-    
- 
-        /**
-         * TeamPlay radius
-         */
-        double teamRadius;
+  /**
+   * Is team play enabled ?
+   */
+  bool isEnabled();
 
-        /**
-         * Extra radius for the referee
-         */
-        double refereeRadius;
-        
-    private:
+  /**
+   * TeamPlay radius
+   */
+  double teamRadius;
 
-        /**
-         * RhIO Binding
-         */
-        RhIO::Bind* _bind;
+  /**
+   * Extra radius for the referee
+   */
+  double refereeRadius;
 
-        /**
-         * UDPBroadcast instance
-         */
-        rhoban_utils::UDPBroadcast* _broadcaster;
+private:
+  /**
+   * RhIO Binding
+   */
+  RhIO::Bind* _bind;
 
-        /**
-         * Protobuf message manager
-         */
-        std::unique_ptr<hl_communication::UDPMessageManager> _protobuf_message_manager;
+  /**
+   * UDPBroadcast instance
+   */
+  rhoban_utils::UDPBroadcast* _broadcaster;
 
-        /**
-         * Current and other robots infos
-         */
-        rhoban_team_play::TeamPlayInfo _selfInfo;
-        std::map<int, rhoban_team_play::TeamPlayInfo> _allInfo;
+  /**
+   * Protobuf message manager
+   */
+  std::unique_ptr<hl_communication::UDPMessageManager> _protobuf_message_manager;
 
-        /**
-         * Protobuf Communication
-         */
-        hl_communication::GameMsg _myMessage;
+  /**
+   * Current and other robots infos
+   */
+  rhoban_team_play::TeamPlayInfo _selfInfo;
+  std::map<int, rhoban_team_play::TeamPlayInfo> _allInfo;
 
-        /**
-         * Send and check 
-         * delay in seconds
-         */
-        double _t;
-        
-        /**
-         * Enable or disable the teamplay
-         */
-        bool _isEnabled;
+  /**
+   * Protobuf Communication
+   */
+  hl_communication::GameMsg _myMessage;
 
-        /**
-         * Broadcast period in seconds
-         */
-        double _broadcastPeriod;
+  /**
+   * Send and check
+   * delay in seconds
+   */
+  double _t;
 
-        /**
-         * Do message sending if needed
-         */
-        void messageSend();
+  /**
+   * Enable or disable the teamplay
+   */
+  bool _isEnabled;
 
-        /**
-         * Parse given message 
-         * and update teamplay state
-         */
-        void processInfo(rhoban_team_play::TeamPlayInfo info);
+  /**
+   * Broadcast period in seconds
+   */
+  double _broadcastPeriod;
 
-        /**
-         * Is the placing aggressive or defensive?
-         */
-        double aggressivity;
+  /**
+   * Do message sending if needed
+   */
+  void messageSend();
 
-        /**
-         * For hl_communication, the direction of x-axis for field referential is
-         * based on the position of the team area. If the team attacks to the left of
-         * the team area, then the field is inverted
-         */
-        bool _isFieldInverted;
-        
-        /**
-         * RhIO team command
-         */
-        std::string cmdTeam();
+  /**
+   * Parse given message
+   * and update teamplay state
+   */
+  void processInfo(rhoban_team_play::TeamPlayInfo info);
 
+  /**
+   * Is the placing aggressive or defensive?
+   */
+  double aggressivity;
+
+  /**
+   * For hl_communication, the direction of x-axis for field referential is
+   * based on the position of the team area. If the team attacks to the left of
+   * the team area, then the field is inverted
+   */
+  bool _isFieldInverted;
+
+  /**
+   * RhIO team command
+   */
+  std::string cmdTeam();
 };
-

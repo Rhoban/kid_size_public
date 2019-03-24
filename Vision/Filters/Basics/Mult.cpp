@@ -10,5 +10,5 @@ void Mult::setParameters() {
 }
 
 void Mult::process() { img() = *(getDependency().getImg()) * _ratio; }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

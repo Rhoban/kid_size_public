@@ -12,17 +12,17 @@ namespace Filters {
  * (Order matters and if A[i,j] < B[i,j], then R[i,j] = 0)
  */
 class Diff : public Filter {
-public:
+ public:
   Diff() : Filter("Diff") {}
 
   virtual std::string getClassName() const override { return "Diff"; }
   virtual int expectedDependencies() const override { return 2; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
   virtual void process() override;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

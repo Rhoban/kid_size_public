@@ -8,37 +8,37 @@ class Walk;
 class Placer;
 class Search : public STM
 {
-    public:
-        Search(Walk *walk, Placer *placer);
-        std::string getName();
+public:
+  Search(Walk* walk, Placer* placer);
+  std::string getName();
 
-        void onStart();
-        void onStop();
-        void step(float elapsed);
+  void onStart();
+  void onStop();
+  void step(float elapsed);
 
-        float t;
-        float getAzimuth();
-        float getAzimuthError();
-        float targetAzimuth;
+  float t;
+  float getAzimuth();
+  float getAzimuthError();
+  float targetAzimuth;
 
-        bool goLeft, goForward, goRight;
+  bool goLeft, goForward, goRight;
 
-        int goDir;
-        int nbRotate;
-        
-    protected:
-        Walk *walk;
-        Placer *placer;
+  int goDir;
+  int nbRotate;
 
-        float rotateAfter, rotateAngle;
-        float beginStep;
+protected:
+  Walk* walk;
+  Placer* placer;
 
-        float beginX, beginY, beginAzimuth;
-        float P1X, P1Y, P1Azimuth;
-        float P2X, P2Y, P2Azimuth;
-        float lastBallY;
-        int patrolTarget;
+  float rotateAfter, rotateAngle;
+  float beginStep;
 
-        void enterState(std::string state);
-        void exitState(std::string state);
+  float beginX, beginY, beginAzimuth;
+  float P1X, P1Y, P1Azimuth;
+  float P2X, P2Y, P2Azimuth;
+  float lastBallY;
+  int patrolTarget;
+
+  void enterState(std::string state);
+  void exitState(std::string state);
 };

@@ -12,16 +12,16 @@ namespace Filters {
  * dst(x,y) is the norm of all the channels from the source image
  */
 class Norm : public Filter {
-public:
+ public:
   Norm() : Filter("Norm") {}
 
   virtual std::string getClassName() const override { return "Norm"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
   virtual void process() override;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -5,14 +5,14 @@
 #include <services/TeamPlayService.h>
 
 #include "rhoban_csa_mdp/core/policy.h"
-#include "problems/ball_approach.h"//from csa_mdp_experiments
+#include "problems/ball_approach.h"  //from csa_mdp_experiments
 
 class Walk;
 
 class LearnedApproach : public ApproachMove
 {
 public:
-  LearnedApproach(Walk *walk);
+  LearnedApproach(Walk* walk);
   std::string getName();
 
   void onStart() override;
@@ -21,9 +21,9 @@ public:
   void step(float elapsed);
 
 protected:
-
   /// Each KickSolution has several properties:
-  class KickSolution {
+  class KickSolution
+  {
   public:
     /// Policy used for the kick
     std::unique_ptr<csa_mdp::Policy> policy;
@@ -35,10 +35,9 @@ protected:
     std::string problem_file;
   };
 
-
   std::string getActivePolicyName();
 
-  KickSolution & getActiveKick();
+  KickSolution& getActiveKick();
 
   /// Return current state, requesting other moves and services
   Eigen::VectorXd getState();
@@ -47,10 +46,10 @@ protected:
   void startWarmUp();
 
   /// If warm_up time is reached or _doKick is disabled, stop the move
-  void warmUp(const Eigen::VectorXd & state);
+  void warmUp(const Eigen::VectorXd& state);
 
   /// Use policy to update current orders
-  void updateWalk(const Eigen::VectorXd & state);
+  void updateWalk(const Eigen::VectorXd& state);
 
   /// Update all policies from json files
   void updatePolicies();
@@ -73,7 +72,7 @@ protected:
   double warm_up_time;
 
   /// If true, the robot start an actual Kick at the end
-  /// of a approach 
+  /// of a approach
   bool do_kick;
 
   /// If not empty, state and action is logged

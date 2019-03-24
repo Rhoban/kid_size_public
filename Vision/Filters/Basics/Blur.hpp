@@ -11,12 +11,12 @@ namespace Filters {
  * Blur the image with a kernel of a given width and height
  */
 class Blur : public Filter {
-public:
+ public:
   Blur() : Filter("Blur") {}
 
   virtual std::string getClassName() const override { return "Blur"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -24,9 +24,9 @@ protected:
 
   virtual void setParameters() override;
 
-private:
+ private:
   ParamInt kWidth;
   ParamInt kHeight;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

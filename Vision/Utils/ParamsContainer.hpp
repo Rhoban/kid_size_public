@@ -15,15 +15,16 @@ namespace ParamsContainerImpl {
 /**
  * Typedef for parameters callback on set
  */
-template <class T> using Callback = std::function<void(T &)>;
+template <class T>
+using Callback = std::function<void(T &)>;
 
 /**
  * Structure holding both the parameter value
  * (or pointer), dirty flag and its associated set callback
  */
-template <class T> struct Bag {
-  static_assert(!std::is_reference<T>::value,
-                "ParamsContainer should not be a reference type");
+template <class T>
+struct Bag {
+  static_assert(!std::is_reference<T>::value, "ParamsContainer should not be a reference type");
   T value;
   bool isDirty;
   Callback<typename std::remove_pointer<T>::type> callback;
@@ -33,7 +34,8 @@ template <class T> struct Bag {
  * Type trait testing is a type
  * is printable
  */
-template <class T> struct is_printable {
+template <class T>
+struct is_printable {
   template <class U>
   constexpr static auto test(U *u) -> decltype(std::cout << *u, bool()) {
     return (void)u, true;
@@ -45,14 +47,15 @@ template <class T> struct is_printable {
 /**
  * Base container for a single given type T
  */
-template <class T> class Container {
-public:
+template <class T>
+class Container {
+ public:
   /**
    * Return a map representing only the name->value association
    */
-  inline std::map<std::string,T> getMap() const {
-    std::map<std::string,T> result;
-    for (const auto & pair : _values) {
+  inline std::map<std::string, T> getMap() const {
+    std::map<std::string, T> result;
+    for (const auto &pair : _values) {
       result[pair.first] = pair.second.value;
     }
     return result;
@@ -61,8 +64,7 @@ public:
   /**
    * Define a new parameter by its name and default value
    */
-  inline void define(const std::string &name, const T &value,
-                     Callback<T> callback) {
+  inline void define(const std::string &name, const T &value, Callback<T> callback) {
     if (exists(name)) {
       throw std::logic_error("ParamsContainer already registered name '" + name + "'");
     }
@@ -72,8 +74,7 @@ public:
   /**
    * Define a new parameter by its name and its pointer
    */
-  inline void define(const std::string &name, T *pointer,
-                     Callback<T> callback) {
+  inline void define(const std::string &name, T *pointer, Callback<T> callback) {
     if (exists(name)) {
       throw std::logic_error("ParamsContainer already registered name '" + name + "'");
     }
@@ -167,8 +168,7 @@ public:
    */
 
   template <class U = void>
-  inline typename std::enable_if<is_printable<T>::value, U>::type
-  print(std::ostream &os) const {
+  inline typename std::enable_if<is_printable<T>::value, U>::type print(std::ostream &os) const {
     for (const auto &it : _values) {
       os << it.first << ": " << it.second.value << std::endl;
     }
@@ -177,8 +177,7 @@ public:
     }
   }
   template <class U = void>
-  inline typename std::enable_if<!is_printable<T>::value, U>::type
-  print(std::ostream &os) const {
+  inline typename std::enable_if<!is_printable<T>::value, U>::type print(std::ostream &os) const {
     for (const auto &it : _values) {
       os << it.first << ": [Non printable]" << std::endl;
     }
@@ -187,15 +186,14 @@ public:
     }
   }
 
-private:
+ private:
   /**
    * Typedef values and pointers container iterator
    */
   typedef typename std::map<std::string, Bag<T>>::iterator ValuesIt;
   typedef typename std::map<std::string, Bag<T>>::const_iterator ValuesItConst;
   typedef typename std::map<std::string, Bag<T *>>::iterator PointersIt;
-  typedef
-      typename std::map<std::string, Bag<T *>>::const_iterator PointersItConst;
+  typedef typename std::map<std::string, Bag<T *>>::const_iterator PointersItConst;
 
   /**
    * Values and pointers parameter container
@@ -204,25 +202,23 @@ private:
   std::map<std::string, Bag<T>> _values;
   std::map<std::string, Bag<T *>> _pointers;
 
-public:
+ public:
   unsigned int size() const { return _pointers.size() + _values.size(); }
 
   /**
    * Const and non const Iterator for the Parameter Container
    */
-  template <bool isConst> class Iterator {
-  public:
-    typedef typename std::conditional<!isConst, ValuesIt, ValuesItConst>::type
-        ValsIt;
-    typedef typename std::conditional<!isConst, PointersIt,
-                                      PointersItConst>::type PtrsIt;
+  template <bool isConst>
+  class Iterator {
+   public:
+    typedef typename std::conditional<!isConst, ValuesIt, ValuesItConst>::type ValsIt;
+    typedef typename std::conditional<!isConst, PointersIt, PointersItConst>::type PtrsIt;
     typedef typename std::conditional<!isConst, T &, const T &>::type Value;
 
     typedef std::pair<const std::string &, Value> KeyValue;
 
     Iterator(ValsIt itVals, ValsIt itEndVals, PtrsIt itPtrs)
-        : _isIteratingValues(true), _itVals(itVals), _itEndVals(itEndVals),
-          _itPtrs(itPtrs) {
+        : _isIteratingValues(true), _itVals(itVals), _itEndVals(itEndVals), _itPtrs(itPtrs) {
       if (_itVals == _itEndVals) {
         _isIteratingValues = false;
       }
@@ -259,11 +255,9 @@ public:
       return *this;
     }
 
-    inline bool operator!=(const Iterator &it) const {
-      return _itVals != it._itVals || _itPtrs != it._itPtrs;
-    }
+    inline bool operator!=(const Iterator &it) const { return _itVals != it._itVals || _itPtrs != it._itPtrs; }
 
-  private:
+   private:
     bool _isIteratingValues;
     ValsIt _itVals;
     ValsIt _itEndVals;
@@ -274,20 +268,12 @@ public:
    * Return Iterator on registered parameters
    * as a std::map (use it.first and it.second)
    */
-  inline Iterator<false> begin() {
-    return Iterator<false>(_values.begin(), _values.end(), _pointers.begin());
-  }
-  inline Iterator<true> begin() const {
-    return Iterator<true>(_values.begin(), _values.end(), _pointers.begin());
-  }
-  inline Iterator<false> end() {
-    return Iterator<false>(_values.end(), _values.end(), _pointers.end());
-  }
-  inline Iterator<true> end() const {
-    return Iterator<true>(_values.end(), _values.end(), _pointers.end());
-  }
+  inline Iterator<false> begin() { return Iterator<false>(_values.begin(), _values.end(), _pointers.begin()); }
+  inline Iterator<true> begin() const { return Iterator<true>(_values.begin(), _values.end(), _pointers.begin()); }
+  inline Iterator<false> end() { return Iterator<false>(_values.end(), _values.end(), _pointers.end()); }
+  inline Iterator<true> end() const { return Iterator<true>(_values.end(), _values.end(), _pointers.end()); }
 };
-}
+}  // namespace ParamsContainerImpl
 
 /**
  * ParamsContainer
@@ -296,24 +282,24 @@ public:
  * Provides define, iteration and get/set method
  */
 template <class... Types>
-class ParamsContainer
-    : private ParamsContainerImpl::Container<ParamsContainer<Types...>>,
-      private ParamsContainerImpl::Container<Types>... {
-public:
+class ParamsContainer : private ParamsContainerImpl::Container<ParamsContainer<Types...>>,
+                        private ParamsContainerImpl::Container<Types>... {
+ public:
   /**
    * Typedef for typed parameter container and
    * typed callback
    */
-  template <class T> using Container = ParamsContainerImpl::Container<T>;
-  template <class T> using Callback = ParamsContainerImpl::Callback<T>;
+  template <class T>
+  using Container = ParamsContainerImpl::Container<T>;
+  template <class T>
+  using Callback = ParamsContainerImpl::Callback<T>;
 
   /**
    * Define a new parameter (value) of given type by its name, and
    * optionally its default value and callback lambda
    */
   template <class T>
-  inline void define(const std::string &name, const T &value = T(),
-                     Callback<T> callback = [](T &) {}) {
+  inline void define(const std::string &name, const T &value = T(), Callback<T> callback = [](T &) {}) {
     convert<T>().define(name, value, callback);
   }
 
@@ -323,15 +309,15 @@ public:
    * its callback lambda
    */
   template <class T>
-  inline void define(const std::string &name, T *pointer,
-                     Callback<T> callback = [](T &) {}) {
+  inline void define(const std::string &name, T *pointer, Callback<T> callback = [](T &) {}) {
     convert<T>().define(name, pointer, callback);
   }
 
   /**
    * Read access to given parameter type and name
    */
-  template <class T> inline const T &get(const std::string &name) const {
+  template <class T>
+  inline const T &get(const std::string &name) const {
     return convert<T>().get(name);
   }
 
@@ -339,7 +325,8 @@ public:
    * Write access to given parameter type and name
    * (The dirty flag is set)
    */
-  template <class T> inline T &set(const std::string &name) {
+  template <class T>
+  inline T &set(const std::string &name) {
     return convert<T>().set(name);
   }
 
@@ -356,7 +343,8 @@ public:
    * Return true if the given parameter name exists
    * in the asked container
    */
-  template <class T> inline bool exists(const std::string &name) const {
+  template <class T>
+  inline bool exists(const std::string &name) const {
     return convert<T>().exists(name);
   }
 
@@ -364,10 +352,14 @@ public:
    * Direct access to typed container
    * of given type
    */
-  template <class T> inline const Container<T> &params() const {
+  template <class T>
+  inline const Container<T> &params() const {
     return convert<T>();
   }
-  template <class T> inline Container<T> &params() { return convert<T>(); }
+  template <class T>
+  inline Container<T> &params() {
+    return convert<T>();
+  }
 
   /**
    * Check for updated parameters and call
@@ -378,23 +370,21 @@ public:
   /**
    * Print all contained parameters
    */
-  inline void print(std::ostream &os = std::cout) {
-    printImpl<Types...>::run(os, *this);
-  }
+  inline void print(std::ostream &os = std::cout) { printImpl<Types...>::run(os, *this); }
 
-private:
+ private:
   /**
    * Check and cast the current instance into
    * the given typed Container
    */
-  template <class T> const Container<T> &convert() const {
-    static_assert(std::is_base_of<Container<T>, ParamsContainer>::value,
-                  "ParamsContainer template type error");
+  template <class T>
+  const Container<T> &convert() const {
+    static_assert(std::is_base_of<Container<T>, ParamsContainer>::value, "ParamsContainer template type error");
     return static_cast<const Container<T> &>(*this);
   }
-  template <class T> Container<T> &convert() {
-    static_assert(std::is_base_of<Container<T>, ParamsContainer>::value,
-                  "ParamsContainer template type error");
+  template <class T>
+  Container<T> &convert() {
+    static_assert(std::is_base_of<Container<T>, ParamsContainer>::value, "ParamsContainer template type error");
     return static_cast<Container<T> &>(*this);
   }
 
@@ -402,13 +392,14 @@ private:
    * Implementation of checkDirty on all
    * typed containers
    */
-  template <class... Args> struct checkDirtyImpl;
-  template <class T> struct checkDirtyImpl<T> {
-    static inline void run(ParamsContainer<Types...> &self) {
-      self.convert<T>().checkDirty();
-    }
+  template <class... Args>
+  struct checkDirtyImpl;
+  template <class T>
+  struct checkDirtyImpl<T> {
+    static inline void run(ParamsContainer<Types...> &self) { self.convert<T>().checkDirty(); }
   };
-  template <class T, class... Args> struct checkDirtyImpl<T, Args...> {
+  template <class T, class... Args>
+  struct checkDirtyImpl<T, Args...> {
     static inline void run(ParamsContainer<Types...> &self) {
       self.convert<T>().checkDirty();
       checkDirtyImpl<Args...>::run(self);
@@ -419,19 +410,20 @@ private:
    * Implementation of print on all
    * typed container
    */
-  template <class... Args> struct printImpl;
-  template <class T> struct printImpl<T> {
-    static inline void run(std::ostream &os, ParamsContainer<Types...> &self) {
-      self.convert<T>().print(os);
-    }
+  template <class... Args>
+  struct printImpl;
+  template <class T>
+  struct printImpl<T> {
+    static inline void run(std::ostream &os, ParamsContainer<Types...> &self) { self.convert<T>().print(os); }
   };
-  template <class T, class... Args> struct printImpl<T, Args...> {
+  template <class T, class... Args>
+  struct printImpl<T, Args...> {
     static inline void run(std::ostream &os, ParamsContainer<Types...> &self) {
       printImpl<T>::run(os, self);
       printImpl<Args...>::run(os, self);
     }
   };
 };
-}
+}  // namespace Vision
 
 #endif

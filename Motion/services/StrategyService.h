@@ -13,18 +13,18 @@ class StrategyService : public Service
 public:
   StrategyService();
 
-  const std::string & getDefaultApproach();
-  const std::string & getDefaultKickController();
+  const std::string& getDefaultApproach();
+  const std::string& getDefaultKickController();
 
-  const std::string & getActiveApproachName();
-  const std::string & getActiveKickControllerName();
+  const std::string& getActiveApproachName();
+  const std::string& getActiveKickControllerName();
 
-  ApproachMove * getActiveApproach();
-  const KickController * getActiveKickController() const;
+  ApproachMove* getActiveApproach();
+  const KickController* getActiveKickController() const;
 
   bool tick(double elapsed) override;
 
-  /// Inform the strategy service that a kick has been performed, 
+  /// Inform the strategy service that a kick has been performed,
   void announceKick();
 
 protected:

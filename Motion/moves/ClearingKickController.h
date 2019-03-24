@@ -6,7 +6,8 @@ class Walk;
 
 class ClearingKickController : public KickController
 {
-  bool isInLateral=false;
+  bool isInLateral = false;
+
 public:
   ClearingKickController();
   std::string getName();

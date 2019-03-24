@@ -32,5 +32,5 @@ void MaskOr::process() {
   }
   img() = tmp;
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

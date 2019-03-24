@@ -12,16 +12,16 @@ namespace Vision {
  * Wrap a pointer of given type
  * with a mutex protection safety
  */
-template <class T> class SafePtr {
-public:
+template <class T>
+class SafePtr {
+ public:
   /**
    * Initialization with the wrapped
    * reference and associated mutex lock
    * If lock is false, the mutex is assumed to
    * be already locked
    */
-  SafePtr(T &ref, std::mutex &mutex, bool locked = false)
-      : _mutex(mutex), _isLocked(false), _reference(ref) {
+  SafePtr(T &ref, std::mutex &mutex, bool locked = false) : _mutex(mutex), _isLocked(false), _reference(ref) {
     // Acquire the mutex lock
     if (!locked) {
       _mutex.lock();
@@ -72,7 +72,7 @@ public:
     }
   }
 
-private:
+ private:
   /**
    * The protection mutex
    * handling mutual exclusion
@@ -89,6 +89,6 @@ private:
    */
   T &_reference;
 };
-}
+}  // namespace Vision
 
 #endif

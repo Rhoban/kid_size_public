@@ -18,30 +18,32 @@
 #include <iostream>
 class Move;
 
-
-///Initialize and return an Humanoid Model where the robot type is retrieved
-///from RhIO and the geometry parameter from the camera model file.
-///ModelType should be either HumanoidFixedModel or HumanoidFixedPressureModel.
+/// Initialize and return an Humanoid Model where the robot type is retrieved
+/// from RhIO and the geometry parameter from the camera model file.
+/// ModelType should be either HumanoidFixedModel or HumanoidFixedPressureModel.
 template <typename ModelType>
 ModelType InitHumanoidModel()
 {
-  //Retrieve the robot model type from RhIO configuration
+  // Retrieve the robot model type from RhIO configuration
   Leph::RobotType robotType;
-  if (RhIO::Root.getValueType("/model/modelType")
-      == RhIO::TypeStr
-    ) {
-    std::string type =
-      RhIO::Root.getStr("/model/modelType");
-    if (type == "sigmaban") {
+  if (RhIO::Root.getValueType("/model/modelType") == RhIO::TypeStr)
+  {
+    std::string type = RhIO::Root.getStr("/model/modelType");
+    if (type == "sigmaban")
+    {
       robotType = Leph::SigmabanModel;
-    } else if (type  == "grosban") {
-      robotType = Leph::GrosbanModel;
-    } else {
-      throw std::logic_error(
-        "ModelService invalid modelType in RhIO: "
-        + type);
     }
-  } else {
+    else if (type == "grosban")
+    {
+      robotType = Leph::GrosbanModel;
+    }
+    else
+    {
+      throw std::logic_error("ModelService invalid modelType in RhIO: " + type);
+    }
+  }
+  else
+  {
     std::cout << "WARNING ModelService no model type defined. "
               << "Default is SigmabanModel" << std::endl;
     robotType = Leph::SigmabanModel;
@@ -60,14 +62,11 @@ ModelType InitHumanoidModel()
   geometryName = tmpModel.getGeometryName();
 
   // Modification of geometry data
-  geometryData.block(geometryName.at("camera"),0,1,3) +=
-    calibration_model.getCameraOffsetsRad().transpose();
-  geometryData.block(geometryName.at("head_yaw"),0,1,3) +=
-    calibration_model.getNeckOffsetsRad().transpose();
+  geometryData.block(geometryName.at("camera"), 0, 1, 3) += calibration_model.getCameraOffsetsRad().transpose();
+  geometryData.block(geometryName.at("head_yaw"), 0, 1, 3) += calibration_model.getNeckOffsetsRad().transpose();
 
-  //Initialize and return the model
-  return ModelType (robotType, Eigen::MatrixXd(), {},
-                    geometryData, geometryName);
+  // Initialize and return the model
+  return ModelType(robotType, Eigen::MatrixXd(), {}, geometryData, geometryName);
 }
 
 /**
@@ -81,7 +80,6 @@ ModelType InitHumanoidModel()
 class ModelService : public Service
 {
 public:
-
   /**
    * Initialization
    */
@@ -99,24 +97,18 @@ public:
    * Applay all DOF of only apply both arms,
    * both legs, head or left/right leg.
    */
-  void flushAll(double gain=1.0);
-  void flushArms(double gain=1.0);
-  void flushHead(double gain=1.0);
-  void flushLegs(double gain=1.0);
-  void flushLeftLeg(double gain=1.0);
-  void flushRightLeg(double gain=1.0);
+  void flushAll(double gain = 1.0);
+  void flushArms(double gain = 1.0);
+  void flushHead(double gain = 1.0);
+  void flushLegs(double gain = 1.0);
+  void flushLeftLeg(double gain = 1.0);
+  void flushRightLeg(double gain = 1.0);
 
   /**
    * Flush the goal model for
    * given DOFs
    */
-  void flush(
-    bool doHead,
-    bool doLeftArm,
-    bool doRightArm,
-    bool doLeftLeg,
-    bool doRightLeg,
-    double gain=1.0);
+  void flush(bool doHead, bool doLeftArm, bool doRightArm, bool doLeftLeg, bool doRightLeg, double gain = 1.0);
 
   /**
    * Access to Goal and Read  and odometry
@@ -134,8 +126,7 @@ public:
    * Also return the magnetometer absolute value
    * and boolean is base updated at given timestamp.
    */
-  void pastReadModel(double timestamp,
-                     Leph::HumanoidFixedPressureModel& pastReadModel);
+  void pastReadModel(double timestamp, Leph::HumanoidFixedPressureModel& pastReadModel);
   double pastMagneto(double timestamp);
   bool pastIsBaseUpdated(double timestamp);
 
@@ -164,8 +155,7 @@ public:
    * odometry displacement interpolated between given
    * timestamp in self frame of source position.
    */
-  Eigen::Vector3d odometryDiff(
-    double timestamp1, double timestamp2);
+  Eigen::Vector3d odometryDiff(double timestamp1, double timestamp2);
 
   /**
    * Start or stop the lowlevel logging.
@@ -174,20 +164,18 @@ public:
    * If isBinary is true, the log is written
    * in binary format
    */
-  void startLogging(const std::string& filepath,
-                    bool isBinary = true);
+  void startLogging(const std::string& filepath, bool isBinary = true);
   void stopLogging();
 
   /**
    * Start a named log session on all histories
    */
-  void startNamedLog(const std::string & filePath);
+  void startNamedLog(const std::string& filePath);
   /**
    * Stop adding new entries for the given log name (on all histories)
    * Then, write the logs, histories will be written at filePath
    */
-  void stopNamedLog(const std::string & filePath);
-
+  void stopNamedLog(const std::string& filePath);
 
   /**
    * Append to history container given name:value
@@ -199,8 +187,7 @@ public:
    * Enable the replay mode and load history
    * data from given log file name
    */
-  void loadReplays(
-    const std::string& filepath);
+  void loadReplays(const std::string& filepath);
 
   /**
    * Assign the replay timestamp
@@ -226,7 +213,6 @@ public:
   Leph::HumanoidFixedModel::SupportFoot getSupportFoot() const;
 
 private:
-
   /**
    * Lowlevel missing state
    */
@@ -327,25 +313,18 @@ private:
    * between two given state from state1
    * to state2
    */
-  Eigen::Vector3d odometryDiff(
-    const Eigen::Vector3d& state1,
-    const Eigen::Vector3d& state2) const;
+  Eigen::Vector3d odometryDiff(const Eigen::Vector3d& state1, const Eigen::Vector3d& state2) const;
 
   /**
    * Integrate given odometry diff to
    * given state and update it
    */
-  void odometryInt(
-    const Eigen::Vector3d& diff,
-    Eigen::Vector3d& state) const;
+  void odometryInt(const Eigen::Vector3d& diff, Eigen::Vector3d& state) const;
 
   /**
    * Publish to RhIO given model state with given prefix
    */
-  void publishModelState(
-    const std::string& prefix,
-    const Leph::HumanoidFixedModel& model,
-    bool initialize = false);
+  void publishModelState(const std::string& prefix, const Leph::HumanoidFixedModel& model, bool initialize = false);
 
   /**
    * Dump into file the contains of
@@ -387,7 +366,7 @@ private:
   void tickAssignReadIMU();
 
   /**
-   * Publish to RhIO odometry 
+   * Publish to RhIO odometry
    * and models state
    */
   void tickRhIOPublish();

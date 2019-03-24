@@ -22,13 +22,9 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
-namespace cv
-{
+namespace cv {
 
-int decomposeHomographyMat(cv::InputArray _H,
-                           cv::InputArray _K,
-                           cv::OutputArrayOfArrays& _rotations,
-                           cv::OutputArrayOfArrays& _translations,
-                           cv::OutputArrayOfArrays& _normals);
+int decomposeHomographyMat(cv::InputArray _H, cv::InputArray _K, cv::OutputArrayOfArrays& _rotations,
+                           cv::OutputArrayOfArrays& _translations, cv::OutputArrayOfArrays& _normals);
 }
 #endif

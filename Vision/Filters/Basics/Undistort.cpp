@@ -18,21 +18,21 @@ using namespace cv;
 using namespace std;
 
 class MyData {
-public:
+ public:
   MyData() {}
 
-  void write(FileStorage &fs) const // Write serialization for this class
+  void write(FileStorage &fs) const  // Write serialization for this class
   {
     std::cout << "Write not implemented" << std::endl;
   }
-  void read(const FileNode &node) // Read serialization for this class
+  void read(const FileNode &node)  // Read serialization for this class
   {
     /*    A = (int)node["A"];
           X = (double)node["X"];
           id = (string)node["id"];*/
   }
 
-public:
+ public:
   Mat mat1;
   Mat mat2;
 };
@@ -86,10 +86,9 @@ void Undistort::process() {
     //                             imageSize, CV_16SC2, _map1, _map2);
     Benchmark::close("initUndistortRectifyMap (should be done only once)");
     Benchmark::open("Reading huge map1 and map2 (only once)");
-    cout << endl
-         << "Reading big_mama.xml ..." << endl;
+    cout << endl << "Reading big_mama.xml ..." << endl;
     FileStorage fs;
-    std::string filename = "big_mama.xml"; // FIXME
+    std::string filename = "big_mama.xml";  // FIXME
     // MAIS DE QUOI FIXME? Il est très bien ce nom.
     fs.open(filename, FileStorage::READ);
 
@@ -143,10 +142,8 @@ void Undistort::process() {
         //               _map1Inverted.at<cv::Vec2s>(i,j)[1] =
         //               _map1.at<cv::Vec2s>(2*j,_map1.cols - 2*i - 1)[1]/2;
         // #else
-        _map1Inverted.at<cv::Vec2s>(i, j)[0] =
-            _map1.at<cv::Vec2s>(j, _map1Inverted.rows - i - 1)[0];
-        _map1Inverted.at<cv::Vec2s>(i, j)[1] =
-            _map1.at<cv::Vec2s>(j, _map1Inverted.rows - i - 1)[1];
+        _map1Inverted.at<cv::Vec2s>(i, j)[0] = _map1.at<cv::Vec2s>(j, _map1Inverted.rows - i - 1)[0];
+        _map1Inverted.at<cv::Vec2s>(i, j)[1] = _map1.at<cv::Vec2s>(j, _map1Inverted.rows - i - 1)[1];
         // #endif
       }
     }
@@ -169,8 +166,7 @@ void Undistort::process() {
     cv::UMat image_gpu, image_gpu_undist;
     input.copyTo(image_gpu);
 
-    cv::remap(image_gpu, image_gpu_undist, map1, map2, cv::INTER_LINEAR,
-              cv::BORDER_CONSTANT);
+    cv::remap(image_gpu, image_gpu_undist, map1, map2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
     image_gpu_undist.copyTo(img());
     // std::cerr<<"OPENCL"<<std::endl;
 
@@ -181,5 +177,5 @@ void Undistort::process() {
     Benchmark::close("remap");
   }
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

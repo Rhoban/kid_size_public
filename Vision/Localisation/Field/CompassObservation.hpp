@@ -7,9 +7,9 @@ namespace Vision {
 namespace Localisation {
 
 class CompassObservation : public SerializableFieldObservation {
-private:
+ private:
   typedef rhoban_utils::Angle Angle;
-  
+
   /// Visual compass value which should be provided when facing opponent goal
   static Angle offset;
 
@@ -18,7 +18,7 @@ private:
 
   static double pError, maxError, sigmoidOffset, sigmoidLambda;
 
-public:
+ public:
   /// Return the field orientation corresponding to the visual compass orientation
   /// given as a parameter
   static Angle compassToField(Angle visualCompassAngle);
@@ -28,7 +28,7 @@ public:
   /// Angle is direction of
   CompassObservation(Angle visualCompassAngle);
 
-  virtual double potential(const FieldPosition & p) const;
+  virtual double potential(const FieldPosition& p) const;
 
   /**
    * Define the compass value when aiming toward center of adversary goal
@@ -48,11 +48,11 @@ public:
 
   std::string getClassName() const override;
   Json::Value toJson() const override;
-  void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  void fromJson(const Json::Value& v, const std::string& dir_name) override;
 
   double getMinScore() const;
 
   virtual std::string toStr() const override;
 };
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

@@ -17,10 +17,10 @@ class CameraState;
 namespace Localisation {
 
 class BallStackFilter : public RadarFilterPoint {
-public:
+ public:
   BallStackFilter(Utils::CameraState *cameraState);
 
-  virtual bool bindToRhIO(std::string node, std::string command="");
+  virtual bool bindToRhIO(std::string node, std::string command = "");
 
   // For permissive merge after kick
   virtual bool isSimilar(const Eigen::Vector3d &pt1, const Eigen::Vector3d &pt2);
@@ -31,12 +31,12 @@ public:
   // Apply a kick
   void applyKick(float x, float y);
 
-protected:
+ protected:
   ::rhoban_utils::TimeStamp lastKick;
 
   // Parameters
   float afterKickPermissiveDuration;
   bool duplicateOnKick;
 };
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

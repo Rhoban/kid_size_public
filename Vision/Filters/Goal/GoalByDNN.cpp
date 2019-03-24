@@ -13,94 +13,71 @@
 using ::rhoban_utils::Benchmark;
 using namespace std;
 
-static void patchToNN(const cv::Mat & patch,
-                      double minv,
-                      double maxv,
-                      int w,
-                      int h,
-                      tiny_dnn::vec_t & data)
-{
-    if (patch.data == nullptr) return; // cannot open, or it's not an image
-    cv::Mat resized,res;
-    cv::resize(patch, resized, cv::Size(w, h), .0, .0,cv::INTER_AREA);
-    data.resize(w*h*resized.channels(), minv);
-    resized.copyTo(res);
-    // Splitting channels
-    cv::Mat ch1, ch2, ch3;
-    vector<cv::Mat> channels(3);
-    cv::split(res, channels);
-    ch1 = channels[0];
-    ch2 = channels[1];
-    ch3 = channels[2];
-    // Reformat data
-    int j=0;
+static void patchToNN(const cv::Mat &patch, double minv, double maxv, int w, int h, tiny_dnn::vec_t &data) {
+  if (patch.data == nullptr) return;  // cannot open, or it's not an image
+  cv::Mat resized, res;
+  cv::resize(patch, resized, cv::Size(w, h), .0, .0, cv::INTER_AREA);
+  data.resize(w * h * resized.channels(), minv);
+  resized.copyTo(res);
+  // Splitting channels
+  cv::Mat ch1, ch2, ch3;
+  vector<cv::Mat> channels(3);
+  cv::split(res, channels);
+  ch1 = channels[0];
+  ch2 = channels[1];
+  ch3 = channels[2];
+  // Reformat data
+  int j = 0;
 
-    cv::Size sz = ch1.size();
-    int size=sz.height*sz.width;
+  cv::Size sz = ch1.size();
+  int size = sz.height * sz.width;
 
-    for(int i=0; i<size;i++)
-        data[j*size+i]=minv+(maxv-minv)*ch1.data[i]/255.0;
-    j++;
-    for(int i=0; i<size;i++)
-        data[j*size+i]=minv+(maxv-minv)*ch2.data[i]/255.0;
-    j++;
-    for(int i=0; i<size;i++)
-        data[j*size+i]=minv+(maxv-minv)*ch3.data[i]/255.0;
+  for (int i = 0; i < size; i++) data[j * size + i] = minv + (maxv - minv) * ch1.data[i] / 255.0;
+  j++;
+  for (int i = 0; i < size; i++) data[j * size + i] = minv + (maxv - minv) * ch2.data[i] / 255.0;
+  j++;
+  for (int i = 0; i < size; i++) data[j * size + i] = minv + (maxv - minv) * ch3.data[i] / 255.0;
 }
 
 namespace Vision {
 namespace Filters {
 
-GoalByDNN::GoalByDNN() : GoalProvider("GoalByDNN"),
-                         arch_path("arch.json"),
-                         weights_path("weights.data")
-{
-}
+GoalByDNN::GoalByDNN() : GoalProvider("GoalByDNN"), arch_path("arch.json"), weights_path("weights.data") {}
 
-
-void GoalByDNN::setParameters()
-{
-  debugLevel = ParamInt(0,0,1);
-  scoreThreshold = ParamFloat(0.5,0.01,1.0);
+void GoalByDNN::setParameters() {
+  debugLevel = ParamInt(0, 0, 1);
+  scoreThreshold = ParamFloat(0.5, 0.01, 1.0);
 
   params()->define<ParamInt>("debugLevel", &debugLevel);
   params()->define<ParamFloat>("scoreThreshold", &scoreThreshold);
 }
 
-std::string GoalByDNN::getClassName() const {
-  return "GoalByDNN";
-}
-Json::Value GoalByDNN::toJson() const
-{
+std::string GoalByDNN::getClassName() const { return "GoalByDNN"; }
+Json::Value GoalByDNN::toJson() const {
   Json::Value v = Filter::toJson();
   v["arch_path"] = arch_path;
   v["weights_path"] = weights_path;
   return v;
 }
 
-void GoalByDNN::fromJson(const Json::Value & v, const std::string & dir_name)
-{
+void GoalByDNN::fromJson(const Json::Value &v, const std::string &dir_name) {
   Filter::fromJson(v, dir_name);
-  rhoban_utils::tryRead(v,"arch_path",&arch_path);
-  rhoban_utils::tryRead(v,"weights_path",&weights_path);
+  rhoban_utils::tryRead(v, "arch_path", &arch_path);
+  rhoban_utils::tryRead(v, "weights_path", &weights_path);
 
   updateNN();
 }
 
-int GoalByDNN::expectedDependencies() const {
-  return 1;
-}
+int GoalByDNN::expectedDependencies() const { return 1; }
 
-void GoalByDNN::updateNN()
-{
+void GoalByDNN::updateNN() {
   // load the architecture of the model in json format
   nn.load(arch_path, tiny_dnn::content_type::model, tiny_dnn::file_format::json);
   // load the weights of the model in binary format
   nn.load(weights_path, tiny_dnn::content_type::weights, tiny_dnn::file_format::binary);
 }
 
-double GoalByDNN::getScore(const cv::Mat & patch)
-{
+double GoalByDNN::getScore(const cv::Mat &patch) {
   tiny_dnn::vec_t data;
 
   Benchmark::open("resize");
@@ -117,20 +94,18 @@ double GoalByDNN::getScore(const cv::Mat & patch)
 }
 
 void GoalByDNN::process() {
-
   clearGoalsData();
 
   cv::Mat output;
 
   try {
-    const PatchProvider & dep = 
-      dynamic_cast<const PatchProvider &>(getDependency());
+    const PatchProvider &dep = dynamic_cast<const PatchProvider &>(getDependency());
 
     Benchmark::open("Cloning src");
     output = dep.getImg()->clone();
     Benchmark::close("Cloning src");
 
-    const std::vector<cv::Mat> & patches = dep.getPatches();
+    const std::vector<cv::Mat> &patches = dep.getPatches();
     const std::vector<std::pair<float, cv::RotatedRect>> rois = dep.getRois();
 
     if (rois.size() != patches.size()) {
@@ -143,8 +118,8 @@ void GoalByDNN::process() {
       debug_message << rois.size() << " patches in filter '" << name << "'" << std::endl;
     }
     for (size_t patch_id = 0; patch_id < rois.size(); patch_id++) {
-      const cv::Mat & patch = patches[patch_id];
-      const cv::RotatedRect & roi = rois[patch_id].second;
+      const cv::Mat &patch = patches[patch_id];
+      const cv::RotatedRect &roi = rois[patch_id].second;
 
       double score = getScore(patch);
 
@@ -156,18 +131,16 @@ void GoalByDNN::process() {
 
       if (isValid) {
         pushGoal(roi.center.x, roi.center.y, output);
-        drawRotatedRectangle(output, roi, cv::Scalar(0,255,0), 2);
-      }
-      else {
-        drawRotatedRectangle(output, roi, cv::Scalar(0,0,255), 2);
+        drawRotatedRectangle(output, roi, cv::Scalar(0, 255, 0), 2);
+      } else {
+        drawRotatedRectangle(output, roi, cv::Scalar(0, 0, 255), 2);
       }
     }
     if (debugLevel > 0) {
       std::cout << debug_message.str();
     }
     Benchmark::close("Analyzing patches");
-  }
-  catch (const std::bad_alloc & exc) {
+  } catch (const std::bad_alloc &exc) {
     std::ostringstream oss;
     oss << "Pipeline structure is invalid: "
         << "filter " << name << " dependency is not a PatchProvider" << std::endl;
@@ -175,5 +148,5 @@ void GoalByDNN::process() {
   }
   img() = output;
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

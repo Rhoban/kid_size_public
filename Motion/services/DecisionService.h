@@ -12,7 +12,10 @@ class Move;
 
 enum FallDirection : int
 {
-  None = 0, Forward = 1, Backward = 2, Side = 3
+  None = 0,
+  Forward = 1,
+  Backward = 2,
+  Side = 3
 };
 
 /// TODO: threshold as variables
@@ -21,150 +24,151 @@ enum FallDirection : int
 /// Fallen  : means the robot is almost (error above 75 deg)
 enum FallStatus : int
 {
-  Ok = 0, Falling = 1, Fallen = 2
+  Ok = 0,
+  Falling = 1,
+  Fallen = 2
 };
 
 class DecisionService : public Service
 {
-    public:
-        DecisionService();
- 
-        /**
-         * Is the ball quality good enough?
-         */
-        bool isBallQualityGood;
+public:
+  DecisionService();
 
-        /// Is the ball currently moving according to the robot
-        bool isBallMoving;
+  /**
+   * Is the ball quality good enough?
+   */
+  bool isBallQualityGood;
 
-        /// Is one of the robot of the team currently kicking
-        bool isMateKicking;
+  /// Is the ball currently moving according to the robot
+  bool isBallMoving;
 
-        /**
-         * Is the field quality good enough?
-         */
-        bool isFieldQualityGood;
+  /// Is one of the robot of the team currently kicking
+  bool isMateKicking;
 
-        /**
-         * Is the robot fallen?
-         * TODO: remove and use only fallStatus/fallDirection?
-         */
-        bool isFallen;
+  /**
+   * Is the field quality good enough?
+   */
+  bool isFieldQualityGood;
 
-        /**
-         * Should I let play?
-         * This will be true if we should let play because of the rules, like if
-         * we can't enter the center circle before the 10 first seconds or if a
-         * free kick is awarded to the opponent team
-         */
-        bool shouldLetPlay;
+  /**
+   * Is the robot fallen?
+   * TODO: remove and use only fallStatus/fallDirection?
+   */
+  bool isFallen;
 
-        /**
-         * With what radius should I let play?
-         */
-        double letPlayRadius;
-        
-        /**
-         * Should we go for the shared ball?
-         */
-        bool ballIsShared;
-        
-        /**
-         * Position of the shared ball
-         */
-        float shareX, shareY;
+  /**
+   * Should I let play?
+   * This will be true if we should let play because of the rules, like if
+   * we can't enter the center circle before the 10 first seconds or if a
+   * free kick is awarded to the opponent team
+   */
+  bool shouldLetPlay;
 
-        /**
-         * Target of the kick of the ball handler
-         */
-        float ballTargetX, ballTargetY;
+  /**
+   * With what radius should I let play?
+   */
+  double letPlayRadius;
 
-        /**
-         * Is the robot handled?
-         */
-        bool handled;
+  /**
+   * Should we go for the shared ball?
+   */
+  bool ballIsShared;
 
-        /**
-         * Should the kick be frozen?
-         */
-        bool freezeKick;
+  /**
+   * Position of the shared ball
+   */
+  float shareX, shareY;
 
-        /**
-         * Should we fake team decisons?
-         */
-        bool fakeTeamDecisions;
+  /**
+   * Target of the kick of the ball handler
+   */
+  float ballTargetX, ballTargetY;
 
-        /**
-         * What is the side of the last seen ball?
-         */
-        bool lastSeenBallRight;
+  /**
+   * Is the robot handled?
+   */
+  bool handled;
 
-        /**
-         * Time since last fall [s]
-         * 0 if the robot is currently fallen
-         */
-        float timeSinceFall;
+  /**
+   * Should the kick be frozen?
+   */
+  bool freezeKick;
 
-        /// Filtered direction of the fall
-        FallDirection fallDirection;
-        /// Filtered status of the fall
-        FallStatus fallStatus;
-    
-    protected:
-        RhIO::Bind bind;
+  /**
+   * Should we fake team decisons?
+   */
+  bool fakeTeamDecisions;
 
-        // Thresholds for ball quality
-        float ballQThreshold, ballQDisableThreshold;
+  /**
+   * What is the side of the last seen ball?
+   */
+  bool lastSeenBallRight;
 
-        /// Minimal ball speed to consider that ball speed is moving
-        float movingBallMinSpeed;
+  /**
+   * Time since last fall [s]
+   * 0 if the robot is currently fallen
+   */
+  float timeSinceFall;
 
-        /// Time where a robot is forced to track the ball after a kick
-        float postKickTrackingTime;
+  /// Filtered direction of the fall
+  FallDirection fallDirection;
+  /// Filtered status of the fall
+  FallStatus fallStatus;
 
-        // Thresholds for field quality
-        float fieldQThreshold, fieldQDisableThreshold;
-        
-        // Ticking
-        bool tick(double elapsed) override;
+protected:
+  RhIO::Bind bind;
 
-        // Low pressure threshold
-        float lowPressureThreshold;
+  // Thresholds for ball quality
+  float ballQThreshold, ballQDisableThreshold;
 
-        /**
-         * Should we listen to the other players?
-         */
-        bool cooperation;
+  /// Minimal ball speed to consider that ball speed is moving
+  float movingBallMinSpeed;
 
-        /**
-         * Ball sharing
-         */
-        bool enableShare;
-        int shareId;
-        float shareFieldQ, shareBallQ;
-        float shareSmooth;
-        float handledT = 0;
+  /// Time where a robot is forced to track the ball after a kick
+  float postKickTrackingTime;
 
-        /**
-         * Who is the goal?
-         */
-        int goalId;
+  // Thresholds for field quality
+  float fieldQThreshold, fieldQDisableThreshold;
 
-        /**
-         * Self attack detection
-         */
-        float selfAttackingT;
+  // Ticking
+  bool tick(double elapsed) override;
 
-        /**
-         * Counting time from free kick
-         */
-        double freeKickT;
+  // Low pressure threshold
+  float lowPressureThreshold;
 
-        /// When has ball been flagged as moving for the last time
-        rhoban_utils::TimeStamp lastBallMoving;
+  /**
+   * Should we listen to the other players?
+   */
+  bool cooperation;
 
-        /// In order for a robot to be considered as handled, it has to see a
-        /// pressure inferior to lowPressureThreshold for more than handledDelay
-        double handledDelay;
+  /**
+   * Ball sharing
+   */
+  bool enableShare;
+  int shareId;
+  float shareFieldQ, shareBallQ;
+  float shareSmooth;
+  float handledT = 0;
+
+  /**
+   * Who is the goal?
+   */
+  int goalId;
+
+  /**
+   * Self attack detection
+   */
+  float selfAttackingT;
+
+  /**
+   * Counting time from free kick
+   */
+  double freeKickT;
+
+  /// When has ball been flagged as moving for the last time
+  rhoban_utils::TimeStamp lastBallMoving;
+
+  /// In order for a robot to be considered as handled, it has to see a
+  /// pressure inferior to lowPressureThreshold for more than handledDelay
+  double handledDelay;
 };
-

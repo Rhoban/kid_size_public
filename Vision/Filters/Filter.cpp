@@ -35,13 +35,18 @@ std::vector<std::string> Filter::listOfPresentWindows;
 
 Filter::Filter(const std::string &n, const Dependencies &dependencies)
     : display(false),
-      _dependencies(dependencies), name(n), _availableImg(0),
-      _img1(480, 640, CV_8UC3), _img2(480, 640, CV_8UC3),
-       _params(),
-      _lockParams(), _lockImgs(),
+      _dependencies(dependencies),
+      name(n),
+      _availableImg(0),
+      _img1(480, 640, CV_8UC3),
+      _img2(480, 640, CV_8UC3),
+      _params(),
+      _lockParams(),
+      _lockImgs(),
       _pipeline(nullptr),
-      monitor_scale(1), rhio_initialized(false),
-      warningExecutionTime(0.01){
+      monitor_scale(1),
+      rhio_initialized(false),
+      warningExecutionTime(0.01) {
   _defaultRoi = false;
   setParameters();
 }
@@ -63,21 +68,16 @@ SafePtr<const cv::Mat> Filter::getImg() const {
   }
 }
 
-void Filter::addDependency(const std::string &name) {
-  _dependencies.push_back(name);
-}
+void Filter::addDependency(const std::string &name) { _dependencies.push_back(name); }
 
 SafePtr<const Filter::Parameters> Filter::params() const {
   return SafePtr<const Filter::Parameters>(_params, _lockParams);
 }
-SafePtr<Filter::Parameters> Filter::params() {
-  return SafePtr<Filter::Parameters>(_params, _lockParams);
-}
+SafePtr<Filter::Parameters> Filter::params() { return SafePtr<Filter::Parameters>(_params, _lockParams); }
 
 const Utils::CameraState &Filter::getCS() const {
   if (_pipeline == NULL) {
-    throw std::runtime_error(DEBUG_INFO + 
-        "Requesting CameraState in a filter not attached to a pipeline");
+    throw std::runtime_error(DEBUG_INFO + "Requesting CameraState in a filter not attached to a pipeline");
   }
   Utils::CameraState *cs = _pipeline->getCameraState();
   if (cs == NULL) {
@@ -89,8 +89,7 @@ const Utils::CameraState &Filter::getCS() const {
 
 Utils::CameraState &Filter::getCS() {
   if (_pipeline == NULL) {
-    throw std::runtime_error(DEBUG_INFO + 
-      "Requesting CameraState in a filter not attached to a pipeline");
+    throw std::runtime_error(DEBUG_INFO + "Requesting CameraState in a filter not attached to a pipeline");
   }
   Utils::CameraState *cs = _pipeline->getCameraState();
   if (cs == NULL) {
@@ -102,8 +101,7 @@ Utils::CameraState &Filter::getCS() {
 
 Pipeline *Filter::getPipeline() {
   if (_pipeline == NULL) {
-    throw std::runtime_error(
-        "Requesting CameraState in a filter not attached to a pipeline");
+    throw std::runtime_error("Requesting CameraState in a filter not attached to a pipeline");
   }
   return _pipeline;
 }
@@ -114,81 +112,75 @@ void Filter::initWindow() {
   }
 
   // Create Opencv window for image and parameters
-  cv::namedWindow(name);//, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO);
+  cv::namedWindow(name);  //, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO);
 
   // Set up and initialize mouse callback
   cv::setMouseCallback(
-      name, [](int event, int x, int y, int, void *param) -> void {
+      name,
+      [](int event, int x, int y, int, void *param) -> void {
         Filter *filter = (Filter *)param;
         if (event != cv::EVENT_LBUTTONDOWN) {
           return;
         }
         // Print coordinate, pixel value and world estimated position
-        const CameraState & cs = filter->getCS();
-        const Leph::CameraModel & cameraModel = cs.getCameraModel();
+        const CameraState &cs = filter->getCS();
+        const Leph::CameraModel &cameraModel = cs.getCameraModel();
         cv::Vec3b pixel = filter->getImg()->at<cv::Vec3b>(y, x);
-        cv::Point2f ball_center_in_img = cv::Point2f(x,y);
-        std::cout << "filter->getCS()->timestamp" << cs.getTimeStampDouble()
-                  << std::endl;
+        cv::Point2f ball_center_in_img = cv::Point2f(x, y);
+        std::cout << "filter->getCS()->timestamp" << cs.getTimeStampDouble() << std::endl;
 
         int B = (int)pixel[0];
         int G = (int)pixel[1];
         int R = (int)pixel[2];
         int Y = R * 0.299000 + G * 0.587000 + B * 0.114000;
         // http://softpixel.com/~cwright/programming/colorspace/yuv/
-        //int U = R * -0.168736 + G * -0.331264 + B * 0.500000 + 128;
-        //int V = R * 0.500000 + G * -0.418688 + B * -0.081312 + 128;
+        // int U = R * -0.168736 + G * -0.331264 + B * 0.500000 + 128;
+        // int V = R * 0.500000 + G * -0.418688 + B * -0.081312 + 128;
         // Wikipedia
         int U = R * -0.14713 + G * -0.28886 + B * 0.436 + 128;
         int V = R * 0.615 + G * -0.51499 + B * -0.10001 + 128;
-        
-        cv::Point2f corrected = cameraModel.toCorrectedImg(cv::Point2f(x,y));
+
+        cv::Point2f corrected = cameraModel.toCorrectedImg(cv::Point2f(x, y));
 
         std::cout << "CLICK x=" << x << " y=" << y << std::endl;
         std::cout << " -> corrected: " << corrected.x << ", " << corrected.y << std::endl;
         std::cout << " --> BGR[" << B << ",";
         std::cout << G << ",";
         std::cout << R << "]";
-        
+
         std::cout << " --> YCrCb[" << Y << ",";
         std::cout << V << ",";
         std::cout << U << "]" << std::endl;
 
         Eigen::Vector3d viewVectorInCamera = cv2Eigen(cameraModel.getViewVectorFromImg(ball_center_in_img));
-        
+
         Eigen::Vector3d viewVectorInWorld = cs.cameraToWorld.linear() * viewVectorInCamera;
         std::cout << "-> viewVectorInWorld: " << viewVectorInWorld.transpose() << std::endl;
-        std::cout << "-> camera pos in world: "
-                  << (cs.cameraToWorld * Eigen::Vector3d(0,0,0)).transpose() << std::endl;
+        std::cout << "-> camera pos in world: " << (cs.cameraToWorld * Eigen::Vector3d(0, 0, 0)).transpose()
+                  << std::endl;
         if (viewVectorInWorld(2) > 0) {
           std::cout << "-> ViewVector is above horizon, no additional elements" << std::endl;
-        } else { 
+        } else {
           Eigen::Vector3d ball_pos = cs.ballInWorldFromPixel(ball_center_in_img);
           double ballRadius = cs.computeBallRadiusFromPixel(ball_center_in_img);
-          cv::Point2f posInSelf = cs.robotPosFromImg(x,y);
+          cv::Point2f posInSelf = cs.robotPosFromImg(x, y);
 
           std::cout << "-> Ball pos in world: " << ball_pos.transpose() << std::endl
                     << "-> Pos in self: (" << posInSelf.x << "," << posInSelf.y << ")" << std::endl
                     << "-> ball expected radius: " << ballRadius << std::endl;
           // Draw radiusMin and radiusMax circles on the image
           if (ballRadius > 0) {
-            cv::circle(filter->cachedImg(), ball_center_in_img,
-                       (int)ballRadius, cv::Scalar(255,0,0), 2);
+            cv::circle(filter->cachedImg(), ball_center_in_img, (int)ballRadius, cv::Scalar(255, 0, 0), 2);
           }
           filter->displayCurrent();
         }
-      }, this);
+      },
+      this);
 }
 
-void Filter::update() {
-  throw std::runtime_error("Update is not implemented for filter: " +
-                           getClassName());
-}
+void Filter::update() { throw std::runtime_error("Update is not implemented for filter: " + getClassName()); }
 
-void Filter::previous() {
-  throw std::runtime_error("Previous is not implemented for filter: " +
-                           getClassName());
-}
+void Filter::previous() { throw std::runtime_error("Previous is not implemented for filter: " + getClassName()); }
 
 void Filter::runStep(UpdateType updateType) {
   Benchmark::open(name);
@@ -200,23 +192,22 @@ void Filter::runStep(UpdateType updateType) {
   // Call virtual implementation
   try {
     switch (updateType) {
-    case forward:
-      process();
-      break;
-    case backward:
-      previous();
-      break;
-    case steady:
-      update();
-      break;
-    default:
-      std::cout << "Unhandled type of step in filter" << std::endl;
+      case forward:
+        process();
+        break;
+      case backward:
+        previous();
+        break;
+      case steady:
+        update();
+        break;
+      default:
+        std::cout << "Unhandled type of step in filter" << std::endl;
     }
   } catch (const cv::Exception &exc) {
     Benchmark::close(name.c_str());
     std::ostringstream oss;
-    oss << "Filter '" << name << "' of class '" << getClassName()
-        << "' failed to update throwing error:" << std::endl
+    oss << "Filter '" << name << "' of class '" << getClassName() << "' failed to update throwing error:" << std::endl
         << exc.what();
     throw std::runtime_error(oss.str());
   } catch (...) {
@@ -257,8 +248,7 @@ const Filter &Filter::getDependency(const std::string &name) const {
   }
   auto it = find(_dependencies.begin(), _dependencies.end(), name);
   if (it == _dependencies.end()) {
-    throw std::logic_error("Filter dependency unknown : looking for " + name +
-                           " in " + getName());
+    throw std::logic_error("Filter dependency unknown : looking for " + name + " in " + getName());
   }
 
   return _pipeline->get(*it);
@@ -266,8 +256,7 @@ const Filter &Filter::getDependency(const std::string &name) const {
 
 void Filter::initRhIO(const std::string &path) {
   // Lazy init
-  if (rhio_initialized)
-    return;
+  if (rhio_initialized) return;
 
   rhio_initialized = true;
   rhio_path = path;
@@ -281,13 +270,9 @@ void Filter::initRhIO(const std::string &path) {
     // This will fail if node do not exist yet
     node.getFloat("monitor_scale");
   } catch (const std::logic_error &err) {
-    node.newFloat("monitor_scale")
-        ->defaultValue(monitor_scale)
-        ->minimum(0.01)
-        ->maximum(10);
+    node.newFloat("monitor_scale")->defaultValue(monitor_scale)->minimum(0.01)->maximum(10);
     // Advertise format
-    node.newFrame("out", "Output frame of the filter '" + getName() + "'",
-                  RhIO::FrameFormat::BGR);
+    node.newFrame("out", "Output frame of the filter '" + getName() + "'", RhIO::FrameFormat::BGR);
   }
 }
 
@@ -342,10 +327,7 @@ void Filter::publishToRhIO(const std::string &path) {
   // Publish parameters to RhIO if they have never been published
   for (const auto &param : params()->params<ParamInt>()) {
     if (node.getValueType(param.first) == RhIO::NoValue) {
-      node.newInt(param.first)
-          ->defaultValue(param.second.value)
-          ->minimum(param.second.min)
-          ->maximum(param.second.max);
+      node.newInt(param.first)->defaultValue(param.second.value)->minimum(param.second.min)->maximum(param.second.max);
     }
   }
   for (const auto &param : params()->params<ParamFloat>()) {
@@ -382,8 +364,8 @@ cv::Mat &Filter::cachedImg() {
 }
 
 unsigned long Filter::now() const {
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-             std::chrono::steady_clock::now().time_since_epoch()).count();
+  return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+      .count();
 }
 
 void Filter::waitDependencies() const {
@@ -405,28 +387,28 @@ Json::Value Filter::toJson() const {
   return v;
 }
 
-void Filter::fromJson(const Json::Value & v, const std::string & dir_name) {
+void Filter::fromJson(const Json::Value &v, const std::string &dir_name) {
   // First set parameters
   setParameters();
   try {
     // Then update content from json data
-    rhoban_utils::tryRead(v,"name",&name);
-    rhoban_utils::tryRead(v,"display",&display);;
+    rhoban_utils::tryRead(v, "name", &name);
+    rhoban_utils::tryRead(v, "display", &display);
+    ;
     // Read dependencies
     rhoban_utils::tryReadVector(v, "dependencies", &_dependencies);
     // Checking dependencies size
     if (_dependencies.size() != (size_t)expectedDependencies()) {
       std::ostringstream oss;
-      oss << "Filter::fromJson: '" << getName() << "' of class '"
-          << getClassName() << "': invalid number of dependencies ("
-          << _dependencies.size() << " received, " << expectedDependencies()
+      oss << "Filter::fromJson: '" << getName() << "' of class '" << getClassName()
+          << "': invalid number of dependencies (" << _dependencies.size() << " received, " << expectedDependencies()
           << " expected)";
       throw rhoban_utils::JsonParsingError(oss.str());
     }
     // Read Parameters
-    tryParametersUpdate<int  >(v, "paramInts");
+    tryParametersUpdate<int>(v, "paramInts");
     tryParametersUpdate<float>(v, "paramFloats");
-  } catch (const rhoban_utils::JsonParsingError & err) {
+  } catch (const rhoban_utils::JsonParsingError &err) {
     std::ostringstream oss;
     oss << err.what() << " in filter with name '" << name << "' of class '" << getClassName() << "'";
     throw rhoban_utils::JsonParsingError(oss.str());
@@ -438,14 +420,9 @@ void Filter::fromJson(const Json::Value & v, const std::string & dir_name) {
   publishToRhIO("Vision/");
 }
 
+const std::vector<std::pair<float, cv::RotatedRect>> &Filter::getRois() const { return _rois; }
 
-const std::vector<std::pair<float, cv::RotatedRect>> &Filter::getRois() const {
-  return _rois;
-}
-
-const std::vector<std::pair<float, Circle>> &Filter::getCircleRois() const {
-  return _circleRois;
-}
+const std::vector<std::pair<float, Circle>> &Filter::getCircleRois() const { return _circleRois; }
 
 void Filter::addRoi(float quality, cv::RotatedRect _rect) {
   if (_defaultRoi) {
@@ -469,52 +446,50 @@ void Filter::clearRois() {
 }
 
 void Filter::displayCurrent() {
-    Benchmark::open("display");
+  Benchmark::open("display");
 
-    // Computing current image
-    cv::Mat & current_img = cachedImg();
+  // Computing current image
+  cv::Mat &current_img = cachedImg();
 
-    // TODO : make it cleaner, with values configurable outside the code
-    // Resizing the windows to fit better their images
-    float higherSize = 320.0; // Other side will be 240 if we're in 3/4
-    int width, height;
-    if (current_img.cols == 0 || current_img.rows == 0) {
-      width = 320;
-      height = 320;
+  // TODO : make it cleaner, with values configurable outside the code
+  // Resizing the windows to fit better their images
+  float higherSize = 320.0;  // Other side will be 240 if we're in 3/4
+  int width, height;
+  if (current_img.cols == 0 || current_img.rows == 0) {
+    width = 320;
+    height = 320;
+  } else {
+    if (current_img.cols > current_img.rows) {
+      width = higherSize;
+      height = current_img.rows / (current_img.cols / higherSize);
     } else {
-      if (current_img.cols > current_img.rows) {
-        width = higherSize;
-        height = current_img.rows / (current_img.cols / higherSize);
-      } else {
-        height = higherSize;
-        width = current_img.cols / (current_img.rows / higherSize);
-      }
+      height = higherSize;
+      width = current_img.cols / (current_img.rows / higherSize);
     }
+  }
 
-    cv::resizeWindow(name, width, height);
-    cv::imshow(name, current_img);
+  cv::resizeWindow(name, width, height);
+  cv::imshow(name, current_img);
 
-    /*
-     * Positionning the images. TODO : make it cleaner, with values configurable
-     * outside the code
-     */
-    if (std::find(listOfPresentWindows.begin(), listOfPresentWindows.end(),
-                  name) == listOfPresentWindows.end()) {
-      // First time with ask to print this
-      int nbElements = listOfPresentWindows.size();
-      int xOffset = 50;
-      int yOffset = 50;
-      int widthImg = 250;
-      int heightImg = 360;
-      int widthScreen = 1920;
-      int xIndex = nbElements % (widthScreen / widthImg);
-      int yIndex = nbElements / (widthScreen / widthImg);
-      cv::moveWindow(name, xIndex * widthImg + xOffset,
-                     yIndex * heightImg + yOffset);
-      Filter::listOfPresentWindows.push_back(name);
-    }
+  /*
+   * Positionning the images. TODO : make it cleaner, with values configurable
+   * outside the code
+   */
+  if (std::find(listOfPresentWindows.begin(), listOfPresentWindows.end(), name) == listOfPresentWindows.end()) {
+    // First time with ask to print this
+    int nbElements = listOfPresentWindows.size();
+    int xOffset = 50;
+    int yOffset = 50;
+    int widthImg = 250;
+    int heightImg = 360;
+    int widthScreen = 1920;
+    int xIndex = nbElements % (widthScreen / widthImg);
+    int yIndex = nbElements / (widthScreen / widthImg);
+    cv::moveWindow(name, xIndex * widthImg + xOffset, yIndex * heightImg + yOffset);
+    Filter::listOfPresentWindows.push_back(name);
+  }
 
-    Benchmark::close("display");
+  Benchmark::close("display");
 }
 
-}
+}  // namespace Vision

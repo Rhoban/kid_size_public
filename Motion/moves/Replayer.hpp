@@ -8,19 +8,19 @@
 
 class Replayer : public Move
 {
-    public:
-        Replayer();
-        ~Replayer();
-        std::string getName();
+public:
+  Replayer();
+  ~Replayer();
+  std::string getName();
 
-        void onStart();
-        void step(float elapsed);
+  void onStart();
+  void step(float elapsed);
 
-        bool over;
+  bool over;
 
-    protected:
-        float time;
-        float speed;
-        std::map<std::string, rhoban_utils::Function> splines;
-        bool enable;
+protected:
+  float time;
+  float speed;
+  std::map<std::string, rhoban_utils::Function> splines;
+  bool enable;
 };

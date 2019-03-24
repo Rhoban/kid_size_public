@@ -22,20 +22,20 @@ namespace Filters {
 /// - Below (width approximately of the post)
 /// - Boundary (top is top of above, bottom is bottom of below, width is larger)
 class GoalByII : public Filter {
-public:
+ public:
   GoalByII();
 
   virtual std::string getClassName() const override;
   virtual int expectedDependencies() const override;
 
-protected:
+ protected:
   virtual void process() override;
 
   virtual void setParameters() override;
 
-  cv::Mat getHeatMap(const cv::Mat & scores, double minScore, double maxScore) const;
+  cv::Mat getHeatMap(const cv::Mat& scores, double minScore, double maxScore) const;
 
-private:
+ private:
   /// Return the patch associated to the above rect of the goal at the given point
   cv::Rect_<float> getAbovePatch(int x, int y, float width);
 
@@ -55,14 +55,11 @@ private:
   cv::Rect_<float> getROIPatch(int x, int y, float width);
 
   /// Return the score of the patch given the provided integralImage
-  double getPatchScore(const cv::Rect & patch,
-                       const cv::Mat & whiteII, const cv::Mat & greenII);
+  double getPatchScore(const cv::Rect& patch, const cv::Mat& whiteII, const cv::Mat& greenII);
 
   /// img should be CV_32SC1
   /// draw pixels in [start_x,end_x[ * [start_y,end_y[
-  void fillScore(cv::Mat & img, int score,
-                 int start_x, int end_x,
-                 int start_y, int end_y);
+  void fillScore(cv::Mat& img, int score, int start_x, int end_x, int start_y, int end_y);
 
   /// Number of rows in the result image
   int rows;
@@ -115,7 +112,5 @@ private:
   /// Minimal radius when mask is used but entirely filled
   ParamFloat filledMaskMinWidth;
 };
-}
-}
-
-
+}  // namespace Filters
+}  // namespace Vision

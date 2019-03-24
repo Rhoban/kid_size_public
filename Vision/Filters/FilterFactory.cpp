@@ -29,5 +29,5 @@ FilterFactory::FilterFactory() {
   registerSourceFilters(this);
 }
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -4,9 +4,9 @@
 
 class Skeleton : public Move
 {
-    public:
-        std::string getName();
+public:
+  std::string getName();
 
-        void onStart();
-        void step(float elapsed);
+  void onStart();
+  void step(float elapsed);
 };

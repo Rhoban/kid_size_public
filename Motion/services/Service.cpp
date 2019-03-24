@@ -2,6 +2,5 @@
 
 bool Service::tick(double elapsed)
 {
-    return false;
+  return false;
 }
-

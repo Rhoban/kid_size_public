@@ -6,50 +6,47 @@
 
 class KickPhilipp : public Move
 {
-    public:
+public:
+  /**
+   * Initialization
+   */
+  KickPhilipp();
 
-        /**
-         * Initialization
-         */
-        KickPhilipp();
-        
-        /**
-         * @Inherit
-         */
-        virtual std::string getName() override;
+  /**
+   * @Inherit
+   */
+  virtual std::string getName() override;
 
-        /**
-         * @Inherit
-         */
-        virtual void onStart() override;
-        
-        /**
-         * @Inherit
-         */
-        virtual void step(float elapsed) override;
+  /**
+   * @Inherit
+   */
+  virtual void onStart() override;
 
-    private:
-        
-        /**
-         * Trajectories filename
-         */
-        std::string _filename;
+  /**
+   * @Inherit
+   */
+  virtual void step(float elapsed) override;
 
-        /**
-         * Splines container
-         */
-        Leph::Trajectories _trajs;
+private:
+  /**
+   * Trajectories filename
+   */
+  std::string _filename;
 
-        /**
-         * Play state
-         */
-        double _t;
-        double _timeGain;
+  /**
+   * Splines container
+   */
+  Leph::Trajectories _trajs;
 
-        /**
-         * Reset and Start spline command
-         */
-        void cmdReset();
-        std::string cmdStart();
+  /**
+   * Play state
+   */
+  double _t;
+  double _timeGain;
+
+  /**
+   * Reset and Start spline command
+   */
+  void cmdReset();
+  std::string cmdStart();
 };
-

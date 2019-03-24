@@ -12,12 +12,12 @@ namespace Filters {
  *them
  */
 class Histogram : public Filter {
-public:
+ public:
   Histogram();
 
   virtual std::string getClassName() const override { return "Histogram"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -25,8 +25,8 @@ protected:
 
   virtual void setParameters() override;
 
-private:
+ private:
   ParamInt bins;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -36,14 +36,12 @@ Field::Field() : fieldLines(), fieldMarks() {
   initBorders();
   initCenter();
   for (auto dir : {-1, 1}) {
-    initGoalZone(cv::Point2f(dir * Constants::field.fieldLength / 2,
-                             -Constants::field.goalAreaWidth / 2),
-                 -dir);
+    initGoalZone(cv::Point2f(dir * Constants::field.fieldLength / 2, -Constants::field.goalAreaWidth / 2), -dir);
   }
   initMarks();
   initGoals();
   initArena();
-  initTags(); //FIXME: testing
+  initTags();  // FIXME: testing
 }
 
 void Field::initBorders() {
@@ -88,7 +86,7 @@ void Field::initMarks() {
 }
 
 void Field::initGoals() {
-  for (auto i : {-1, 1}) { // 2 Goals
+  for (auto i : {-1, 1}) {  // 2 Goals
     cv::Point2f center = cv::Point2f(i * Constants::field.fieldLength / 2, 0);
     cv::Point2f delta(0, Constants::field.goalWidth / 2);
     goals.push_back(Segment(center - delta, center + delta));
@@ -112,8 +110,7 @@ void Field::initArena() {
 }
 
 Field *Field::getField() {
-  if (singleton == NULL)
-    singleton = new Field();
+  if (singleton == NULL) singleton = new Field();
   return singleton;
 }
 
@@ -122,46 +119,31 @@ cv::Point2f Field::getGoal(int goalNo, int postNo) {
   return getField()->goals[goalNo].center() + offset;
 }
 
-
-void Field::initTags()
-{
+void Field::initTags() {
   tags.clear();
   CalibrationSet cs;
-  std::map<int,ArucoTag> tags_dictionary = cs.getMarkers();
-  for (const auto & entry : tags_dictionary) {
+  std::map<int, ArucoTag> tags_dictionary = cs.getMarkers();
+  for (const auto &entry : tags_dictionary) {
     Eigen::Vector3d center = entry.second.marker_center;
     tags[entry.first] = cv::Point3f(center.x(), center.y(), center.z());
   }
 }
 
-const std::map<int,cv::Point3f> & Field::getTags()
-{
-  return getField()->tags;
-}
+const std::map<int, cv::Point3f> &Field::getTags() { return getField()->tags; }
 
 cv::Point2f Field::getMyGoal(int postNo) { return getGoal(0, postNo); }
 
 cv::Point2f Field::getAdvGoal(int postNo) { return getGoal(1, postNo); }
 
-int Field::totalHeight() {
-  return (int)(2 * Constants::field.borderStripWidth + Constants::field.fieldWidth);
-}
+int Field::totalHeight() { return (int)(2 * Constants::field.borderStripWidth + Constants::field.fieldWidth); }
 
-int Field::totalWidth() {
-  return (int)(2 * Constants::field.borderStripWidth + Constants::field.fieldLength);
-}
+int Field::totalWidth() { return (int)(2 * Constants::field.borderStripWidth + Constants::field.fieldLength); }
 
-int Field::lineWidth(const cv::Mat &img) {
-  return (int)(Constants::field.lineWidth * getScale(img));
-}
+int Field::lineWidth(const cv::Mat &img) { return (int)(Constants::field.lineWidth * getScale(img)); }
 
-int Field::markWidth(const cv::Mat &img) {
-  return (int)(Constants::field.penaltyMarkLength * getScale(img));
-}
+int Field::markWidth(const cv::Mat &img) { return (int)(Constants::field.penaltyMarkLength * getScale(img)); }
 
-int Field::centerDiameter(const cv::Mat &img) {
-  return (int)(2 * Constants::field.centerRadius * getScale(img));
-}
+int Field::centerDiameter(const cv::Mat &img) { return (int)(2 * Constants::field.centerRadius * getScale(img)); }
 
 cv::Point2f Field::fieldToImg(const cv::Mat &img, const cv::Point2f &p) {
   cv::Point2f start(img.cols / 2, img.rows / 2);
@@ -179,8 +161,7 @@ cv::Point2i Field::fieldToImg(const cv::Mat &img, const cv::Point2i &p) {
 
 void Field::drawField(cv::Mat &img, const cv::Scalar &bgColor) {
   // Filling with bg Color
-  rectangle(img, cv::Point(0, 0), cv::Point(img.cols, img.rows), bgColor,
-            CV_FILLED);
+  rectangle(img, cv::Point(0, 0), cv::Point(img.cols, img.rows), bgColor, CV_FILLED);
   Field *f = getField();
   // Drawing white lines
   for (unsigned int i = 0; i < f->fieldLines.size(); i++) {
@@ -194,21 +175,17 @@ void Field::drawField(cv::Mat &img, const cv::Scalar &bgColor) {
     cv::Point2f markCenter = f->fieldMarks[i];
     cv::Point2f dx(Constants::field.penaltyMarkLength / 2, 0);
     cv::Point2f dy(0, Constants::field.penaltyMarkLength / 2);
-    line(img, fieldToImg(img, markCenter - dx),
-         fieldToImg(img, markCenter + dx), LINES_COLOR, markWidth(img));
-    line(img, fieldToImg(img, markCenter - dy),
-         fieldToImg(img, markCenter + dy), LINES_COLOR, markWidth(img));
+    line(img, fieldToImg(img, markCenter - dx), fieldToImg(img, markCenter + dx), LINES_COLOR, markWidth(img));
+    line(img, fieldToImg(img, markCenter - dy), fieldToImg(img, markCenter + dy), LINES_COLOR, markWidth(img));
   }
   // Drawing circle
-  circle(img, fieldToImg(img, cv::Point(0, 0)), centerDiameter(img) / 2,
-         LINES_COLOR, lineWidth(img));
+  circle(img, fieldToImg(img, cv::Point(0, 0)), centerDiameter(img) / 2, LINES_COLOR, lineWidth(img));
   // Drawing Goals
   for (unsigned int i = 0; i < f->goals.size(); i++) {
     Segment &s = f->goals[i];
     cv::Point2f src = s.first;
     cv::Point2f dst = s.second;
-    line(img, fieldToImg(img, src), fieldToImg(img, dst), GOAL_COLOR,
-         3 * lineWidth(img));
+    line(img, fieldToImg(img, src), fieldToImg(img, dst), GOAL_COLOR, 3 * lineWidth(img));
   }
 
   // drawing goal posts
@@ -223,9 +200,7 @@ const std::vector<Segment> &Field::getLines() { return getField()->fieldLines; }
 
 const std::vector<Segment> &Field::getGoals() { return getField()->goals; }
 
-const std::vector<ParametricLine> &Field::getArenaBorders() {
-  return getField()->arenaBorders;
-}
+const std::vector<ParametricLine> &Field::getArenaBorders() { return getField()->arenaBorders; }
 
 std::vector<cv::Point2f> Field::getGoalPosts() {
   std::vector<cv::Point2f> goalPosts;
@@ -249,5 +224,5 @@ std::vector<cv::Point2f> Field::getArenaCorners() {
   }
   return corners;
 }
-}
-}
+}  // namespace Field
+}  // namespace Vision

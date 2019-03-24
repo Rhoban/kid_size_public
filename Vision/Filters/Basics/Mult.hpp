@@ -11,12 +11,12 @@ namespace Filters {
  * Multiply each channel of the image by the given ratio
  */
 class Mult : public Filter {
-public:
+ public:
   Mult() : Filter("Mult") {}
 
   virtual std::string getClassName() const override { return "Mult"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -24,8 +24,8 @@ protected:
 
   virtual void setParameters() override;
 
-private:
+ private:
   ParamFloat _ratio;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

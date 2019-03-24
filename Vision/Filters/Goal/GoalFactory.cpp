@@ -7,9 +7,9 @@
 
 namespace Vision {
 namespace Filters {
-void registerGoalFilters(FilterFactory * ff) {
-  ff->registerBuilder("GoalByDNN", [](){return std::unique_ptr<Filter>(new GoalByDNN);});
-  ff->registerBuilder("GoalByII" , [](){return std::unique_ptr<Filter>(new GoalByII );});
+void registerGoalFilters(FilterFactory* ff) {
+  ff->registerBuilder("GoalByDNN", []() { return std::unique_ptr<Filter>(new GoalByDNN); });
+  ff->registerBuilder("GoalByII", []() { return std::unique_ptr<Filter>(new GoalByII); });
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

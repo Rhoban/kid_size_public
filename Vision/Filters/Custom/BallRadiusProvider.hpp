@@ -10,23 +10,22 @@ namespace Filters {
 /// In order to spare computing power, only a subset of the required value is
 /// computed. Values between those points are obtained through interpolation.
 class BallRadiusProvider : public Filter {
-public:
+ public:
   BallRadiusProvider() : Filter("BallRadiusProvider") {}
 
   virtual std::string getClassName() const override;
   virtual int expectedDependencies() const override;
 
-protected:
-
+ protected:
   virtual void process() override;
   virtual void setParameters() override;
 
-private:
+ private:
   /// The number of columns where the 'exact' value is computed
   ParamInt nbCols;
   /// The number of rows where the 'exact' value is computed
   ParamInt nbRows;
 };
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

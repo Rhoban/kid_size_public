@@ -15,19 +15,19 @@ namespace Vision {
 namespace Localisation {
 
 class FieldPF : public rhoban_unsorted::ParticleFilter<FieldPosition> {
-public:
+ public:
   typedef std::pair<int, int> GoalKey;
   typedef std::tuple<int, int, int> QualityKey;
   enum ResetType { None, Uniform, BordersRight, BordersLeft, Borders, Fall, Custom };
 
-private:
+ private:
   RhIO::IONode *rhioNode;
 
   ResetType resetType;
 
   // Points which should be tracked
   std::vector<GoalKey> trackedGoals;
-  std::vector<int> errorTols; // Tolerance to angle error to average
+  std::vector<int> errorTols;  // Tolerance to angle error to average
 
   // Directions and qualities of goals points of interest
   std::map<GoalKey, rhoban_utils::Angle> goalDirections;
@@ -36,11 +36,11 @@ private:
   virtual void updateInternalValues() override;
   void updateToGoalQuality();
 
-protected:
+ protected:
   virtual void updateRepresentativeQuality();
   virtual void updateRepresentativeParticle();
 
-public:
+ public:
   FieldPF();
 
   /// Overwrite current resetType if it has not been ticked yet
@@ -91,20 +91,20 @@ public:
   double resamplingRatio;
 
   // Tolerance to error
-  double tolDist;      // [m]
-  double tolDiffAngle; // [deg]
+  double tolDist;       // [m]
+  double tolDiffAngle;  // [deg]
 
-  double fallNoise;// [m]
-  double fallNoiseTheta;// [deg]
+  double fallNoise;       // [m]
+  double fallNoiseTheta;  // [deg]
 
-  double borderNoise;// [m]
-  double borderNoiseTheta;// [deg]
+  double borderNoise;       // [m]
+  double borderNoiseTheta;  // [deg]
 
-  double customX;// [m]
-  double customY;// [m]
-  double customTheta;// [deg]
-  double customNoise;// [m]
-  double customThetaNoise;// [deg]
+  double customX;           // [m]
+  double customY;           // [m]
+  double customTheta;       // [deg]
+  double customNoise;       // [m]
+  double customThetaNoise;  // [deg]
 
   void publishToRhIO();
   void importFromRhIO();
@@ -114,5 +114,5 @@ public:
 
   static std::map<ResetType, std::string> resetNames;
 };
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

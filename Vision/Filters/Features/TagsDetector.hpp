@@ -20,16 +20,15 @@ namespace Filters {
  *
  */
 class TagsDetector : public Filter {
-public:
+ public:
   /// Aruco::Marker does not exist in OpenCV3
   class Marker {
-  public:
+   public:
     Marker();
-    Marker(int id, float size, const std::vector<cv::Point2f> & corners,
-           const cv::Vec3d & rvec, const cv::Vec3d & tvec);
+    Marker(int id, float size, const std::vector<cv::Point2f>& corners, const cv::Vec3d& rvec, const cv::Vec3d& tvec);
 
     cv::Point2f getCenter() const;
-    
+
     /// Id of the marker
     int id;
     /// Size in [m]
@@ -41,7 +40,7 @@ public:
     /// Translation with respect to Camera
     cv::Vec3d tvec;
   };
-  
+
   TagsDetector();
 
   // Json stuff
@@ -52,15 +51,15 @@ public:
   virtual void setParameters() override;
   virtual int expectedDependencies() const override;
 
-  const std::vector<Marker> & getDetectedMarkers() const;
+  const std::vector<Marker>& getDetectedMarkers() const;
 
-protected:
+ protected:
   /**
    * @Inherit
    */
   virtual void process() override;
 
-private:
+ private:
   ParamFloat adaptiveThreshConstant;
   ParamInt adaptiveThreshWinSizeMin;
   ParamInt adaptiveThreshWinSizeMax;
@@ -98,5 +97,5 @@ private:
   /// Store the markers seen until now
   rhoban_utils::StringTable markersData;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

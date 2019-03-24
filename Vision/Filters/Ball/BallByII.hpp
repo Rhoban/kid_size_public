@@ -15,20 +15,20 @@ namespace Filters {
 /// Output:
 /// - An image of (rows, cols) where pixels are colored in red or blue depending on their value
 class BallByII : public Filter {
-public:
+ public:
   BallByII() : Filter("BallByII") {}
 
   virtual std::string getClassName() const override;
   virtual int expectedDependencies() const override;
 
-protected:
+ protected:
   virtual void process() override;
 
   virtual void setParameters() override;
 
-  cv::Mat getHeatMap(const cv::Mat & scores, double minScore, double maxScore) const;
+  cv::Mat getHeatMap(const cv::Mat& scores, double minScore, double maxScore) const;
 
-private:
+ private:
   /// Return the half width corresponding to a ball of the given radius
   double getBoundaryHalfWidth(float radius);
   /// Return the patch associated to the inner part of the ball at the given point
@@ -42,14 +42,11 @@ private:
   /// Return the patch associated to the upper boundary part of the ball at the given point
   cv::Rect_<float> getBoundaryAbovePatch(int x, int y, float radius);
 
-  double getCandidateScore(int center_x, int center_y, double radius,
-                           const cv::Mat & y_img, const cv::Mat & green_img);
+  double getCandidateScore(int center_x, int center_y, double radius, const cv::Mat& y_img, const cv::Mat& green_img);
 
   /// img should be CV_32SC1
   /// draw pixels in [start_x,end_x[ * [start_y,end_y[
-  void fillScore(cv::Mat & img, int score,
-                 int start_x, int end_x,
-                 int start_y, int end_y);
+  void fillScore(cv::Mat& img, int score, int start_x, int end_x, int start_y, int end_y);
 
   /// Number of rows in the result image
   int rows;
@@ -90,7 +87,5 @@ private:
   /// If enabled, a local search is used nearby every selected candidate
   ParamInt useLocalSearch;
 };
-}
-}
-
-
+}  // namespace Filters
+}  // namespace Vision

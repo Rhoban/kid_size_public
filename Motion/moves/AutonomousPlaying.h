@@ -9,25 +9,25 @@ class StandUp;
 class Walk;
 class AutonomousPlaying : public STM
 {
-    public:
-        AutonomousPlaying(Walk *walk, StandUp *standup);
-        std::string getName();
-        void onStart();
-        void onStop();
-        void step(float elapsed);
-        bool isFallen();
-        bool isHandled();
+public:
+  AutonomousPlaying(Walk* walk, StandUp* standup);
+  std::string getName();
+  void onStart();
+  void onStop();
+  void step(float elapsed);
+  bool isFallen();
+  bool isHandled();
 
-    protected:
-        Walk *walk;
-        StandUp *standup;
+protected:
+  Walk* walk;
+  StandUp* standup;
 
-        float t;
-        int standup_try;
-        double timeSinceVisionInactive;
+  float t;
+  int standup_try;
+  double timeSinceVisionInactive;
 
-        void applyGameState();
+  void applyGameState();
 
-        void enterState(std::string state);
-        void exitState(std::string state);
+  void enterState(std::string state);
+  void exitState(std::string state);
 };

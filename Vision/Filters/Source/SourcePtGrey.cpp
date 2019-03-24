@@ -24,45 +24,41 @@ static rhoban_utils::Logger logger("SourcePtGrey");
 namespace Vision {
 namespace Filters {
 
-std::map<std::string, FlyCapture2::PropertyType> SourcePtGrey::names_to_types =
-    {{"Brightness", FlyCapture2::BRIGHTNESS},
-     {"Exposure", FlyCapture2::AUTO_EXPOSURE},
-     {"Shutter", FlyCapture2::SHUTTER},
-     {"FrameRate", FlyCapture2::FRAME_RATE},
-     {"Gain", FlyCapture2::GAIN},
-     {"WhiteBalance", FlyCapture2::WHITE_BALANCE}
-};
+std::map<std::string, FlyCapture2::PropertyType> SourcePtGrey::names_to_types = {
+    {"Brightness", FlyCapture2::BRIGHTNESS},
+    {"Exposure", FlyCapture2::AUTO_EXPOSURE},
+    {"Shutter", FlyCapture2::SHUTTER},
+    {"FrameRate", FlyCapture2::FRAME_RATE},
+    {"Gain", FlyCapture2::GAIN},
+    {"WhiteBalance", FlyCapture2::WHITE_BALANCE}};
 
 std::map<unsigned int, std::string> pixel_format_names = {
-  {FlyCapture2::PIXEL_FORMAT_MONO8        , "Mono 8"},
-  {FlyCapture2::PIXEL_FORMAT_MONO12       , "Mono 12"},
-  {FlyCapture2::PIXEL_FORMAT_MONO16       , "Mono 16"},
-  {FlyCapture2::PIXEL_FORMAT_RAW8         , "Raw 8"},
-  {FlyCapture2::PIXEL_FORMAT_RAW12        , "Raw 12"},
-  {FlyCapture2::PIXEL_FORMAT_RAW16        , "Raw 16"},
-  {FlyCapture2::PIXEL_FORMAT_411YUV8      , "YUV 411"},
-  {FlyCapture2::PIXEL_FORMAT_422YUV8      , "YUV 422"},
-  {FlyCapture2::PIXEL_FORMAT_444YUV8      , "YUV 444"},
-  {FlyCapture2::PIXEL_FORMAT_RGB8         , "RGB 8"},
-  {FlyCapture2::PIXEL_FORMAT_RGB16        , "RGB 16"},
-  {FlyCapture2::PIXEL_FORMAT_S_MONO16     , "Signed Mono 16"},
-  {FlyCapture2::PIXEL_FORMAT_S_RGB16      , "Signed RGB 16"}
-  // Ignoring vendor pixel format 422YUV8_JPEG
+    {FlyCapture2::PIXEL_FORMAT_MONO8, "Mono 8"},         {FlyCapture2::PIXEL_FORMAT_MONO12, "Mono 12"},
+    {FlyCapture2::PIXEL_FORMAT_MONO16, "Mono 16"},       {FlyCapture2::PIXEL_FORMAT_RAW8, "Raw 8"},
+    {FlyCapture2::PIXEL_FORMAT_RAW12, "Raw 12"},         {FlyCapture2::PIXEL_FORMAT_RAW16, "Raw 16"},
+    {FlyCapture2::PIXEL_FORMAT_411YUV8, "YUV 411"},      {FlyCapture2::PIXEL_FORMAT_422YUV8, "YUV 422"},
+    {FlyCapture2::PIXEL_FORMAT_444YUV8, "YUV 444"},      {FlyCapture2::PIXEL_FORMAT_RGB8, "RGB 8"},
+    {FlyCapture2::PIXEL_FORMAT_RGB16, "RGB 16"},         {FlyCapture2::PIXEL_FORMAT_S_MONO16, "Signed Mono 16"},
+    {FlyCapture2::PIXEL_FORMAT_S_RGB16, "Signed RGB 16"}
+    // Ignoring vendor pixel format 422YUV8_JPEG
 };
-  
+
 SourcePtGrey::SourcePtGrey()
-    : Source("SourcePtGrey"), is_capturing(false), nb_retrieve_success(0),
-      nb_retrieve_failures(0),  elapsed_from_synch_ms(0),
-      ts_delta(0.0), first_run(true), last_ts(), custom_offset_ms(0.0) {
+    : Source("SourcePtGrey"),
+      is_capturing(false),
+      nb_retrieve_success(0),
+      nb_retrieve_failures(0),
+      elapsed_from_synch_ms(0),
+      ts_delta(0.0),
+      first_run(true),
+      last_ts(),
+      custom_offset_ms(0.0) {
   last_retrieval_success = TimeStamp::now();
 }
 
 SourcePtGrey::~SourcePtGrey() {}
 
-FlyCapture2::Property
-SourcePtGrey::propertyFromJson(const Json::Value & v,
-                               FlyCapture2::PropertyType type) const {
-
+FlyCapture2::Property SourcePtGrey::propertyFromJson(const Json::Value &v, FlyCapture2::PropertyType type) const {
   bool isWhiteBalance = (type == FlyCapture2::PropertyType::WHITE_BALANCE);
   FlyCapture2::Property p;
   p.type = type;
@@ -71,7 +67,7 @@ SourcePtGrey::propertyFromJson(const Json::Value & v,
   p.absControl = !isWhiteBalance;
   p.onePush = false;
   p.onOff = true;
-  p.autoManualMode = false; // false -> manual
+  p.autoManualMode = false;  // false -> manual
   p.valueA = 0;
   p.valueB = 0;
   p.autoManualMode = rhoban_utils::read<bool>(v, "autoManualMode");
@@ -91,18 +87,15 @@ SourcePtGrey::propertyFromJson(const Json::Value & v,
   return p;
 }
 
-double SourcePtGrey::getFrameRate() {
-  return properties.at("FrameRate").absValue;
-}
+double SourcePtGrey::getFrameRate() { return properties.at("FrameRate").absValue; }
 
 double SourcePtGrey::getSuccessRatio() {
   int nb_retrievals = nb_retrieve_success + nb_retrieve_failures;
-  if (nb_retrievals == 0)
-    return 1;
+  if (nb_retrievals == 0) return 1;
   return nb_retrieve_success / (double)nb_retrievals;
 }
 
-void SourcePtGrey::fromJson(const Json::Value & v, const std::string & dir_name) {
+void SourcePtGrey::fromJson(const Json::Value &v, const std::string &dir_name) {
   Filter::fromJson(v, dir_name);
   Json::Value wp_val = v["wished_properties"];
   // If wished properties are found, use them
@@ -130,14 +123,12 @@ string SourcePtGrey::getClassName() const { return "SourcePtGrey"; }
 
 int SourcePtGrey::expectedDependencies() const { return 0; }
 
-Source::Type SourcePtGrey::getType() const {
-  return Type::Online;
-}
+Source::Type SourcePtGrey::getType() const { return Type::Online; }
 
 void SourcePtGrey::updateImageSettings() {
   // Error variable
   setImagingMode(FlyCapture2::Mode::MODE_1);
-  updateBinning(2,2);
+  updateBinning(2, 2);
   setPixelFormat(FlyCapture2::PixelFormat::PIXEL_FORMAT_444YUV8);
 }
 
@@ -168,8 +159,7 @@ void SourcePtGrey::updatePacketProperties() {
   error = camera.SetGigEProperty(&packet_size_prop);
   if (error != FlyCapture2::PGRERROR_OK) {
     std::ostringstream oss;
-    oss << "SourcePtGrey::updatePacketProperties: failed to set packet size: "
-        << error.GetType();
+    oss << "SourcePtGrey::updatePacketProperties: failed to set packet size: " << error.GetType();
     {
       oss << ": Camera was capturing, stop capturing before changing packet "
              "size";
@@ -195,9 +185,10 @@ void SourcePtGrey::startCamera() {
     camera.Disconnect();
   }
   // Connect to camera
-  error = camera.Connect(0); // TODO: replace by &camera_id when implemented
+  error = camera.Connect(0);  // TODO: replace by &camera_id when implemented
   if (error != FlyCapture2::PGRERROR_OK) {
-    const std::string message = "SourcePtGrey::StartCamera: Failed to connect to camera. Message: " + std::string(error.GetDescription());
+    const std::string message =
+        "SourcePtGrey::StartCamera: Failed to connect to camera. Message: " + std::string(error.GetDescription());
     throw Utils::PtGreyConnectionException(message);
   }
   try {
@@ -213,12 +204,10 @@ void SourcePtGrey::startCamera() {
       if (error == FlyCapture2::PGRERROR_ISOCH_BANDWIDTH_EXCEEDED) {
         throw Utils::PtGreyException("SourcePtGrey::StartCamera: bandwidth exceeded");
       } else if (error == FlyCapture2::PGRERROR_ISOCH_ALREADY_STARTED) {
-        std::cerr << "SourcePtGrey::StartCamera: Isoch already started: stopping"
-                  << std::endl;
+        std::cerr << "SourcePtGrey::StartCamera: Isoch already started: stopping" << std::endl;
         camera.StopCapture();
       } else if (error != FlyCapture2::PGRERROR_OK) {
-        std::cerr << "SourcePtGrey::StartCamera: Failed to start image capture: '"
-                  << error.GetDescription();
+        std::cerr << "SourcePtGrey::StartCamera: Failed to start image capture: '" << error.GetDescription();
         reconnectCamera();
       } else {
         break;
@@ -252,9 +241,8 @@ void SourcePtGrey::startCamera() {
       throw Utils::PtGreyException("failed to set 'embedded ImageInfo'");
     }
     logger.log("setEmbeddedImageInfo OK");
-  } catch (const Utils::PtGreyException & exc) {
-    logger.error("Got a PtGreyException while preparing camera: '%s'",
-                 exc.what());
+  } catch (const Utils::PtGreyException &exc) {
+    logger.error("Got a PtGreyException while preparing camera: '%s'", exc.what());
     camera.Disconnect();
     throw;
   }
@@ -266,8 +254,7 @@ void SourcePtGrey::endCamera() {
   if (is_capturing) {
     camera.StopCapture();
     if (error != FlyCapture2::PGRERROR_OK) {
-      throw Utils::PtGreyException(
-          "SourcePtGrey::endCamera: Failed to stop capture!");
+      throw Utils::PtGreyException("SourcePtGrey::endCamera: Failed to stop capture!");
     }
   }
   if (camera.IsConnected()) {
@@ -285,10 +272,9 @@ void SourcePtGrey::reconnectCamera() {
   }
   // Connect to camera
   logger.log("reconnectCamera::Connect()");
-  error = camera.Connect(0); // TODO: replace by &camera_id when implemented
+  error = camera.Connect(0);  // TODO: replace by &camera_id when implemented
   if (error != FlyCapture2::PGRERROR_OK) {
-    throw Utils::PtGreyConnectionException(
-        "SourcePtGrey::StartCamera: Failed to connect to camera");
+    throw Utils::PtGreyConnectionException("SourcePtGrey::StartCamera: Failed to connect to camera");
   }
   logger.log("reconnectCamera::OK()");
 }
@@ -303,8 +289,7 @@ void SourcePtGrey::updateProperties() {
     property.type = property_type;
     error = camera.GetProperty(&property);
     if (error != FlyCapture2::PGRERROR_OK) {
-      throw Utils::PtGreyException("Failed to Get Property: '" + property_name +
-                               "'");
+      throw Utils::PtGreyException("Failed to Get Property: '" + property_name + "'");
     }
     // Write Property inside local map
     properties[property_name] = property;
@@ -321,16 +306,14 @@ void SourcePtGrey::updatePropertiesInformation() {
     property_info.type = property_type;
     error = camera.GetPropertyInfo(&property_info);
     if (error != FlyCapture2::PGRERROR_OK) {
-      throw Utils::PtGreyException("Failed to Get Property Information: '" +
-                               property_name + "'");
+      throw Utils::PtGreyException("Failed to Get Property Information: '" + property_name + "'");
     }
     // Write Property inside local map
     properties_information[property_name] = property_info;
   }
 }
 
-void SourcePtGrey::dump(const FlyCapture2::Format7ImageSettings & s,
-                        std::ostream & out) {
+void SourcePtGrey::dump(const FlyCapture2::Format7ImageSettings &s, std::ostream &out) {
   out << "----------------" << std::endl;
   out << "F7 Image Settings" << std::endl;
   out << "----------------" << std::endl;
@@ -340,8 +323,7 @@ void SourcePtGrey::dump(const FlyCapture2::Format7ImageSettings & s,
   out << "pixelFormat: " << pixel_format_names.at(s.pixelFormat) << std::endl;
 }
 
-void SourcePtGrey::dump(const FlyCapture2::GigEImageSettings & s,
-                        std::ostream & out) {
+void SourcePtGrey::dump(const FlyCapture2::GigEImageSettings &s, std::ostream &out) {
   out << "--------------" << std::endl;
   out << "Image Settings" << std::endl;
   out << "--------------" << std::endl;
@@ -350,14 +332,13 @@ void SourcePtGrey::dump(const FlyCapture2::GigEImageSettings & s,
   out << "pixelFormat: " << pixel_format_names.at(s.pixelFormat) << std::endl;
 }
 
-void SourcePtGrey::dump(const FlyCapture2::GigEImageSettingsInfo & image_settings_info,
-                        std::ostream & out) {
+void SourcePtGrey::dump(const FlyCapture2::GigEImageSettingsInfo &image_settings_info, std::ostream &out) {
   out << "-------------------" << std::endl;
   out << "Image Settings Info" << std::endl;
   out << "-------------------" << std::endl;
   for (const auto &entry : pixel_format_names) {
     unsigned int format_mask = entry.first;
-    const std::string & format_name = entry.second;
+    const std::string &format_name = entry.second;
     if ((format_mask & image_settings_info.pixelFormatBitField) != 0) {
       out << "\t" << format_name << std::endl;
     }
@@ -384,18 +365,15 @@ void SourcePtGrey::dumpPropertiesInformation(std::ostream &out) {
   }
 }
 
-FlyCapture2::PropertyType
-SourcePtGrey::getPropertyType(const std::string &name) {
+FlyCapture2::PropertyType SourcePtGrey::getPropertyType(const std::string &name) {
   try {
     return names_to_types.at(name);
   } catch (const std::out_of_range &exc) {
-    throw std::out_of_range("SourcePtGrey::getPropertyType: unknown name '" +
-                            name + "'");
+    throw std::out_of_range("SourcePtGrey::getPropertyType: unknown name '" + name + "'");
   }
 }
 
-void SourcePtGrey::writeProperty(const FlyCapture2::Property &property,
-                                 std::ostream &out, const std::string &prefix) {
+void SourcePtGrey::writeProperty(const FlyCapture2::Property &property, std::ostream &out, const std::string &prefix) {
   out << prefix << "type            : " << property.type << std::endl;
   out << prefix << "present         : " << property.present << std::endl;
   out << prefix << "absolute control: " << property.absControl << std::endl;
@@ -407,23 +385,16 @@ void SourcePtGrey::writeProperty(const FlyCapture2::Property &property,
   out << prefix << "absolute value  : " << property.absValue << std::endl;
 }
 
-void SourcePtGrey::writePropertyInformation(
-    const FlyCapture2::PropertyInfo &property_info, std::ostream &out,
-    const std::string &prefix) {
+void SourcePtGrey::writePropertyInformation(const FlyCapture2::PropertyInfo &property_info, std::ostream &out,
+                                            const std::string &prefix) {
   out << prefix << "type            : " << property_info.type << std::endl;
   out << prefix << "present         : " << property_info.present << std::endl;
-  out << prefix << "support auto    : " << property_info.autoSupported
-      << std::endl;
-  out << prefix << "support manual  : " << property_info.manualSupported
-      << std::endl;
-  out << prefix << "support on/off  : " << property_info.onOffSupported
-      << std::endl;
-  out << prefix << "support one push: " << property_info.onePushSupported
-      << std::endl;
-  out << prefix << "support abs val : " << property_info.absValSupported
-      << std::endl;
-  out << prefix << "support read out: " << property_info.readOutSupported
-      << std::endl;
+  out << prefix << "support auto    : " << property_info.autoSupported << std::endl;
+  out << prefix << "support manual  : " << property_info.manualSupported << std::endl;
+  out << prefix << "support on/off  : " << property_info.onOffSupported << std::endl;
+  out << prefix << "support one push: " << property_info.onePushSupported << std::endl;
+  out << prefix << "support abs val : " << property_info.absValSupported << std::endl;
+  out << prefix << "support read out: " << property_info.readOutSupported << std::endl;
   out << prefix << "min             : " << property_info.min << std::endl;
   out << prefix << "max             : " << property_info.max << std::endl;
   out << prefix << "abs min         : " << property_info.absMin << std::endl;
@@ -454,31 +425,23 @@ void SourcePtGrey::bindProperties() {
     const std::string &property_name = entry.first;
     std::string property_path = filter_path + "/" + property_name;
     FlyCapture2::Property property = entry.second;
-    FlyCapture2::PropertyInfo property_info =
-        properties_information.at(property_name);
+    FlyCapture2::PropertyInfo property_info = properties_information.at(property_name);
     // If property has already been created, skip property
-    if (RhIO::Root.childExist(property_path))
-      continue;
+    if (RhIO::Root.childExist(property_path)) continue;
     // Create Property node
     RhIO::Root.newChild(property_path);
     RhIO::IONode &node = RhIO::Root.child(property_path);
     // Create a node for each property
     node.newBool("auto")->defaultValue(false);
     if (property.type == FlyCapture2::WHITE_BALANCE) {
-      node.newInt("valueA")
-        ->defaultValue(property.valueA)
-        ->minimum(0)
-        ->maximum(1023);
-      node.newInt("valueB")
-        ->defaultValue(property.valueB)
-        ->minimum(0)
-        ->maximum(1023);
+      node.newInt("valueA")->defaultValue(property.valueA)->minimum(0)->maximum(1023);
+      node.newInt("valueB")->defaultValue(property.valueB)->minimum(0)->maximum(1023);
     } else {
       node.newBool("absControl")->defaultValue(true);
       node.newFloat("absValue")
-        ->defaultValue(property.absValue)
-        ->minimum(property_info.absMin)
-        ->maximum(property_info.absMax);
+          ->defaultValue(property.absValue)
+          ->minimum(property_info.absMin)
+          ->maximum(property_info.absMax);
     }
     // TODO handle other types
   }
@@ -526,8 +489,7 @@ void SourcePtGrey::applyWishedProperties() {
     FlyCapture2::Property &wished_property = entry.second;
     // Lazy application of parameters
     if (!isEquivalent(wished_property, properties.at(property_name))) {
-      std::cout << "Difference found in configuration for property: '"
-                << property_name << "'" << std::endl;
+      std::cout << "Difference found in configuration for property: '" << property_name << "'" << std::endl;
       if (wished_property.type == FlyCapture2::WHITE_BALANCE) {
         wished_property.absControl = false;
       }
@@ -536,29 +498,24 @@ void SourcePtGrey::applyWishedProperties() {
       error = camera.SetProperty(&wished_property, false);
       if (error != FlyCapture2::PGRERROR_OK) {
         dumpProperties(std::cout);
-        //dumpPropertiesInformation(std::cout);
-        std::cout << "PtGreyError: " <<  error.GetDescription() << std::endl;
+        // dumpPropertiesInformation(std::cout);
+        std::cout << "PtGreyError: " << error.GetDescription() << std::endl;
         std::cout << "Wished prop: ";
         writeProperty(entry.second, std::cout, "  ");
-        throw Utils::PtGreyException("Failed to apply property: '" + property_name +
-                                 "'");
+        throw Utils::PtGreyException("Failed to apply property: '" + property_name + "'");
       }
       // Checking that property has properly been updated
       error = camera.GetProperty(&(properties.at(property_name)));
       if (error != FlyCapture2::PGRERROR_OK) {
-        throw Utils::PtGreyException("Failed to get property: '" + property_name +
-                                 "'");
+        throw Utils::PtGreyException("Failed to get property: '" + property_name + "'");
       }
-      std::cout << "Difference between values:"
-                << (wished_property.absValue -
-                    properties.at(property_name).absValue)
+      std::cout << "Difference between values:" << (wished_property.absValue - properties.at(property_name).absValue)
                 << std::endl;
     }
   }
 }
 
-void SourcePtGrey::setTimeout(int time_ms)
-{
+void SourcePtGrey::setTimeout(int time_ms) {
   FlyCapture2::Error error;
   FlyCapture2::FC2Config config;
   // Grab config
@@ -576,16 +533,14 @@ void SourcePtGrey::setTimeout(int time_ms)
     oss << "SourcePtGrey::setTimeout: failed to setConfig: " << error.GetDescription();
     throw Utils::PtGreyException(oss.str());
   }
-  
 }
-
 
 // The camera clock crystal, a CITIZEN CS10‐25.000MABJTR has a drift specification of ± 50 PPM
 // Which means that after 20 minutes, we can expect the clock to drift +-60ms.
 //=> If we want a ~1ms precision, we should call this function at least every 24 seconds.
 double SourcePtGrey::measureTimestampDelta() {
   // This function costs ~3ms on the fitlet.
-  
+
   /**How to estimate the delay between the capture moment and the image
    * reception moment? Sure, we have a precise, image embedded timsestamp, but
    * the clock of the camera and the clock of the PC are not synchronized. A
@@ -601,33 +556,34 @@ double SourcePtGrey::measureTimestampDelta() {
   unsigned long latch_data = 0x1 << 1;
 
   /* tl dr do not reset_data.
-   * Weirdly enough, the timestamp embedded into the frames has 32 bits (resets every 128 secs) and 
+   * Weirdly enough, the timestamp embedded into the frames has 32 bits (resets every 128 secs) and
    * the latched camera timestamp has 64 bits. Their LSB seems to be the same. Their value seems also
    * to be the same (modulo 128sec) UNLESS a reset was asked on the latched timsestamp which causes
    * both timers to desynchronize.
    */
-  /* 
+  /*
   unsigned long reset_data = 0x1;
   error = camera.WriteGVCPRegister(0x0944, reset_data);
   if (error != FlyCapture2::PGRERROR_OK) {
-    const std::string message = "WriteGVCPRegister failed (timestamp reset). Message: " + std::string(error.GetDescription());
-    throw PtGreyException(message);
+    const std::string message = "WriteGVCPRegister failed (timestamp reset). Message: " +
+  std::string(error.GetDescription()); throw PtGreyException(message);
     }*/
-  
+
   FlyCapture2::Error error = camera.WriteGVCPRegister(0x0944, latch_data);
   if (error != FlyCapture2::PGRERROR_OK) {
-    const std::string message = "WriteGVCPRegister failed (timestamp latch). Message: " + std::string(error.GetDescription());
+    const std::string message =
+        "WriteGVCPRegister failed (timestamp latch). Message: " + std::string(error.GetDescription());
     if (diffMs(last_retrieval_success, TimeStamp::now()) > 5000) {
       endCamera();
       throw Utils::PtGreyException("Failed to reset timestamp for more than 5 s");
     }
     throw Utils::PtGreyException(message);
   }
-  
+
   TimeStamp t1 = TimeStamp::now();
   double elapsed = diffMs(t0, t1);
-  
-  //We can read the latched value now
+
+  // We can read the latched value now
   unsigned int addressHigh = 0x0948;
   unsigned int addressLow = 0x094C;
   unsigned int bufferLow = 0;
@@ -643,37 +599,37 @@ double SourcePtGrey::measureTimestampDelta() {
     throw Utils::PtGreyException(message);
   }
 
-  //From latched timestamp to milliseconds. The timestamp increments at 125MHz
-  double low = bufferLow/(double)125000;
-  double high = bufferHigh*(((unsigned long long int)1<<32)/(double)125000);
+  // From latched timestamp to milliseconds. The timestamp increments at 125MHz
+  double low = bufferLow / (double)125000;
+  double high = bufferHigh * (((unsigned long long int)1 << 32) / (double)125000);
   double latchedMs = high + low;
   latchedMs = fmod(latchedMs, 128000.0);
-  double localTimestamp = t0.getTimeMS() + elapsed/2;
+  double localTimestamp = t0.getTimeMS() + elapsed / 2;
   double delta = localTimestamp - latchedMs;
 
   return delta;
 }
-  
+
 void SourcePtGrey::process() {
   FlyCapture2::Image fc_image;
   // If capture is not activated yet, start camera
   if (!is_capturing) {
     startCamera();
   }
-  
+
   // Import parameters from> rhio and apply them if necessary
   importPropertiesFromRhIO();
   applyWishedProperties();
-  
+
   // Show elapsed time since last call
   TimeStamp now = TimeStamp::now();
-  //TODO require to store lastRetrievalAttempt
+  // TODO require to store lastRetrievalAttempt
   //     - (accumulation on elapsed when failing retrieval)
   double elapsed = diffMs(last_retrieval_success, now);
   elapsed_from_synch_ms = elapsed_from_synch_ms + elapsed;
 
   // TODO set as a json parameter?
-  if((elapsed_from_synch_ms > 10000) | first_run) {
+  if ((elapsed_from_synch_ms > 10000) | first_run) {
     if (first_run) {
       first_run = false;
       last_ts = TimeStamp::fromMS(0);
@@ -683,19 +639,18 @@ void SourcePtGrey::process() {
     // Re-synch the pc timestamp with the camera timestamp
     ts_delta = measureTimestampDelta();
   }
-  
+
   // Grab frame from camera
   FlyCapture2::Error error = camera.RetrieveBuffer(&fc_image);
 
   if (error == FlyCapture2::PGRERROR_TIMEOUT) {
     endCamera();
     throw Utils::PtGreyException("RetrieveBuffer timed out");
-  }
-  else if (error != FlyCapture2::PGRERROR_OK) {
+  } else if (error != FlyCapture2::PGRERROR_OK) {
     std::ostringstream oss;
     oss << "Failed buffer retrieval: '" << error.GetDescription() << "'";
     // Detailed error
-    //oss << "Failed to retrieve buffer from PtGrey: | "
+    // oss << "Failed to retrieve buffer from PtGrey: | "
     //    << "Error description: " << error.GetDescription() << " | "
     //    << "Elapsed time since last retrieval: " << elapsed << " ms |"
     //    << "Elapsed from synch " << elapsed_from_synch_ms;
@@ -707,11 +662,8 @@ void SourcePtGrey::process() {
   nb_retrieve_success++;
 
   Benchmark::open("Copy image");
-  unsigned int bytes_per_row =
-      fc_image.GetReceivedDataSize() / fc_image.GetRows();
-  cv::Mat tmp_img = cv::Mat(fc_image.GetRows(), fc_image.GetCols(), CV_8UC3,
-                            fc_image.GetData(), bytes_per_row)
-                        .clone();
+  unsigned int bytes_per_row = fc_image.GetReceivedDataSize() / fc_image.GetRows();
+  cv::Mat tmp_img = cv::Mat(fc_image.GetRows(), fc_image.GetCols(), CV_8UC3, fc_image.GetData(), bytes_per_row).clone();
   // TODO : skip the invertChannels step to reduce CPU usage.
   invertChannels(tmp_img);
   img() = tmp_img;
@@ -737,15 +689,13 @@ void SourcePtGrey::process() {
   double frame_age_ms = now_ms - normalized_frame_ts;
   if (frame_age_ms < 0) {
     std::ostringstream oss;
-    oss << "SourcePtGrey::process: frame is dated from "
-        << (-frame_age_ms) << " ms in the future -> refused";
+    oss << "SourcePtGrey::process: frame is dated from " << (-frame_age_ms) << " ms in the future -> refused";
     measureTimestampDelta();
     throw Utils::PtGreyException(oss.str());
   }
   if (frame_age_ms > 128000) {
     std::ostringstream oss;
-    oss << "SourcePtGrey::process: frame is dated from "
-        << frame_age_ms << " ms in the past -> too old";
+    oss << "SourcePtGrey::process: frame is dated from " << frame_age_ms << " ms in the past -> too old";
     measureTimestampDelta();
     throw Utils::PtGreyException(oss.str());
   }
@@ -756,15 +706,14 @@ void SourcePtGrey::process() {
   if (elapsed_ms <= 0) {
     updateRhIO();
     std::ostringstream oss;
-    oss << "Invalid elapsed time: " << elapsed_ms
-        << " (Elapsed from sync " << elapsed_from_synch_ms << ")";
+    oss << "Invalid elapsed time: " << elapsed_ms << " (Elapsed from sync " << elapsed_from_synch_ms << ")";
     throw Utils::PtGreyException(oss.str());
   } else if (elapsed_ms > 500) {
     std::cout << "SourcePtGrey:: Warning: Elapsed time: " << elapsed_ms << " ms" << std::endl;
   }
   last_ts = TimeStamp::fromMS(normalized_frame_ts);
 
-  updateRhIO();   
+  updateRhIO();
 }
 
 void SourcePtGrey::invertChannels(cv::Mat &frame) {
@@ -782,16 +731,12 @@ void SourcePtGrey::invertChannels(cv::Mat &frame) {
   }
 }
 
-bool SourcePtGrey::isEquivalent(const FlyCapture2::Property &prop1,
-                                const FlyCapture2::Property &prop2) {
+bool SourcePtGrey::isEquivalent(const FlyCapture2::Property &prop1, const FlyCapture2::Property &prop2) {
   if (prop1.type == FlyCapture2::WHITE_BALANCE) {
-    return prop1.valueA == prop2.valueA &&
-      prop1.valueB == prop2.valueB &&
-      prop1.autoManualMode == prop2.autoManualMode;
+    return prop1.valueA == prop2.valueA && prop1.valueB == prop2.valueB && prop1.autoManualMode == prop2.autoManualMode;
   }
-  double abs_value_tol = 0.02; // TODO! Use something specific to each property
-  return (prop1.absControl == prop2.absControl &&
-          prop1.autoManualMode == prop2.autoManualMode &&
+  double abs_value_tol = 0.02;  // TODO! Use something specific to each property
+  return (prop1.absControl == prop2.absControl && prop1.autoManualMode == prop2.autoManualMode &&
           std::fabs(prop1.absValue - prop2.absValue) <= abs_value_tol);
 }
 
@@ -806,7 +751,8 @@ double SourcePtGrey::timestamp2MS(FlyCapture2::TimeStamp ts) {
   unsigned int second_count = ts.cycleSeconds;
   unsigned int cycle_count = ts.cycleCount;
   unsigned int cycle_offset = ts.cycleOffset;
-  double ms = 1000*((double)second_count + (double)cycle_count/8000.0 + (double)cycle_offset*0.000000030517578125);
+  double ms =
+      1000 * ((double)second_count + (double)cycle_count / 8000.0 + (double)cycle_offset * 0.000000030517578125);
 
   return ms;
 }
@@ -823,7 +769,7 @@ FlyCapture2::Mode SourcePtGrey::getMode() {
 FlyCapture2::GigEImageSettings SourcePtGrey::getImageSettings() {
   FlyCapture2::GigEImageSettings settings;
   FlyCapture2::Error error = camera.GetGigEImageSettings(&settings);
-  if ( error != FlyCapture2::ErrorType::PGRERROR_OK ) {
+  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
     throw Utils::PtGreyException(DEBUG_INFO + error.GetDescription());
   }
   return settings;
@@ -832,7 +778,7 @@ FlyCapture2::GigEImageSettings SourcePtGrey::getImageSettings() {
 FlyCapture2::GigEImageSettingsInfo SourcePtGrey::getImageSettingsInfo() {
   FlyCapture2::GigEImageSettingsInfo infos;
   FlyCapture2::Error error = camera.GetGigEImageSettingsInfo(&infos);
-  if ( error != FlyCapture2::ErrorType::PGRERROR_OK ) {
+  if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
     throw Utils::PtGreyException(DEBUG_INFO + error.GetDescription());
   }
   return infos;
@@ -850,19 +796,16 @@ void SourcePtGrey::updateBinning(unsigned int h_binning, unsigned int v_binning)
   unsigned int current_h_binning = 0;
   unsigned int current_v_binning = 0;
   FlyCapture2::Error error;
-  error = camera.GetGigEImageBinningSettings(&current_h_binning,
-                                             &current_v_binning);
+  error = camera.GetGigEImageBinningSettings(&current_h_binning, &current_v_binning);
   if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw Utils::PtGreyException(DEBUG_INFO + "Error getting current binning settings"
-                          + error.GetDescription());
+    throw Utils::PtGreyException(DEBUG_INFO + "Error getting current binning settings" + error.GetDescription());
   }
 
   // Setting binning
   if (h_binning != current_h_binning || v_binning != current_v_binning) {
     error = camera.SetGigEImageBinningSettings(h_binning, v_binning);
     if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-      throw Utils::PtGreyException(DEBUG_INFO + "Error setting binning settings"
-                            + error.GetDescription());
+      throw Utils::PtGreyException(DEBUG_INFO + "Error setting binning settings" + error.GetDescription());
     }
   }
 }
@@ -872,10 +815,9 @@ void SourcePtGrey::setPixelFormat(FlyCapture2::PixelFormat pixel_format) {
   image_settings.pixelFormat = pixel_format;
   FlyCapture2::Error error = camera.SetGigEImageSettings(&image_settings);
   if (error != FlyCapture2::ErrorType::PGRERROR_OK) {
-    throw Utils::PtGreyException(DEBUG_INFO + "Error setting image settings: "
-                          + error.GetDescription());
+    throw Utils::PtGreyException(DEBUG_INFO + "Error setting image settings: " + error.GetDescription());
   }
 }
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

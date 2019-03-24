@@ -16,17 +16,15 @@ using namespace rhoban_geometry;
 
 namespace Vision {
 
-std::vector<PLCluster> linesClustersRHT(std::vector<cv::Point2i> edges,
-                                        int nbIterations, float minDist,
-                                        float rhoTol, float thetaTol) {
+std::vector<PLCluster> linesClustersRHT(std::vector<cv::Point2i> edges, int nbIterations, float minDist, float rhoTol,
+                                        float thetaTol) {
   std::vector<PLCluster> clusters;
   // Step 1: Sampling lines
   std::vector<ParametricLine> randomLines;
   Benchmark::open("Sampling lines");
-  std::random_device rd; // only used once to initialise (seed) engine
-  std::mt19937 rng(
-      rd()); // random-number engine used (Mersenne-Twister in this case)
-  std::uniform_int_distribution<int> uni(0, (int)edges.size()); // guaranteed unbiased
+  std::random_device rd;   // only used once to initialise (seed) engine
+  std::mt19937 rng(rd());  // random-number engine used (Mersenne-Twister in this case)
+  std::uniform_int_distribution<int> uni(0, (int)edges.size());  // guaranteed unbiased
   // auto random_integer = uni(rng);
   // std::cout<<"RAND "<<uni(rng)<<" "<<rand()<<std::endl;
   for (int i = 0; i < nbIterations; i++) {
@@ -49,10 +47,8 @@ std::vector<PLCluster> linesClustersRHT(std::vector<cv::Point2i> edges,
   return clusters;
 }
 
-std::vector<PLCluster>
-linesClustersRHT(std::vector<std::vector<cv::Point2i>> edgesSet,
-                 int nbIterations, float minDist, float rhoTol,
-                 float thetaTol) {
+std::vector<PLCluster> linesClustersRHT(std::vector<std::vector<cv::Point2i>> edgesSet, int nbIterations, float minDist,
+                                        float rhoTol, float thetaTol) {
   std::vector<PLCluster> clusters;
   // Step 1: Sampling lines
   std::vector<ParametricLine> randomLines;
@@ -65,10 +61,9 @@ linesClustersRHT(std::vector<std::vector<cv::Point2i>> edgesSet,
   }
 
   Benchmark::open("Sampling lines");
-  std::random_device rd; // only used once to initialise (seed) engine
-  std::mt19937 rng(
-      rd()); // random-number engine used (Mersenne-Twister in this case)
-  std::uniform_int_distribution<int> uni(0, RAND_MAX); // guaranteed unbiased
+  std::random_device rd;                                // only used once to initialise (seed) engine
+  std::mt19937 rng(rd());                               // random-number engine used (Mersenne-Twister in this case)
+  std::uniform_int_distribution<int> uni(0, RAND_MAX);  // guaranteed unbiased
   // std::cout<<"RAND "<<uni(rng)<<" "<<rand()<<std::endl;
   for (const auto &edge : edgesSet) {
     unsigned int setIterations = nbIterations * edge.size() / totalSize;
@@ -90,8 +85,7 @@ linesClustersRHT(std::vector<std::vector<cv::Point2i>> edgesSet,
   return clusters;
 }
 
-std::vector<cv::Point2i> eraseLine(const std::vector<cv::Point2i> &edges,
-                                   const ParametricLine &line,
+std::vector<cv::Point2i> eraseLine(const std::vector<cv::Point2i> &edges, const ParametricLine &line,
                                    float cleaningTol) {
   std::vector<cv::Point2i> newEdge;
   for (const auto &p : edges) {
@@ -102,10 +96,8 @@ std::vector<cv::Point2i> eraseLine(const std::vector<cv::Point2i> &edges,
   return newEdge;
 }
 
-std::vector<std::vector<cv::Point2i>>
-eraseLine(const std::vector<std::vector<cv::Point2i>> &edgeSet,
-          const ParametricLine &line, float cleaningTol) {
-
+std::vector<std::vector<cv::Point2i>> eraseLine(const std::vector<std::vector<cv::Point2i>> &edgeSet,
+                                                const ParametricLine &line, float cleaningTol) {
   std::vector<std::vector<cv::Point2i>> newEdgeSet;
   for (const auto &edge : edgeSet) {
     newEdgeSet.push_back(eraseLine(edge, line, cleaningTol));
@@ -114,17 +106,13 @@ eraseLine(const std::vector<std::vector<cv::Point2i>> &edgeSet,
   return newEdgeSet;
 }
 
-std::vector<ParametricLine> detectLinesRHT(const std::vector<cv::Point> &edges,
-                                           int nbEpochs, int iterationsByEpoch,
-                                           int minEdgeSize, int minScore,
-                                           float eraseThickness, float minDist,
-                                           float rhoTol, float thetaTol,
-                                           cv::Mat *tagImg) {
+std::vector<ParametricLine> detectLinesRHT(const std::vector<cv::Point> &edges, int nbEpochs, int iterationsByEpoch,
+                                           int minEdgeSize, int minScore, float eraseThickness, float minDist,
+                                           float rhoTol, float thetaTol, cv::Mat *tagImg) {
   std::vector<cv::Point> workingEdges = edges;
   std::vector<ParametricLine> result;
   for (int epoch = 0; epoch < nbEpochs; epoch++) {
-    std::vector<PLCluster> clusters = linesClustersRHT(
-        workingEdges, iterationsByEpoch, minDist, rhoTol, thetaTol);
+    std::vector<PLCluster> clusters = linesClustersRHT(workingEdges, iterationsByEpoch, minDist, rhoTol, thetaTol);
     ParametricLine bestLine;
     double bestScore = 0;
     for (const auto &c : clusters) {
@@ -145,18 +133,13 @@ std::vector<ParametricLine> detectLinesRHT(const std::vector<cv::Point> &edges,
   return result;
 }
 
-std::vector<ParametricLine>
-detectLinesRHT(const std::vector<std::vector<cv::Point>> &workingEdgeSet,
-               int nbEpochs, int iterationsByEpoch, int minEdgeSize,
-               int minScore, float eraseThickness, float minDist, float rhoTol,
-               float thetaTol, cv::Mat *tagImg) {
-
+std::vector<ParametricLine> detectLinesRHT(const std::vector<std::vector<cv::Point>> &workingEdgeSet, int nbEpochs,
+                                           int iterationsByEpoch, int minEdgeSize, int minScore, float eraseThickness,
+                                           float minDist, float rhoTol, float thetaTol, cv::Mat *tagImg) {
   std::vector<std::vector<cv::Point>> workingEdges = workingEdgeSet;
   std::vector<ParametricLine> result;
   for (int epoch = 0; epoch < nbEpochs; epoch++) {
-
-    std::vector<PLCluster> clusters = linesClustersRHT(
-        workingEdges, iterationsByEpoch, minDist, rhoTol, thetaTol);
+    std::vector<PLCluster> clusters = linesClustersRHT(workingEdges, iterationsByEpoch, minDist, rhoTol, thetaTol);
 
     ParametricLine bestLine;
     double bestScore = 0;
@@ -180,14 +163,12 @@ detectLinesRHT(const std::vector<std::vector<cv::Point>> &workingEdgeSet,
   return result;
 }
 
-std::vector<ParametricLine>
-detectLinesRHT(const cv::Mat &img, int nbEpochs, int iterationsByEpoch,
-               int minEdgeSize, int minScore, int eraseThickness, float minDist,
-               float rhoTol, float thetaTol, cv::Mat *tagImg) {
+std::vector<ParametricLine> detectLinesRHT(const cv::Mat &img, int nbEpochs, int iterationsByEpoch, int minEdgeSize,
+                                           int minScore, int eraseThickness, float minDist, float rhoTol,
+                                           float thetaTol, cv::Mat *tagImg) {
   std::vector<cv::Point> edges = Vision::Utils::usedPoints(img);
-  return detectLinesRHT(edges, nbEpochs, iterationsByEpoch, minEdgeSize,
-                        minScore, eraseThickness, minDist, rhoTol, thetaTol,
-                        tagImg);
+  return detectLinesRHT(edges, nbEpochs, iterationsByEpoch, minEdgeSize, minScore, eraseThickness, minDist, rhoTol,
+                        thetaTol, tagImg);
 }
 
 /**
@@ -195,11 +176,8 @@ detectLinesRHT(const cv::Mat &img, int nbEpochs, int iterationsByEpoch,
  * The method detects lines contained in listOfEdges and erases them in
  * workingImg
  */
-void eraseLinesRHT(std::vector<std::vector<cv::Point2i>> &listOfEdges,
-                   int nbIterations, int minEdgeSize, int minScore,
-                   int eraseThickness, float minDist, float rhoTol,
-                   float thetaTol, cv::Mat &workingImg) {
-
+void eraseLinesRHT(std::vector<std::vector<cv::Point2i>> &listOfEdges, int nbIterations, int minEdgeSize, int minScore,
+                   int eraseThickness, float minDist, float rhoTol, float thetaTol, cv::Mat &workingImg) {
   std::vector<PLCluster> clusters;
   std::vector<ParametricLine> result;
   int totalEdgesSize = 0;
@@ -225,10 +203,9 @@ void eraseLinesRHT(std::vector<std::vector<cv::Point2i>> &listOfEdges,
     std::vector<ParametricLine> randomLines;
     // Computing the candidate Lines and adding them into clusters
     Benchmark::open("Sampling lines");
-    std::random_device rd; // only used once to initialise (seed) engine
-    std::mt19937 rng(
-        rd()); // random-number engine used (Mersenne-Twister in this case)
-    std::uniform_int_distribution<int> uni(0, RAND_MAX); // guaranteed unbiased
+    std::random_device rd;                                // only used once to initialise (seed) engine
+    std::mt19937 rng(rd());                               // random-number engine used (Mersenne-Twister in this case)
+    std::uniform_int_distribution<int> uni(0, RAND_MAX);  // guaranteed unbiased
     // std::cout<<"RAND "<<uni(rng)<<" "<<rand()<<std::endl;
     // Each contour will have a portion of the total nbIterations, provided that
     // it is big enough
@@ -278,9 +255,8 @@ void eraseLinesRHT(std::vector<std::vector<cv::Point2i>> &listOfEdges,
   return;
 }
 
-std::vector<Circle>
-generateCircleCandidates(const std::vector<cv::Point> &edge, int max_candidates,
-                         double min_dist, std::default_random_engine *engine) {
+std::vector<Circle> generateCircleCandidates(const std::vector<cv::Point> &edge, int max_candidates, double min_dist,
+                                             std::default_random_engine *engine) {
   std::vector<Circle> candidates;
   std::uniform_int_distribution<int> edge_distrib(0, edge.size() - 1);
   for (int e = 0; e < max_candidates; e++) {
@@ -297,12 +273,10 @@ generateCircleCandidates(const std::vector<cv::Point> &edge, int max_candidates,
       }
     }
     // Points of this generation are not used
-    if (too_close)
-      continue;
+    if (too_close) continue;
 
     try {
-      Circle c =
-          Circle::circleFromPoints(cv2rg(p[0]), cv2rg(p[1]), cv2rg(p[2]));
+      Circle c = Circle::circleFromPoints(cv2rg(p[0]), cv2rg(p[1]), cv2rg(p[2]));
       candidates.push_back(c);
     }
     // If points are not collinear, ignore situation
@@ -312,18 +286,16 @@ generateCircleCandidates(const std::vector<cv::Point> &edge, int max_candidates,
   return candidates;
 }
 
-std::vector<Circle>
-generateCircleCandidates(const std::vector<std::vector<cv::Point>> &edges,
-                         int total_candidates, size_t min_edge_size,
-                         double min_dist, std::default_random_engine *engine) {
+std::vector<Circle> generateCircleCandidates(const std::vector<std::vector<cv::Point>> &edges, int total_candidates,
+                                             size_t min_edge_size, double min_dist,
+                                             std::default_random_engine *engine) {
   // First, filter edges which are too small and count number of pixels
   std::vector<size_t> valid_edges_id;
   int valid_pixels = 0;
   for (size_t edge_id = 0; edge_id < edges.size(); edge_id++) {
     size_t edge_size = edges[edge_id].size();
     // Skip small edges
-    if (edge_size < min_edge_size)
-      continue;
+    if (edge_size < min_edge_size) continue;
     // Add large edges
     valid_edges_id.push_back(edge_id);
     valid_pixels += edge_size;
@@ -334,10 +306,9 @@ generateCircleCandidates(const std::vector<std::vector<cv::Point>> &edges,
     const std::vector<cv::Point> &edge = edges[edge_id];
     double edge_ratio = edge.size() / (double)valid_pixels;
     int edge_max_candidates = std::floor(edge_ratio * total_candidates);
-    std::vector<Circle> edge_candidates =
-        generateCircleCandidates(edge, edge_max_candidates, min_dist, engine);
+    std::vector<Circle> edge_candidates = generateCircleCandidates(edge, edge_max_candidates, min_dist, engine);
     result.insert(result.end(), edge_candidates.begin(), edge_candidates.end());
   }
   return result;
 }
-}
+}  // namespace Vision

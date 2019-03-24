@@ -15,14 +15,10 @@ Eigen::MatrixXd RobotController::posLimits(2, 2);
 
 int RobotController::nbSamples = 10000;
 
-RobotController::RobotController() : Controller() {
-  setPosExploration(posExploration);
-}
+RobotController::RobotController() : Controller() { setPosExploration(posExploration); }
 
-RobotController::RobotController(const Point &move, const Angle &rotation,
-                                 double noiseGain_)
-  : Controller(), ctrlMove(move), ctrlRot(rotation), noiseGain(noiseGain_)
-{
+RobotController::RobotController(const Point &move, const Angle &rotation, double noiseGain_)
+    : Controller(), ctrlMove(move), ctrlRot(rotation), noiseGain(noiseGain_) {
   setPosExploration(posExploration * noiseGain);
 }
 
@@ -50,14 +46,8 @@ void RobotController::bindWithRhIO() {
 
 void RobotController::importFromRhIO() {
   double oldPosExpl(posExploration);
-  angleExploration =
-      RhIO::Root.getValueFloat(
-                     "/localisation/field/RobotController/angleExploration")
-          .value;
-  posExploration =
-      RhIO::Root.getValueFloat(
-                     "/localisation/field/RobotController/posExploration")
-          .value;
+  angleExploration = RhIO::Root.getValueFloat("/localisation/field/RobotController/angleExploration").value;
+  posExploration = RhIO::Root.getValueFloat("/localisation/field/RobotController/posExploration").value;
   if (oldPosExpl != posExploration) {
     setPosExploration(posExploration);
   }
@@ -69,13 +59,11 @@ void RobotController::move(FieldPosition &p, double elapsedTime) {
 }
 
 void RobotController::explore(FieldPosition &p, double elapsedTime) {
-  std::uniform_real_distribution<double> angleDistrib(-angleExploration * noiseGain,
-                                                      angleExploration * noiseGain);
-  Eigen::VectorXd explMove =
-    elapsedTime * rhoban_random::getUniformSamples(posLimits, 1, &engine)[0];
+  std::uniform_real_distribution<double> angleDistrib(-angleExploration * noiseGain, angleExploration * noiseGain);
+  Eigen::VectorXd explMove = elapsedTime * rhoban_random::getUniformSamples(posLimits, 1, &engine)[0];
   Point explPos(explMove(0), explMove(1));
   p.move(explPos);
   p.rotate(elapsedTime * Angle(angleDistrib(engine)));
 }
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

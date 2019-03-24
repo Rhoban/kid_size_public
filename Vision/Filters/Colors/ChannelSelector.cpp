@@ -15,11 +15,10 @@ void ChannelSelector::process() {
   split(src, channels);
   if (channel >= (int)channels.size()) {
     std::ostringstream oss;
-    oss << "Asking for channel '" << channel << "' while image has "
-        << channels.size() << " channels.";
+    oss << "Asking for channel '" << channel << "' while image has " << channels.size() << " channels.";
     throw std::runtime_error(oss.str());
   }
   img() = channels[channel];
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

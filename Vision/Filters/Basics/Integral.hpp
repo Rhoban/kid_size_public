@@ -12,12 +12,12 @@ namespace Filters {
  * Outputs the integral image formed by the single channel input image
  */
 class Integral : public Filter {
-public:
+ public:
   Integral() : Filter("Integral") {}
 
   virtual std::string getClassName() const override { return "Integral"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -25,10 +25,9 @@ protected:
 
   virtual void setParameters() override;
 
-private:
-
+ private:
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision
 
 #endif

@@ -37,5 +37,5 @@ cv::Mat HT::rotZ(const Angle &theta) {
   m.at<float>(1, 0) = -sin(theta);
   return m;
 }
-}
-}
+}  // namespace Utils
+}  // namespace Vision

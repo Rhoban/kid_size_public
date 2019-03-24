@@ -13,12 +13,12 @@ namespace Filters {
  * WARNING: This filter is not adapted for working with floating images
  */
 class Threshold : public Filter {
-public:
+ public:
   Threshold() : Filter("Threshold") {}
 
   virtual std::string getClassName() const override { return "Threshold"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -26,7 +26,7 @@ protected:
 
   virtual void setParameters() override;
 
-private:
+ private:
   ParamInt threshold;
   /**
    * Threshold Type:
@@ -38,5 +38,5 @@ private:
    */
   ParamInt thresholdType;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

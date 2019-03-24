@@ -7,64 +7,64 @@ class Walk;
 class Head;
 class Approach : public ApproachMove
 {
-    public:
-        Approach(Walk *walk, Head *head);
-        std::string getName();
+public:
+  Approach(Walk* walk, Head* head);
+  std::string getName();
 
-        void onStart();
-        void onStop();
-        void step(float elapsed);
-        
-        // Clearing the ball
-        bool clearing = false;
+  void onStart();
+  void onStop();
+  void step(float elapsed);
 
-        void setPenalty(bool enable);
-        
-        // Time since last near ball
-        float timeSinceNear;
+  // Clearing the ball
+  bool clearing = false;
 
-    protected:
-        // Head
-        Head *head;
+  void setPenalty(bool enable);
 
-        float t;
-        // Treshold to go for lateral shoot
-        float lateralKickTreshold;
-        bool enableLateralKick;
-        float placementMargin;
-        float targetPX, targetPY, theta;
+  // Time since last near ball
+  float timeSinceNear;
 
-        // Gain of the aligner
-        float farAlignerP, rotateAlignerP, nearAlignerP;
-        float rotateLateralP, nearLateralP;
-        // Aligning with the ball
-        rhoban_utils::Control aligner, stepper, lateraler;
-        // Radius to rotate around the ball
-        float radius;
-        // Shoot time interval
-        float shootInterval;
-        float elapsedLastShoot;
+protected:
+  // Head
+  Head* head;
 
-        // Goal quality
-        float goalQ;
-        // Azimuth
-        float ballAzimuth, goalAzimuth, goalLeftAzimuth, goalRightAzimuth;
-        float ballX, ballY;
-        int avoidDirection;
-        // Distances
-        float ballDistance;
+  float t;
+  // Treshold to go for lateral shoot
+  float lateralKickTreshold;
+  bool enableLateralKick;
+  float placementMargin;
+  float targetPX, targetPY, theta;
 
-        // Distance for centering
-        float centeringCorner;
+  // Gain of the aligner
+  float farAlignerP, rotateAlignerP, nearAlignerP;
+  float rotateLateralP, nearLateralP;
+  // Aligning with the ball
+  rhoban_utils::Control aligner, stepper, lateraler;
+  // Radius to rotate around the ball
+  float radius;
+  // Shoot time interval
+  float shootInterval;
+  float elapsedLastShoot;
 
-        // Number of shoots made
-        int nbShoot;
+  // Goal quality
+  float goalQ;
+  // Azimuth
+  float ballAzimuth, goalAzimuth, goalLeftAzimuth, goalRightAzimuth;
+  float ballX, ballY;
+  int avoidDirection;
+  // Distances
+  float ballDistance;
 
-        // Modes
-        bool idiot;
-        bool penalty;
-        int penaltySide;
+  // Distance for centering
+  float centeringCorner;
 
-        void enterState(std::string state);
-        void exitState(std::string state);
+  // Number of shoots made
+  int nbShoot;
+
+  // Modes
+  bool idiot;
+  bool penalty;
+  int penaltySide;
+
+  void enterState(std::string state);
+  void exitState(std::string state);
 };

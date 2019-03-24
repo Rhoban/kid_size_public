@@ -16,18 +16,14 @@ static rhoban_utils::Logger out("TagsDetector");
 namespace Vision {
 namespace Filters {
 
-TagsDetector::Marker::Marker()
-  : id(-1), size(-1), rvec(), tvec()
-{}
+TagsDetector::Marker::Marker() : id(-1), size(-1), rvec(), tvec() {}
 
-TagsDetector::Marker::Marker(int id, float size, const std::vector<cv::Point2f> & corners,
-                             const cv::Vec3d & rvec, const cv::Vec3d & tvec)
-  : id(id), size(size), corners(corners), rvec(rvec), tvec(tvec)
-{}
+TagsDetector::Marker::Marker(int id, float size, const std::vector<cv::Point2f>& corners, const cv::Vec3d& rvec,
+                             const cv::Vec3d& tvec)
+    : id(id), size(size), corners(corners), rvec(rvec), tvec(tvec) {}
 
-cv::Point2f TagsDetector::Marker::getCenter() const
-{
-  cv::Point2f center(0,0);
+cv::Point2f TagsDetector::Marker::getCenter() const {
+  cv::Point2f center(0, 0);
   for (const cv::Point2f corner : corners) {
     center += corner / (float)corners.size();
   }
@@ -35,13 +31,11 @@ cv::Point2f TagsDetector::Marker::getCenter() const
 }
 
 TagsDetector::TagsDetector()
-  : Filter("TagsDetector"),
-    detectorParameters(new cv::aruco::DetectorParameters()),
-    markersData({"imageIdx", "markerId", "centerX", "centerY"}, {})
-{
+    : Filter("TagsDetector"),
+      detectorParameters(new cv::aruco::DetectorParameters()),
+      markersData({"imageIdx", "markerId", "centerX", "centerY"}, {}) {
   periodCounter = 0;
 }
-
 
 void TagsDetector::setParameters() {
   adaptiveThreshConstant = ParamFloat(7, 3, 23);
@@ -52,11 +46,11 @@ void TagsDetector::setParameters() {
   params()->define<ParamInt>("adaptiveThreshWinSizeMax", &adaptiveThreshWinSizeMax);
   adaptiveThreshWinSizeStep = ParamInt(7, 3, 23);
   params()->define<ParamInt>("adaptiveThreshWinSizeStep", &adaptiveThreshWinSizeStep);
-  
- //marker size in m
+
+  // marker size in m
   markerSize = ParamFloat(0.09, 0, 1.0);
   params()->define<ParamFloat>("markerSize", &markerSize);
-  
+
   debugLevel = ParamInt(0, 0, 2);
   params()->define<ParamInt>("debugLevel", &debugLevel);
   period = ParamInt(1, 1, 100);
@@ -64,10 +58,10 @@ void TagsDetector::setParameters() {
   debugLevel = ParamInt(0, 0, 1);
   params()->define<ParamInt>("isWritingData", &isWritingData);
 }
-  
+
 void TagsDetector::process() {
   markers.clear();
-  
+
   // End function if we have not reached period
   periodCounter++;
   if (periodCounter < period) {
@@ -75,7 +69,7 @@ void TagsDetector::process() {
   }
   periodCounter = 0;
 
-  const cv::Mat & srcImg = *(getDependency().getImg());
+  const cv::Mat& srcImg = *(getDependency().getImg());
 
   // Importing parameters from rhio
   // Adaptive threshold is used since it is note modified
@@ -99,15 +93,14 @@ void TagsDetector::process() {
   std::vector<std::vector<cv::Point2f>> markerCorners;
   cv::aruco::detectMarkers(img(), dic, markerCorners, markerIds, detectorParameters);
   Benchmark::close("Detecting Tags");
-  
+
   Benchmark::open("Estimating poses");
   std::vector<cv::Vec3d> rvecs, tvecs;
-  const Leph::CameraModel & cam_model = getCS().getCameraModel();
-  cv::aruco::estimatePoseSingleMarkers(markerCorners, markerSize,
-                                       cam_model.getCameraMatrix(),cam_model.getDistortionCoeffs(),
-                                       rvecs, tvecs);
+  const Leph::CameraModel& cam_model = getCS().getCameraModel();
+  cv::aruco::estimatePoseSingleMarkers(markerCorners, markerSize, cam_model.getCameraMatrix(),
+                                       cam_model.getDistortionCoeffs(), rvecs, tvecs);
   Benchmark::close("Estimating poses");
-  
+
   Benchmark::open("Gathering markers");
   for (size_t i = 0; i < markerIds.size(); i++) {
     markers.push_back(Marker(markerIds[i], markerSize, markerCorners[i], rvecs[i], tvecs[i]));
@@ -116,22 +109,19 @@ void TagsDetector::process() {
 
   if (debugLevel >= 1) {
     Benchmark::open("Drawing Tags");
-    cv::aruco::drawDetectedMarkers(img(), markerCorners, markerIds, cv::Scalar(0,0,255));    
+    cv::aruco::drawDetectedMarkers(img(), markerCorners, markerIds, cv::Scalar(0, 0, 255));
     Benchmark::close("Drawing Tags");
   }
 
   if (isWritingData == 0) {
     Benchmark::open("Writing Tags");
     if (markers.size() > 0) {
-      for (const Marker & m : markers) {
+      for (const Marker& m : markers) {
         cv::Point2f center = m.getCenter();
-        std::map<std::string, std::string> row =
-          {
-            {"imageIdx", std::to_string(dumpCounter)},
-            {"markerId", std::to_string(m.id)},
-            {"centerX", std::to_string(center.x)},
-            {"centerY", std::to_string(center.y)}
-          };
+        std::map<std::string, std::string> row = {{"imageIdx", std::to_string(dumpCounter)},
+                                                  {"markerId", std::to_string(m.id)},
+                                                  {"centerX", std::to_string(center.x)},
+                                                  {"centerY", std::to_string(center.y)}};
         markersData.insertRow(row);
       }
     }
@@ -145,17 +135,11 @@ void TagsDetector::process() {
     dumpCounter = 0;
     markersData.clearData();
   }
-
 }
 
-const std::vector<TagsDetector::Marker> & TagsDetector::getDetectedMarkers() const
-{
-  return markers;
-}
+const std::vector<TagsDetector::Marker>& TagsDetector::getDetectedMarkers() const { return markers; }
 
-int TagsDetector::expectedDependencies() const {
-  return 1;
-}
+int TagsDetector::expectedDependencies() const { return 1; }
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -13,7 +13,7 @@ class KickController;
 class ApproachMove : public STM
 {
 public:
-  ApproachMove(Walk * walk);
+  ApproachMove(Walk* walk);
 
   /// Should be called after Move::initializeBinding() in child classes
   /// (class_name is virtual only in ApproachMove constructor)
@@ -32,10 +32,10 @@ public:
   virtual std::vector<std::string> getAllowedKicks();
 
   /// Is given kick among the list of kicks allowed?
-  bool isKickAllowed(const std::string & name);
+  bool isKickAllowed(const std::string& name);
 
   /// Return the name of the currently expected kick
-  const std::string & getExpectedKick() const;
+  const std::string& getExpectedKick() const;
 
   /// Request kick with the appropriate parameters to walk
   /// (kick used is 'expectedKick')
@@ -52,13 +52,13 @@ protected:
 
   /// @see updateKickScore
   /// ball_pos is provided in self referential
-  void updateKickScore(double elapsed, const rhoban_geometry::Point & ball_pos);
+  void updateKickScore(double elapsed, const rhoban_geometry::Point& ball_pos);
 
   /// Gets the current kick controler
-  const KickController * getKickController() const;
+  const KickController* getKickController() const;
 
   /// Link to the walk move
-  Walk * walk;
+  Walk* walk;
 
   /// Current expectation of the kick
   std::string expectedKick;
@@ -72,7 +72,7 @@ protected:
 
   /// Score increases by elapsed * kick_gain when ball is kickable
   double kick_gain;
-  
+
   /// Score decreases by elapsed * no_kick_gain when ball is not kickable
   double no_kick_gain;
 

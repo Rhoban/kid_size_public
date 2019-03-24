@@ -28,7 +28,7 @@ protected:
   double applyLateralStepRatio;
   bool over;
 
-  bool  left,generated;
+  bool left, generated;
 
   // This floating model is used for inverse kinematics
   Leph::HumanoidFloatingModel lateralStepModel;

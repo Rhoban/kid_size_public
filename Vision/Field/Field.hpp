@@ -18,9 +18,8 @@ namespace Vision {
 namespace Field {
 
 class Field {
-public:
-  static void drawField(cv::Mat &dst,
-                        const cv::Scalar &bgColor = cv::Scalar(0, 128, 0));
+ public:
+  static void drawField(cv::Mat &dst, const cv::Scalar &bgColor = cv::Scalar(0, 128, 0));
   // Creates the singleton if needed
   static Field *getField();
 
@@ -33,7 +32,7 @@ public:
   static std::vector<cv::Point2f> getGoalPosts();
   static std::vector<cv::Point2f> getArenaCorners();
 
-  static const std::map<int,cv::Point3f> & getTags();
+  static const std::map<int, cv::Point3f> &getTags();
 
   /**
    * postNo:
@@ -51,7 +50,7 @@ public:
   static cv::Point2f fieldToImg(const cv::Mat &img, const cv::Point2f &p);
   static cv::Point2i fieldToImg(const cv::Mat &img, const cv::Point2i &p);
 
-private:
+ private:
   Field();
 
   void initBorders();
@@ -79,5 +78,5 @@ private:
   std::vector<rhoban_geometry::ParametricLine> arenaBorders;
   std::map<int, cv::Point3f> tags;
 };
-}
-}
+}  // namespace Field
+}  // namespace Vision

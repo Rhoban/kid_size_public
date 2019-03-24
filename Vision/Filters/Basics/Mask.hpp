@@ -12,17 +12,17 @@ namespace Filters {
  * mask has to be an image of the same width/height ratio as src
  */
 class Mask : public Filter {
-public:
+ public:
   Mask() : Filter("Mask") {}
 
   virtual std::string getClassName() const override { return "Mask"; }
   virtual int expectedDependencies() const override { return 2; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
   virtual void process() override;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

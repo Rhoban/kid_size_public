@@ -12,7 +12,7 @@ namespace Filters {
  * Detecting pixels of a field color in a yuv Image
  */
 class ColorBounding : public Filter {
-public:
+ public:
   ColorBounding() : Filter("ColorBounding") {}
 
   virtual std::string getClassName() const override { return "ColorBounding"; }
@@ -23,7 +23,7 @@ public:
    */
   ParamInt minY, maxY, minU, maxU, minV, maxV;
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -31,7 +31,7 @@ protected:
 
   virtual void setParameters() override;
 
-private:
+ private:
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

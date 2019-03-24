@@ -6,12 +6,9 @@ using namespace std;
 using namespace Vision;
 
 class Player : public Application::Application {
-
   std::string getClassName() const override { return "Player"; }
 
-  void step() {
-    Application::step();
-  }
+  void step() { Application::step(); }
 };
 
 int main(int argc, char **argv) {

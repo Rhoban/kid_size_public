@@ -28,9 +28,9 @@ namespace Vision {
 namespace Filters {
 
 VisualCompass::VisualCompass() : CompassProvider("VisualCompass"), active_field(-1) {
-  cameraparamsdone=1;
-  prev_maskBelow=0;
-  prev_maskAbove=1;
+  cameraparamsdone = 1;
+  prev_maskBelow = 0;
+  prev_maskAbove = 1;
 }
 
 void VisualCompass::initSIFT() {
@@ -56,7 +56,7 @@ void VisualCompass::initSIFT() {
   Benchmark::open("VisualCompass init pano SIFT");
 
   // Compute the features of the pano
-  detector->detect(field, keypoints_pano,field_mask);
+  detector->detect(field, keypoints_pano, field_mask);
   descriptor_extractor->compute(field, keypoints_pano, descriptors_pano);
 
   Benchmark::close("VisualCompass init pano SIFT");
@@ -66,10 +66,10 @@ void VisualCompass::setParameters() {
   debugLevel = ParamInt(0, 0, 2);
   params()->define<ParamInt>("debugLevel", &debugLevel);
 
-  nndrRatio = ParamFloat(0.81, 0, 1);// 0.85
+  nndrRatio = ParamFloat(0.81, 0, 1);  // 0.85
   params()->define<ParamFloat>(
       "nndrRatio", &nndrRatio);  // Matching. Distance ratio for correct matching. Higher values=less restrictive match
-  
+
   knn_K = ParamInt(2, 0, 10);
   params()->define<ParamInt>("knn_K", &knn_K);  // number of neigbors
 
@@ -82,54 +82,49 @@ void VisualCompass::setParameters() {
   enabled = ParamInt(0, 0, 1);
   params()->define<ParamInt>("enabled", &enabled);  // process the filter?
 
-
-  maskBelow=ParamFloat(0, 0, 1); //% of the image
+  maskBelow = ParamFloat(0, 0, 1);  //% of the image
   params()->define<ParamFloat>("maskBelow", &maskBelow);
 
-  maskAbove=ParamFloat(1, 0, 1); //% of the image
+  maskAbove = ParamFloat(1, 0, 1);  //% of the image
   params()->define<ParamFloat>("maskAbove", &maskAbove);
-
 }
 
-void VisualCompass::fromJson(const Json::Value & v, const std::string & dir_name)
-{
+void VisualCompass::fromJson(const Json::Value& v, const std::string& dir_name) {
   CompassProvider::fromJson(v, dir_name);
   updateField();
 }
 
-void VisualCompass::updateField()
-{
-
+void VisualCompass::updateField() {
   switch (fieldNumber) {
-    case 0: //A
+    case 0:  // A
       out.log("Opening panoramic image: pano.jpg");
       field = cv::imread("../common/pano.jpg", 0);
       out.log("Opening panoramic image mask: pano_mask.jpg");
-      field_mask=cv::imread("../common/pano_mask.jpg", 0);
+      field_mask = cv::imread("../common/pano_mask.jpg", 0);
       break;
-    case 1: //C
+    case 1:  // C
       out.log("Opening panoramic image: pano.jpg");
       field = cv::imread("../common/pano.jpg", 0);
       out.log("Opening panoramic image mask: pano_mask.jpg");
-      field_mask=cv::imread("../common/pano_mask.jpg", 0);
+      field_mask = cv::imread("../common/pano_mask.jpg", 0);
       break;
-    case 2: //E
+    case 2:  // E
       out.log("Opening panoramic image: pano.jpg");
       field = cv::imread("../common/pano.jpg", 0);
       out.log("Opening panoramic image mask: pano_mask.jpg");
-      field_mask=cv::imread("../common/pano_mask.jpg", 0);
+      field_mask = cv::imread("../common/pano_mask.jpg", 0);
       break;
-    default: //ENSEIRB!!!!!
+    default:  // ENSEIRB!!!!!
       out.log("Opening panoramic image: pano.jpg");
       field = cv::imread("../common/pano.jpg", 0);
       out.log("Opening panoramic image mask: pano_mask.jpg");
-      field_mask=cv::imread("../common/pano_mask.jpg", 0);
+      field_mask = cv::imread("../common/pano_mask.jpg", 0);
       break;
   }
 
   out.log("field before resize: %d * %d", field.cols, field.rows);
   out.log("field_mask before resize: %d * %d", field_mask.cols, field_mask.rows);
-  cv::resize(field, field, cv::Size(), panoScale, panoScale);  // depends on the size of the pano.
+  cv::resize(field, field, cv::Size(), panoScale, panoScale);            // depends on the size of the pano.
   cv::resize(field_mask, field_mask, cv::Size(), panoScale, panoScale);  // depends on the size of the pano.
   out.log("field after resize: %d * %d", field.cols, field.rows);
   out.log("field_mask after resize: %d * %d", field_mask.cols, field_mask.rows);
@@ -167,7 +162,7 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
 
   // TODO debug level
   Benchmark::open("VisualCompass SIFT draw");
-  cv::drawKeypoints(img(), keypoints, img()); //Useless
+  cv::drawKeypoints(img(), keypoints, img());  // Useless
   Benchmark::close("VisualCompass SIFT draw");
 
   // std::vector<cv::DMatch> matches;
@@ -188,8 +183,10 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
   Benchmark::close("VisualCompass SIFT match");
 
   for (int k = 0; k < (int)matches.size(); k++) {
-    if ((matches[k][0].distance < nndrRatio * (matches[k][1].distance)))  // &&
-      //  ((int)matches[k].size() <= 2 && (int)matches[k].size()>0) ) //TODO param
+    if ((matches[k][0].distance <
+         nndrRatio *
+             (matches[k][1].distance)))  // &&
+                                         //  ((int)matches[k].size() <= 2 && (int)matches[k].size()>0) ) //TODO param
     {
       // take the first result only if its distance is smaller than 0.6*second_best_dist
       // that means this descriptor is ignored if the second distance is bigger or of similar
@@ -197,53 +194,45 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
     }
   }
 
-    if (debugLevel >= 1) {
-      out.log("Good matches: %d", good_matches.size());
-    }
+  if (debugLevel >= 1) {
+    out.log("Good matches: %d", good_matches.size());
+  }
 
-    // cv::Mat img_goodmatches;
+  // cv::Mat img_goodmatches;
 
-    if (good_matches.size() > 0) {
-      if (debugLevel >= 2) {
-	
-        cv::drawMatches(img(), keypoints, field, keypoints_pano, good_matches,
-                        img_debug, cv::Scalar(0, 0, 255),
-                        cv::Scalar(255, 0, 0), std::vector<char>(),
-                        cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-        cv::resize(img_debug, img_debug, cv::Size(), 1.2, 1.2);
-      }
+  if (good_matches.size() > 0) {
+    if (debugLevel >= 2) {
+      cv::drawMatches(img(), keypoints, field, keypoints_pano, good_matches, img_debug, cv::Scalar(0, 0, 255),
+                      cv::Scalar(255, 0, 0), std::vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+      cv::resize(img_debug, img_debug, cv::Size(), 1.2, 1.2);
     }
+  }
 }
 
 void VisualCompass::process() {
   // First clean memory
   clearCompassData();
 
-  bool shouldUpdate=false;
-  //First update the field
-  if(active_field != fieldNumber)
-  {
+  bool shouldUpdate = false;
+  // First update the field
+  if (active_field != fieldNumber) {
     updateField();
-    active_field=fieldNumber;
-    shouldUpdate=true;
+    active_field = fieldNumber;
+    shouldUpdate = true;
   }
 
   if (shouldUpdate) {
     initSIFT();
   }
 
-
   if (enabled) {
     const cv::Mat& srcImg = *(getDependency().getImg());
     // TODO: clone only when debugLevel > 0
     img() = srcImg.clone();
 
-
-
     // DEBUG
     // cv::cvtColor(img(),img(),CV_YCrCb2BGR);
     // img()=  cv::imread("test.jpg",0);
-
 
     if (!cameraparamsdone) {
       width = srcImg.cols;
@@ -251,24 +240,21 @@ void VisualCompass::process() {
       pano_width = field.cols;
       pano_height = field.rows;
 
-      //init image mask
-      img_mask=cv::Mat(height,width,CV_8UC1, cv::Scalar(255));
-
-
+      // init image mask
+      img_mask = cv::Mat(height, width, CV_8UC1, cv::Scalar(255));
 
       // std::cout<<"WIDTH: "<<width<<" "<<pano_width<<" HEIGHT: "<<height<<" "<<pano_height<<std::endl;
-      //TODO: fix: use parameters from camera
+      // TODO: fix: use parameters from camera
 
       double appertureW = NATIVE_WIDTH / width * PIXEL_SIZE;
       double appertureH = NATIVE_HEIGHT / height * PIXEL_SIZE;
       double fovx, fovy, focalLength, aspectRatio;
       cv::Point2d principalPoint;
 
-      const Leph::CameraModel & cam_model = getCS().getCameraModel();
+      const Leph::CameraModel& cam_model = getCS().getCameraModel();
 
-      cv::calibrationMatrixValues(cam_model.getCameraMatrix(),
-                                  cv::Size(width, height), appertureW, appertureH, fovx, fovy,
-                                  focalLength, principalPoint, aspectRatio);
+      cv::calibrationMatrixValues(cam_model.getCameraMatrix(), cv::Size(width, height), appertureW, appertureH, fovx,
+                                  fovy, focalLength, principalPoint, aspectRatio);
       hfov_rad = deg2rad(fovx);
 
       pixeltoangle_pano = (2.0 * M_PI) / pano_width;
@@ -277,18 +263,15 @@ void VisualCompass::process() {
       cameraparamsdone = true;
     }
 
-
-    if((prev_maskBelow != maskBelow) || (prev_maskAbove != maskAbove)) //mask has changed
+    if ((prev_maskBelow != maskBelow) || (prev_maskAbove != maskAbove))  // mask has changed
     {
-      //start black
-      img_mask=cv::Mat(height,width,CV_8UC1, cv::Scalar(0));
-      //draw white
-      cv::Point pt1(0,maskBelow*height);
-      cv::Point pt2(width,maskAbove*height);
-      cv::rectangle(img_mask,pt1,pt2,cv::Scalar(255),CV_FILLED);
-
+      // start black
+      img_mask = cv::Mat(height, width, CV_8UC1, cv::Scalar(0));
+      // draw white
+      cv::Point pt1(0, maskBelow * height);
+      cv::Point pt2(width, maskAbove * height);
+      cv::rectangle(img_mask, pt1, pt2, cv::Scalar(255), CV_FILLED);
     }
-
 
     std::vector<cv::KeyPoint> keypoints;
     std::vector<cv::DMatch> good_matches;
@@ -300,9 +283,8 @@ void VisualCompass::process() {
       computeAngle(keypoints, good_matches);
       Benchmark::close("VisualCompass compute angle");
 
-      
       // cv::imshow("VisualCompass SIFT debug", img());
-      // cv::waitKey(1);      
+      // cv::waitKey(1);
     } else {
       // humm
     }
@@ -340,7 +322,6 @@ void VisualCompass::sanitizeCoordinates(const std::vector<cv::Point2f>& in, std:
 }
 
 void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std::vector<cv::DMatch>& good_matches) {
-
   cv::Mat outangle;
 
   if (debugLevel >= 2) {
@@ -451,15 +432,12 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
       // average angle pos of center relative to marker (cam) + pos of
       // marker relative to center (pano)
 
-
       float angle = ((width / 2) - pt1.x) * pixeltoangle + (-(pano_width / 2) + pt2.x) * pixeltoangle_pano;
       // float angle =  -(pt2.x-(pano_width / 2)  ) * pixeltoangle_pano + (pt1.x-(width / 2) ) * pixeltoangle ;
       sines += sin(angle);
       cosines += cos(angle);
 
-
-      if (debugLevel >= 1)
-        out.log("angle: %f", rad2deg(angle));
+      if (debugLevel >= 1) out.log("angle: %f", rad2deg(angle));
 
       // debuging (display the inliers)
       if (debugLevel >= 2) {
@@ -517,12 +495,11 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
       // cv::line(outangle, cv::Point((linepos - disppos*1 + pano_width / 2), pano_height), cv::Point((linepos
       // -disppos*1 + pano_width / 2), 0), cv::Scalar(255, 255, 0), 1);
 
-
       cv::resize(outangle, outangle, cv::Size(), 0.5, 0.5);
 
       cv::Size sz1 = img_debug.size();
       cv::Size sz2 = outangle.size();
-      cv::Mat img_debug_concat(sz1.height+sz2.height, max(sz1.width,sz2.width), CV_8UC3,cv::Scalar(0));
+      cv::Mat img_debug_concat(sz1.height + sz2.height, max(sz1.width, sz2.width), CV_8UC3, cv::Scalar(0));
       img_debug.copyTo(img_debug_concat(cv::Rect(0, 0, sz1.width, sz1.height)));
       outangle.copyTo(img_debug_concat(cv::Rect(0, sz1.height, sz2.width, sz2.height)));
 
@@ -537,9 +514,8 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
 
     pushCompass(avangle, score);  // because I can
 
-    out.log("VisualCompassFilter ANGLE: (mean) %f , (std) %f , (score) %f",
-            rad2deg(avangle), stdangle, score);
+    out.log("VisualCompassFilter ANGLE: (mean) %f , (std) %f , (score) %f", rad2deg(avangle), stdangle, score);
   }
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -11,7 +11,8 @@ namespace Localisation {
 
 class FieldObservation : public rhoban_unsorted::BoundedScoreObservation<FieldPosition> {
   bool isGoalKeeper;
-public:
+
+ public:
   FieldObservation(bool isGoalKeeper);
 
   virtual double potential(const FieldPosition &p) const;
@@ -21,5 +22,5 @@ public:
   /// Required because 0 score are particularly dangerous
   static double pError;
 };
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

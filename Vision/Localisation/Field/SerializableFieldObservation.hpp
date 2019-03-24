@@ -10,8 +10,7 @@
 namespace Vision {
 namespace Localisation {
 
-class SerializableFieldObservation
-  : public rhoban_unsorted::BoundedScoreObservation<FieldPosition>,
-      public rhoban_utils::JsonSerializable {};
-}
-}
+class SerializableFieldObservation : public rhoban_unsorted::BoundedScoreObservation<FieldPosition>,
+                                     public rhoban_utils::JsonSerializable {};
+}  // namespace Localisation
+}  // namespace Vision

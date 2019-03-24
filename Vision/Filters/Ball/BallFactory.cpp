@@ -8,10 +8,10 @@
 namespace Vision {
 namespace Filters {
 
-void registerBallFilters(FilterFactory * ff) {
-  ff->registerBuilder("BallByDNN", [](){return std::unique_ptr<Filter>(new BallByDNN());});
-  ff->registerBuilder("BallByII" , [](){return std::unique_ptr<Filter>(new BallByII()) ;});
+void registerBallFilters(FilterFactory* ff) {
+  ff->registerBuilder("BallByDNN", []() { return std::unique_ptr<Filter>(new BallByDNN()); });
+  ff->registerBuilder("BallByII", []() { return std::unique_ptr<Filter>(new BallByII()); });
 }
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

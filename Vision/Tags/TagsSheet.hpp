@@ -8,28 +8,24 @@
 ///    |
 ///   dy
 ///    |
-///   \ /   id[2]     id[3] 
+///   \ /   id[2]     id[3]
 ///
-///     
+///
 ///
 ///         id[4]     id[5]
 class TagsSheet : public TagsCollection {
-
-public:
+ public:
   TagsSheet();
-  TagsSheet(double marker_size,
-            const Eigen::Vector3d & dx,
-            const Eigen::Vector3d & dy,
-            const Eigen::Vector3d & sheet_center,
-            const std::vector<int> & markers_ids);
+  TagsSheet(double marker_size, const Eigen::Vector3d& dx, const Eigen::Vector3d& dy,
+            const Eigen::Vector3d& sheet_center, const std::vector<int>& markers_ids);
 
   virtual std::map<int, ArucoTag> getMarkers() const override;
 
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value & v, const std::string & dir_path) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_path) override;
   virtual std::string getClassName() const override;
 
-private:
+ private:
   /// Size of an aruco marker (all markers of a sheet have the same size) [m]
   double marker_size;
 

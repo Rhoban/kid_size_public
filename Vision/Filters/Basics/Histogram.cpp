@@ -5,8 +5,7 @@
 namespace Vision {
 namespace Filters {
 
-Histogram::Histogram() : Filter("Histogram") {
-}
+Histogram::Histogram() : Filter("Histogram") {}
 
 void Histogram::setParameters() {
   bins = ParamInt(256, 0, 256);
@@ -31,12 +30,9 @@ void Histogram::process() {
   cv::Mat yHist, uHist, vHist;
 
   /// Compute the histograms:
-  cv::calcHist(&yuv[0], 1, 0, cv::Mat(), yHist, 1, &histSize, &histRange,
-               uniform, accumulate);
-  cv::calcHist(&yuv[1], 1, 0, cv::Mat(), vHist, 1, &histSize, &histRange,
-               uniform, accumulate);
-  cv::calcHist(&yuv[2], 1, 0, cv::Mat(), uHist, 1, &histSize, &histRange,
-               uniform, accumulate);
+  cv::calcHist(&yuv[0], 1, 0, cv::Mat(), yHist, 1, &histSize, &histRange, uniform, accumulate);
+  cv::calcHist(&yuv[1], 1, 0, cv::Mat(), vHist, 1, &histSize, &histRange, uniform, accumulate);
+  cv::calcHist(&yuv[2], 1, 0, cv::Mat(), uHist, 1, &histSize, &histRange, uniform, accumulate);
 
   // Draw the histograms
   int hist_w = src.cols;
@@ -52,19 +48,13 @@ void Histogram::process() {
 
   // Draw for each channel
   for (int i = 1; i < histSize; i++) {
-    line(img(),
-         cv::Point(bin_w * (i - 1), hist_h - cvRound(yHist.at<float>(i - 1))),
-         cv::Point(bin_w * (i), hist_h - cvRound(yHist.at<float>(i))),
-         cv::Scalar(255, 255, 255), 2, 8, 0);
-    line(img(),
-         cv::Point(bin_w * (i - 1), hist_h - cvRound(uHist.at<float>(i - 1))),
-         cv::Point(bin_w * (i), hist_h - cvRound(uHist.at<float>(i))),
-         cv::Scalar(0, 255, 0), 2, 8, 0);
-    line(img(),
-         cv::Point(bin_w * (i - 1), hist_h - cvRound(vHist.at<float>(i - 1))),
-         cv::Point(bin_w * (i), hist_h - cvRound(vHist.at<float>(i))),
-         cv::Scalar(0, 0, 255), 2, 8, 0);
+    line(img(), cv::Point(bin_w * (i - 1), hist_h - cvRound(yHist.at<float>(i - 1))),
+         cv::Point(bin_w * (i), hist_h - cvRound(yHist.at<float>(i))), cv::Scalar(255, 255, 255), 2, 8, 0);
+    line(img(), cv::Point(bin_w * (i - 1), hist_h - cvRound(uHist.at<float>(i - 1))),
+         cv::Point(bin_w * (i), hist_h - cvRound(uHist.at<float>(i))), cv::Scalar(0, 255, 0), 2, 8, 0);
+    line(img(), cv::Point(bin_w * (i - 1), hist_h - cvRound(vHist.at<float>(i - 1))),
+         cv::Point(bin_w * (i), hist_h - cvRound(vHist.at<float>(i))), cv::Scalar(0, 0, 255), 2, 8, 0);
   }
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

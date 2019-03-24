@@ -28,5 +28,5 @@ void Blur::process() {
     blur(src, img(), cv::Size(kWidth, kHeight));
   }
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

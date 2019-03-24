@@ -6,7 +6,7 @@ namespace Vision {
 namespace Utils {
 
 class ImageSequence {
-private:
+ private:
   int frameNo, nextFrameNo;
   int64_t clock_offset;
   cv::Mat img;
@@ -17,7 +17,7 @@ private:
 
   void update();
 
-public:
+ public:
   ImageSequence();
   /**
    * @see loadImages
@@ -59,5 +59,5 @@ public:
 
   bool isValid() const;
 };
-}
-}
+}  // namespace Utils
+}  // namespace Vision

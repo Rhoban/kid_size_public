@@ -11,27 +11,27 @@ class Move;
 
 class MaintenanceService : public Service
 {
-    public:
-        struct Task
-        {
-            std::string name;
-            std::string description;
-            time_t last;
+public:
+  struct Task
+  {
+    std::string name;
+    std::string description;
+    time_t last;
 
-            bool operator<(const Task&other) const {
-                return other.last > last;
-            }
-        };
+    bool operator<(const Task& other) const
+    {
+      return other.last > last;
+    }
+  };
 
-        MaintenanceService();
+  MaintenanceService();
 
-        void loadFile();
-        void saveFile();
- 
-    protected:
-        std::vector<Task> tasks;
-        RhIO::Bind bind;
+  void loadFile();
+  void saveFile();
 
-        std::string cmdMaintenance(std::string cmd);
+protected:
+  std::vector<Task> tasks;
+  RhIO::Bind bind;
+
+  std::string cmdMaintenance(std::string cmd);
 };
-

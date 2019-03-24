@@ -10,8 +10,7 @@ using namespace cv;
 
 // Function from :
 // - http://nghiaho.com/uploads/code/opencv_connected_component/blob.cpp
-void addBlobs(const Mat &binary, vector<vector<Point2i>> &blobs, bool gpuOn,
-              float fgValue, Mat *output) {
+void addBlobs(const Mat &binary, vector<vector<Point2i>> &blobs, bool gpuOn, float fgValue, Mat *output) {
   blobs.clear();
 
   // Fill the label_image with the blobs
@@ -76,8 +75,7 @@ void addBlobs(const Mat &binary, vector<vector<Point2i>> &blobs, bool gpuOn,
   }
 }
 
-void addBlobsRects(const Mat &binary, std::vector<cv::Rect> &rects, bool gpuOn,
-                   float fgValue, cv::Mat *output) {
+void addBlobsRects(const Mat &binary, std::vector<cv::Rect> &rects, bool gpuOn, float fgValue, cv::Mat *output) {
   rects.clear();
 
   // Fill the label_image with the blobs
@@ -128,8 +126,7 @@ void addBlobsRects(const Mat &binary, std::vector<cv::Rect> &rects, bool gpuOn,
   }
 }
 
-void colorBlobs(Mat &output, vector<vector<Point2i>> &blobs, bool randomColor,
-                Scalar color) {
+void colorBlobs(Mat &output, vector<vector<Point2i>> &blobs, bool randomColor, Scalar color) {
   // If no color specified, use random color
   unsigned char r(255), g(255), b(255);
   if (!randomColor) {
@@ -155,10 +152,8 @@ void colorBlobs(Mat &output, vector<vector<Point2i>> &blobs, bool randomColor,
   }
 }
 
-void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg,
-                    std::vector<std::pair<int, cv::Rect>> &blobRect,
-                    const std::vector<std::pair<int, cv::Rect>> &whiteRect,
-                    cv::Mat &adjMat, int maxDist) {
+void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<std::pair<int, cv::Rect>> &blobRect,
+                    const std::vector<std::pair<int, cv::Rect>> &whiteRect, cv::Mat &adjMat, int maxDist) {
   /*
     Compute the connectivity between the "binary" blobs and the "whiteImg" blobs
     Returns a matrix of size (nb whiteImg labels+2)x(nb binary labels+2). It is
@@ -179,17 +174,14 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg,
   // 1  - unlabelled foreground
   // 2+ - labelled foreground
 
-  if (binary.size() != whiteImg.size())
-    throw std::logic_error(
-        "FindBlobsGraph: binary and whiteImg not the same size");
+  if (binary.size() != whiteImg.size()) throw std::logic_error("FindBlobsGraph: binary and whiteImg not the same size");
 
-  if (whiteImg.type() != CV_32SC1)
-    whiteImg.convertTo(whiteImg, CV_32SC1);
+  if (whiteImg.type() != CV_32SC1) whiteImg.convertTo(whiteImg, CV_32SC1);
 
   cv::Mat label_image;
   binary.convertTo(label_image, CV_32SC1);
   // label_image=binary;
-  int label_count = 2; // starts at 2 because 0,1 are used already
+  int label_count = 2;  // starts at 2 because 0,1 are used already
 
   // TODO keep the rectangles
   // First pass, label pixels
@@ -209,8 +201,7 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg,
   }
 
   // whiteRect.size() should be the number of different white blobs
-  adjMat =
-      cv::Mat(label_count, whiteRect.size() + 2, CV_8U, cv::Scalar::all(0));
+  adjMat = cv::Mat(label_count, whiteRect.size() + 2, CV_8U, cv::Scalar::all(0));
 
   // Second pass, create the graph
   for (int y = 0; y < label_image.rows; y++) {
@@ -219,7 +210,7 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg,
     int *whiterow = (int *)whiteImg.ptr(y);
 
     for (int x = 0; x < label_image.cols; x++) {
-      if (whiterow[x] == 0) { // Do we have white here?
+      if (whiterow[x] == 0) {  // Do we have white here?
         continue;
       }
 
@@ -228,26 +219,23 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg,
 
       // WEST
       if (x > 0) {
-        if (row[x - 1] > 1) // labeled
+        if (row[x - 1] > 1)  // labeled
         {
           // DEBUG
           // std::cout<<"DEBUG WEST: "<<x<<" "<<y<<" "<<(x-1)<<" "<<row[x-1]<<"
           // "<<(int)whiterow[x]<<std::endl;
           // adjMat.at<uchar>(whiterow[x],row[x-1])=1;
-          adjMat.at<uchar>(row[x - 1], whiterow[x]) =
-              1; // symmetric, probably useless
+          adjMat.at<uchar>(row[x - 1], whiterow[x]) = 1;  // symmetric, probably useless
         } else {
-          if (maxDist > 1) // we look a little farther
+          if (maxDist > 1)  // we look a little farther
           {
             int dist = 2;
             bool done = false;
             while ((x - dist) > 0 && dist <= maxDist && !done) {
-              if (row[x - dist] > 1) // labeled
+              if (row[x - dist] > 1)  // labeled
               {
-
                 // adjMat.at<uchar>(whiterow[x],row[x-dist])=1;
-                adjMat.at<uchar>(row[x - dist], whiterow[x]) =
-                    1; // symmetric, probably useless
+                adjMat.at<uchar>(row[x - dist], whiterow[x]) = 1;  // symmetric, probably useless
                 done = true;
               }
               dist++;
@@ -259,26 +247,24 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg,
       // NORTH
       if (y > 0) {
         int *nrow = (int *)label_image.ptr(y - 1);
-        if (nrow[x] > 1) // labeled
+        if (nrow[x] > 1)  // labeled
         {
           // DEBUG
           // std::cout<<"DEBUG NORTH: "<<x<<" "<<y<<" "<<(x)<<" "<<nrow[x]<<"
           // "<<(int)whiterow[x]<<std::endl;
           // adjMat.at<uchar>(whiterow[x],nrow[x])=1;
-          adjMat.at<uchar>(nrow[x], whiterow[x]) =
-              1; // symmetric, probably useless
+          adjMat.at<uchar>(nrow[x], whiterow[x]) = 1;  // symmetric, probably useless
         } else {
-          if (maxDist > 1) // we look a little farther
+          if (maxDist > 1)  // we look a little farther
           {
             int dist = 2;
             bool done = false;
             while ((y - dist) > 0 && dist <= maxDist && !done) {
               nrow = (int *)label_image.ptr(y - dist);
-              if (nrow[x] > 1) // labeled
+              if (nrow[x] > 1)  // labeled
               {
                 // adjMat.at<uchar>(whiterow[x],nrow[x])=1;
-                adjMat.at<uchar>(nrow[x], whiterow[x]) =
-                    1; // symmetric, probably useless
+                adjMat.at<uchar>(nrow[x], whiterow[x]) = 1;  // symmetric, probably useless
                 done = true;
               }
               dist++;
@@ -290,26 +276,23 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg,
       /////////
       // EAST
       if (x < (label_image.cols - 1)) {
-        if (row[x + 1] > 1) // labeled
+        if (row[x + 1] > 1)  // labeled
         {
           // DEBUG
           // std::cout<<"DEBUG EST: "<<x<<" "<<y<<" "<<(x+1)<<" "<<row[x+1]<<"
           // "<<(int)whiterow[x]<<std::endl;
           // adjMat.at<uchar>(0,row[x+1])=whiterow[x];
-          adjMat.at<uchar>(row[x + 1], whiterow[x]) =
-              1; // symmetric, probably useless
+          adjMat.at<uchar>(row[x + 1], whiterow[x]) = 1;  // symmetric, probably useless
         } else {
-          if (maxDist > 1) // we look a little farther
+          if (maxDist > 1)  // we look a little farther
           {
             int dist = 2;
             bool done = false;
-            while ((x + dist) < (label_image.cols - 1) && dist <= maxDist &&
-                   !done) {
-              if (row[x + dist] > 1) // labeled
+            while ((x + dist) < (label_image.cols - 1) && dist <= maxDist && !done) {
+              if (row[x + dist] > 1)  // labeled
               {
                 // adjMat.at<uchar>(0,row[x+dist])=whiterow[x];
-                adjMat.at<uchar>(row[x + dist], whiterow[x]) =
-                    1; // symmetric, probably useless
+                adjMat.at<uchar>(row[x + dist], whiterow[x]) = 1;  // symmetric, probably useless
                 done = true;
               }
               dist++;
@@ -321,27 +304,24 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg,
       // SOUTH
       if (y < (label_image.rows - 1)) {
         int *nrow = (int *)label_image.ptr(y + 1);
-        if (nrow[x] > 1) // labeled
+        if (nrow[x] > 1)  // labeled
         {
           // DEBUG
           // std::cout<<"DEBUG SOUTH: "<<x<<" "<<y<<" "<<(x)<<" "<<nrow[x+1]<<"
           // "<<(int)whiterow[x]<<std::endl;
           // adjMat.at<uchar>(whiterow[x],nrow[x])=1;
-          adjMat.at<uchar>(nrow[x], whiterow[x]) =
-              1; // symmetric, probably useless
+          adjMat.at<uchar>(nrow[x], whiterow[x]) = 1;  // symmetric, probably useless
         } else {
-          if (maxDist > 1) // we look a little farther
+          if (maxDist > 1)  // we look a little farther
           {
             int dist = 2;
             bool done = false;
-            while ((y + dist) < (label_image.rows - 1) && dist <= maxDist &&
-                   !done) {
+            while ((y + dist) < (label_image.rows - 1) && dist <= maxDist && !done) {
               nrow = (int *)label_image.ptr(y + dist);
-              if (nrow[x] > 1) // labeled
+              if (nrow[x] > 1)  // labeled
               {
                 // adjMat.at<uchar>(whiterow[x],nrow[x])=1;
-                adjMat.at<uchar>(nrow[x], whiterow[x]) =
-                    1; // symmetric, probably useless
+                adjMat.at<uchar>(nrow[x], whiterow[x]) = 1;  // symmetric, probably useless
                 done = true;
               }
               dist++;
@@ -356,8 +336,7 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg,
   // std::cout<<adjMat<<std::endl;
 }
 
-void FindBlobsLabels(const cv::Mat &binary, cv::Mat &label_image,
-                     std::vector<std::pair<int, cv::Rect>> &blobs) {
+void FindBlobsLabels(const cv::Mat &binary, cv::Mat &label_image, std::vector<std::pair<int, cv::Rect>> &blobs) {
   /*
     input a binary image and labels it into label_image with the label and the
     rectangle into blobs
@@ -371,7 +350,7 @@ void FindBlobsLabels(const cv::Mat &binary, cv::Mat &label_image,
   // cv::Mat label_image;
   binary.convertTo(label_image, CV_32SC1);
   // label_image=binary;
-  int label_count = 2; // starts at 2 because 0,1 are used already
+  int label_count = 2;  // starts at 2 because 0,1 are used already
 
   for (int y = 0; y < label_image.rows; y++) {
     int *row = (int *)label_image.ptr(y);
@@ -391,8 +370,7 @@ void FindBlobsLabels(const cv::Mat &binary, cv::Mat &label_image,
 }
 
 // Oh
-void paintBlob(cv::Mat &blobPainted, std::vector<cv::Point2i> blob,
-               unsigned char value) {
+void paintBlob(cv::Mat &blobPainted, std::vector<cv::Point2i> blob, unsigned char value) {
   for (auto point : blob) {
     blobPainted.at<uchar>(point.y, point.x) = value;
   }

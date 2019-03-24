@@ -9,5 +9,5 @@ void Invert::process() {
   // Other option : cv::bitwise_not (src, src);
   img() = 255 - src;
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

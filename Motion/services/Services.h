@@ -24,56 +24,54 @@ class CaptainService;
  */
 class Services
 {
-    public:
+public:
+  /**
+   * Initialization with main
+   * ModelService instance
+   */
+  Services(MoveScheduler* scheduler);
 
-        /**
-         * Initialization with main
-         * ModelService instance
-         */
-        Services(MoveScheduler* scheduler);
+  /**
+   * Deallocation of all
+   * contained services
+   */
+  ~Services();
 
-        /**
-         * Deallocation of all 
-         * contained services
-         */
-        ~Services();
+  /**
+   * Services access
+   */
+  bool hasService(const std::string& name) const;
+  Service* getService(const std::string& name);
+  const std::vector<std::pair<std::string, Service*>>& getAllServices();
 
-        /**
-         * Services access
-         */
-        bool hasService(const std::string& name) const;
-        Service* getService(const std::string& name);
-        const std::vector<std::pair<std::string, Service*>>& getAllServices();
-        
-        /**
-         * Direct access to services instance
-         */
-        ModelService* model;
-        OdometryService* odometry;
-        RefereeService *referee;
-        LocalisationService *localisation;
-        TeamPlayService *teamPlay;
-        DecisionService *decision;
-        MaintenanceService *maintenance;
-        StrategyService *strategy;
-        CaptainService *captain;
+  /**
+   * Direct access to services instance
+   */
+  ModelService* model;
+  OdometryService* odometry;
+  RefereeService* referee;
+  LocalisationService* localisation;
+  TeamPlayService* teamPlay;
+  DecisionService* decision;
+  MaintenanceService* maintenance;
+  StrategyService* strategy;
+  CaptainService* captain;
 
-    private:
+private:
+  /**
+   * Main MoveScheduler pointer
+   */
+  MoveScheduler* _scheduler;
 
-        /**
-         * Main MoveScheduler pointer
-         */
-        MoveScheduler* _scheduler;
+  /**
+   * Services container and map
+   * (For direct access and well defined iteration order).
+   */
+  std::vector<std::pair<std::string, Service*>> _container;
+  std::map<std::string, Service*> _map;
 
-        /**
-         * Services container and map
-         * (For direct access and well defined iteration order).
-         */
-        std::vector<std::pair<std::string, Service*>> _container;
-        std::map<std::string, Service*> _map;
-        
-        /**
-         * Insert a new service inside the container
-         */
-        void add(const std::string& name, Service* service);
+  /**
+   * Insert a new service inside the container
+   */
+  void add(const std::string& name, Service* service);
 };

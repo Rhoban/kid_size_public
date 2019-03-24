@@ -3,13 +3,11 @@
 #include <Eigen/Core>
 
 class ArucoTag {
-public:
+ public:
   ArucoTag();
 
-  ArucoTag(int marker_id, double marker_size,
-           const Eigen::Vector3d & marker_center,
-           const Eigen::Vector3d & x_axis,
-           const Eigen::Vector3d & y_axis);
+  ArucoTag(int marker_id, double marker_size, const Eigen::Vector3d& marker_center, const Eigen::Vector3d& x_axis,
+           const Eigen::Vector3d& y_axis);
 
   /// The aruco identifier
   int marker_id;

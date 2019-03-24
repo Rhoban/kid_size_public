@@ -11,19 +11,20 @@ class Placer;
 class PlayingMove : public STM
 {
 public:
-  struct Place {
+  struct Place
+  {
     bool ok;
     rhoban_geometry::Point position;
     rhoban_utils::Angle orientation;
   };
 
-  PlayingMove(Walk *walk);
+  PlayingMove(Walk* walk);
   std::string getName();
 
   void onStart();
   void onStop();
   void step(float elapsed);
-        
+
   virtual void enterState(std::string state);
   virtual void exitState(std::string state);
   void setTeamPlayState(rhoban_team_play::TeamPlayState state);
@@ -39,8 +40,8 @@ protected:
   double avoidRadius;
   double walkBallDistance;
 
-  Walk *walk;
-  Head *head;
-  Approach *approach;
-  Placer *placer;
+  Walk* walk;
+  Head* head;
+  Approach* approach;
+  Placer* placer;
 };

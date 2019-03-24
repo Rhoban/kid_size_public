@@ -11,16 +11,16 @@ namespace Filters {
  * Invert a CV_8U image (dst[i,j] = 255 - src[i,j])
  */
 class Invert : public Filter {
-public:
+ public:
   Invert() : Filter("Invert") {}
 
   virtual std::string getClassName() const override { return "Invert"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
   virtual void process() override;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

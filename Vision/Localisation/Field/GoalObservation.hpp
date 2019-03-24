@@ -7,7 +7,7 @@ namespace Vision {
 namespace Localisation {
 
 class GoalObservation : public SerializableFieldObservation {
-public:
+ public:
   rhoban_geometry::PanTilt panTilt;
 
   /// [m]
@@ -38,11 +38,10 @@ public:
   /// Used to weight more observations which represent large clusters
   static double weightRatio;
 
-public:
+ public:
   GoalObservation();
 
-  GoalObservation(const rhoban_geometry::PanTilt &panTiltToGoal,
-                  double robotHeight, double weight = 1);
+  GoalObservation(const rhoban_geometry::PanTilt &panTiltToGoal, double robotHeight, double weight = 1);
 
   cv::Point3f getSeenDir() const;
 
@@ -50,20 +49,18 @@ public:
 
   double potential(const FieldPosition &p, bool debug) const;
 
-
   /// Merge 'other' observation into current one:
   /// average angles and cumulate weights
-  void merge(const GoalObservation & other);
+  void merge(const GoalObservation &other);
 
-  static bool isSimilar(const GoalObservation & o1,
-                        const GoalObservation & o2);
+  static bool isSimilar(const GoalObservation &o1, const GoalObservation &o2);
 
   static void bindWithRhIO();
   static void importFromRhIO();
 
   std::string getClassName() const override;
   Json::Value toJson() const override;
-  void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  void fromJson(const Json::Value &v, const std::string &dir_name) override;
 
   double getMinScore() const override;
 
@@ -71,5 +68,5 @@ public:
 
   virtual std::string toStr() const override;
 };
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

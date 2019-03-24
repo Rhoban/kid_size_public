@@ -4,10 +4,11 @@
 
 #include "rhoban_unsorted/head_scan.h"
 
-namespace Leph {
-  class HumanoidModel;
-  class CameraModel;
-}
+namespace Leph
+{
+class HumanoidModel;
+class CameraModel;
+}  // namespace Leph
 
 /// PermaScan Move based on smooth trajectories
 ///
@@ -29,7 +30,6 @@ public:
   void setDisabled(bool value);
   void setLocalizeMaxPan(double maxPan);
 
-
 private:
   /// Synchronize local parameters with 'scanner'
   void updateScanners();
@@ -39,12 +39,10 @@ private:
   bool shouldTrackBall();
 
   /// Get the scan target in self referential according to the scanner
-  Eigen::Vector3d getScanTarget(Leph::HumanoidModel * model,
-                                const rhoban_unsorted::HeadScan & scannerUsed);
+  Eigen::Vector3d getScanTarget(Leph::HumanoidModel* model, const rhoban_unsorted::HeadScan& scannerUsed);
 
   /// Get the ball target in self referential
-  Eigen::Vector3d getBallTarget(Leph::HumanoidModel * model,
-                                const Leph::CameraModel & camera_model);
+  Eigen::Vector3d getBallTarget(Leph::HumanoidModel* model, const Leph::CameraModel& camera_model);
 
   /// Apply the protection orders based on provided status
   void applyProtection();

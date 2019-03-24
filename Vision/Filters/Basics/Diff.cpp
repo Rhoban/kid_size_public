@@ -13,5 +13,5 @@ void Diff::process() {
   cv::Mat B = *(getDependency(bName).getImg());
   img() = A - B;
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

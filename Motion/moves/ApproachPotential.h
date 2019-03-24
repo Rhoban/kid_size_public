@@ -9,10 +9,11 @@ class KickController;
 class ApproachPotential : public ApproachMove
 {
 public:
-  struct Target {
+  struct Target
+  {
     Target();
-    Target(rhoban_geometry::Point position, rhoban_utils::Angle yaw,
-           bool rightKick, std::string kickName, double tolerance);
+    Target(rhoban_geometry::Point position, rhoban_utils::Angle yaw, bool rightKick, std::string kickName,
+           double tolerance);
     rhoban_geometry::Point position;
     rhoban_utils::Angle yaw;
     bool rightKick;
@@ -22,7 +23,7 @@ public:
 
   virtual rhoban_utils::Angle getKickCap();
 
-  ApproachPotential(Walk *walk);
+  ApproachPotential(Walk* walk);
   std::string getName();
 
   void onStart();
@@ -31,20 +32,19 @@ public:
 
 protected:
   rhoban_utils::Control stepper, lateraler, aligner;
-    
+
   std::vector<Target> targets;
 
   /**
    * Getting the control to send to the walk to reach a given target, knowing
    * where the ball is
    */
-  void getControl(const Target &target, const rhoban_geometry::Point &ball,
-                  double &x, double &y, double &yaw);
+  void getControl(const Target& target, const rhoban_geometry::Point& ball, double& x, double& y, double& yaw);
 
   // Foot choice
   bool left;
   double lastFootChoice;
-  
+
   // Potential repulsion
   double repulsion;
 
@@ -66,7 +66,5 @@ protected:
   void enterState(std::string state);
   void exitState(std::string state);
 
-  Eigen::Vector3d computeLastStepDelta(
-      const std::string& kickName, 
-      bool isRightFoot);
+  Eigen::Vector3d computeLastStepDelta(const std::string& kickName, bool isRightFoot);
 };

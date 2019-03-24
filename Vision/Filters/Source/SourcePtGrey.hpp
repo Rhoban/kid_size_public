@@ -7,7 +7,7 @@
 /// How to configure the camera to have a static ip:
 /// https://www.ptgrey.com/KB/10933
 
-///Headers usually found in /usr/include/flycapture
+/// Headers usually found in /usr/include/flycapture
 
 namespace Vision {
 namespace Filters {
@@ -16,7 +16,7 @@ namespace Filters {
  * SourcePtGrey
  */
 class SourcePtGrey : public Source {
-public:
+ public:
   /**
    * Do not open camera
    */
@@ -28,9 +28,8 @@ public:
   virtual ~SourcePtGrey();
 
   // JSON stuff
-  FlyCapture2::Property propertyFromJson(const Json::Value & v,
-                                         FlyCapture2::PropertyType type) const;
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  FlyCapture2::Property propertyFromJson(const Json::Value &v, FlyCapture2::PropertyType type) const;
+  virtual void fromJson(const Json::Value &v, const std::string &dir_name) override;
   virtual Json::Value toJson() const override;
 
   virtual std::string getClassName() const override;
@@ -38,7 +37,7 @@ public:
 
   virtual Type getType() const override;
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -76,16 +75,13 @@ protected:
   void updatePropertiesInformation();
 
   /// Debug readable info
-  void dump(const FlyCapture2::Format7ImageSettings & image_settings,
-            std::ostream & out);
+  void dump(const FlyCapture2::Format7ImageSettings &image_settings, std::ostream &out);
 
   /// Debug readable info
-  void dump(const FlyCapture2::GigEImageSettings & image_settings,
-            std::ostream & out);
+  void dump(const FlyCapture2::GigEImageSettings &image_settings, std::ostream &out);
 
   /// Debug readable info
-  void dump(const FlyCapture2::GigEImageSettingsInfo & image_settings_info,
-            std::ostream & out);
+  void dump(const FlyCapture2::GigEImageSettingsInfo &image_settings_info, std::ostream &out);
 
   /**
    * Dump all the current properties on the provided stream
@@ -98,10 +94,10 @@ protected:
   void dumpPropertiesInformation(std::ostream &out);
 
   /**
-  * Estimates the delay between the camera internal clock and the local pc clock.
-  */
+   * Estimates the delay between the camera internal clock and the local pc clock.
+   */
   double measureTimestampDelta();
-  
+
   /**
    * Correspondance between names and PropertyTypes
    * throws std::out_of_range if name is not registered
@@ -111,17 +107,15 @@ protected:
   /**
    * Write the property to the given stream
    */
-  static void writeProperty(const FlyCapture2::Property &property,
-                            std::ostream &out, const std::string &prefix = "");
+  static void writeProperty(const FlyCapture2::Property &property, std::ostream &out, const std::string &prefix = "");
 
   /**
    * Write the property to the given stream
    */
-  static void
-  writePropertyInformation(const FlyCapture2::PropertyInfo &property_info,
-                           std::ostream &out, const std::string &prefix = "");
+  static void writePropertyInformation(const FlyCapture2::PropertyInfo &property_info, std::ostream &out,
+                                       const std::string &prefix = "");
 
-protected:
+ protected:
   /// Bind properties and monitoring variables to RhIO
   void bindProperties();
 
@@ -138,8 +132,7 @@ protected:
   /// Set timeout for grabFrames, necessary to ensure that vision does not freeze
   void setTimeout(int time_ms);
 
-  static bool isEquivalent(const FlyCapture2::Property &prop1,
-                           const FlyCapture2::Property &prop2);
+  static bool isEquivalent(const FlyCapture2::Property &prop1, const FlyCapture2::Property &prop2);
 
   /// Return the current frame rate
   double getFrameRate();
@@ -154,7 +147,7 @@ protected:
   /// Value is always in [0,128]
   double timestamp2MS(FlyCapture2::TimeStamp ts);
 
-  /// Retrieve current mode with the current 
+  /// Retrieve current mode with the current
   FlyCapture2::Mode getMode();
 
   /// Retrieve current image format
@@ -173,7 +166,7 @@ protected:
   /// Note: dump(getImageSettingsInfo(), std::cout) to see available formats
   void setPixelFormat(FlyCapture2::PixelFormat pixel_format);
 
-private:
+ private:
   /**
    * PtGrey camera
    */
@@ -248,5 +241,5 @@ private:
    */
   double custom_offset_ms;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -12,9 +12,6 @@ void Threshold::setParameters() {
   params()->define<ParamInt>("thresholdType", &thresholdType);
 }
 
-void Threshold::process() {
-  cv::threshold(*(getDependency().getImg()), img(), threshold, 255,
-                thresholdType);
-}
-}
-}
+void Threshold::process() { cv::threshold(*(getDependency().getImg()), img(), threshold, 255, thresholdType); }
+}  // namespace Filters
+}  // namespace Vision

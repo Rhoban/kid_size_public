@@ -7,72 +7,72 @@
 class Walk;
 class Placer : public Move
 {
-    public:
-        Placer(Walk *walk);
-        std::string getName();
+public:
+  Placer(Walk* walk);
+  std::string getName();
 
-        void onStart();
-        void onStop();
-        void step(float elapsed);
+  void onStart();
+  void onStop();
+  void step(float elapsed);
 
-        // Controlling the placer, going to x, y [m] and azimuth [deg]
-        // The circle are obstacles [m] to avoid
-        void goTo(float x, float y, float azimuth, 
-                  std::vector<rhoban_geometry::Circle> obstacles=std::vector<rhoban_geometry::Circle>());
-        void setLateralMode(bool l);
-        void setDirectMode(bool );
-        float getMaxMarginXY();
-        //void setTemporaryMarginAzimuth(float l);
-        //void restoreMarginAzimuth();
+  // Controlling the placer, going to x, y [m] and azimuth [deg]
+  // The circle are obstacles [m] to avoid
+  void goTo(float x, float y, float azimuth,
+            std::vector<rhoban_geometry::Circle> obstacles = std::vector<rhoban_geometry::Circle>());
+  void setLateralMode(bool l);
+  void setDirectMode(bool);
+  float getMaxMarginXY();
+  // void setTemporaryMarginAzimuth(float l);
+  // void restoreMarginAzimuth();
 
-        bool arrived;
-        
-        // Temporary target
-        float tmpX, tmpY;
+  bool arrived;
 
-    protected:
-        Walk *walk;
+  // Temporary target
+  float tmpX, tmpY;
 
-        bool dontWalk;
-        float hysteresis;
+protected:
+  Walk* walk;
 
-        // Target point on the field [m]
-        float targetX, errorX;
-        float targetY, errorY;
+  bool dontWalk;
+  float hysteresis;
 
-        // Target azimuth and its error [deg]
-        float targetAzimuth, errorAzimuth;
+  // Target point on the field [m]
+  float targetX, errorX;
+  float targetY, errorY;
 
-        // Servoing classes
-        rhoban_utils::Control stepper, lateraler, turner;
+  // Target azimuth and its error [deg]
+  float targetAzimuth, errorAzimuth;
 
-        // Margins [m] and [deg]
-        float marginX, marginY, marginAzimuth ;//, tmpMarginAzimuth;
+  // Servoing classes
+  rhoban_utils::Control stepper, lateraler, turner;
 
-        //Direct mode variables
-        bool lateralMode;
-        float lmDriftXMax;
-        float lmDriftXMaxHyst;
-        bool directMode, rushAngleOk, rushDistOk;
-        float rushHysteresisLow, rushHysteresisHigh;
-        float rushRadiusLow, rushRadiusHigh;
-        float capToTarget;
+  // Margins [m] and [deg]
+  float marginX, marginY, marginAzimuth;  //, tmpMarginAzimuth;
 
-        // Obstacles to avoid [m]
-        std::vector<rhoban_geometry::Circle> obstacles;
+  // Direct mode variables
+  bool lateralMode;
+  float lmDriftXMax;
+  float lmDriftXMaxHyst;
+  bool directMode, rushAngleOk, rushDistOk;
+  float rushHysteresisLow, rushHysteresisHigh;
+  float rushRadiusLow, rushRadiusHigh;
+  float capToTarget;
 
-        // Distance to the next point that should be considered on the path [m]
-        float pathTargetDist;
+  // Obstacles to avoid [m]
+  std::vector<rhoban_geometry::Circle> obstacles;
 
-        // Avoid the opponents ?
-        bool avoidOpponents;
+  // Distance to the next point that should be considered on the path [m]
+  float pathTargetDist;
 
-        /// Avoiding teamMates
-        bool avoidMates;
+  // Avoid the opponents ?
+  bool avoidOpponents;
 
-        /// Avoiding shared opponents
-        bool avoidSharedOpponents;
+  /// Avoiding teamMates
+  bool avoidMates;
 
-        // Json that represent the path like [[x1, y1], [x2, y2] ...]
-        std::string pathJson;
+  /// Avoiding shared opponents
+  bool avoidSharedOpponents;
+
+  // Json that represent the path like [[x1, y1], [x2, y2] ...]
+  std::string pathJson;
 };

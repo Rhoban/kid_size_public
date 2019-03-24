@@ -4,37 +4,34 @@
 
 class TestHeadSinus : public Move
 {
-    public:
-        
-        /**
-         * Initialization
-         */
-        TestHeadSinus();
+public:
+  /**
+   * Initialization
+   */
+  TestHeadSinus();
 
-        /**
-         * Implement Move
-         */
-        virtual std::string getName() override;
-        virtual void onStart() override;
-        virtual void step(float elapsed) override;
+  /**
+   * Implement Move
+   */
+  virtual std::string getName() override;
+  virtual void onStart() override;
+  virtual void step(float elapsed) override;
 
-    private:
+private:
+  /**
+   * Affix movement
+   */
+  double _t;
 
-        /**
-         * Affix movement
-         */
-        double _t;
+  /**
+   * Frequency
+   */
+  double _freqTilt;
+  double _freqPan;
 
-        /**
-         * Frequency
-         */
-        double _freqTilt;
-        double _freqPan;
-
-        /**
-         * Amplitude
-         */
-        double _amplTilt;
-        double _amplPan;
+  /**
+   * Amplitude
+   */
+  double _amplTilt;
+  double _amplPan;
 };
-

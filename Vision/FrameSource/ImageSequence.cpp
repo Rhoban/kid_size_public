@@ -34,10 +34,8 @@ std::string ImageSequence::imgOriginalName() const {
 }
 
 void ImageSequence::setIndex(int index) {
-  if (index >= (int)images.size())
-    throw StreamEndException(DEBUG_INFO + "End of stream has been reached");
-  if (index < 0)
-    throw StreamEndException(DEBUG_INFO + "Negative index in imageSequence");
+  if (index >= (int)images.size()) throw StreamEndException(DEBUG_INFO + "End of stream has been reached");
+  if (index < 0) throw StreamEndException(DEBUG_INFO + "Negative index in imageSequence");
   nextFrameNo = index;
 }
 
@@ -58,8 +56,7 @@ void ImageSequence::loadImages(const std::string &fileName) {
   in.open(fileName);
   // Open file
   if (!in.is_open()) {
-    throw std::runtime_error("Invalid config file for ImageSequence: '" +
-                             fileName + "'");
+    throw std::runtime_error("Invalid config file for ImageSequence: '" + fileName + "'");
   }
   // Read file
   std::string line;
@@ -83,8 +80,7 @@ void ImageSequence::loadImages(const std::string &fileName) {
   // Update prefix
   int lastSeparator = -1;
   for (size_t i = 0; i < fileName.size(); i++) {
-    if (fileName[i] == '/')
-      lastSeparator = i;
+    if (fileName[i] == '/') lastSeparator = i;
   }
   if (lastSeparator < 0)
 
@@ -98,24 +94,14 @@ void ImageSequence::previousImg() {
   update();
 }
 
-void ImageSequence::nextImg() {
-  update();
-}
+void ImageSequence::nextImg() { update(); }
 
-bool ImageSequence::isFirst() const {
-  return (frameNo == 0);
-}
+bool ImageSequence::isFirst() const { return (frameNo == 0); }
 
-bool ImageSequence::isLast() const {
-  return (frameNo + 1 == (int)images.size());
-}
+bool ImageSequence::isLast() const { return (frameNo + 1 == (int)images.size()); }
 
-bool ImageSequence::isValid() const {
-  return (frameNo >= 0 && frameNo < (int)images.size());
-}
+bool ImageSequence::isValid() const { return (frameNo >= 0 && frameNo < (int)images.size()); }
 
-unsigned long ImageSequence::getTimestamp() const {
-  return timestamps[frameNo];
-}
-}
-}
+unsigned long ImageSequence::getTimestamp() const { return timestamps[frameNo]; }
+}  // namespace Utils
+}  // namespace Vision

@@ -15,8 +15,10 @@
 #include <unistd.h>
 #include <iomanip>
 
-#define CHECK_CODE(code, msg) \
-  if (code != IS_SUCCESS) { throw IDSException(DEBUG_INFO + msg + ": code " + std::to_string(code));}
+#define CHECK_CODE(code, msg)                                                \
+  if (code != IS_SUCCESS) {                                                  \
+    throw IDSException(DEBUG_INFO + msg + ": code " + std::to_string(code)); \
+  }
 
 using ::rhoban_utils::Benchmark;
 using ::rhoban_utils::TimeStamp;
@@ -27,42 +29,37 @@ static rhoban_utils::Logger logger("SourceIDS");
 
 namespace Vision {
 namespace Filters {
-  
+
 SourceIDS::SourceIDS()
-    : Source("SourceIDS"), is_capturing(false),
-      last_format_id(-1), last_exposure(-1), last_frame_rate(-1),
-      nb_retrieve_success(0), nb_retrieve_failures(0)
-{
+    : Source("SourceIDS"),
+      is_capturing(false),
+      last_format_id(-1),
+      last_exposure(-1),
+      last_frame_rate(-1),
+      nb_retrieve_success(0),
+      nb_retrieve_failures(0) {
   is_connected = false;
 }
 
 SourceIDS::~SourceIDS() {}
 
-void SourceIDS::fromJson(const Json::Value & v, const std::string & dir_name) {
+void SourceIDS::fromJson(const Json::Value &v, const std::string &dir_name) {
   Filter::fromJson(v, dir_name);
   bindRhIO();
 }
 
-Json::Value SourceIDS::toJson() const {
-  return Filter::toJson();
-}
+Json::Value SourceIDS::toJson() const { return Filter::toJson(); }
 
-string SourceIDS::getClassName() const {
-  return "SourceIDS";
-}
+string SourceIDS::getClassName() const { return "SourceIDS"; }
 
-int SourceIDS::expectedDependencies() const {
-  return 0;
-}
+int SourceIDS::expectedDependencies() const { return 0; }
 
-Source::Type SourceIDS::getType() const {
-  return Type::Online;
-}
+Source::Type SourceIDS::getType() const { return Type::Online; }
 
 void SourceIDS::setParameters() {
-  format_id = ParamInt(1,0,100);
-  exposure = ParamFloat(2.0,0.01,100);
-  frame_rate = ParamFloat(30.0,0.01,100);
+  format_id = ParamInt(1, 0, 100);
+  exposure = ParamFloat(2.0, 0.01, 100);
+  frame_rate = ParamFloat(30.0, 0.01, 100);
 
   params()->define<ParamInt>("formatId", &format_id);
   params()->define<ParamFloat>("exposure", &exposure);
@@ -82,7 +79,7 @@ void SourceIDS::process() {
   }
 
   updateLiveParameters();
-  
+
   // Grab frame from camera
   updateImage();
 
@@ -107,11 +104,11 @@ void SourceIDS::backgroundProcess() {
       std::unique_ptr<ImageEntry> new_img(new ImageEntry);
       // Getting id of next buffer to be written
       int32_t buffer_id;
-      char * buffer;
+      char *buffer;
       ret_code = is_GetActSeqBuf(camera, &buffer_id, &buffer, NULL);
       CHECK_CODE(ret_code, "failed to get next buffer");
       // Waiting for a frame
-      double wait_time_ms = 5000;//TODO: should depend on frame_rate
+      double wait_time_ms = 5000;  // TODO: should depend on frame_rate
       ret_code = is_WaitEvent(camera, IS_SET_EVENT_FRAME, wait_time_ms);
       CHECK_CODE(ret_code, "failed to wait for event");
       new_img->ts = TimeStamp::now();
@@ -119,8 +116,7 @@ void SourceIDS::backgroundProcess() {
       ret_code = is_LockSeqBuf(camera, buffer_id, NULL);
       CHECK_CODE(ret_code, "failed to lock seq");
       // Retrieving image_info
-      ret_code = is_GetImageInfo(camera, buffer_id,
-                                 &(new_img->image_info), sizeof(new_img->image_info));
+      ret_code = is_GetImageInfo(camera, buffer_id, &(new_img->image_info), sizeof(new_img->image_info));
       CHECK_CODE(ret_code, "failed to get image information");
       // Copying data to avoid overwrite
       cv::Mat tmp(img_size, CV_8UC3, buffer);
@@ -135,17 +131,14 @@ void SourceIDS::backgroundProcess() {
         bg_cond.notify_all();
       }
       nb_retrieve_success++;
-    } catch (const IDSException & exc) {
+    } catch (const IDSException &exc) {
       nb_retrieve_failures++;
       logger.error("Failed to retrieve image: %s", exc.what());
     }
   }
 }
 
-
-bool SourceIDS::isConnected() {
-  return is_connected;
-}
+bool SourceIDS::isConnected() { return is_connected; }
 
 void SourceIDS::connect() {
   if (isConnected()) {
@@ -172,7 +165,7 @@ void SourceIDS::startCamera() {
   }
   connect();
   updateSupportedFormats();
-  updateImageSettings();  
+  updateImageSettings();
   startCapture();
   updateLiveParameters();
 }
@@ -197,7 +190,7 @@ void SourceIDS::startCapture() {
   CHECK_CODE(ret_code, "failed to start capture");
   is_capturing = true;
 
-  bg_thread = std::thread([this](){this->backgroundProcess();});
+  bg_thread = std::thread([this]() { this->backgroundProcess(); });
 }
 
 void SourceIDS::stopCapture() {
@@ -208,8 +201,8 @@ void SourceIDS::stopCapture() {
   if (bg_thread.joinable()) {
     bg_thread.join();
   }
-  //TODO: freeImageMem?
-  //TODO: handle case where buffers are locked
+  // TODO: freeImageMem?
+  // TODO: handle case where buffers are locked
   ret_code = is_ClearSequence(camera);
   CHECK_CODE(ret_code, "Failed to clear buffers");
 }
@@ -220,13 +213,13 @@ void SourceIDS::updateSupportedFormats() {
   int32_t ret_code;
   ret_code = is_ImageFormat(camera, IMGFRMT_CMD_GET_NUM_ENTRIES, &entries, sizeof(entries));
   // Retrieving formats
-  char formats[sizeof(IMAGE_FORMAT_LIST) + (entries-1)*sizeof(IMAGE_FORMAT_INFO)];
-  IMAGE_FORMAT_LIST *formatList = (IMAGE_FORMAT_LIST*)formats;
+  char formats[sizeof(IMAGE_FORMAT_LIST) + (entries - 1) * sizeof(IMAGE_FORMAT_INFO)];
+  IMAGE_FORMAT_LIST *formatList = (IMAGE_FORMAT_LIST *)formats;
   formatList->nNumListElements = entries;
   formatList->nSizeOfListEntry = sizeof(IMAGE_FORMAT_INFO);
   ret_code = is_ImageFormat(camera, IMGFRMT_CMD_GET_LIST, formats, sizeof(formats));
   CHECK_CODE(ret_code, "Failed to list image formats");
-  for (uint32_t k=0; k<entries; k++) {
+  for (uint32_t k = 0; k < entries; k++) {
     supported_formats.push_back(formatList->FormatInfo[k]);
   }
   printSupportedFormats(&std::cout);
@@ -236,11 +229,10 @@ void SourceIDS::setFormat(int32_t format_id) {
   if (last_format_id == format_id) {
     return;
   }
-  for (IMAGE_FORMAT_INFO & info : supported_formats) {
+  for (IMAGE_FORMAT_INFO &info : supported_formats) {
     if (info.nFormatID == format_id) {
       int32_t ret_code;
-      ret_code = is_ImageFormat(camera, IMGFRMT_CMD_SET_FORMAT,
-                                &info.nFormatID, sizeof(info.nFormatID));
+      ret_code = is_ImageFormat(camera, IMGFRMT_CMD_SET_FORMAT, &info.nFormatID, sizeof(info.nFormatID));
       CHECK_CODE(ret_code, "failed to set format");
       img_size = cv::Size(info.nWidth, info.nHeight);
       last_format_id = format_id;
@@ -252,27 +244,25 @@ void SourceIDS::setFormat(int32_t format_id) {
 
 void SourceIDS::updateImageSettings() {
   setFormat(format_id);
-  //TODO: how is binning applied?
-  //TODO: add choice of color_format
+  // TODO: how is binning applied?
+  // TODO: add choice of color_format
   int32_t ret_code;
   ret_code = is_SetColorMode(camera, IS_CM_BGR8_PACKED);
   CHECK_CODE(ret_code, "failed to set color_mode");
 }
 
-bool SourceIDS::requireImageSettingsUpdate() {
-  return last_format_id != format_id;
-}
+bool SourceIDS::requireImageSettingsUpdate() { return last_format_id != format_id; }
 
 void SourceIDS::allocateBuffers() {
   int32_t ret;
   ret = is_ClearSequence(camera);
   CHECK_CODE(ret, "failed to clear sequence");
   // Setting the ring buffer for images for the camera
-  int nb_buffers = 3;//TODO: set as parameter
-  for (int k=0; k<nb_buffers; k++) {
+  int nb_buffers = 3;  // TODO: set as parameter
+  for (int k = 0; k < nb_buffers; k++) {
     char *mem;
     int mem_id;
-    int32_t bits_per_pixel = 24;// RGB8 -> 24 bits per pixel
+    int32_t bits_per_pixel = 24;  // RGB8 -> 24 bits per pixel
     is_AllocImageMem(camera, img_size.width, img_size.height, bits_per_pixel, &mem, &mem_id);
     is_AddToSequence(camera, mem, mem_id);
   }
@@ -292,8 +282,7 @@ void SourceIDS::setFrameRate(double fps) {
   double real_fps;
   ret = is_SetFrameRate(camera, fps, &real_fps);
   CHECK_CODE(ret, "failed to set fps to " + std::to_string(fps));
-  std::string msg =
-    "Fps set to " + std::to_string(real_fps) + " (required: " + std::to_string(fps) + ")";
+  std::string msg = "Fps set to " + std::to_string(real_fps) + " (required: " + std::to_string(fps) + ")";
   logger.log(msg.c_str());
   last_frame_rate = fps;
   // According to IDS Documentation, setting frame_rate might influence exposure
@@ -354,23 +343,21 @@ void SourceIDS::updateRhIO() {
   monitoring_node.setFloat("ratio", getSuccessRatio());
 }
 
-void SourceIDS::printSupportedFormats(std::ostream * out) const
-{
-  for (const IMAGE_FORMAT_INFO & info : supported_formats) {
+void SourceIDS::printSupportedFormats(std::ostream *out) const {
+  for (const IMAGE_FORMAT_INFO &info : supported_formats) {
     (*out) << info << std::endl;
   }
 }
 
 double SourceIDS::getSuccessRatio() {
   int nb_retrievals = nb_retrieve_success + nb_retrieve_failures;
-  if (nb_retrievals == 0)
-    return 1;
+  if (nb_retrievals == 0) return 1;
   return nb_retrieve_success / (double)nb_retrievals;
 }
 
-std::ostream& operator<<(std::ostream& os, const IMAGE_FORMAT_INFO & format) {
+std::ostream &operator<<(std::ostream &os, const IMAGE_FORMAT_INFO &format) {
   os << "(id:" << format.nFormatID << ","
-     << " size:"<< format.nWidth << "x"<< format.nHeight << ","
+     << " size:" << format.nWidth << "x" << format.nHeight << ","
      << " aoiStart:(" << format.nX0 << "," << format.nY0 << "),"
      << " captureModes:" << format.nSupportedCaptureModes << ","
      << " binningMode:" << format.nBinningMode << ","
@@ -380,6 +367,5 @@ std::ostream& operator<<(std::ostream& os, const IMAGE_FORMAT_INFO & format) {
   return os;
 }
 
-}
-}
-
+}  // namespace Filters
+}  // namespace Vision

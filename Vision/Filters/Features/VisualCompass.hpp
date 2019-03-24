@@ -20,44 +20,41 @@ namespace Filters {
  *
  */
 class VisualCompass : public CompassProvider {
-public:
-
+ public:
   VisualCompass();
   virtual std::string getClassName() const override { return "VisualCompass"; }
 
   virtual void setParameters() override;
   virtual int expectedDependencies() const override { return 1; }
 
-  void getPoints(const std::vector<cv::KeyPoint>& kpts_train,
-                 const std::vector<cv::KeyPoint>& kpts_query, std::vector<cv::Point2f>& pts_train,
-                 std::vector<cv::Point2f>& pts_query,std::vector<cv::DMatch> & good_matches);
-  void computeAngle(std::vector<cv::KeyPoint> keypoints,  const std::vector<cv::DMatch>& good_matches  );
+  void getPoints(const std::vector<cv::KeyPoint>& kpts_train, const std::vector<cv::KeyPoint>& kpts_query,
+                 std::vector<cv::Point2f>& pts_train, std::vector<cv::Point2f>& pts_query,
+                 std::vector<cv::DMatch>& good_matches);
+  void computeAngle(std::vector<cv::KeyPoint> keypoints, const std::vector<cv::DMatch>& good_matches);
 
-  //useless (and overkill)
+  // useless (and overkill)
   void cameraPoseFromHomography(const cv::Mat& H, cv::Mat& pose);
 
-  void sanitizeCoordinates(const std::vector<cv::Point2f> &in, std::vector<cv::Point2f> &out);
+  void sanitizeCoordinates(const std::vector<cv::Point2f>& in, std::vector<cv::Point2f>& out);
   void initSIFT();
-  void matchSIFT(std::vector<cv::KeyPoint> &keypoints,  std::vector<cv::DMatch>& good_matches );
+  void matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::DMatch>& good_matches);
 
   void updateField();
 
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
 
-protected:
+ protected:
   /**
    * @Inherit
    */
   virtual void process() override;
 
-
-private:
+ private:
   /// Should we update the field
   int active_field;
 
   cv::Ptr<cv::FeatureDetector> detector;
   cv::Ptr<cv::DescriptorExtractor> descriptor_extractor;
-
 
   ParamFloat nndrRatio;
   ParamFloat panoScale;
@@ -80,7 +77,7 @@ private:
   cv::Ptr<cv::DescriptorMatcher> descriptorMatcher;
   cv::Ptr<cv::flann::Index> flannIndex;
 
-  cv::Mat field; //FIXME, we should probably not store it
+  cv::Mat field;  // FIXME, we should probably not store it
   cv::Mat field_mask;
 
   cv::Mat img_mask;
@@ -98,7 +95,6 @@ private:
   int pano_width;
   int height;
   int pano_height;
-
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

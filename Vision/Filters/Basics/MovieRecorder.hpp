@@ -17,13 +17,13 @@ namespace Filters {
  * TODO: add option of adding padding of similar images when images are missing.
  */
 class MovieRecorder : public Filter {
-public:
+ public:
   MovieRecorder();
   virtual ~MovieRecorder();
 
   std::string getClassName() const override;
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -31,17 +31,16 @@ protected:
 
   virtual void setParameters() override;
 
-private:
-
+ private:
   /// Automatically choose a name for the movie and open the stream
-  void startStream(const cv::Size & size);
+  void startStream(const cv::Size& size);
 
   /// Push entry to current stream
   void pushEntry();
 
   void closeStream();
-  
-  /// While enabled, saves to a file 
+
+  /// While enabled, saves to a file
   ParamInt enabled;
 
   /// Framerate used for video produced
@@ -52,10 +51,10 @@ private:
 
   cv::VideoWriter videoWriter;
 
-  /// Name of the video currently written (without extension) 
+  /// Name of the video currently written (without extension)
   std::string videoPath;
 
   rhoban_vision_proto::VideoMetaInformation videoMetaInformation;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

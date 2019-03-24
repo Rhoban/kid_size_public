@@ -12,12 +12,12 @@ namespace Filters {
  * Extract the channel of a given index from the source image
  */
 class ChannelSelector : public Filter {
-public:
+ public:
   ChannelSelector() : Filter("ChannelSelector") {}
 
   virtual std::string getClassName() const override { return "ChannelSelector"; }
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -25,8 +25,8 @@ protected:
 
   virtual void setParameters() override;
 
-private:
+ private:
   ParamInt channel;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

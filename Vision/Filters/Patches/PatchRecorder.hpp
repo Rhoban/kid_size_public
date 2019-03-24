@@ -2,28 +2,23 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision
-{
-namespace Filters
-{
+namespace Vision {
+namespace Filters {
 
 /// Uses
-class PatchRecorder : public Filter
-{
-public:
+class PatchRecorder : public Filter {
+ public:
   PatchRecorder();
 
   void setParameters() override;
 
-
   virtual std::string getClassName() const override;
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
 
   virtual int expectedDependencies() const;
 
-protected:
-
+ protected:
   virtual void process() override;
 
   int imgId;
@@ -37,5 +32,5 @@ protected:
   int curr_period;
 };
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

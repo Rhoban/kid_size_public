@@ -7,8 +7,8 @@
 namespace Vision {
 namespace Filters {
 class FilterFactory : public rhoban_utils::Factory<Filter> {
-public:
+ public:
   FilterFactory();
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -3,7 +3,7 @@
 
 std::string Skeleton::getName()
 {
-    return "skeleton";
+  return "skeleton";
 }
 
 void Skeleton::onStart()
@@ -12,5 +12,5 @@ void Skeleton::onStart()
 
 void Skeleton::step(float elapsed)
 {
-    setAngle("head_pitch", getSensorValue("Pitch"));
+  setAngle("head_pitch", getSensorValue("Pitch"));
 }

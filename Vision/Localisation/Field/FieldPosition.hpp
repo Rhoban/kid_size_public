@@ -16,7 +16,7 @@ namespace Localisation {
 ///              top   ->  0
 ///              right -> 90
 class FieldPosition : public rhoban_unsorted::Particle<3> {
-public:
+ public:
   FieldPosition() : Particle() {}
   FieldPosition(double xInit, double yInit, double angleInit);
   FieldPosition(const FieldPosition &other) : Particle(other) {}
@@ -31,16 +31,15 @@ public:
   cv::Point2f getRobotPositionCV() const;
 
   /// Return the position of 'pos_in_field' in robot referential
-  rhoban_geometry::Point getFieldPosInSelf(const rhoban_geometry::Point & pos_in_field) const;
+  rhoban_geometry::Point getFieldPosInSelf(const rhoban_geometry::Point &pos_in_field) const;
 
-  void move(rhoban_geometry::Point &dist); // dist is given in the robot referential
+  void move(rhoban_geometry::Point &dist);  // dist is given in the robot referential
   void rotate(const rhoban_utils::Angle &rotation);
 
   rhoban_unsorted::Particle<3> *clone() const { return new FieldPosition(*this); }
 
   void tag(cv::Mat &img, rhoban_utils::Angle pan = rhoban_utils::Angle(0),
-           const cv::Scalar &color = cv::Scalar(255, 0, 255),
-           int thickness = 1) const;
+           const cv::Scalar &color = cv::Scalar(255, 0, 255), int thickness = 1) const;
 };
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

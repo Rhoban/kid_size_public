@@ -13,7 +13,7 @@ namespace Filters {
  * SourceIDS
  */
 class SourceIDS : public Source {
-public:
+ public:
   /**
    * Do not open camera, simply create the Filter
    */
@@ -25,7 +25,7 @@ public:
   virtual ~SourceIDS();
 
   // JSON stuff
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
   virtual Json::Value toJson() const override;
 
   virtual std::string getClassName() const override;
@@ -33,7 +33,7 @@ public:
 
   virtual Type getType() const override;
 
-protected:
+ protected:
   virtual void setParameters() override;
 
   virtual void process() override;
@@ -131,7 +131,7 @@ protected:
    */
   double getExposure();
 
-protected:
+ protected:
   /**
    * Retrieve image from last buffer and related meta informations
    */
@@ -150,9 +150,9 @@ protected:
   /**
    * Print all the allowed formats to output stream
    */
-  void printSupportedFormats(std::ostream * out) const;
+  void printSupportedFormats(std::ostream* out) const;
 
-private:
+ private:
   /**
    * Contains an image associated with it's metadata
    */
@@ -164,14 +164,14 @@ private:
      */
     rhoban_utils::TimeStamp ts;
   };
-  
+
   /**
    * IDS camera
    */
   HIDS camera;
 
   /**
-   * Is connected 
+   * Is connected
    */
   bool is_connected;
 
@@ -194,7 +194,7 @@ private:
    * The thread polling images from the camera
    */
   std::thread bg_thread;
-  
+
   /**
    * Ensures the background thread is not overwritting an image currently in used
    */
@@ -216,7 +216,7 @@ private:
   cv::Size img_size;
 
   /**
-   * Format of image used 
+   * Format of image used
    */
   ParamInt format_id;
 
@@ -267,7 +267,7 @@ private:
   int nb_retrieve_failures;
 };
 
-std::ostream& operator<<(std::ostream& os, const IMAGE_FORMAT_INFO & format);
+std::ostream& operator<<(std::ostream& os, const IMAGE_FORMAT_INFO& format);
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -9,7 +9,6 @@ namespace Filters {
  * Recognize Border of the Field and compute the clipping
  */
 class WhiteLines : public Filter {
-
  public:
   WhiteLines();
   ~WhiteLines();
@@ -23,8 +22,7 @@ class WhiteLines : public Filter {
    */
   virtual void process() override;
   virtual void setParameters() override;
-
 };
 
-}
-}
+}  // namespace Filters
+}  // namespace Vision

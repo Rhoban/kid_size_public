@@ -34,20 +34,20 @@ namespace Filters {
 /// |       Below       |
 /// ---------------------
 class ObstacleByII : public Filter {
-public:
+ public:
   ObstacleByII();
 
   virtual std::string getClassName() const override;
   virtual int expectedDependencies() const override;
 
-protected:
+ protected:
   virtual void process() override;
 
   virtual void setParameters() override;
 
-  cv::Mat getHeatMap(const cv::Mat & scores, double minScore, double maxScore) const;
+  cv::Mat getHeatMap(const cv::Mat& scores, double minScore, double maxScore) const;
 
-private:
+ private:
   /// Return the patch associated to the above rect of the goal at the given point
   cv::Rect_<float> getAbovePatch(int x, int y, float width);
 
@@ -67,13 +67,11 @@ private:
   cv::Rect_<float> getROIPatch(int x, int y, float width);
 
   /// Return the score of the patch given the provided integralImage
-  double getPatchScore(const cv::Rect & patch, const cv::Mat & greenII);
+  double getPatchScore(const cv::Rect& patch, const cv::Mat& greenII);
 
   /// img should be CV_32SC1
   /// draw pixels in [start_x,end_x[ * [start_y,end_y[
-  void fillScore(cv::Mat & img, int score,
-                 int start_x, int end_x,
-                 int start_y, int end_y);
+  void fillScore(cv::Mat& img, int score, int start_x, int end_x, int start_y, int end_y);
 
   /// Number of rows in the result image
   int rows;
@@ -95,7 +93,6 @@ private:
 
   /// Boundary width: boundaryHeightRatio * width * widthScale
   ParamFloat boundaryHeightRatio;
-
 
   /// Size of the ROI: roiRatio * width * widthScale (rectangle 1:2, centered)
   /// Allows to provide ROI largers than the area used for getting the score
@@ -124,7 +121,5 @@ private:
   /// 0: No heatMap produced
   ParamInt tagLevel;
 };
-}
-}
-
-
+}  // namespace Filters
+}  // namespace Vision

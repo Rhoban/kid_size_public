@@ -9,7 +9,7 @@
 /// P9 is the basis of the robot
 /// P0 and P8 are horizontal (flat on the ground)
 /// P1 to P7 are vertical
-/// 
+///
 ///
 /// Pk contains the the tags from 12*k to 12*k+11
 /// Warning: P9 only contains tags from 108 to 113
@@ -18,34 +18,34 @@
 ///                                                          |
 ///                                                      y----
 ///
-///        |          |          |          |      
+///        |          |          |          |
 ///        |    P3    |    P4    |    P5    |
-///        |          |          |          |                       
+///        |          |          |          |
 ///  ------|---------------------------------------
-///        |          |          |          |      
-///        |          |          |          |      
-///    P2  |          |          |          |  P6  
-///        |          |          |          |      
-///        |          |          |          |      
+///        |          |          |          |
+///        |          |          |          |
+///    P2  |          |          |          |  P6
+///        |          |          |          |
+///        |          |          |          |
 ///  ------|    P0    |    P9    |    P8    |------
-///        |          |          |          |      
-///        |          |          |          |      
-///    P1  |          |          |          |  P7  
-///        |          |          |          |      
-///        |          |          |          |      
+///        |          |          |          |
+///        |          |          |          |
+///    P1  |          |          |          |  P7
+///        |          |          |          |
+///        |          |          |          |
 ///  ------|----------|----------|--------- |------
 class CalibrationSet : public TagsCollection {
-public:
+ public:
   CalibrationSet();
 
   virtual std::map<int, ArucoTag> getMarkers() const;
 
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value & v, const std::string & dir_path) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_path) override;
   virtual std::string getClassName() const override;
 
-private:
-  /// Update the content/position of the sheets 
+ private:
+  /// Update the content/position of the sheets
   void updateSheets();
 
   Eigen::Vector3d getXDir(int panel_idx) const;

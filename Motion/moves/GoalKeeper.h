@@ -12,7 +12,7 @@ class Placer;
 class GoalKeeper : public STM
 {
 public:
-  GoalKeeper(Walk *walk,  Placer *placer);
+  GoalKeeper(Walk* walk, Placer* placer);
   std::string getName();
 
   void onStart();
@@ -23,9 +23,8 @@ public:
   rhoban_team_play::TeamPlayState teamState();
 
 protected:
-  Walk *walk;
-  Placer *placer;
-
+  Walk* walk;
+  Placer* placer;
 
   bool ballInZone(float xd, float yd);
   bool ballInAttackZone();
@@ -34,27 +33,27 @@ protected:
   bool ignoreBallHys();
   bool isNearHome();
   bool isNearHomeHys();
-  rhoban_geometry::Point getAlignPoint(const rhoban_geometry::Point &,float &);
+  rhoban_geometry::Point getAlignPoint(const rhoban_geometry::Point&, float&);
   rhoban_geometry::Point home();
   bool isAligned();
-  rhoban_geometry::Point shootLineCenter();  
-  void bufferedSetState(const std::string &);
-  
+  rhoban_geometry::Point shootLineCenter();
+  void bufferedSetState(const std::string&);
+
   void setTeamPlayState(rhoban_team_play::TeamPlayState state);
-  
+
   bool stopPosture;
   float t;
-  float targetX, targetY ;
+  float targetX, targetY;
   float xAttack, yAttack;
   float xAttackHys, yAttackHys;
   float xIgnoreBall, xIgnoreBallHys;
-  float homeX,maxHomeDistance,maxHomeDistanceHys;
+  float homeX, maxHomeDistance, maxHomeDistanceHys;
   float alignTolerance;
   float maxShootDist;
   int nextStateSize;
   std::vector<std::string> nextState;
-  int nextStateIndice;	
-  //bool isPlacing;
+  int nextStateIndice;
+  // bool isPlacing;
   bool neverWalked;
   bool placedByHand;
   float initElbowOffsetValue;
@@ -62,5 +61,5 @@ protected:
   float initTrunkZOffsetValue;
   float stopMoveTime;
   bool opponentWithGrass;
-  float againstGrassRatio,grassRatio;
+  float againstGrassRatio, grassRatio;
 };

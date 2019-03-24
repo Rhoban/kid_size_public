@@ -7,15 +7,14 @@ namespace Vision {
 namespace Localisation {
 
 class TagsObservation : public SerializableFieldObservation {
-public:
-
-  //Id of the marker
+ public:
+  // Id of the marker
   int id;
 
-  //Position of the marker observation [m]
+  // Position of the marker observation [m]
   cv::Point3f seenPos;
 
-  //Deviation on the marker observation [m]
+  // Deviation on the marker observation [m]
   cv::Point3f stdDev;
 
   /// Robot height at the given time [m]
@@ -40,32 +39,29 @@ public:
   /// false-> score = distanceScore
   static bool angleMode;
 
-
-public:
+ public:
   TagsObservation();
 
+  TagsObservation(const int& id_, const cv::Point3f& seenPos_, const cv::Point3f& seenDev_, double robotHeight_,
+                  double weight);
 
-  TagsObservation(const int& id_,const cv::Point3f & seenPos_,
-                  const cv::Point3f & seenDev_,
-                  double robotHeight_,  double weight);
-
-  cv::Point3f getTagPosInParticleSelf(int tagId, const FieldPosition & p) const;
+  cv::Point3f getTagPosInParticleSelf(int tagId, const FieldPosition& p) const;
 
   // Get direction vector from camera to target point in robot basis
-  cv::Point3f getSeenVec(const cv::Point3f & posInSelf) const;
+  cv::Point3f getSeenVec(const cv::Point3f& posInSelf) const;
 
-  virtual double potential(const FieldPosition &p) const override;
+  virtual double potential(const FieldPosition& p) const override;
 
   static void bindWithRhIO();
   static void importFromRhIO();
 
   std::string getClassName() const override;
-  void fromJson(const Json::Value & v, const std::string & dir_name);
+  void fromJson(const Json::Value& v, const std::string& dir_name);
   Json::Value toJson() const;
 
   double getMinScore() const override;
 
   virtual std::string toStr() const override;
 };
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

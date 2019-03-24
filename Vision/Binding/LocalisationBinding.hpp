@@ -19,22 +19,20 @@ class CompassObservation;
 class FieldPF;
 class GoalObservation;
 class TagsObservation;
-}
+}  // namespace Localisation
 namespace Utils {
 class CameraState;
 }
-
 
 /// Charged of all the localisation services for the Robocup
 ///
 /// It can be used in a separate thread
 class LocalisationBinding {
-private:
-  typedef std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition> * > ObservationVector;
+ private:
+  typedef std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition> *> ObservationVector;
 
-public:
-  LocalisationBinding(MoveScheduler * scheduler,
-                      Robocup * vision_binding);
+ public:
+  LocalisationBinding(MoveScheduler *scheduler, Robocup *vision_binding);
 
   ~LocalisationBinding();
 
@@ -64,13 +62,12 @@ public:
   ObservationVector extractObservations();
 
   /// Tick the filter with the provided informations
-  void updateFilter(const ObservationVector & obs);
+  void updateFilter(const ObservationVector &obs);
   /// Tick the consistency watcher using provided informations
-  void applyWatcher(const ObservationVector & obs);
+  void applyWatcher(const ObservationVector &obs);
 
   /// Ask for a reset of the particle filter
-  void fieldReset(Localisation::FieldPF::ResetType type, float x = 0,
-                  float y = 0, float noise = 0, float theta = 0,
+  void fieldReset(Localisation::FieldPF::ResetType type, float x = 0, float y = 0, float noise = 0, float theta = 0,
                   float thetaNoise = 180);
 
   /// Publish information to the localisation service of the bounded scheduler
@@ -83,13 +80,13 @@ public:
   bool refereeAllowsToPlay();
 
   /// Link to the vision binding is required to retrieve information
-  Robocup * vision_binding;
+  Robocup *vision_binding;
 
   /// Direct link to the scheduler
-  MoveScheduler * scheduler;
+  MoveScheduler *scheduler;
 
   /// The particle filter containing the position of the robot
-  Localisation::FieldPF * field_filter;
+  Localisation::FieldPF *field_filter;
 
   /// Number of particles for the field
   int nb_particles_ff;
@@ -103,7 +100,6 @@ public:
   bool isGoalKeeper;
   /// Handling timeStamps
   rhoban_utils::TimeStamp currTS, lastTS, lastFieldReset, lastUniformReset;
-
 
   /// Elapsed time since last reset [s]
   double elapsedSinceReset;
@@ -130,7 +126,7 @@ public:
   double consistencyMaxNoise;
 
   /// Camera states
-  Utils::CameraState * cs;
+  Utils::CameraState *cs;
 
   /// Wished period between two ticks of the localisationBinding
   double period;
@@ -184,9 +180,9 @@ public:
   /// Verbosity level
   int debugLevel;
 
-private:
+ private:
   /// The binding for RhIO variables
-  RhIO::Bind* bind;
+  RhIO::Bind *bind;
 
   /// Main thread running
   std::thread *_runThread;
@@ -198,4 +194,4 @@ private:
   std::mutex vcCounterMutex;
 };
 
-}
+}  // namespace Vision

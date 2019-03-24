@@ -36,8 +36,7 @@ void Recorder::process() {
 
 void Recorder::initControl() {
   std::string activated_path = rhio_path + getName() + "/activated";
-  if (RhIO::Root.getValueType(activated_path) != RhIO::ValueType::NoValue)
-    return;
+  if (RhIO::Root.getValueType(activated_path) != RhIO::ValueType::NoValue) return;
   RhIO::Root.newBool(activated_path)->defaultValue(activated);
 }
 
@@ -46,5 +45,5 @@ void Recorder::updateControl() {
   std::string activated_path = rhio_path + getName() + "/activated";
   activated = RhIO::Root.getValueBool(activated_path).value;
 }
-}
-}
+}  // namespace Filters
+}  // namespace Vision

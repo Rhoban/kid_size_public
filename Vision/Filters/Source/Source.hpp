@@ -9,7 +9,7 @@ namespace Filters {
 
 /// Source abstract class: allow distinction between log, online and custom sources
 class Source : public Filter {
-public:
+ public:
   enum Type {
     /// CameraState is updated based on low level logs
     Log,
@@ -19,15 +19,15 @@ public:
     Custom
   };
 
-  Source(const std::string & name) : Filter(name) {}
+  Source(const std::string &name) : Filter(name) {}
 
-  Source(const std::string &name, const Dependencies & dependencies) : Filter(name, dependencies) {}
+  Source(const std::string &name, const Dependencies &dependencies) : Filter(name, dependencies) {}
 
   virtual Type getType() const = 0;
 
-  virtual Utils::CameraState * buildCameraState() {
+  virtual Utils::CameraState *buildCameraState() {
     throw std::logic_error(DEBUG_INFO + "Not implemented for class " + getClassName());
   }
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

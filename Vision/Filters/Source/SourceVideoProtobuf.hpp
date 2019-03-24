@@ -18,11 +18,11 @@ namespace Filters {
  * - A protobuf file provides timestamps, and camera states
  */
 class SourceVideoProtobuf : public Source {
-public:
+ public:
   SourceVideoProtobuf();
 
   // JSON stuff
-  void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  void fromJson(const Json::Value& v, const std::string& dir_name) override;
   Json::Value toJson() const override;
   std::string getClassName() const override;
   int expectedDependencies() const override;
@@ -39,7 +39,7 @@ public:
   void previous() override;
   void updateImg();
 
-protected:
+ protected:
   /**
    * @Inherit
    */
@@ -51,9 +51,9 @@ protected:
   /// Load the MetaInformation
   void loadMetaInformation();
 
-  Utils::CameraState * buildCameraState() override;
+  Utils::CameraState* buildCameraState() override;
 
-private:
+ private:
   int startIndex;
   /// Path to the video including extension
   std::string videoPath;
@@ -67,5 +67,5 @@ private:
 
   rhoban_vision_proto::VideoMetaInformation videoMetaInformation;
 };
-}
-}
+}  // namespace Filters
+}  // namespace Vision

@@ -1,15 +1,14 @@
 #include "KickController.h"
 
-KickController::KickController() {}
+KickController::KickController()
+{
+}
 
 void KickController::initBindings()
 {
-  bind->bindNew("kick_dir", kick_dir, RhIO::Bind::PushOnly)
-    ->defaultValue(0);
-  bind->bindNew("tolerance", tolerance, RhIO::Bind::PushOnly)
-    ->defaultValue(0);
+  bind->bindNew("kick_dir", kick_dir, RhIO::Bind::PushOnly)->defaultValue(0);
+  bind->bindNew("tolerance", tolerance, RhIO::Bind::PushOnly)->defaultValue(0);
 }
-
 
 rhoban_utils::Angle KickController::getKickDir() const
 {
@@ -21,7 +20,7 @@ double KickController::getTolerance() const
   return tolerance;
 }
 
-const std::vector<std::string> & KickController::getAllowedKicks() const
+const std::vector<std::string>& KickController::getAllowedKicks() const
 {
   return allowed_kicks;
 }

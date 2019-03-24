@@ -41,112 +41,111 @@
 // #include "LearnedApproach.h"
 // #include "MDPKickController.h"
 
-Moves::Moves(MoveScheduler* scheduler) :
-        _scheduler(scheduler)
+Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
 {
-    if (_scheduler == nullptr) {
-        throw std::logic_error("Moves null pointer");
-    }
+  if (_scheduler == nullptr)
+  {
+    throw std::logic_error("Moves null pointer");
+  }
 
-    //Loading all Moves
-    Kick *kick = new Kick;
-    add(kick);
-    // Forcing generation of kick motions at kick creation
-    kick->cmdKickGen();
+  // Loading all Moves
+  Kick* kick = new Kick;
+  add(kick);
+  // Forcing generation of kick motions at kick creation
+  kick->cmdKickGen();
 
-    Walk *walk = new Walk(kick);
-    Head *head = new Head;
-    Placer *placer = new Placer(walk);
-    StandUp *standup = new StandUp;
-    add(walk);
-    add(standup);
-    add(head);
-    add(new Search(walk, placer));
-    Approach *approach = new Approach(walk, head);
-    add(approach);
-    add(new ApproachPotential(walk));
-    add(placer);
-    // add(lateralStep);
+  Walk* walk = new Walk(kick);
+  Head* head = new Head;
+  Placer* placer = new Placer(walk);
+  StandUp* standup = new StandUp;
+  add(walk);
+  add(standup);
+  add(head);
+  add(new Search(walk, placer));
+  Approach* approach = new Approach(walk, head);
+  add(approach);
+  add(new ApproachPotential(walk));
+  add(placer);
+  // add(lateralStep);
 
-    add(new GoalKeeper(walk, placer));
-    add(new Robocup(walk, standup, placer));
-    add(new PlayingMove(walk));
+  add(new GoalKeeper(walk, placer));
+  add(new Robocup(walk, standup, placer));
+  add(new PlayingMove(walk));
 
-    // Dev moves
+  // Dev moves
 #ifdef VISION_COMPONENT
-    add(new ArucoCalibration);
+  add(new ArucoCalibration);
 #endif
-    add(new TrajectoriesPlayer);
-    add(new IMUTest);
-    add(new TestHeadSinus);
-    add(new StaticLearner);
-    add(new Replayer);
+  add(new TrajectoriesPlayer);
+  add(new IMUTest);
+  add(new TestHeadSinus);
+  add(new StaticLearner);
+  add(new Replayer);
 
-    add(new LogMachine(walk, head));
+  add(new LogMachine(walk, head));
 
+  // add(new KickCalibration(approach));
+  add(new GoalKick());
 
-    // add(new KickCalibration(approach));
-    add(new GoalKick());
+  // Requires additionnal dependencies
 
-    // Requires additionnal dependencies
+  add(new QKickController());
+  add(new ClearingKickController());
+  auto penaltyController = new PenaltyKickController();
+  add(penaltyController);
+  add(new Penalty(penaltyController));
 
-    add(new QKickController());
-    add(new ClearingKickController());
-    auto penaltyController = new PenaltyKickController();
-    add(penaltyController);
-    add(new Penalty(penaltyController));
+  add(new ReactiveKicker(walk));
+  add(new AutonomousPlaying(walk, standup));
 
-    add(new ReactiveKicker(walk));
-    add(new AutonomousPlaying(walk, standup));
-
-
-//    csa_mdp::PolicyFactory::registerExtraBuilder("ExpertApproach", []() {return std::unique_ptr<csa_mdp::Policy>(new csa_mdp::ExpertApproach);});
-//    add(new MDPKickController());
-//    LateralStep *lateralStep = new LateralStep();
-//    add(new LearnedApproach(walk));
-//    add(new KickPhilipp);
-//    add(new OdometryCalibration(walk));
-//    add(new ModelCalibration);
+  //    csa_mdp::PolicyFactory::registerExtraBuilder("ExpertApproach", []() {return std::unique_ptr<csa_mdp::Policy>(new
+  //    csa_mdp::ExpertApproach);}); add(new MDPKickController()); LateralStep *lateralStep = new LateralStep(); add(new
+  //    LearnedApproach(walk)); add(new KickPhilipp); add(new OdometryCalibration(walk)); add(new ModelCalibration);
 }
 
 Moves::~Moves()
 {
-    for (const auto& it : _container) {
+  for (const auto& it : _container)
+  {
     delete it.second;
-    }
-    }
+  }
+}
 
-    bool Moves::hasMove(const std::string& name) const
-    {
-    return (_map.count(name) > 0);
-    }
-    const Move* Moves::getMove(const std::string& name) const
-    {
-    if (!hasMove(name)) {
-    throw std::logic_error(
-    "Moves move does not exist: " + name);
-    } else {
+bool Moves::hasMove(const std::string& name) const
+{
+  return (_map.count(name) > 0);
+}
+const Move* Moves::getMove(const std::string& name) const
+{
+  if (!hasMove(name))
+  {
+    throw std::logic_error("Moves move does not exist: " + name);
+  }
+  else
+  {
     return _map.at(name);
-    }
-    }
-    Move* Moves::getMove(const std::string& name)
-    {
-    if (!hasMove(name)) {
-    throw std::logic_error(
-    "Moves move does not exist: " + name);
-    } else {
+  }
+}
+Move* Moves::getMove(const std::string& name)
+{
+  if (!hasMove(name))
+  {
+    throw std::logic_error("Moves move does not exist: " + name);
+  }
+  else
+  {
     return _map.at(name);
-    }
-    }
-    const std::vector<std::pair<std::string, Move*>>& Moves::getAllMoves()
-    {
-    return _container;
-    }
+  }
+}
+const std::vector<std::pair<std::string, Move*>>& Moves::getAllMoves()
+{
+  return _container;
+}
 
-    void Moves::add(Move* move)
-    {
-    _container.push_back({move->getName(), move});
-    _map.insert({move->getName(), move});
-    //Assign the MoveScheduler instance
-    move->setScheduler(_scheduler);
-    }
+void Moves::add(Move* move)
+{
+  _container.push_back({ move->getName(), move });
+  _map.insert({ move->getName(), move });
+  // Assign the MoveScheduler instance
+  move->setScheduler(_scheduler);
+}

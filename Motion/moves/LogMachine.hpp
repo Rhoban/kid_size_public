@@ -18,7 +18,7 @@ class Walk;
 class LogMachine : public STM
 {
 public:
-  LogMachine(Walk* walk, Head * head);
+  LogMachine(Walk* walk, Head* head);
 
   virtual std::string getName() override;
   virtual void onStart() override;
@@ -50,8 +50,8 @@ private:
 
   Eigen::Vector3d getPosition();
 
-  Eigen::Matrix<double,3,2> getOrdersLimits();
-  Eigen::Matrix<double,3,2> getDeltaLimits();
+  Eigen::Matrix<double, 3, 2> getOrdersLimits();
+  Eigen::Matrix<double, 3, 2> getDeltaLimits();
 
   Eigen::Vector3d getRandomSpeed();
 
@@ -61,7 +61,7 @@ private:
   Walk* walk;
 
   /// Access to Head move
-  Head * head;
+  Head* head;
 
   /// Brief summary of status for RhIO inspection
   std::string status;
@@ -129,4 +129,3 @@ private:
   /// TODO: currently do not handle standup on falls and similar stuff
   int nbRunsLeft;
 };
-

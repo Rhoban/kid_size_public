@@ -8,7 +8,7 @@ namespace Vision {
 namespace Localisation {
 
 class RobotController : public rhoban_unsorted::Controller<FieldPosition> {
-private:
+ private:
   static double posExploration, angleExploration;
   static Eigen::MatrixXd posLimits;
 
@@ -19,12 +19,11 @@ private:
 
   double noiseGain;
 
-public:
+ public:
   RobotController();
   // Move is the expected move of the robot in the robot referential, not the
   // speed (changed july 19th 2015)
-  RobotController(const rhoban_geometry::Point &move,
-                  const rhoban_utils::Angle &rotation, double noiseGain);
+  RobotController(const rhoban_geometry::Point &move, const rhoban_utils::Angle &rotation, double noiseGain);
 
   static void setPosExploration(double newPosExplo);
   static double getPosExploration() { return posExploration; }
@@ -36,5 +35,5 @@ public:
   static void bindWithRhIO();
   static void importFromRhIO();
 };
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

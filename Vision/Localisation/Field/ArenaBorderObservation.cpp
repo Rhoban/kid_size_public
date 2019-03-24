@@ -33,27 +33,24 @@ double ArenaBorderObservation::cpSigmoidLambda = 5;
 bool ArenaBorderObservation::debug = false;
 
 int ArenaBorderObservation::maxTries = 10;
-double ArenaBorderObservation::minDist = 0.2; //[m]
+double ArenaBorderObservation::minDist = 0.2;  //[m]
 
 ArenaBorderObservation::ArenaBorderObservation() {}
 
-ArenaBorderObservation::ArenaBorderObservation(
-    const ParametricLine &imgSeenLine, int imgWidth, int imgHeight,
-    CameraState &cs) {
+ArenaBorderObservation::ArenaBorderObservation(const ParametricLine &imgSeenLine, int imgWidth, int imgHeight,
+                                               CameraState &cs) {
   if (debug) {
     std::ostringstream oss;
-    oss << "Creating an observation with seenLine : [rho="
-        << imgSeenLine.getRho() << ",theta=" << imgSeenLine.getTheta() << "]"
+    oss << "Creating an observation with seenLine : [rho=" << imgSeenLine.getRho()
+        << ",theta=" << imgSeenLine.getTheta() << "]"
         << ", imgSize: " << imgWidth << "x" << imgHeight;
     out.log(oss.str().c_str());
   }
   std::vector<ParametricLine> imgBorders;
   imgBorders.push_back(ParametricLine(Point(0, 0), Point(imgWidth - 1, 0)));
   imgBorders.push_back(ParametricLine(Point(0, 0), Point(0, imgHeight - 1)));
-  imgBorders.push_back(ParametricLine(Point(imgWidth - 1, imgHeight - 1),
-                                      Point(imgWidth - 1, 0)));
-  imgBorders.push_back(ParametricLine(Point(imgWidth - 1, imgHeight - 1),
-                                      Point(0, imgHeight - 1)));
+  imgBorders.push_back(ParametricLine(Point(imgWidth - 1, imgHeight - 1), Point(imgWidth - 1, 0)));
+  imgBorders.push_back(ParametricLine(Point(imgWidth - 1, imgHeight - 1), Point(0, imgHeight - 1)));
   // Determining the extremum positions of the line on the image
   std::vector<Point> extremums;
   for (const auto &line : imgBorders) {
@@ -67,8 +64,7 @@ ArenaBorderObservation::ArenaBorderObservation(
   }
   if (extremums.size() != 2) {
     // TODO is it possible for this to happen? To check
-    throw std::runtime_error(
-        "Failed to find extremums of lines in ArenaBorder");
+    throw std::runtime_error("Failed to find extremums of lines in ArenaBorder");
   }
 
   //      std::cout << "--- Images Extremums ---" << std::endl
@@ -117,27 +113,21 @@ ArenaBorderObservation::ArenaBorderObservation(
   //          << "\trobotSeenLine: " << robotSeenLine << std::endl;
 }
 
-double
-ArenaBorderObservation::angleScore(const FieldPosition &p,
-                                   const ParametricLine &theoricLine) const {
+double ArenaBorderObservation::angleScore(const FieldPosition &p, const ParametricLine &theoricLine) const {
   Angle expectedAngle = theoricLine.getTheta() - p.getOrientation();
   Angle diffAngle = expectedAngle - robotSeenLine.getTheta();
   if (std::fabs(diffAngle.getSignedValue()) > 90) {
     diffAngle = diffAngle + Angle(180);
   }
   double absAngleDiff = std::fabs(diffAngle.getSignedValue());
-  if (absAngleDiff > lAngleMaxError)
-    return 0.0;
-  double score = sigmoidScore(absAngleDiff, lAngleMaxError, 0.0, lSigmoidOffset,
-                              lSigmoidLambda);
+  if (absAngleDiff > lAngleMaxError) return 0.0;
+  double score = sigmoidScore(absAngleDiff, lAngleMaxError, 0.0, lSigmoidOffset, lSigmoidLambda);
   return score;
 }
 
-double ArenaBorderObservation::closestPointScore(
-    const FieldPosition &p, const ParametricLine &theoricLine) const {
+double ArenaBorderObservation::closestPointScore(const FieldPosition &p, const ParametricLine &theoricLine) const {
   Point fieldThClosestPoint = theoricLine.projectPoint(p.getRobotPosition());
-  Point robotThClosestPoint = (fieldThClosestPoint - p.getRobotPosition())
-                                  .rotation(-p.getOrientation());
+  Point robotThClosestPoint = (fieldThClosestPoint - p.getRobotPosition()).rotation(-p.getOrientation());
 
   Point seenPos = robotClosestPoint;
   Point expPos = robotThClosestPoint;
@@ -147,10 +137,8 @@ double ArenaBorderObservation::closestPointScore(
   cv::Point3f expectedDir(expPos.x, expPos.y, -robotHeight);
   Angle aDiff = angleBetween(seenDir, expectedDir);
   // Parameters of scoring
-  if (aDiff.getValue() > cpAngleMaxError)
-    return 0;
-  return sigmoidScore(aDiff.getValue(), cpAngleMaxError, 0.0, cpSigmoidOffset,
-                      cpSigmoidLambda);
+  if (aDiff.getValue() > cpAngleMaxError) return 0;
+  return sigmoidScore(aDiff.getValue(), cpAngleMaxError, 0.0, cpSigmoidOffset, cpSigmoidLambda);
 }
 
 double ArenaBorderObservation::potential(const FieldPosition &p) const {
@@ -172,34 +160,28 @@ void ArenaBorderObservation::bindWithRhIO() {
       ->minimum(0.0)
       ->maximum(1.0)
       ->comment("The false positive probability");
-  RhIO::Root.newFloat(
-                 "/localisation/field/ArenaBorderObservation/lAngleMaxError")
+  RhIO::Root.newFloat("/localisation/field/ArenaBorderObservation/lAngleMaxError")
       ->defaultValue(lAngleMaxError)
       ->minimum(0.0)
       ->maximum(180);
-  RhIO::Root.newFloat(
-                 "/localisation/field/ArenaBorderObservation/lSigmoidOffset")
+  RhIO::Root.newFloat("/localisation/field/ArenaBorderObservation/lSigmoidOffset")
       ->defaultValue(lSigmoidOffset)
       ->minimum(0.0)
       ->maximum(1.0);
-  RhIO::Root.newFloat(
-                 "/localisation/field/ArenaBorderObservation/lSigmoidLambda")
+  RhIO::Root.newFloat("/localisation/field/ArenaBorderObservation/lSigmoidLambda")
       ->defaultValue(lSigmoidLambda)
       ->minimum(0.0)
       ->maximum(1000.0)
       ->comment("Cf. sigmoidOffset");
-  RhIO::Root.newFloat(
-                 "/localisation/field/ArenaBorderObservation/cpAngleMaxError")
+  RhIO::Root.newFloat("/localisation/field/ArenaBorderObservation/cpAngleMaxError")
       ->defaultValue(cpAngleMaxError)
       ->minimum(0.0)
       ->maximum(180);
-  RhIO::Root.newFloat(
-                 "/localisation/field/ArenaBorderObservation/cpSigmoidOffset")
+  RhIO::Root.newFloat("/localisation/field/ArenaBorderObservation/cpSigmoidOffset")
       ->defaultValue(lSigmoidOffset)
       ->minimum(0.0)
       ->maximum(1.0);
-  RhIO::Root.newFloat(
-                 "/localisation/field/ArenaBorderObservation/cpSigmoidLambda")
+  RhIO::Root.newFloat("/localisation/field/ArenaBorderObservation/cpSigmoidLambda")
       ->defaultValue(lSigmoidLambda)
       ->minimum(0.0)
       ->maximum(1000.0);
@@ -218,8 +200,7 @@ void ArenaBorderObservation::bindWithRhIO() {
 }
 
 void ArenaBorderObservation::importFromRhIO() {
-  RhIO::IONode &node =
-      RhIO::Root.child("localisation/field/ArenaBorderObservation");
+  RhIO::IONode &node = RhIO::Root.child("localisation/field/ArenaBorderObservation");
   pError = node.getValueFloat("pError").value;
   lAngleMaxError = node.getValueFloat("lAngleMaxError").value;
   lSigmoidOffset = node.getValueFloat("lSigmoidOffset").value;
@@ -232,9 +213,7 @@ void ArenaBorderObservation::importFromRhIO() {
   debug = node.getValueBool("debug").value;
 }
 
-std::string ArenaBorderObservation::getClassName() const {
-  return "ArenaBorderObservation";
-}
+std::string ArenaBorderObservation::getClassName() const { return "ArenaBorderObservation"; }
 
 Json::Value ArenaBorderObservation::toJson() const {
   double rho = robotSeenLine.getRho();
@@ -246,15 +225,15 @@ Json::Value ArenaBorderObservation::toJson() const {
   return v;
 }
 
-void ArenaBorderObservation::fromJson(const Json::Value & v, const std::string & dir_name) {
-  rhoban_utils::tryRead(v,"robotHeight",&robotHeight);
+void ArenaBorderObservation::fromJson(const Json::Value &v, const std::string &dir_name) {
+  rhoban_utils::tryRead(v, "robotHeight", &robotHeight);
   double rho(0.0), theta(0.0);
-  rhoban_utils::tryRead(v,"rho",&rho);
-  rhoban_utils::tryRead(v,"theta",&theta);
+  rhoban_utils::tryRead(v, "rho", &rho);
+  rhoban_utils::tryRead(v, "theta", &theta);
   robotSeenLine = ParametricLine::fromRhoTheta(rho, Angle(theta));
   robotClosestPoint = robotSeenLine.projectPoint(Point(0, 0));
 }
 
 double ArenaBorderObservation::getMinScore() const { return pError; }
-}
-}
+}  // namespace Localisation
+}  // namespace Vision

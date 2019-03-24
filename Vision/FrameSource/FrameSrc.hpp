@@ -15,7 +15,7 @@ namespace Vision {
  * for Frame Source
  */
 class FrameSrc {
-public:
+ public:
   /**
    * Virtual destrutor
    */
@@ -40,8 +40,7 @@ public:
    * Throw std::runtime_error on grab error
    */
   // ugh
-  virtual cv::Mat grabFrame(::rhoban_utils::TimeStamp &newTS,
-                            bool *lastCall) = 0;
+  virtual cv::Mat grabFrame(::rhoban_utils::TimeStamp &newTS, bool *lastCall) = 0;
 
   /**
    * Close and stop video capture
@@ -49,6 +48,6 @@ public:
    */
   virtual void close() = 0;
 };
-}
+}  // namespace Vision
 
 #endif

@@ -7,22 +7,21 @@ class KickController;
 class KickCalibration : public Move
 {
 public:
-  KickCalibration(Approach *approach);
+  KickCalibration(Approach* approach);
   std::string getName();
-  
+
   void onStart();
   void onStop();
   void step(float elapsed);
 
-  void toFile(std::map<std::string, std::map<std::string,  float>> &map, std::string filename);
-  
-protected:
+  void toFile(std::map<std::string, std::map<std::string, float>>& map, std::string filename);
 
+protected:
   float startX;
   float T;
   bool forceStart;
   bool started;
-  Approach *approach;
+  Approach* approach;
 
   std::string lastState;
   std::string currentState;
@@ -38,7 +37,7 @@ protected:
   int nbShoots;
 
   double tLogging;
-  KickController * kickController;
+  KickController* kickController;
 
   bool smallKick;
   bool normalKick;
