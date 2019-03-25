@@ -29,7 +29,17 @@ public:
    * time_stamp is in micro-seconds and can be specified according to local steady_clock or according to system_clock.
    * throws an out_of_range error if status does not contain information for the tracker id
    */
-  Eigen::Affine3d getFieldToVive(uint64_t time_stamp, bool system_clock = false);
+  Eigen::Affine3d getFieldToVive(uint64_t time_stamp, bool system_clock = false) const;
+
+  /**
+   * @see getFieldToVive
+   */
+  Eigen::Affine3d getFieldToCamera(uint64_t time_stamp, bool system_clock = false) const;
+
+  /**
+   * Return the transformation from vive referential to camera referential
+   */
+  Eigen::Affine3d getViveToCamera() const;
 
 private:
   /**
@@ -41,4 +51,17 @@ private:
    * Each robot has its own tracker id
    */
   int tracker_id;
+
+  /**
+   * RhIO binding
+   */
+  RhIO::Bind bind;
+
+  double camera_x;
+  double camera_y;
+  double camera_z;
+
+  double camera_roll;
+  double camera_pitch;
+  double camera_yaw;
 };
