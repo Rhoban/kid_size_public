@@ -5,8 +5,8 @@
 #include "rhoban_geometry/point.h"
 
 // Pure interface between opencv and rhoban_geometry
-namespace Vision {
-
+namespace Vision
+{
 rhoban_geometry::Point cv2rg(const cv::Point& p);
 rhoban_geometry::Point cv2rg(const cv::Point2f& p);
 

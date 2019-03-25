@@ -2,9 +2,10 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /// Uses an algorithm based on the approach proposed by Berlin United (spl team)
 /// at RoHOW 2017 to identify the best 'n' regions of interest
 ///
@@ -21,21 +22,22 @@ namespace Filters {
 /// - Above (width approximately of the post)
 /// - Below (width approximately of the post)
 /// - Boundary (top is top of above, bottom is bottom of below, width is larger)
-class GoalByII : public Filter {
- public:
+class GoalByII : public Filter
+{
+public:
   GoalByII();
 
   virtual std::string getClassName() const override;
   virtual int expectedDependencies() const override;
 
- protected:
+protected:
   virtual void process() override;
 
   virtual void setParameters() override;
 
   cv::Mat getHeatMap(const cv::Mat& scores, double minScore, double maxScore) const;
 
- private:
+private:
   /// Return the patch associated to the above rect of the goal at the given point
   cv::Rect_<float> getAbovePatch(int x, int y, float width);
 

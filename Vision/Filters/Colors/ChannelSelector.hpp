@@ -3,21 +3,28 @@
 #include <vector>
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * ChannelSelector
  *
  * Extract the channel of a given index from the source image
  */
-class ChannelSelector : public Filter {
- public:
-  ChannelSelector() : Filter("ChannelSelector") {}
+class ChannelSelector : public Filter
+{
+public:
+  ChannelSelector() : Filter("ChannelSelector")
+  {
+  }
 
-  virtual std::string getClassName() const override { return "ChannelSelector"; }
+  virtual std::string getClassName() const override
+  {
+    return "ChannelSelector";
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -25,7 +32,7 @@ class ChannelSelector : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
   ParamInt channel;
 };
 }  // namespace Filters

@@ -6,9 +6,10 @@
 
 #include <opencv2/videoio.hpp>
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * MovieRecorder
  *
@@ -16,14 +17,15 @@ namespace Filters {
  *
  * TODO: add option of adding padding of similar images when images are missing.
  */
-class MovieRecorder : public Filter {
- public:
+class MovieRecorder : public Filter
+{
+public:
   MovieRecorder();
   virtual ~MovieRecorder();
 
   std::string getClassName() const override;
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -31,7 +33,7 @@ class MovieRecorder : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
   /// Automatically choose a name for the movie and open the stream
   void startStream(const cv::Size& size);
 

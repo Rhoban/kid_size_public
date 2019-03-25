@@ -5,7 +5,7 @@ extern "C" {
 /**
  * YUV conversion (deinterlacing)
  */
-void yuv_convert(char *input, char *output, int pixels);
+void yuv_convert(char* input, char* output, int pixels);
 }
 
 #endif

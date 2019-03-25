@@ -7,14 +7,19 @@
 using namespace Vision::Utils;
 using namespace rhoban_utils;
 
-namespace Vision {
-namespace Localisation {
+namespace Vision
+{
+namespace Localisation
+{
+RadarFilterPoint::RadarFilterPoint(CameraState* cameraState)
+  : RadarFilter(), cameraState(cameraState), matchDistance(0.4), far(2), matchAngle(2), alignedAngle(60)
+{
+}
 
-RadarFilterPoint::RadarFilterPoint(CameraState *cameraState)
-    : RadarFilter(), cameraState(cameraState), matchDistance(0.4), far(2), matchAngle(2), alignedAngle(60) {}
-
-bool RadarFilterPoint::bindToRhIO(std::string node, std::string command) {
-  if (RadarFilter<Eigen::Vector3d>::bindToRhIO(node, command)) {
+bool RadarFilterPoint::bindToRhIO(std::string node, std::string command)
+{
+  if (RadarFilter<Eigen::Vector3d>::bindToRhIO(node, command))
+  {
     bind->bindNew("matchDistance", matchDistance, RhIO::Bind::PullOnly)
         ->comment("Radius to match the same object")
         ->defaultValue(matchDistance);
@@ -37,10 +42,12 @@ bool RadarFilterPoint::bindToRhIO(std::string node, std::string command) {
   return false;
 }
 
-bool RadarFilterPoint::isVisible(const Eigen::Vector3d &pt) {
+bool RadarFilterPoint::isVisible(const Eigen::Vector3d& pt)
+{
   // Point is in robot basis in order to check if ball is seen
   cv::Point2f pt_cv(pt.x(), pt.y());
-  try {
+  try
+  {
     cv::Point2f point = cameraState->imgXYFromWorldPosition(pt_cv);
     bool inScreen = cameraState->getCameraModel().containsPixel(point);
 
@@ -51,13 +58,16 @@ bool RadarFilterPoint::isVisible(const Eigen::Vector3d &pt) {
     bool isAligned = objDir.getSignedValue() < alignedAngle;
 
     return inScreen && !isFar && isAligned;
-  } catch (const std::runtime_error &exc) {
+  }
+  catch (const std::runtime_error& exc)
+  {
     // Fails when the object is behind the camera which means point is not visible
     return false;
   }
 }
 
-bool RadarFilterPoint::isSimilar(const Eigen::Vector3d &pt1, const Eigen::Vector3d &pt2) {
+bool RadarFilterPoint::isSimilar(const Eigen::Vector3d& pt1, const Eigen::Vector3d& pt2)
+{
   // We need the position in robot referential, c1 and c2 are in world referential
   Eigen::Vector3d c1_robot = cameraState->getSelfFromWorld(pt1);
   Eigen::Vector3d c2_robot = cameraState->getSelfFromWorld(pt2);
@@ -79,7 +89,8 @@ bool RadarFilterPoint::isSimilar(const Eigen::Vector3d &pt1, const Eigen::Vector
   return posDiff < matchDistance || fabs(aDiff.getSignedValue()) < matchAngle;
 }
 
-std::string RadarFilterPoint::toString(const Eigen::Vector3d &point) {
+std::string RadarFilterPoint::toString(const Eigen::Vector3d& point)
+{
   std::stringstream ss;
 
   auto pos = cameraState->getSelfFromWorld(point);
@@ -89,7 +100,10 @@ std::string RadarFilterPoint::toString(const Eigen::Vector3d &point) {
   return ss.str();
 }
 
-void RadarFilterPoint::updateCS(Vision::Utils::CameraState *newCS) { cameraState = newCS; }
+void RadarFilterPoint::updateCS(Vision::Utils::CameraState* newCS)
+{
+  cameraState = newCS;
+}
 
 }  // namespace Localisation
 }  // namespace Vision

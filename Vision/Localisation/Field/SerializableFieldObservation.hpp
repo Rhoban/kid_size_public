@@ -7,10 +7,13 @@
 
 // Ensure that the particle is inside of the field
 
-namespace Vision {
-namespace Localisation {
-
+namespace Vision
+{
+namespace Localisation
+{
 class SerializableFieldObservation : public rhoban_unsorted::BoundedScoreObservation<FieldPosition>,
-                                     public rhoban_utils::JsonSerializable {};
+                                     public rhoban_utils::JsonSerializable
+{
+};
 }  // namespace Localisation
 }  // namespace Vision

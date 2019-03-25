@@ -4,10 +4,13 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-class FilterFactory : public rhoban_utils::Factory<Filter> {
- public:
+namespace Vision
+{
+namespace Filters
+{
+class FilterFactory : public rhoban_utils::Factory<Filter>
+{
+public:
   FilterFactory();
 };
 }  // namespace Filters

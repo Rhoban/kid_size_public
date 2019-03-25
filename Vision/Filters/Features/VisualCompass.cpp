@@ -24,16 +24,19 @@ using namespace rhoban_utils;
 using namespace std;
 static rhoban_utils::Logger out("VisualCompass");
 
-namespace Vision {
-namespace Filters {
-
-VisualCompass::VisualCompass() : CompassProvider("VisualCompass"), active_field(-1) {
+namespace Vision
+{
+namespace Filters
+{
+VisualCompass::VisualCompass() : CompassProvider("VisualCompass"), active_field(-1)
+{
   cameraparamsdone = 1;
   prev_maskBelow = 0;
   prev_maskAbove = 1;
 }
 
-void VisualCompass::initSIFT() {
+void VisualCompass::initSIFT()
+{
   Benchmark::open("VisualCompass create SIFT");
   // initialize algoritm
   // detector = cv::FeatureDetector::create("SIFT");
@@ -62,13 +65,14 @@ void VisualCompass::initSIFT() {
   Benchmark::close("VisualCompass init pano SIFT");
 }
 
-void VisualCompass::setParameters() {
+void VisualCompass::setParameters()
+{
   debugLevel = ParamInt(0, 0, 2);
   params()->define<ParamInt>("debugLevel", &debugLevel);
 
-  nndrRatio = ParamFloat(0.81, 0, 1);  // 0.85
-  params()->define<ParamFloat>(
-      "nndrRatio", &nndrRatio);  // Matching. Distance ratio for correct matching. Higher values=less restrictive match
+  nndrRatio = ParamFloat(0.81, 0, 1);                     // 0.85
+  params()->define<ParamFloat>("nndrRatio", &nndrRatio);  // Matching. Distance ratio for correct matching. Higher
+                                                          // values=less restrictive match
 
   knn_K = ParamInt(2, 0, 10);
   params()->define<ParamInt>("knn_K", &knn_K);  // number of neigbors
@@ -89,13 +93,16 @@ void VisualCompass::setParameters() {
   params()->define<ParamFloat>("maskAbove", &maskAbove);
 }
 
-void VisualCompass::fromJson(const Json::Value& v, const std::string& dir_name) {
+void VisualCompass::fromJson(const Json::Value& v, const std::string& dir_name)
+{
   CompassProvider::fromJson(v, dir_name);
   updateField();
 }
 
-void VisualCompass::updateField() {
-  switch (fieldNumber) {
+void VisualCompass::updateField()
+{
+  switch (fieldNumber)
+  {
     case 0:  // A
       out.log("Opening panoramic image: pano.jpg");
       field = cv::imread("../common/pano.jpg", 0);
@@ -133,17 +140,20 @@ void VisualCompass::updateField() {
 
 void VisualCompass::getPoints(const std::vector<cv::KeyPoint>& kpts_train, const std::vector<cv::KeyPoint>& kpts_query,
                               std::vector<cv::Point2f>& pts_train, std::vector<cv::Point2f>& pts_query,
-                              std::vector<cv::DMatch>& good_matches) {
+                              std::vector<cv::DMatch>& good_matches)
+{
   pts_train.clear();
   pts_query.clear();
-  for (size_t k = 0; k < good_matches.size(); k++) {
+  for (size_t k = 0; k < good_matches.size(); k++)
+  {
     const cv::DMatch& match = good_matches[k];
     pts_query.push_back(kpts_query[match.queryIdx].pt);
     pts_train.push_back(kpts_train[match.trainIdx].pt);
   }
 }
 
-void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::DMatch>& good_matches) {
+void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::DMatch>& good_matches)
+{
   cv::Mat descriptors;
 
   // detection
@@ -176,17 +186,18 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
 
   // Don't know the difference...
   descriptorMatcher->knnMatch(descriptors, descriptors_pano, matches, 2);
-  if (debugLevel >= 1) {
+  if (debugLevel >= 1)
+  {
     out.log("Matches: %d", matches.size());
   }
 
   Benchmark::close("VisualCompass SIFT match");
 
-  for (int k = 0; k < (int)matches.size(); k++) {
-    if ((matches[k][0].distance <
-         nndrRatio *
-             (matches[k][1].distance)))  // &&
-                                         //  ((int)matches[k].size() <= 2 && (int)matches[k].size()>0) ) //TODO param
+  for (int k = 0; k < (int)matches.size(); k++)
+  {
+    if ((matches[k][0].distance < nndrRatio * (matches[k][1].distance)))  // &&
+                                                                          //  ((int)matches[k].size() <= 2 &&
+                                                                          //  (int)matches[k].size()>0) ) //TODO param
     {
       // take the first result only if its distance is smaller than 0.6*second_best_dist
       // that means this descriptor is ignored if the second distance is bigger or of similar
@@ -194,14 +205,17 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
     }
   }
 
-  if (debugLevel >= 1) {
+  if (debugLevel >= 1)
+  {
     out.log("Good matches: %d", good_matches.size());
   }
 
   // cv::Mat img_goodmatches;
 
-  if (good_matches.size() > 0) {
-    if (debugLevel >= 2) {
+  if (good_matches.size() > 0)
+  {
+    if (debugLevel >= 2)
+    {
       cv::drawMatches(img(), keypoints, field, keypoints_pano, good_matches, img_debug, cv::Scalar(0, 0, 255),
                       cv::Scalar(255, 0, 0), std::vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
       cv::resize(img_debug, img_debug, cv::Size(), 1.2, 1.2);
@@ -209,23 +223,27 @@ void VisualCompass::matchSIFT(std::vector<cv::KeyPoint>& keypoints, std::vector<
   }
 }
 
-void VisualCompass::process() {
+void VisualCompass::process()
+{
   // First clean memory
   clearCompassData();
 
   bool shouldUpdate = false;
   // First update the field
-  if (active_field != fieldNumber) {
+  if (active_field != fieldNumber)
+  {
     updateField();
     active_field = fieldNumber;
     shouldUpdate = true;
   }
 
-  if (shouldUpdate) {
+  if (shouldUpdate)
+  {
     initSIFT();
   }
 
-  if (enabled) {
+  if (enabled)
+  {
     const cv::Mat& srcImg = *(getDependency().getImg());
     // TODO: clone only when debugLevel > 0
     img() = srcImg.clone();
@@ -234,7 +252,8 @@ void VisualCompass::process() {
     // cv::cvtColor(img(),img(),CV_YCrCb2BGR);
     // img()=  cv::imread("test.jpg",0);
 
-    if (!cameraparamsdone) {
+    if (!cameraparamsdone)
+    {
       width = srcImg.cols;
       height = srcImg.rows;
       pano_width = field.cols;
@@ -278,20 +297,24 @@ void VisualCompass::process() {
 
     matchSIFT(keypoints, good_matches);
 
-    if (good_matches.size() > 0) {
+    if (good_matches.size() > 0)
+    {
       Benchmark::open("VisualCompass compute angle");
       computeAngle(keypoints, good_matches);
       Benchmark::close("VisualCompass compute angle");
 
       // cv::imshow("VisualCompass SIFT debug", img());
       // cv::waitKey(1);
-    } else {
+    }
+    else
+    {
       // humm
     }
   }
 }
 
-void VisualCompass::cameraPoseFromHomography(const cv::Mat& H, cv::Mat& pose) {
+void VisualCompass::cameraPoseFromHomography(const cv::Mat& H, cv::Mat& pose)
+{
   pose = cv::Mat::eye(3, 4, CV_32FC1);  // 3x4 matrix, the camera pose
   float norm1 = (float)norm(H.col(0));
   float norm2 = (float)norm(H.col(1));
@@ -317,14 +340,17 @@ void VisualCompass::cameraPoseFromHomography(const cv::Mat& H, cv::Mat& pose) {
   pose.col(3) = H.col(2) / tnorm;  // vector t [R|t] is the last column of pose
 }
 
-void VisualCompass::sanitizeCoordinates(const std::vector<cv::Point2f>& in, std::vector<cv::Point2f>& out) {
+void VisualCompass::sanitizeCoordinates(const std::vector<cv::Point2f>& in, std::vector<cv::Point2f>& out)
+{
   // not sure...
 }
 
-void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std::vector<cv::DMatch>& good_matches) {
+void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std::vector<cv::DMatch>& good_matches)
+{
   cv::Mat outangle;
 
-  if (debugLevel >= 2) {
+  if (debugLevel >= 2)
+  {
     outangle = field.clone();
     cv::cvtColor(outangle, outangle, CV_GRAY2RGB);
   }
@@ -340,7 +366,8 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
     std::vector<cv::Point2f> obj;
     std::vector<cv::Point2f> scene;
 
-    for (size_t i = 0; i < good_matches.size(); i++) {
+    for (size_t i = 0; i < good_matches.size(); i++)
+    {
       //-- Get the keypoints from the good matches
       obj.push_back(keypoints[good_matches[i].queryIdx].pt);
       scene.push_back(keypoints_pano[good_matches[i].trainIdx].pt);
@@ -366,7 +393,8 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
     cv::perspectiveTransform(obj_corners, scene_corners, H);
     Benchmark::close("VisualCompass homography");
 
-    if (debugLevel >= 2) {
+    if (debugLevel >= 2)
+    {
       // cv::perspectiveTransform( obj_corners, scene_corners, H);
       cv::line(outangle, scene_corners[0], scene_corners[1], cv::Scalar(255, 255, 255), 4);
       cv::line(outangle, scene_corners[1], scene_corners[2], cv::Scalar(255, 255, 255), 4);
@@ -377,7 +405,8 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
     // Convexity test for the found homography polygon
     // Compute the z component of the cross product for each pair of edges
     float sign[4];
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
       float dx1 = scene_corners[(i + 1) % 4].x - scene_corners[i % 4].x;
       float dy1 = scene_corners[(i + 1) % 4].y - scene_corners[i % 4].y;
 
@@ -392,16 +421,19 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
     // if the 4 values are of the same sign, the polygon is convex, which is a pretty good indication that the
     // homography is not too bad...
     if ((sign[0] > 0 && sign[1] > 0 && sign[2] > 0 && sign[3] > 0) ||
-        (sign[0] < 0 && sign[1] < 0 && sign[2] < 0 && sign[3] < 0)) {
+        (sign[0] < 0 && sign[1] < 0 && sign[2] < 0 && sign[3] < 0))
+    {
       // We can reasonably trust the homography
-      if (debugLevel >= 1) {
+      if (debugLevel >= 1)
+      {
         out.log("VisualCompass: homography polygon is convex");
       }
       isHomographyGood = true;
-
-    } else  // humm... let's still use the outliers mask (seems to be quite ok)
+    }
+    else  // humm... let's still use the outliers mask (seems to be quite ok)
     {
-      if (debugLevel >= 1) {
+      if (debugLevel >= 1)
+      {
         out.log("VisualCompass: homography polygon is concave");
       }
       isHomographyGood = false;
@@ -411,10 +443,13 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
   float sines = 0.0;
   float cosines = 0.0;
   int nb_inliers = 0;
-  for (size_t i = 0; i < good_matches.size(); i++) {
-    if (!output_mask.empty()) {
+  for (size_t i = 0; i < good_matches.size(); i++)
+  {
+    if (!output_mask.empty())
+    {
       // std::cerr<<"DEBUG EMPTY"<<std::endl;
-      if (!output_mask.at<uchar>(i, 0)) {  // outlier mask => we don't consider this marker
+      if (!output_mask.at<uchar>(i, 0))
+      {  // outlier mask => we don't consider this marker
         // std::cerr<<"MASK"<<std::endl;
 
         continue;
@@ -437,20 +472,24 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
       sines += sin(angle);
       cosines += cos(angle);
 
-      if (debugLevel >= 1) out.log("angle: %f", rad2deg(angle));
+      if (debugLevel >= 1)
+        out.log("angle: %f", rad2deg(angle));
 
       // debuging (display the inliers)
-      if (debugLevel >= 2) {
+      if (debugLevel >= 2)
+      {
         cv::circle(outangle, pt2, 10, cv::Scalar(0, 0, 255), 2);
       }
     }
   }
 
-  if (debugLevel >= 1) {
+  if (debugLevel >= 1)
+  {
     out.log("Inliers: %d", nb_inliers);
   }
 
-  if (good_matches.size() >= 5) {
+  if (good_matches.size() >= 5)
+  {
     // sines = sines / good_matches.size();
     // cosines = cosines / good_matches.size();
 
@@ -473,7 +512,8 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
     // cv::resize(outangle, outangle, cv::Size(), 0.5, 0.5);
 
     // average angle line
-    if (debugLevel >= 2) {
+    if (debugLevel >= 2)
+    {
       // cv::line(outangle, cv::Point((linepos - width + pano_width / 2), pano_height), cv::Point((linepos - width +
       // pano_width / 2), 0), cv::Scalar(0, 255, 0), 2);
       cv::line(outangle, cv::Point((linepos + pano_width / 2), pano_height), cv::Point((linepos + pano_width / 2), 0),
@@ -505,12 +545,14 @@ void VisualCompass::computeAngle(std::vector<cv::KeyPoint> keypoints, const std:
 
       img() = img_debug_concat;
     }
-    if (debugLevel >= 1) {
+    if (debugLevel >= 1)
+    {
     }
 
     double score = R_angle;
 
-    if (!isHomographyGood) score /= 2.0;
+    if (!isHomographyGood)
+      score /= 2.0;
 
     pushCompass(avangle, score);  // because I can
 

@@ -3,21 +3,28 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Integral
  *
  * Outputs the integral image formed by the single channel input image
  */
-class Integral : public Filter {
- public:
-  Integral() : Filter("Integral") {}
+class Integral : public Filter
+{
+public:
+  Integral() : Filter("Integral")
+  {
+  }
 
-  virtual std::string getClassName() const override { return "Integral"; }
+  virtual std::string getClassName() const override
+  {
+    return "Integral";
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -25,7 +32,7 @@ class Integral : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
 };
 }  // namespace Filters
 }  // namespace Vision

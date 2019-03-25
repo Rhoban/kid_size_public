@@ -2,21 +2,29 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Recognize Border of the Field and compute the clipping
  */
-class ClippingByBorder : public Filter {
- public:
+class ClippingByBorder : public Filter
+{
+public:
   ClippingByBorder();
   ~ClippingByBorder();
 
-  virtual std::string getClassName() const override { return "ClippingByBorder"; }
-  virtual int expectedDependencies() const override { return 1; }
+  virtual std::string getClassName() const override
+  {
+    return "ClippingByBorder";
+  }
+  virtual int expectedDependencies() const override
+  {
+    return 1;
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */

@@ -7,10 +7,12 @@ using namespace rhoban_utils;
 
 static Logger logger("RobotFilter");
 
-namespace Vision {
-namespace Localisation {
-
-RobotFilter::RobotFilter(Utils::CameraState *cs) : RadarFilterPoint(cs) {
+namespace Vision
+{
+namespace Localisation
+{
+RobotFilter::RobotFilter(Utils::CameraState* cs) : RadarFilterPoint(cs)
+{
   // Overriding default values of parent classes
   initialScore = 0.2;
   maximumScore = 1.0;
@@ -23,8 +25,10 @@ RobotFilter::RobotFilter(Utils::CameraState *cs) : RadarFilterPoint(cs) {
   far = 8;
 }
 
-bool RobotFilter::bindToRhIO(std::string node, std::string command) {
-  if (RadarFilterPoint::bindToRhIO(node, command)) {
+bool RobotFilter::bindToRhIO(std::string node, std::string command)
+{
+  if (RadarFilterPoint::bindToRhIO(node, command))
+  {
     bind->bindNew("pitchTol", pitch_tol, RhIO::Bind::PullOnly)
         ->comment("Tolerance for obstacles along pitch [deg]")
         ->defaultValue(25);
@@ -39,11 +43,13 @@ bool RobotFilter::bindToRhIO(std::string node, std::string command) {
   return false;
 }
 
-Eigen::Vector2d RobotFilter::getGroundPosSelf(const Eigen::Vector3d &pt) {
+Eigen::Vector2d RobotFilter::getGroundPosSelf(const Eigen::Vector3d& pt)
+{
   return cameraState->getSelfFromWorld(pt).segment(0, 2);
 }
 
-bool RobotFilter::isSimilar(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2) {
+bool RobotFilter::isSimilar(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2)
+{
   Eigen::Vector2d pos1 = getGroundPosSelf(p1);
   Eigen::Vector2d pos2 = getGroundPosSelf(p2);
 
@@ -62,13 +68,17 @@ bool RobotFilter::isSimilar(const Eigen::Vector3d &p1, const Eigen::Vector3d &p2
   return dir_diff < dir_tol && pitch_diff < pitch_tol;
 }
 
-Eigen::Vector3d RobotFilter::mergeObjects(const Eigen::Vector3d &o1, const Eigen::Vector3d &o2, double w1, double w2) {
+Eigen::Vector3d RobotFilter::mergeObjects(const Eigen::Vector3d& o1, const Eigen::Vector3d& o2, double w1, double w2)
+{
   Eigen::Vector2d pos1 = getGroundPosSelf(o1);
   Eigen::Vector2d pos2 = getGroundPosSelf(o2);
 
-  if (pos1.norm() < pos2.norm()) {
+  if (pos1.norm() < pos2.norm())
+  {
     w1 *= closest_gain;
-  } else {
+  }
+  else
+  {
     w2 *= closest_gain;
   }
   return (w1 * o1 + w2 * o2) / (w1 + w2);

@@ -8,14 +8,18 @@
 #include <cstdlib>
 #include <deque>
 
-namespace RhIO {
+namespace RhIO
+{
 class Bind;
 }
 
-namespace Vision {
-namespace Localisation {
-class SpeedEstimator {
- public:
+namespace Vision
+{
+namespace Localisation
+{
+class SpeedEstimator
+{
+public:
   SpeedEstimator();
 
   // Insert the value if it is not equivalent to the last on
@@ -26,7 +30,7 @@ class SpeedEstimator {
 
   Eigen::Vector2d getUsableSpeed();
 
- private:
+private:
   typedef std::pair<rhoban_utils::TimeStamp, Eigen::Vector2d> TimedPosition;
   typedef std::pair<Eigen::Vector2d, double> WeightedSpeed;
 

@@ -2,10 +2,12 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 
-namespace Vision {
-namespace Filters {
-
-void ColorBounding::setParameters() {
+namespace Vision
+{
+namespace Filters
+{
+void ColorBounding::setParameters()
+{
   minY = ParamInt(124, 0, 255, ParameterType::PARAM);
   maxY = ParamInt(124, 0, 255, ParameterType::PARAM);
   minU = ParamInt(124, 0, 255, ParameterType::PARAM);
@@ -21,7 +23,8 @@ void ColorBounding::setParameters() {
   params()->define<ParamInt>("maxV", &maxV);
 }
 
-void ColorBounding::process() {
+void ColorBounding::process()
+{
   cv::Mat src = *(getDependency().getImg());
 
   cv::Mat temp(src.size(), 0, cv::Scalar(0));  // Unsigned char mat

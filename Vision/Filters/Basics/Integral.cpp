@@ -5,12 +5,16 @@
 
 using rhoban_utils::Benchmark;
 
-namespace Vision {
-namespace Filters {
+namespace Vision
+{
+namespace Filters
+{
+void Integral::setParameters()
+{
+}
 
-void Integral::setParameters() {}
-
-void Integral::process() {
+void Integral::process()
+{
   cv::Mat src = *(getDependency().getImg());
   integral(src, img(), CV_32S);
 }

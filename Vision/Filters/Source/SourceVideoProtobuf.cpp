@@ -10,51 +10,69 @@
 
 #include <stdexcept>
 
-namespace Vision {
-namespace Filters {
+namespace Vision
+{
+namespace Filters
+{
+SourceVideoProtobuf::SourceVideoProtobuf() : Source("SourceVideoProtobuf"), startIndex(0), index(0)
+{
+}
 
-SourceVideoProtobuf::SourceVideoProtobuf() : Source("SourceVideoProtobuf"), startIndex(0), index(0) {}
-
-void SourceVideoProtobuf::openVideo() {
-  if (!video.open(videoPath)) {
+void SourceVideoProtobuf::openVideo()
+{
+  if (!video.open(videoPath))
+  {
     throw std::runtime_error(DEBUG_INFO + "failed to open video '" + videoPath + "'");
   }
 }
 
-void SourceVideoProtobuf::loadMetaInformation() {
+void SourceVideoProtobuf::loadMetaInformation()
+{
   std::ifstream in(metaInformationPath, std::ios::binary);
-  if (!in.good()) {
+  if (!in.good())
+  {
     throw std::runtime_error(DEBUG_INFO + " failed to open file '" + metaInformationPath + "'");
   }
-  if (!videoMetaInformation.ParseFromIstream(&in)) {
+  if (!videoMetaInformation.ParseFromIstream(&in))
+  {
     throw std::runtime_error(DEBUG_INFO + " failed to read file '" + metaInformationPath + "'");
   }
 }
 
-Utils::CameraState* SourceVideoProtobuf::buildCameraState() {
-  if (index < 0 || index >= videoMetaInformation.camera_states_size()) {
+Utils::CameraState* SourceVideoProtobuf::buildCameraState()
+{
+  if (index < 0 || index >= videoMetaInformation.camera_states_size())
+  {
     throw std::runtime_error(DEBUG_INFO + " invalid index: " + std::to_string(index));
   }
-  if (!videoMetaInformation.has_camera_parameters()) {
+  if (!videoMetaInformation.has_camera_parameters())
+  {
     throw std::runtime_error(DEBUG_INFO + " camera_parameters were not provided");
   }
   return new Utils::CameraState(videoMetaInformation.camera_parameters(), videoMetaInformation.camera_states(index));
 }
 
-void SourceVideoProtobuf::process() { updateImg(); }
+void SourceVideoProtobuf::process()
+{
+  updateImg();
+}
 
-void SourceVideoProtobuf::updateImg() {
+void SourceVideoProtobuf::updateImg()
+{
   index = (int)video.get(cv::CAP_PROP_POS_FRAMES);
-  if (index < 0) {
+  if (index < 0)
+  {
     throw std::runtime_error(DEBUG_INFO + " failed to get pos frames");
   }
   video.read(img());
-  if (img().empty()) {
+  if (img().empty())
+  {
     throw std::runtime_error(DEBUG_INFO + " blank frame read");
   }
 }
 
-void SourceVideoProtobuf::fromJson(const Json::Value& v, const std::string& dir_name) {
+void SourceVideoProtobuf::fromJson(const Json::Value& v, const std::string& dir_name)
+{
   Filter::fromJson(v, dir_name);
   rhoban_utils::tryRead(v, "startIndex", &startIndex);
   rhoban_utils::tryRead(v, "videoPath", &videoPath);
@@ -62,13 +80,15 @@ void SourceVideoProtobuf::fromJson(const Json::Value& v, const std::string& dir_
   openVideo();
   loadMetaInformation();
 
-  if (startIndex != 0) {
+  if (startIndex != 0)
+  {
     setIndex(startIndex - 1);
     updateImg();
   }
 }
 
-Json::Value SourceVideoProtobuf::toJson() const {
+Json::Value SourceVideoProtobuf::toJson() const
+{
   Json::Value v = Filter::toJson();
   v["startIndex"] = startIndex;
   v["videoPath"] = videoPath;
@@ -76,29 +96,51 @@ Json::Value SourceVideoProtobuf::toJson() const {
   return v;
 }
 
-std::string SourceVideoProtobuf::getClassName() const { return "SourceVideoProtobuf"; }
+std::string SourceVideoProtobuf::getClassName() const
+{
+  return "SourceVideoProtobuf";
+}
 
-int SourceVideoProtobuf::expectedDependencies() const { return 0; }
+int SourceVideoProtobuf::expectedDependencies() const
+{
+  return 0;
+}
 
-Source::Type SourceVideoProtobuf::getType() const { return Type::Custom; }
+Source::Type SourceVideoProtobuf::getType() const
+{
+  return Type::Custom;
+}
 
-int SourceVideoProtobuf::getIndex() const { return index; }
-int SourceVideoProtobuf::getNbFrames() const { return (int)video.get(cv::CAP_PROP_FRAME_COUNT); }
+int SourceVideoProtobuf::getIndex() const
+{
+  return index;
+}
+int SourceVideoProtobuf::getNbFrames() const
+{
+  return (int)video.get(cv::CAP_PROP_FRAME_COUNT);
+}
 
-void SourceVideoProtobuf::setIndex(int target_index) {
-  if (!video.set(cv::CAP_PROP_POS_FRAMES, target_index)) {
+void SourceVideoProtobuf::setIndex(int target_index)
+{
+  if (!video.set(cv::CAP_PROP_POS_FRAMES, target_index))
+  {
     throw std::logic_error(DEBUG_INFO + " failed to set index at position " + std::to_string(index));
   }
 }
 
-bool SourceVideoProtobuf::isValid() const { return video.isOpened(); }
+bool SourceVideoProtobuf::isValid() const
+{
+  return video.isOpened();
+}
 
-void SourceVideoProtobuf::previous() {
+void SourceVideoProtobuf::previous()
+{
   setIndex(index - 1);
   updateImg();
 }
 
-void SourceVideoProtobuf::update() {
+void SourceVideoProtobuf::update()
+{
   setIndex(index);
   updateImg();
 }

@@ -3,27 +3,37 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * AbsDiff
  *
  * Calculates the absolute difference between two images A and B
  * (order do not matter)
  */
-class AbsDiff : public Filter {
- public:
-  AbsDiff() : Filter("absDiff") {}
+class AbsDiff : public Filter
+{
+public:
+  AbsDiff() : Filter("absDiff")
+  {
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
   virtual void process() override;
 
-  virtual std::string getClassName() const override { return "AbsDiff"; }
-  virtual int expectedDependencies() const override { return 2; }
+  virtual std::string getClassName() const override
+  {
+    return "AbsDiff";
+  }
+  virtual int expectedDependencies() const override
+  {
+    return 2;
+  }
 };
 }  // namespace Filters
 }  // namespace Vision

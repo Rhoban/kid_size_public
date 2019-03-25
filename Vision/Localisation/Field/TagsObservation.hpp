@@ -3,11 +3,13 @@
 #include "Localisation/Field/SerializableFieldObservation.hpp"
 #include <string>
 
-namespace Vision {
-namespace Localisation {
-
-class TagsObservation : public SerializableFieldObservation {
- public:
+namespace Vision
+{
+namespace Localisation
+{
+class TagsObservation : public SerializableFieldObservation
+{
+public:
   // Id of the marker
   int id;
 
@@ -39,7 +41,7 @@ class TagsObservation : public SerializableFieldObservation {
   /// false-> score = distanceScore
   static bool angleMode;
 
- public:
+public:
   TagsObservation();
 
   TagsObservation(const int& id_, const cv::Point3f& seenPos_, const cv::Point3f& seenDev_, double robotHeight_,

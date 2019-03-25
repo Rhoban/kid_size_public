@@ -11,17 +11,28 @@
 #include <map>
 #include <mutex>
 
-namespace Vision {
-namespace Localisation {
-
-class FieldPF : public rhoban_unsorted::ParticleFilter<FieldPosition> {
- public:
+namespace Vision
+{
+namespace Localisation
+{
+class FieldPF : public rhoban_unsorted::ParticleFilter<FieldPosition>
+{
+public:
   typedef std::pair<int, int> GoalKey;
   typedef std::tuple<int, int, int> QualityKey;
-  enum ResetType { None, Uniform, BordersRight, BordersLeft, Borders, Fall, Custom };
+  enum ResetType
+  {
+    None,
+    Uniform,
+    BordersRight,
+    BordersLeft,
+    Borders,
+    Fall,
+    Custom
+  };
 
- private:
-  RhIO::IONode *rhioNode;
+private:
+  RhIO::IONode* rhioNode;
 
   ResetType resetType;
 
@@ -36,11 +47,11 @@ class FieldPF : public rhoban_unsorted::ParticleFilter<FieldPosition> {
   virtual void updateInternalValues() override;
   void updateToGoalQuality();
 
- protected:
+protected:
   virtual void updateRepresentativeQuality();
   virtual void updateRepresentativeParticle();
 
- public:
+public:
   FieldPF();
 
   /// Overwrite current resetType if it has not been ticked yet
@@ -59,14 +70,13 @@ class FieldPF : public rhoban_unsorted::ParticleFilter<FieldPosition> {
   void applyPendingReset();
   void applyReset(ResetType t);
 
-  void step(rhoban_unsorted::Controller<FieldPosition> &ctrl,
-            const std::vector<rhoban_unsorted::Observation<FieldPosition> *> &observations,
-            double elapsedTime) override;
+  void step(rhoban_unsorted::Controller<FieldPosition>& ctrl,
+            const std::vector<rhoban_unsorted::Observation<FieldPosition>*>& observations, double elapsedTime) override;
 
-  void draw(cv::Mat &img) const;
+  void draw(cv::Mat& img) const;
 
-  rhoban_utils::Angle getAngleToGoal(const GoalKey &gk) const;
-  double angleToGoalQuality(const QualityKey &qk) const;
+  rhoban_utils::Angle getAngleToGoal(const GoalKey& gk) const;
+  double angleToGoalQuality(const QualityKey& qk) const;
 
   rhoban_utils::Angle getAngleToGoal();
   double angleToGoalQuality();

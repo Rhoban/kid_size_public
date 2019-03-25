@@ -20,27 +20,32 @@ using namespace rhoban_utils;
 using namespace rhoban_unsorted;
 using namespace robocup_referee;
 
-namespace Vision {
-namespace Localisation {
-
-std::map<FieldPF::ResetType, std::string> FieldPF::resetNames = {{ResetType::None, "None"},
-                                                                 {ResetType::Uniform, "Uniform"},
-                                                                 {ResetType::BordersRight, "BordersRight"},
-                                                                 {ResetType::BordersLeft, "BordersLeft"},
-                                                                 {ResetType::Borders, "Borders"},
-                                                                 {ResetType::Fall, "Fall"},
-                                                                 {ResetType::Custom, "Custom"}};
+namespace Vision
+{
+namespace Localisation
+{
+std::map<FieldPF::ResetType, std::string> FieldPF::resetNames = { { ResetType::None, "None" },
+                                                                  { ResetType::Uniform, "Uniform" },
+                                                                  { ResetType::BordersRight, "BordersRight" },
+                                                                  { ResetType::BordersLeft, "BordersLeft" },
+                                                                  { ResetType::Borders, "Borders" },
+                                                                  { ResetType::Fall, "Fall" },
+                                                                  { ResetType::Custom, "Custom" } };
 
 FieldPF::FieldPF()
-    : ParticleFilter(), resetType(ResetType::None), errorTols({8}), resamplingRatio(0.0), tolDist(1), tolDiffAngle(15) {
-  std::vector<int> goalsToTrack = {1};
-  std::vector<int> postsToTrack = {-1, 0, 1};
-  for (int goal : goalsToTrack) {
-    for (int post : postsToTrack) {
+  : ParticleFilter(), resetType(ResetType::None), errorTols({ 8 }), resamplingRatio(0.0), tolDist(1), tolDiffAngle(15)
+{
+  std::vector<int> goalsToTrack = { 1 };
+  std::vector<int> postsToTrack = { -1, 0, 1 };
+  for (int goal : goalsToTrack)
+  {
+    for (int post : postsToTrack)
+    {
       GoalKey gk(goal, post);
       trackedGoals.push_back(gk);
       goalDirections[gk] = Angle(0);
-      for (int errorTol : errorTols) {
+      for (int errorTol : errorTols)
+      {
         QualityKey qk(goal, post, errorTol);
         goalQualities[qk] = 0;
       }
@@ -110,16 +115,20 @@ FieldPF::FieldPF()
       ->comment("Uniform noise used for custom reset [m]");
 }
 
-void FieldPF::updateToGoalQuality() {
+void FieldPF::updateToGoalQuality()
+{
   // Initializing data for average computation
   std::map<GoalKey, std::vector<Angle>> viewedAngles;
-  for (const auto &goalPost : trackedGoals) {
+  for (const auto& goalPost : trackedGoals)
+  {
     viewedAngles[goalPost] = {};
   }
   // Calculating differences
-  for (const auto &p : particles) {
+  for (const auto& p : particles)
+  {
     Point tmp = p.first.getRobotPosition();
-    for (const auto &gk : trackedGoals) {
+    for (const auto& gk : trackedGoals)
+    {
       cv::Point dst = Field::Field::getGoal(gk.first, gk.second);
       cv::Point2f pos(tmp.getX(), tmp.getY());
       // Angle in robot referential = aToGoal - robotAngle
@@ -129,23 +138,29 @@ void FieldPF::updateToGoalQuality() {
     }
   }
   // Calculating average and qualities
-  for (const auto &gk : trackedGoals) {
+  for (const auto& gk : trackedGoals)
+  {
     Angle average = Angle::mean(viewedAngles[gk]);
     std::map<int, int> goodParticulesByTol;
-    for (int errorTol : errorTols) {
+    for (int errorTol : errorTols)
+    {
       goodParticulesByTol[errorTol] = 0;
     }
     // Counting particules around average
-    for (const auto &viewedAngle : viewedAngles[gk]) {
+    for (const auto& viewedAngle : viewedAngles[gk])
+    {
       double aDiff = fabs((average - viewedAngle).getSignedValue());
-      for (int errorTol : errorTols) {
-        if (aDiff < errorTol) {
+      for (int errorTol : errorTols)
+      {
+        if (aDiff < errorTol)
+        {
           goodParticulesByTol[errorTol]++;
         }
       }
     }
     // Apply calculated values
-    for (int errorTol : errorTols) {
+    for (int errorTol : errorTols)
+    {
       QualityKey qk(gk.first, gk.second, errorTol);
       goalQualities[qk] = (float)goodParticulesByTol[errorTol] / (float)particles.size();
     }
@@ -153,7 +168,8 @@ void FieldPF::updateToGoalQuality() {
   }
 }
 
-void FieldPF::askForReset(ResetType t) {
+void FieldPF::askForReset(ResetType t)
+{
   ResetType previousType;
   resetMutex.lock();
   previousType = resetType;
@@ -162,26 +178,31 @@ void FieldPF::askForReset(ResetType t) {
   std::string new_name = resetNames.at(t);
   std::string old_name = resetNames.at(previousType);
   logger.log("asking for a reset of type: '%s'", new_name.c_str());
-  if (previousType != ResetType::None) {
+  if (previousType != ResetType::None)
+  {
     logger.warning("Overwriting a reset of type: '%s' with a reset of type '%s'", old_name.c_str(), new_name.c_str());
   }
 }
 
-void FieldPF::cancelPendingReset(ResetType t) {
+void FieldPF::cancelPendingReset(ResetType t)
+{
   ResetType previousType;
   resetMutex.lock();
   previousType = resetType;
-  if (previousType == t) {
+  if (previousType == t)
+  {
     resetType = ResetType::None;
   }
   resetMutex.unlock();
-  if (previousType == t) {
+  if (previousType == t)
+  {
     std::string previous_name = resetNames.at(t);
     logger.log("A reset of type '%s' has been canceled", previous_name.c_str());
   }
 }
 
-FieldPF::ResetType FieldPF::getPendingReset() {
+FieldPF::ResetType FieldPF::getPendingReset()
+{
   ResetType result;
   resetMutex.lock();
   result = resetType;
@@ -189,7 +210,8 @@ FieldPF::ResetType FieldPF::getPendingReset() {
   return result;
 }
 
-void FieldPF::applyPendingReset() {
+void FieldPF::applyPendingReset()
+{
   ResetType pendingReset;
   resetMutex.lock();
   pendingReset = resetType;
@@ -199,17 +221,21 @@ void FieldPF::applyPendingReset() {
   applyReset(pendingReset);
 }
 
-void FieldPF::applyReset(ResetType t) {
-  if (t == ResetType::None) return;
+void FieldPF::applyReset(ResetType t)
+{
+  if (t == ResetType::None)
+    return;
 
   std::string reset_name = resetNames.at(t);
   logger.log("Applying a reset of type: '%s'", reset_name.c_str());
 
-  double mins[3] = {-Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0};
-  double maxs[3] = {Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360};
+  double mins[3] = { -Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0 };
+  double maxs[3] = { Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360 };
 
-  switch (t) {
-    case Uniform: {
+  switch (t)
+  {
+    case Uniform:
+    {
       ParticleFilter::initializeAtUniformRandom(mins, maxs, particles.size());
       break;
     }
@@ -222,21 +248,26 @@ void FieldPF::applyReset(ResetType t) {
     case Borders:
       resetOnLines(0);
       break;
-    case Fall: {
+    case Fall:
+    {
       fallReset();
       break;
     }
-    case Custom: {
+    case Custom:
+    {
       customReset();
       break;
     }
-    default: {}
+    default:
+    {
+    }
   }
   updateInternalValues();
 }
 
-void FieldPF::step(Controller<FieldPosition> &ctrl, const std::vector<Observation<FieldPosition> *> &observations,
-                   double elapsedTime) {
+void FieldPF::step(Controller<FieldPosition>& ctrl, const std::vector<Observation<FieldPosition>*>& observations,
+                   double elapsedTime)
+{
   ResetType stepReset;
   resetMutex.lock();
   stepReset = resetType;
@@ -244,18 +275,22 @@ void FieldPF::step(Controller<FieldPosition> &ctrl, const std::vector<Observatio
   resetMutex.unlock();
 
   // If we are doing a reset, make sure we are up to date with rhio values
-  if (stepReset != None) {
+  if (stepReset != None)
+  {
     importFromRhIO();
   }
 
-  if (stepReset == ResetType::None) {
-    double mins[3] = {-Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0};
-    double maxs[3] = {Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360};
+  if (stepReset == ResetType::None)
+  {
+    double mins[3] = { -Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0 };
+    double maxs[3] = { Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360 };
     // If no reset is planned, apply observations, resampling if required and return
     ParticleFilter::step(ctrl, observations, elapsedTime);
     partialUniformResampling(resamplingRatio, mins, maxs);
     return;
-  } else {
+  }
+  else
+  {
     applyReset(stepReset);
   }
 
@@ -267,24 +302,30 @@ void FieldPF::step(Controller<FieldPosition> &ctrl, const std::vector<Observatio
   updateInternalValues();
 }
 
-void FieldPF::resetOnLines(int side) {
+void FieldPF::resetOnLines(int side)
+{
   auto generator = rhoban_random::getRandomEngine();
   // According to rules, robot start in its own half
   double xOffset = Constants::field.penaltyMarkDist - Constants::field.fieldLength / 2;
   std::uniform_real_distribution<double> xDistribution(-borderNoise, borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta, borderNoiseTheta);
   std::uniform_int_distribution<int> sideDistribution(0, 1);
-  for (auto &p : particles) {
+  for (auto& p : particles)
+  {
     double x = xOffset + xDistribution(generator);
     int currSide;
     // 0 * 2 - 1 = -1 and 1 * 2 - 1 = 1
-    if (side > 0) {
+    if (side > 0)
+    {
       currSide = 1;
-    } else if (side < 0) {
+    }
+    else if (side < 0)
+    {
       currSide = -1;
     }
     // Side is unknown: sampling
-    else {
+    else
+    {
       currSide = sideDistribution(engine) == 0 ? 1 : -1;
     }
     double y = currSide * Constants::field.fieldWidth / 2;
@@ -295,10 +336,12 @@ void FieldPF::resetOnLines(int side) {
   logger.log("Reset particles on borders");
 }
 
-void FieldPF::fallReset() {
+void FieldPF::fallReset()
+{
   auto generator = rhoban_random::getRandomEngine();
   std::uniform_real_distribution<double> dirDistribution(-fallNoiseTheta, fallNoiseTheta);
-  for (auto &p : particles) {
+  for (auto& p : particles)
+  {
     Point move = Point::mkRandomPolar(fallNoise);
     p.first.move(move);
     p.first.rotate(dirDistribution(generator));
@@ -306,58 +349,66 @@ void FieldPF::fallReset() {
   logger.log("Add noise on particles due to a fall");
 }
 
-void FieldPF::customReset() {
+void FieldPF::customReset()
+{
   auto generator = rhoban_random::getRandomEngine();
   std::uniform_real_distribution<double> dirDistribution(customTheta - customThetaNoise,
                                                          customTheta + customThetaNoise);
-  for (auto &p : particles) {
+  for (auto& p : particles)
+  {
     Point noise = Point::mkRandomPolar(customNoise);
     p.first = FieldPosition(customX + noise.x, customY + noise.y, dirDistribution(generator));
   }
-  logger.log(
-      "Applying a customReset at x: %f, y: %f, theta: %f, with noise: "
-      "%f, noiseTheta: %f",
-      customX, customY, customTheta, customNoise, customThetaNoise);
+  logger.log("Applying a customReset at x: %f, y: %f, theta: %f, with noise: "
+             "%f, noiseTheta: %f",
+             customX, customY, customTheta, customNoise, customThetaNoise);
 }
 
-void FieldPF::draw(cv::Mat &img) const {
+void FieldPF::draw(cv::Mat& img) const
+{
   std::cout << "Drawing field" << std::endl;
   Field::Field::drawField(img);
   std::cout << "Drawing particles" << std::endl;
-  for (unsigned int i = 0; i < nbParticles(); i++) {
+  for (unsigned int i = 0; i < nbParticles(); i++)
+  {
     getParticle(i).tag(img, 0.0, cv::Scalar(getParticleQ(i) * 255, 0, 0));
   }
   std::cout << "Drawing representative particles" << std::endl;
   representativeParticle.tag(img, 0.0, cv::Scalar(0, 0, 255), 3);
 }
 
-void FieldPF::updateRepresentativeQuality() {
+void FieldPF::updateRepresentativeQuality()
+{
   // TODO might be improved
   int nbGoodParticles = 0;
-  const Point &repPos = representativeParticle.getRobotPosition();
-  const Angle &repDir = representativeParticle.getOrientation();
-  for (auto &p : particles) {
-    const Point &pos = p.first.getRobotPosition();
-    const Angle &dir = p.first.getOrientation();
+  const Point& repPos = representativeParticle.getRobotPosition();
+  const Angle& repDir = representativeParticle.getOrientation();
+  for (auto& p : particles)
+  {
+    const Point& pos = p.first.getRobotPosition();
+    const Angle& dir = p.first.getOrientation();
     double dist = pos.getDist(repPos);
     double diffAngle = std::fabs((dir - repDir).getSignedValue());
 
     // TODO: The particle quality?
     // p.second=0.5/(diffAngle+1.0)+0.5/(dist+1.0);
-    if (dist < tolDist && diffAngle < tolDiffAngle) {
+    if (dist < tolDist && diffAngle < tolDiffAngle)
+    {
       nbGoodParticles += 1;
     }
   }
   representativeQuality = nbGoodParticles / (double)particles.size();
 }
 
-void FieldPF::updateRepresentativeParticle() {
+void FieldPF::updateRepresentativeParticle()
+{
   int N = particles.size();
   Eigen::VectorXd M = particles[0].first.toVector();
   // Better way of calculating avg angle exists but this one should be
   // good enough
   double x(0), y(0);  // computing avg angle
-  for (int i = 1; i < N; i++) {
+  for (int i = 1; i < N; i++)
+  {
     M = M + particles[i].first.toVector();
     x += cos(particles[i].first.getOrientation());
     y += sin(particles[i].first.getOrientation());
@@ -367,15 +418,20 @@ void FieldPF::updateRepresentativeParticle() {
   representativeParticle.setFromVector(M);
 }
 
-void FieldPF::updateInternalValues() {
+void FieldPF::updateInternalValues()
+{
   ParticleFilter::updateInternalValues();
   updateToGoalQuality();
 }
 
-Angle FieldPF::getAngleToGoal(const GoalKey &gk) const {
-  try {
+Angle FieldPF::getAngleToGoal(const GoalKey& gk) const
+{
+  try
+  {
     return goalDirections.at(gk);
-  } catch (const std::out_of_range &exc) {
+  }
+  catch (const std::out_of_range& exc)
+  {
     ostringstream oss;
     oss << "Error while getting Angle to goal, goalKey not found: "
         << "goal: " << gk.first << ", post: " << gk.second << std::endl;
@@ -383,10 +439,14 @@ Angle FieldPF::getAngleToGoal(const GoalKey &gk) const {
   }
 }
 
-double FieldPF::angleToGoalQuality(const QualityKey &qk) const {
-  try {
+double FieldPF::angleToGoalQuality(const QualityKey& qk) const
+{
+  try
+  {
     return goalQualities.at(qk);
-  } catch (const std::out_of_range &exc) {
+  }
+  catch (const std::out_of_range& exc)
+  {
     ostringstream oss;
     oss << "Error while getting Angle to goal Quality, qualityKey not found: "
         << "goal: " << std::get<0>(qk) << ", post: " << std::get<1>(qk) << ", errTol: " << std::get<2>(qk) << std::endl;
@@ -394,29 +454,45 @@ double FieldPF::angleToGoalQuality(const QualityKey &qk) const {
   }
 }
 
-Angle FieldPF::getAngleToGoal() { return getAngleToGoal(GoalKey(1, 0)); }
+Angle FieldPF::getAngleToGoal()
+{
+  return getAngleToGoal(GoalKey(1, 0));
+}
 
-double FieldPF::angleToGoalQuality() { return angleToGoalQuality(QualityKey(1, 0, 8)); }
+double FieldPF::angleToGoalQuality()
+{
+  return angleToGoalQuality(QualityKey(1, 0, 8));
+}
 
-double FieldPF::getQuality() { return representativeQuality; }
+double FieldPF::getQuality()
+{
+  return representativeQuality;
+}
 
-cv::Point2d FieldPF::getRobotPosition() { return cv::Point2d(representativeParticle.x(), representativeParticle.y()); }
+cv::Point2d FieldPF::getRobotPosition()
+{
+  return cv::Point2d(representativeParticle.x(), representativeParticle.y());
+}
 
-cv::Point2d FieldPF::getCenterPosition() {
+cv::Point2d FieldPF::getCenterPosition()
+{
   return cv::Point2d(-representativeParticle.x(), -representativeParticle.y());
 }
 
-cv::Point2d FieldPF::getLeftGoalPosition() {
+cv::Point2d FieldPF::getLeftGoalPosition()
+{
   cv::Point2d g(Field::Field::getAdvGoal(1).x, Field::Field::getAdvGoal(1).y);
   return g - getRobotPosition();
 }
 
-cv::Point2d FieldPF::getRightGoalPosition() {
+cv::Point2d FieldPF::getRightGoalPosition()
+{
   cv::Point2d g(Field::Field::getAdvGoal(-1).x, Field::Field::getAdvGoal(-1).y);
   return g - getRobotPosition();
 }
 
-cv::Point2d FieldPF::getCenterPositionInSelf() {
+cv::Point2d FieldPF::getCenterPositionInSelf()
+{
   cv::Point2d p = getCenterPosition();
   Angle o = representativeParticle.getOrientation();
   cv::Point2d res;
@@ -425,7 +501,8 @@ cv::Point2d FieldPF::getCenterPositionInSelf() {
   return res;
 }
 
-cv::Point2d FieldPF::getLeftGoalPositionInSelf() {
+cv::Point2d FieldPF::getLeftGoalPositionInSelf()
+{
   cv::Point2d p = getLeftGoalPosition();
   Angle o = representativeParticle.getOrientation();
   cv::Point2d res;
@@ -434,7 +511,8 @@ cv::Point2d FieldPF::getLeftGoalPositionInSelf() {
 
   return res;
 }
-cv::Point2d FieldPF::getRightGoalPositionInSelf() {
+cv::Point2d FieldPF::getRightGoalPositionInSelf()
+{
   cv::Point2d p = getRightGoalPosition();
   Angle o = representativeParticle.getOrientation();
   cv::Point2d res;
@@ -444,14 +522,19 @@ cv::Point2d FieldPF::getRightGoalPositionInSelf() {
   return res;
 }
 
-Angle FieldPF::getOrientation() { return representativeParticle.getOrientation(); }
+Angle FieldPF::getOrientation()
+{
+  return representativeParticle.getOrientation();
+}
 
-bool FieldPF::isResetPending() const {
+bool FieldPF::isResetPending() const
+{
   /// No need for thread safety since it is not setting variables
   return resetType != ResetType::None;
 }
 
-void FieldPF::importFromRhIO() {
+void FieldPF::importFromRhIO()
+{
   resamplingRatio = rhioNode->getValueFloat("resamplingRatio").value;
   tolDist = rhioNode->getValueFloat("tolDist").value;
   tolDiffAngle = rhioNode->getValueFloat("tolDiffAngle").value;
@@ -466,7 +549,8 @@ void FieldPF::importFromRhIO() {
   customThetaNoise = rhioNode->getValueFloat("customThetaNoise").value;
 }
 
-void FieldPF::publishToRhIO() {
+void FieldPF::publishToRhIO()
+{
   rhioNode->setFloat("goalDir", getAngleToGoal().getSignedValue());
   rhioNode->setFloat("goalDirQ", angleToGoalQuality());
   rhioNode->setFloat("leftGoalDir", getAngleToGoal(GoalKey(1, 1)).getSignedValue());
@@ -477,18 +561,23 @@ void FieldPF::publishToRhIO() {
   rhioNode->setFloat("posQ", representativeQuality);
 }
 
-std::string FieldPF::getName(ResetType t) {
-  try {
+std::string FieldPF::getName(ResetType t)
+{
+  try
+  {
     return resetNames.at(t);
-  } catch (const std::out_of_range &exc) {
+  }
+  catch (const std::out_of_range& exc)
+  {
     logger.log("Failed to get name for type: %d", t);
     throw;
   }
 }
 
-void FieldPF::initializeAtUniformRandom(unsigned int particlesNb) {
-  double mins[3] = {-Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0};
-  double maxs[3] = {Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360};
+void FieldPF::initializeAtUniformRandom(unsigned int particlesNb)
+{
+  double mins[3] = { -Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0 };
+  double maxs[3] = { Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360 };
   ParticleFilter::initializeAtUniformRandom(mins, maxs, particlesNb);
 }
 

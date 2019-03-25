@@ -8,24 +8,36 @@
 
 static rhoban_utils::Logger logger("MovieRecorder");
 
-namespace Vision {
-namespace Filters {
+namespace Vision
+{
+namespace Filters
+{
+MovieRecorder::MovieRecorder() : Filter("MovieRecorder"), wasEnabled(false)
+{
+}
 
-MovieRecorder::MovieRecorder() : Filter("MovieRecorder"), wasEnabled(false) {}
+MovieRecorder::~MovieRecorder()
+{
+  closeStream();
+}
 
-MovieRecorder::~MovieRecorder() { closeStream(); }
+std::string MovieRecorder::getClassName() const
+{
+  return "MovieRecorder";
+}
 
-std::string MovieRecorder::getClassName() const { return "MovieRecorder"; }
-
-void MovieRecorder::setParameters() {
+void MovieRecorder::setParameters()
+{
   enabled = ParamInt(0, 0, 1);
   framerate = ParamInt(30, 0, 100.0);
   params()->define<ParamInt>("enabled", &enabled);
   params()->define<ParamFloat>("framerate", &framerate);
 }
 
-void MovieRecorder::startStream(const cv::Size& size) {
-  if (videoPath != "") {
+void MovieRecorder::startStream(const cv::Size& size)
+{
+  if (videoPath != "")
+  {
     throw std::logic_error(DEBUG_INFO + "A video is already being written to " + videoPath);
   }
   videoPath = rhoban_utils::getFormattedTime();
@@ -34,35 +46,41 @@ void MovieRecorder::startStream(const cv::Size& size) {
   // TODO: add quality and fourcc as parameter
   videoWriter.open(filename, cv::VideoWriter::fourcc('X', 'V', 'I', 'D'), framerate, size, useColor);
   //  videoWriter.set(cv::VIDEOWRITER_PROP_QUALITY, 100);
-  if (!videoWriter.isOpened()) {
+  if (!videoWriter.isOpened())
+  {
     throw std::runtime_error(DEBUG_INFO + "Failed to open video");
   }
 
   // Setting intrinsic parameters
   rhoban_vision_proto::IntrinsicParameters* intrinsic = videoMetaInformation.mutable_camera_parameters();
   getCS().exportToProtobuf(intrinsic);
-  if (intrinsic->img_width() != size.width || intrinsic->img_height() != size.height) {
+  if (intrinsic->img_width() != size.width || intrinsic->img_height() != size.height)
+  {
     // TODO: rescale parameters if size is not the same
     throw std::logic_error(DEBUG_INFO + " size of provided image is not the same as camerastate size");
   }
 }
 
-void MovieRecorder::pushEntry() {
+void MovieRecorder::pushEntry()
+{
   videoWriter.write(img());
   const Utils::CameraState& cs = getCS();
   rhoban_vision_proto::CameraState* new_cs = videoMetaInformation.add_camera_states();
   cs.exportToProtobuf(new_cs);
 }
 
-void MovieRecorder::closeStream() {
+void MovieRecorder::closeStream()
+{
   videoWriter.release();
 
   std::string metadataPath = videoPath + "_metadata.bin";
   std::ofstream out(metadataPath);
-  if (!out.good()) {
+  if (!out.good())
+  {
     throw std::runtime_error(DEBUG_INFO + " failed to open '" + metadataPath + "'");
   }
-  if (!videoMetaInformation.SerializeToOstream(&out)) {
+  if (!videoMetaInformation.SerializeToOstream(&out))
+  {
     throw std::runtime_error(DEBUG_INFO + " failed to write in '" + metadataPath + "'");
   }
   out.close();
@@ -74,17 +92,21 @@ void MovieRecorder::closeStream() {
   videoPath.clear();
 }
 
-void MovieRecorder::process() {
+void MovieRecorder::process()
+{
   // Output is similar to input (for debug purpose)
   img() = *(getDependency().getImg());
 
-  if (enabled) {
-    if (!wasEnabled) {
+  if (enabled)
+  {
+    if (!wasEnabled)
+    {
       startStream(img().size());
     }
     pushEntry();
-
-  } else if (wasEnabled) {
+  }
+  else if (wasEnabled)
+  {
     closeStream();
   }
 

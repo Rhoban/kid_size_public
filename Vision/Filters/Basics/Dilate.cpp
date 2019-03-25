@@ -2,10 +2,12 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 
-namespace Vision {
-namespace Filters {
-
-void Dilate::setParameters() {
+namespace Vision
+{
+namespace Filters
+{
+void Dilate::setParameters()
+{
   shape = ParamInt(2, 0, 2);
   kWidth = ParamInt(5, 1, 11);
   kHeight = ParamInt(5, 1, 11);
@@ -14,7 +16,8 @@ void Dilate::setParameters() {
   params()->define<ParamInt>("kernel height", &kHeight);
 }
 
-void Dilate::process() {
+void Dilate::process()
+{
   cv::Mat src = *(getDependency().getImg());
   cv::Mat kernel = getStructuringElement(shape, cv::Size(kWidth, kHeight));
   dilate(*(getDependency().getImg()), img(), kernel);

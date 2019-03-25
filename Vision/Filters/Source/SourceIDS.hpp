@@ -6,14 +6,16 @@
 
 #include <condition_variable>
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * SourceIDS
  */
-class SourceIDS : public Source {
- public:
+class SourceIDS : public Source
+{
+public:
   /**
    * Do not open camera, simply create the Filter
    */
@@ -33,7 +35,7 @@ class SourceIDS : public Source {
 
   virtual Type getType() const override;
 
- protected:
+protected:
   virtual void setParameters() override;
 
   virtual void process() override;
@@ -131,7 +133,7 @@ class SourceIDS : public Source {
    */
   double getExposure();
 
- protected:
+protected:
   /**
    * Retrieve image from last buffer and related meta informations
    */
@@ -152,11 +154,12 @@ class SourceIDS : public Source {
    */
   void printSupportedFormats(std::ostream* out) const;
 
- private:
+private:
   /**
    * Contains an image associated with it's metadata
    */
-  struct ImageEntry {
+  struct ImageEntry
+  {
     cv::Mat img;
     UEYEIMAGEINFO image_info;
     /**

@@ -6,23 +6,33 @@
 // TODO: it seems this class should inherit of ImageSequence more than contain
 // an ImageSequence
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * SourceLogs
  *
  * No dependency filter providing frames coming from the specified folder
  */
-class SourceLogs : public Source {
- public:
-  SourceLogs() : Source("SourceLogs") {}
+class SourceLogs : public Source
+{
+public:
+  SourceLogs() : Source("SourceLogs")
+  {
+  }
 
   // JSON stuff
   virtual void fromJson(const Json::Value& v, const std::string& dir_name);
   virtual Json::Value toJson() const;
-  virtual std::string getClassName() const override { return "SourceLogs"; }
-  virtual int expectedDependencies() const override { return 0; }
+  virtual std::string getClassName() const override
+  {
+    return "SourceLogs";
+  }
+  virtual int expectedDependencies() const override
+  {
+    return 0;
+  }
 
   virtual Type getType() const override;
 
@@ -35,7 +45,7 @@ class SourceLogs : public Source {
   void previous() override;
   void updateImg();
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -43,7 +53,7 @@ class SourceLogs : public Source {
 
   void openImageSequence();
 
- private:
+private:
   int startIndex;
   std::string imagesFile;
 

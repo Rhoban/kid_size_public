@@ -2,9 +2,10 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Threshold
  *
@@ -12,13 +13,19 @@ namespace Filters {
  * applied
  * WARNING: This filter is not adapted for working with floating images
  */
-class Threshold : public Filter {
- public:
-  Threshold() : Filter("Threshold") {}
+class Threshold : public Filter
+{
+public:
+  Threshold() : Filter("Threshold")
+  {
+  }
 
-  virtual std::string getClassName() const override { return "Threshold"; }
+  virtual std::string getClassName() const override
+  {
+    return "Threshold";
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -26,7 +33,7 @@ class Threshold : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
   ParamInt threshold;
   /**
    * Threshold Type:

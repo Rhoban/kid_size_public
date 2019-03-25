@@ -19,9 +19,12 @@
 
 #include "../FilterFactory.hpp"
 
-namespace Vision {
-namespace Filters {
-void registerBasicsFilters(FilterFactory* ff) {
+namespace Vision
+{
+namespace Filters
+{
+void registerBasicsFilters(FilterFactory* ff)
+{
   ff->registerBuilder("AbsDiff", []() { return std::unique_ptr<Filter>(new AbsDiff); });
   ff->registerBuilder("Blur", []() { return std::unique_ptr<Filter>(new Blur()); });
   ff->registerBuilder("Diff", []() { return std::unique_ptr<Filter>(new Diff()); });

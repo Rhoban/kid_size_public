@@ -30,16 +30,20 @@ using namespace robocup_referee;
 
 static rhoban_utils::Logger logger("CameraState");
 
-namespace Vision {
-namespace Utils {
-
-Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D &pose) {
+namespace Vision
+{
+namespace Utils
+{
+Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D& pose)
+{
   Eigen::Matrix3d rotation = Eigen::Matrix3d::Identity();
   Eigen::Vector3d translation = Eigen::Vector3d::Zero();
-  switch (pose.rotation_size()) {
+  switch (pose.rotation_size())
+  {
     case 0:
       break;
-    case 4: {
+    case 4:
+    {
       Eigen::Quaterniond q(pose.rotation(0), pose.rotation(1), pose.rotation(2), pose.rotation(3));
       rotation = Eigen::Matrix3d(q);
       break;
@@ -47,11 +51,13 @@ Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D &pose) {
     default:
       throw std::runtime_error(DEBUG_INFO + " invalid size for rotation: " + std::to_string(pose.rotation_size()));
   }
-  switch (pose.translation_size()) {
+  switch (pose.translation_size())
+  {
     case 0:
       break;
     case 3:
-      for (int dim = 0; dim < 3; dim++) {
+      for (int dim = 0; dim < 3; dim++)
+      {
         translation(dim) = pose.translation(dim);
       }
       break;
@@ -62,7 +68,8 @@ Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D &pose) {
   return Eigen::Translation3d(translation) * Eigen::Affine3d(rotation);
 }
 
-void setProtobufFromAffine(const Eigen::Affine3d &affine, rhoban_vision_proto::Pose3D *pose) {
+void setProtobufFromAffine(const Eigen::Affine3d& affine, rhoban_vision_proto::Pose3D* pose)
+{
   pose->clear_rotation();
   pose->clear_translation();
   Eigen::Quaterniond q(affine.linear());
@@ -75,8 +82,9 @@ void setProtobufFromAffine(const Eigen::Affine3d &affine, rhoban_vision_proto::P
   pose->add_translation(affine.translation()(2));
 }
 
-CameraState::CameraState(MoveScheduler *moveScheduler)
-    : _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>()) {
+CameraState::CameraState(MoveScheduler* moveScheduler)
+  : _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+{
   _moveScheduler = moveScheduler;
   _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
   double now = ::rhoban_utils::TimeStamp::now().getTimeMS() / 1000.0;
@@ -86,28 +94,33 @@ CameraState::CameraState(MoveScheduler *moveScheduler)
   _model->updateDOFPosition();
 }
 
-CameraState::CameraState(const rhoban_vision_proto::IntrinsicParameters &camera_parameters,
-                         const rhoban_vision_proto::CameraState &cs)
-    : _moveScheduler(nullptr), _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>()) {
+CameraState::CameraState(const rhoban_vision_proto::IntrinsicParameters& camera_parameters,
+                         const rhoban_vision_proto::CameraState& cs)
+  : _moveScheduler(nullptr), _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+{
   importFromProtobuf(camera_parameters);
   importFromProtobuf(cs);
 }
 
-void CameraState::importFromProtobuf(const rhoban_vision_proto::IntrinsicParameters &camera_parameters) {
+void CameraState::importFromProtobuf(const rhoban_vision_proto::IntrinsicParameters& camera_parameters)
+{
   _cameraModel.setCenter(Eigen::Vector2d(camera_parameters.center_x(), camera_parameters.center_y()));
   _cameraModel.setFocal(Eigen::Vector2d(camera_parameters.focal_x(), camera_parameters.focal_y()));
   _cameraModel.setImgWidth(camera_parameters.img_width());
   _cameraModel.setImgHeight(camera_parameters.img_height());
-  if (camera_parameters.distortion_size() != 0) {
+  if (camera_parameters.distortion_size() != 0)
+  {
     Eigen::VectorXd distortion(camera_parameters.distortion_size());
-    for (int i = 0; i < camera_parameters.distortion_size(); i++) {
+    for (int i = 0; i < camera_parameters.distortion_size(); i++)
+    {
       distortion(i) = camera_parameters.distortion(i);
     }
     _cameraModel.setDistortion(distortion);
   }
 }
 
-void CameraState::importFromProtobuf(const rhoban_vision_proto::CameraState &src) {
+void CameraState::importFromProtobuf(const rhoban_vision_proto::CameraState& src)
+{
   _timeStamp = src.time_stamp();
   cameraToWorld = getAffineFromProtobuf(src.camera_to_world());
   selfToWorld = getAffineFromProtobuf(src.self_to_world());
@@ -115,7 +128,8 @@ void CameraState::importFromProtobuf(const rhoban_vision_proto::CameraState &src
   worldToSelf = selfToWorld.inverse();
 }
 
-void CameraState::exportToProtobuf(rhoban_vision_proto::IntrinsicParameters *dst) const {
+void CameraState::exportToProtobuf(rhoban_vision_proto::IntrinsicParameters* dst) const
+{
   dst->set_focal_x(_cameraModel.getFocalX());
   dst->set_focal_y(_cameraModel.getFocalY());
   dst->set_center_x(_cameraModel.getCenterX());
@@ -124,27 +138,31 @@ void CameraState::exportToProtobuf(rhoban_vision_proto::IntrinsicParameters *dst
   dst->set_img_height(_cameraModel.getImgHeight());
   Eigen::VectorXd distortion = _cameraModel.getDistortionCoeffsAsEigen();
   dst->clear_distortion();
-  for (int i = 0; i < distortion.size(); i++) {
+  for (int i = 0; i < distortion.size(); i++)
+  {
     dst->add_distortion(distortion(i));
   }
 }
 
-void CameraState::exportToProtobuf(rhoban_vision_proto::CameraState *dst) const {
+void CameraState::exportToProtobuf(rhoban_vision_proto::CameraState* dst) const
+{
   dst->set_time_stamp(_timeStamp);
   setProtobufFromAffine(cameraToWorld, dst->mutable_camera_to_world());
   setProtobufFromAffine(selfToWorld, dst->mutable_self_to_world());
 }
 
-const Leph::CameraModel &CameraState::getCameraModel() const
+const Leph::CameraModel& CameraState::getCameraModel() const
 
 {
   return _cameraModel;
 }
 
-void CameraState::updateInternalModel(double timeStamp) {
+void CameraState::updateInternalModel(double timeStamp)
+{
   _timeStamp = timeStamp;
 
-  if (_moveScheduler != nullptr) {
+  if (_moveScheduler != nullptr)
+  {
     _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
     _model->setAutoUpdate(true);
     _moveScheduler->getServices()->model->pastReadModel(timeStamp, _pastReadModel);
@@ -156,18 +174,22 @@ void CameraState::updateInternalModel(double timeStamp) {
     selfToWorld = worldToSelf.inverse();
     worldToCamera = _model->getTransform("camera", "origin");
     cameraToWorld = worldToCamera.inverse();
-  } else {
+  }
+  else
+  {
     logger.warning("Not updating internal model (no moveScheduler available)");
   }
 }
 
-Angle CameraState::getTrunkYawInWorld() {
+Angle CameraState::getTrunkYawInWorld()
+{
   Eigen::Vector3d dirInWorld = selfToWorld.linear() * Eigen::Vector3d::UnitX();
 
   return Angle(rad2deg(atan2(dirInWorld(1), dirInWorld(0))));
 }
 
-cv::Point2f CameraState::robotPosFromImg(double imgX, double imgY) const {
+cv::Point2f CameraState::robotPosFromImg(double imgX, double imgY) const
+{
   cv::Point2f posInWorldCV = worldPosFromImg(imgX, imgY);
 
   Eigen::Vector3d posInWorld(posInWorldCV.x, posInWorldCV.y, 0);
@@ -176,13 +198,15 @@ cv::Point2f CameraState::robotPosFromImg(double imgX, double imgY) const {
   return cv::Point2f(posInSelf(0), posInSelf(1));
 }
 
-cv::Point2f CameraState::worldPosFromImg(double imgX, double imgY) const {
+cv::Point2f CameraState::worldPosFromImg(double imgX, double imgY) const
+{
   Eigen::Vector3d posInWorld = posInWorldFromPixel(cv::Point2f(imgX, imgY));
 
   return cv::Point2f(posInWorld(0), posInWorld(1));
 }
 
-Eigen::Vector2d CameraState::getVecInSelf(const Eigen::Vector2d &vec_in_world) const {
+Eigen::Vector2d CameraState::getVecInSelf(const Eigen::Vector2d& vec_in_world) const
+{
   Eigen::Vector3d src_in_world = Eigen::Vector3d::Zero();
   Eigen::Vector3d dst_in_world = Eigen::Vector3d::Zero();
   dst_in_world.segment(0, 2) = vec_in_world;
@@ -194,69 +218,86 @@ Eigen::Vector2d CameraState::getVecInSelf(const Eigen::Vector2d &vec_in_world) c
   return (dst_in_self - src_in_self).segment(0, 2);
 }
 
-cv::Point2f CameraState::getPosInSelf(const cv::Point2f &pos_in_origin) const {
+cv::Point2f CameraState::getPosInSelf(const cv::Point2f& pos_in_origin) const
+{
   Eigen::Vector3d pos_in_self = selfToWorld * Eigen::Vector3d(pos_in_origin.x, pos_in_origin.y, 0);
   return cv::Point2f(pos_in_self(0), pos_in_self(1));
 }
 
-rhoban_geometry::PanTilt CameraState::robotPanTiltFromImg(double imgX, double imgY) const {
+rhoban_geometry::PanTilt CameraState::robotPanTiltFromImg(double imgX, double imgY) const
+{
   Eigen::Vector3d viewVectorInCamera = cv2Eigen(_cameraModel.getViewVectorFromImg(cv::Point2f(imgX, imgY)));
   Eigen::Vector3d viewVectorInSelf = worldToSelf.linear() * cameraToWorld.linear() * viewVectorInCamera;
 
   return rhoban_geometry::PanTilt(viewVectorInSelf);
 }
 
-Eigen::Vector3d CameraState::getWorldPosFromCamera(const Eigen::Vector3d &pos_camera) const {
+Eigen::Vector3d CameraState::getWorldPosFromCamera(const Eigen::Vector3d& pos_camera) const
+{
   return cameraToWorld * pos_camera;
 }
 
-Eigen::Vector3d CameraState::getSelfFromWorld(const Eigen::Vector3d &pos_world) const {
+Eigen::Vector3d CameraState::getSelfFromWorld(const Eigen::Vector3d& pos_world) const
+{
   return worldToSelf * pos_world;
 }
 
-Eigen::Vector3d CameraState::getWorldFromSelf(const Eigen::Vector3d &pos_self) const { return selfToWorld * pos_self; }
+Eigen::Vector3d CameraState::getWorldFromSelf(const Eigen::Vector3d& pos_self) const
+{
+  return selfToWorld * pos_self;
+}
 
-Angle CameraState::getPitch() {
+Angle CameraState::getPitch()
+{
   PanTilt panTilt(cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
   return panTilt.tilt;
 }
 
-Angle CameraState::getYaw() {
+Angle CameraState::getYaw()
+{
   PanTilt panTilt(cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
   return panTilt.pan;
 }
 
-double CameraState::getHeight() {
+double CameraState::getHeight()
+{
   // Getting height at camera origin
   double height = (cameraToWorld * Eigen::Vector3d::Zero())(2);
-  if (height < 0) {
+  if (height < 0)
+  {
     height = 0;
   }
   return height;
 }
 
-cv::Point CameraState::imgXYFromWorldPosition(const cv::Point2f &p) const {
+cv::Point CameraState::imgXYFromWorldPosition(const cv::Point2f& p) const
+{
   return imgXYFromWorldPosition(Eigen::Vector3d(p.x, p.y, 0));
 }
 
-cv::Point CameraState::imgXYFromWorldPosition(const Eigen::Vector3d &posInWorld) const {
+cv::Point CameraState::imgXYFromWorldPosition(const Eigen::Vector3d& posInWorld) const
+{
   Eigen::Vector3d posInCamera = worldToCamera * posInWorld;
   return _cameraModel.getImgFromObject(eigen2CV(posInCamera));
 }
 
-PanTilt CameraState::panTiltFromXY(const cv::Point2f &pos, double height) {
+PanTilt CameraState::panTiltFromXY(const cv::Point2f& pos, double height)
+{
   return PanTilt(Eigen::Vector3d(pos.x, pos.y, -height));
 }
 
-double CameraState::computeBallRadiusFromPixel(const cv::Point2f &ballPosImg) const {
+double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) const
+{
   Ray viewRay = getRayInWorldFromPixel(ballPosImg);
-  if (viewRay.dir.z() >= 0) {
+  if (viewRay.dir.z() >= 0)
+  {
     return -1;
   }
 
   Plane ballPlane(Eigen::Vector3d::UnitZ(), Constants::field.ballRadius);
 
-  if (!isIntersectionPoint(viewRay, ballPlane)) {
+  if (!isIntersectionPoint(viewRay, ballPlane))
+  {
     return -1;
   }
 
@@ -278,11 +319,13 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f &ballPosImg) co
   return (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
 }
 
-Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f &pos) const {
+Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f& pos) const
+{
   return posInWorldFromPixel(pos, Constants::field.ballRadius);
 }
 
-rhoban_geometry::Ray CameraState::getRayInWorldFromPixel(const cv::Point2f &img_pos) const {
+rhoban_geometry::Ray CameraState::getRayInWorldFromPixel(const cv::Point2f& img_pos) const
+{
   Eigen::Vector3d viewVectorInCamera = cv2Eigen(_cameraModel.getViewVectorFromImg(img_pos));
   Eigen::Vector3d viewVectorInWorld = cameraToWorld.linear() * viewVectorInCamera;
 
@@ -291,11 +334,13 @@ rhoban_geometry::Ray CameraState::getRayInWorldFromPixel(const cv::Point2f &img_
   return Ray(cameraPosInWorld, viewVectorInWorld);
 }
 
-Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f &pos, double ground_height) const {
+Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f& pos, double ground_height) const
+{
   Ray viewRay = getRayInWorldFromPixel(pos);
   Plane groundPlane(Eigen::Vector3d(0, 0, 1), ground_height);
 
-  if (!isIntersectionPoint(viewRay, groundPlane)) {
+  if (!isIntersectionPoint(viewRay, groundPlane))
+  {
     std::ostringstream oss;
     oss << DEBUG_INFO << " Point " << pos.x << " " << pos.y << " does not intersect ground" << std::endl;
     throw std::runtime_error(oss.str());
@@ -304,11 +349,15 @@ Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f &pos, double 
   return getIntersection(viewRay, groundPlane);
 }
 
-::rhoban_utils::TimeStamp CameraState::getTimeStamp() const {
+::rhoban_utils::TimeStamp CameraState::getTimeStamp() const
+{
   return ::rhoban_utils::TimeStamp::fromMS(_timeStamp * 1000);
 }
 
-double CameraState::getTimeStampDouble() const { return _timeStamp * 1000; }
+double CameraState::getTimeStampDouble() const
+{
+  return _timeStamp * 1000;
+}
 
 }  // namespace Utils
 }  // namespace Vision

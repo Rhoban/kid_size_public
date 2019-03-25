@@ -15,23 +15,33 @@ using Vision::Filters::Source;
 
 static rhoban_utils::Logger logger("Vision::Application");
 
-namespace Vision {
-namespace Application {
-
+namespace Vision
+{
+namespace Application
+{
 Application::Application()
-    : updateType(Filter::UpdateType::forward),
-      playing(false),
-      embedded(false),
-      gpuOn(false),
-      pathToLog(""),
-      exit_on_stream_end(false) {}
+  : updateType(Filter::UpdateType::forward)
+  , playing(false)
+  , embedded(false)
+  , gpuOn(false)
+  , pathToLog("")
+  , exit_on_stream_end(false)
+{
+}
 
-Application::~Application() {}
+Application::~Application()
+{
+}
 
-bool Application::isActive() const { return !end; }
+bool Application::isActive() const
+{
+  return !end;
+}
 
-void Application::configure(int argc, char *argv[]) {
-  if (argc < 2) {
+void Application::configure(int argc, char* argv[])
+{
+  if (argc < 2)
+  {
     std::ostringstream oss;
     oss << "Usage: " << argv[0] << " <config_file>";
     throw std::runtime_error(oss.str());
@@ -39,11 +49,12 @@ void Application::configure(int argc, char *argv[]) {
   loadFile(argv[1]);
 }
 
-void Application::init() {
+void Application::init()
+{
   playNext = true;
   end = false;
-  keyBindings[' '] =
-      KeyAction([this]() { this->playing = !this->playing; }, "Start/Stop playing the video at full speed");
+  keyBindings[' '] = KeyAction([this]() { this->playing = !this->playing; }, "Start/Stop playing the video at full "
+                                                                             "speed");
   keyBindings['n'] = KeyAction(
       [this]() {
         this->playNext = true;
@@ -71,36 +82,52 @@ void Application::init() {
       "Update image (stop playing if activated)");
 }
 
-void Application::step() {
-  try {
+void Application::step()
+{
+  try
+  {
     pipeline.step(updateType);
-  } catch (const Utils::StreamEndException &exc) {
-    if (exit_on_stream_end) {
+  }
+  catch (const Utils::StreamEndException& exc)
+  {
+    if (exit_on_stream_end)
+    {
       end = true;
-    } else {
+    }
+    else
+    {
       logger.warning("End of stream has been reached");
       updateType = Filter::UpdateType::steady;
       playing = false;
     }
-  } catch (const std::runtime_error &exc) {
+  }
+  catch (const std::runtime_error& exc)
+  {
     std::cerr << DEBUG_INFO << " exception during update: " << exc.what() << std::endl;
   }
 }
 
-void Application::finish() {}
+void Application::finish()
+{
+}
 
-void Application::printHelp() {
-  for (const auto &action : keyBindings) {
+void Application::printHelp()
+{
+  for (const auto& action : keyBindings)
+  {
     std::cout << "'" << action.first << "':\t" << action.second.second << std::endl;
   }
 }
 
-void Application::launch() {
+void Application::launch()
+{
   init();
-  while (!end) {
+  while (!end)
+  {
     int64 start, stop;
     double elapsedTime(0);
-    if (playing || playNext) {
+    if (playing || playNext)
+    {
       start = cv::getTickCount();
       step();
       stop = cv::getTickCount();
@@ -109,22 +136,31 @@ void Application::launch() {
       playNext = false;
     }
     int key(255);
-    if (!embedded) {
-      if (!playing) {
+    if (!embedded)
+    {
+      if (!playing)
+      {
         key = cv::waitKey();
-      } else {
+      }
+      else
+      {
         // TODO : Implement FPS limit as a parameter
         int timeToWait = (int)(33 - elapsedTime);  // 30Hz max display
         int minWait = 5;
-        if (timeToWait < minWait) timeToWait = minWait;
+        if (timeToWait < minWait)
+          timeToWait = minWait;
         key = cv::waitKey(timeToWait);
       }
     }
 
-    if (key != 255) {
-      try {
+    if (key != 255)
+    {
+      try
+      {
         keyBindings.at((char)key).first();
-      } catch (const std::out_of_range &o) {
+      }
+      catch (const std::out_of_range& o)
+      {
         printHelp();
       }
     }
@@ -132,7 +168,8 @@ void Application::launch() {
   finish();
 }
 
-void Application::fromJson(const Json::Value &v, const std::string &dir_name) {
+void Application::fromJson(const Json::Value& v, const std::string& dir_name)
+{
   rhoban_utils::tryRead(v, "playing", &playing);
   rhoban_utils::tryRead(v, "embedded", &embedded);
   rhoban_utils::tryRead(v, "gpuOn", &gpuOn);
@@ -144,7 +181,8 @@ void Application::fromJson(const Json::Value &v, const std::string &dir_name) {
   checkConsistency();
 }
 
-Json::Value Application::toJson() const {
+Json::Value Application::toJson() const
+{
   Json::Value v;
   v["playing"] = playing;
   v["embedded"] = embedded;
@@ -156,25 +194,31 @@ Json::Value Application::toJson() const {
   return v;
 }
 
-void Application::checkConsistency() const {
+void Application::checkConsistency() const
+{
   std::string expected_type_name = pathToLog == "" ? "Online" : "Log or Custom";
   std::vector<std::string> invalid_filters;
-  for (const auto &entry : pipeline.filters()) {
-    Source *source = dynamic_cast<Source *>(entry.second);
-    if (source != nullptr) {
+  for (const auto& entry : pipeline.filters())
+  {
+    Source* source = dynamic_cast<Source*>(entry.second);
+    if (source != nullptr)
+    {
       bool bad_online = source->getType() == Filters::Source::Online && pathToLog != "";
       bool bad_replay = source->getType() != Filters::Source::Online && pathToLog == "";
-      if (bad_online || bad_replay) {
+      if (bad_online || bad_replay)
+      {
         invalid_filters.push_back(entry.first);
       }
     }
   }
-  if (invalid_filters.size() != 0) {
+  if (invalid_filters.size() != 0)
+  {
     std::ostringstream oss;
     oss << "Application::checkConsistency: "
         << "Invalid filters found, expected type was: '" << expected_type_name << "', ";
     oss << "filters: ";
-    for (const std::string &name : invalid_filters) {
+    for (const std::string& name : invalid_filters)
+    {
       oss << "(name='" << name << "',type='" << pipeline.get(name).getClassName() << "')" << std::endl;
     }
     throw std::logic_error(oss.str());

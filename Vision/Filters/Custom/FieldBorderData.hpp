@@ -3,13 +3,15 @@
 #include "Filters/Filter.hpp"
 #include "CameraState/CameraState.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /* the data exchange class between vision filter and
  * localisation stuff */
-class FieldBorderData {
- private:
+class FieldBorderData
+{
+private:
   std::vector<std::pair<cv::Point2f, cv::Point2f> > pix_lines;
   std::vector<std::pair<cv::Point2f, cv::Point2f> > world_lines;
   std::vector<std::pair<cv::Point2f, cv::Point2f> > self_lines;
@@ -27,7 +29,7 @@ class FieldBorderData {
 
   bool observation_valid;
 
- public:
+public:
   double max_obs_score;
   bool loc_active;
   bool debug_output;

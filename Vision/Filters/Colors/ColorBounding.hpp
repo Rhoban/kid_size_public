@@ -3,19 +3,26 @@
 #include <vector>
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * ColorBounding
  *
  * Detecting pixels of a field color in a yuv Image
  */
-class ColorBounding : public Filter {
- public:
-  ColorBounding() : Filter("ColorBounding") {}
+class ColorBounding : public Filter
+{
+public:
+  ColorBounding() : Filter("ColorBounding")
+  {
+  }
 
-  virtual std::string getClassName() const override { return "ColorBounding"; }
+  virtual std::string getClassName() const override
+  {
+    return "ColorBounding";
+  }
 
   /**
    * YUV limits for field detection. In public so they are accessible from other
@@ -23,7 +30,7 @@ class ColorBounding : public Filter {
    */
   ParamInt minY, maxY, minU, maxU, minV, maxV;
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -31,7 +38,7 @@ class ColorBounding : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
 };
 }  // namespace Filters
 }  // namespace Vision

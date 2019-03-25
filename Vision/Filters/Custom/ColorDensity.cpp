@@ -2,14 +2,20 @@
 
 using namespace std;
 
-namespace Vision {
-namespace Filters {
+namespace Vision
+{
+namespace Filters
+{
+ColorDensity::ColorDensity() : Filter("ColorDensity")
+{
+}
 
-ColorDensity::ColorDensity() : Filter("ColorDensity") {}
+ColorDensity::~ColorDensity()
+{
+}
 
-ColorDensity::~ColorDensity() {}
-
-void ColorDensity::setParameters() {
+void ColorDensity::setParameters()
+{
   /* define the size of the squared kernel side in pixel */
   kernel_size = ParamInt(30, 2, 100);
   params()->define<ParamInt>("kernel_size", &kernel_size);
@@ -17,15 +23,18 @@ void ColorDensity::setParameters() {
   params()->define<ParamFloat>("resize_factor", &resize_factor);
 }
 
-void ColorDensity::process() {
+void ColorDensity::process()
+{
   std::string greenIIName = _dependencies[0];  // Integral image
   cv::Mat greenII = (getDependency(greenIIName).getImg())->clone();
   int col_nb = (int)(resize_factor * (greenII.cols - 1));
   int row_nb = (int)(resize_factor * (greenII.rows - 1));
   img() = cv::Mat(row_nb, col_nb, 0);
 
-  for (int x = 0; x < col_nb; x++) {
-    for (int y = 0; y < row_nb; y++) {
+  for (int x = 0; x < col_nb; x++)
+  {
+    for (int y = 0; y < row_nb; y++)
+    {
       int s = kernel_size / 2;
       int xm = max((int)(x / resize_factor) - s, 0), ym = max((int)(y / resize_factor) - s, 0);
       int xM = min((int)(x / resize_factor) + s, greenII.cols - 1),

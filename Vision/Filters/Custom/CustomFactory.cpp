@@ -8,9 +8,12 @@
 #include "WhiteLines.hpp"
 #include "../FilterFactory.hpp"
 
-namespace Vision {
-namespace Filters {
-void registerCustomFilters(FilterFactory* ff) {
+namespace Vision
+{
+namespace Filters
+{
+void registerCustomFilters(FilterFactory* ff)
+{
   ff->registerBuilder("BallRadiusProvider", []() { return std::unique_ptr<Filter>(new BallRadiusProvider); });
   ff->registerBuilder("Recorder", []() { return std::unique_ptr<Filter>(new Recorder()); });
   ff->registerBuilder("ColorDensity", []() { return std::unique_ptr<Filter>(new ColorDensity()); });

@@ -5,13 +5,15 @@
 
 #include "tiny_dnn/tiny_dnn.h"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /// Simplest filter for detecting the ball
 /// - Takes a binary image as input and use the barycenter as a ball candidate
-class GoalByDNN : public GoalProvider {
- public:
+class GoalByDNN : public GoalProvider
+{
+public:
   GoalByDNN();
 
   virtual std::string getClassName() const;
@@ -19,7 +21,7 @@ class GoalByDNN : public GoalProvider {
   virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
   virtual int expectedDependencies() const;
 
- protected:
+protected:
   virtual void process() override;
   virtual void setParameters() override;
 
@@ -29,7 +31,7 @@ class GoalByDNN : public GoalProvider {
   /// Use the neural network to get the patch score
   double getScore(const cv::Mat& patch);
 
- private:
+private:
   /// The neural network used to predict if the patch is a 'ball patch'
   tiny_dnn::network<tiny_dnn::sequential> nn;
 

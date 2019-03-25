@@ -3,13 +3,15 @@
 #include "Filters/Filter.hpp"
 #include "Filters/Custom/FieldBorderData.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Recognize Border of the Field and compute the clipping
  */
-class FieldBorder : public Filter {
+class FieldBorder : public Filter
+{
   int col_nb, row_nb;  // the size of the image
   double gd_ratio;     // ratio entre les inputs (TMP)
   int comb_dx;         // spacing between teeth of the comb
@@ -17,12 +19,18 @@ class FieldBorder : public Filter {
   int l_line, r_line;
   int best_K;
 
- public:
+public:
   FieldBorder();
   ~FieldBorder();
 
-  virtual std::string getClassName() const override { return "FieldBorder"; }
-  virtual int expectedDependencies() const override { return 4; }
+  virtual std::string getClassName() const override
+  {
+    return "FieldBorder";
+  }
+  virtual int expectedDependencies() const override
+  {
+    return 4;
+  }
 
   FieldBorderData loc_data;
   void update_loc_data(std::vector<cv::Vec2f> line_pair_eq, std::vector<std::pair<int, int> > line_pair_domain,
@@ -59,19 +67,19 @@ class FieldBorder : public Filter {
   void epilogue(std::vector<cv::Vec2f>& line_eq, std::vector<std::pair<int, int> >& line_x_domain,
                 std::map<std::pair<int, int>, int>& line_pairs_X_inter);
 
- public:
+public:
   static FieldBorderData* current_loc_data;
   static double best_score;
   static double get_score();
 
- protected:
+protected:
   /**
    * @Inherit
    */
   virtual void process() override;
   virtual void setParameters() override;
 
- private:
+private:
   /* enable (1) or disable (0) the filter */
   ParamInt enable;
   /* output debug image tag level */
@@ -103,7 +111,7 @@ class FieldBorder : public Filter {
   // calcul des potentiels
   ParamFloat potential_pos50, potential_angle50, potential_exp, potential_error;
 
- private:
+private:
   static float* line_fine_score;
   static float* line_fine_score_square;
   static float* line_fine_score_cum;

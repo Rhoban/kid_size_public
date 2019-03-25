@@ -74,27 +74,30 @@ using Vision::Filters::TagsDetector;
 using Vision::Utils::CameraState;
 using Vision::Utils::ImageLogger;
 
-namespace Vision {
-
-Robocup::Robocup(MoveScheduler *scheduler)
-    : Application(),
-      imageDelay(0),
-      manual_logger("manual_logs", true, 10000),
-      moving_ball_logger("moving_ball_logs", false, 1000),
-      autologMovingBall(false),
-      game_logger("game_logs", false, 15 * 60 * 40),  // Allows 15 minutes at 40 fps ->
-      autolog_games(false),
-      logBallExtraTime(2.0),
-      writeBallStatus(false),
-      _scheduler(scheduler),
-      benchmark(false),
-      benchmarkDetail(0),
-      cs(new CameraState(scheduler)),  // TODO: maybe put the name of the param file elsewhere
-      activeSource(false),
-      clearRememberObservations(false),
-      wasHandled(false),
-      wasFallen(false),
-      ignoreOutOfFieldBalls(true) {
+namespace Vision
+{
+Robocup::Robocup(MoveScheduler* scheduler)
+  : Application()
+  , imageDelay(0)
+  , manual_logger("manual_logs", true, 10000)
+  , moving_ball_logger("moving_ball_logs", false, 1000)
+  , autologMovingBall(false)
+  , game_logger("game_logs", false, 15 * 60 * 40)
+  ,  // Allows 15 minutes at 40 fps ->
+  autolog_games(false)
+  , logBallExtraTime(2.0)
+  , writeBallStatus(false)
+  , _scheduler(scheduler)
+  , benchmark(false)
+  , benchmarkDetail(0)
+  , cs(new CameraState(scheduler))
+  ,  // TODO: maybe put the name of the param file elsewhere
+  activeSource(false)
+  , clearRememberObservations(false)
+  , wasHandled(false)
+  , wasFallen(false)
+  , ignoreOutOfFieldBalls(true)
+{
   ballStackFilter = new BallStackFilter(cs);
   robotFilter = new RobotFilter(cs);
   ballSpeedEstimator = new SpeedEstimator();
@@ -106,7 +109,8 @@ Robocup::Robocup(MoveScheduler *scheduler)
   featureProviders["fieldBorder"] = std::vector<std::string>();
   initObservationTypes();
 
-  for (std::string obs : observationTypes) {
+  for (std::string obs : observationTypes)
+  {
     rememberObservations[obs] = std::vector<std::pair<cv::Point2f, float>>();
   }
 
@@ -117,31 +121,34 @@ Robocup::Robocup(MoveScheduler *scheduler)
   _doRun = true;
   _runThread = new std::thread(std::bind(&Robocup::run, this));
   Filter::GPU_ON = gpuOn;
-  if (pathToLog != "") {
+  if (pathToLog != "")
+  {
     // The low level info will come from a log
     setLogMode(pathToLog);
   }
   scheduler->getServices()->localisation->setRobocup(this);
 }
 
-Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
-    : imageDelay(0),
-      manual_logger("manual_logs", true, 10000),
-      moving_ball_logger("moving_ball_logs", false, 1000),
-      autologMovingBall(false),
-      game_logger("game_logs", true, 15 * 60 * 40),  // Allows 15 minutes at 40 fps
-      autolog_games(false),
-      logBallExtraTime(2.0),
-      writeBallStatus(false),
-      benchmark(false),
-      benchmarkDetail(0),
-      _runThread(NULL),
-      cs(new CameraState(scheduler)),
-      activeSource(false),
-      clearRememberObservations(false),
-      wasHandled(false),
-      wasFallen(false),
-      ignoreOutOfFieldBalls(true) {
+Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
+  : imageDelay(0)
+  , manual_logger("manual_logs", true, 10000)
+  , moving_ball_logger("moving_ball_logs", false, 1000)
+  , autologMovingBall(false)
+  , game_logger("game_logs", true, 15 * 60 * 40)
+  ,  // Allows 15 minutes at 40 fps
+  autolog_games(false)
+  , logBallExtraTime(2.0)
+  , writeBallStatus(false)
+  , benchmark(false)
+  , benchmarkDetail(0)
+  , _runThread(NULL)
+  , cs(new CameraState(scheduler))
+  , activeSource(false)
+  , clearRememberObservations(false)
+  , wasHandled(false)
+  , wasFallen(false)
+  , ignoreOutOfFieldBalls(true)
+{
   ballStackFilter = new BallStackFilter(cs);
   robotFilter = new RobotFilter(cs);
   ballSpeedEstimator = new SpeedEstimator();
@@ -153,7 +160,8 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
   featureProviders["fieldBorder"] = std::vector<std::string>();
   initObservationTypes();
 
-  for (std::string obs : observationTypes) {
+  for (std::string obs : observationTypes)
+  {
     rememberObservations[obs] = std::vector<std::pair<cv::Point2f, float>>();
   }
   pipeline.setCameraState(cs);
@@ -162,23 +170,27 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
   loadFile(configFile);
   _doRun = true;
   Filter::GPU_ON = gpuOn;
-  if (pathToLog != "") {
+  if (pathToLog != "")
+  {
     // The low level info will come from a log
     setLogMode(pathToLog);
   }
   scheduler->getServices()->localisation->setRobocup(this);
 }
 
-Robocup::~Robocup() {
+Robocup::~Robocup()
+{
   delete ballStackFilter;
   _doRun = false;
-  if (_runThread != NULL) {
+  if (_runThread != NULL)
+  {
     _runThread->join();
     delete _runThread;
   }
 }
 
-void Robocup::startLogging(unsigned int timeMS, const std::string &logDir) {
+void Robocup::startLogging(unsigned int timeMS, const std::string& logDir)
+{
   // If logDir is empty a name session is generated automatically in manual_logger
   logMutex.lock();
   manual_logger.initSession(logDir);
@@ -187,7 +199,8 @@ void Robocup::startLogging(unsigned int timeMS, const std::string &logDir) {
   logMutex.unlock();
 }
 
-void Robocup::endLogging() {
+void Robocup::endLogging()
+{
   logMutex.lock();
   // Telling the low level to stop logging and to dump the info
   stopLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
@@ -196,31 +209,43 @@ void Robocup::endLogging() {
   logMutex.unlock();
 }
 
-void Robocup::applyKick(double x, double y) {
+void Robocup::applyKick(double x, double y)
+{
   // ballStackFilter->applyKick(x / 100.0, y / 100.0);
 }
 
-cv::Mat Robocup::getImg(const std::string &name, int wishedWidth, int wishedHeight, bool gray) {
+cv::Mat Robocup::getImg(const std::string& name, int wishedWidth, int wishedHeight, bool gray)
+{
   cv::Mat original, scaled, final;
-  if (name == "Tagged") {
+  if (name == "Tagged")
+  {
     original = getTaggedImg();
-  } else {
-    try {
+  }
+  else
+  {
+    try
+    {
       original = pipeline.get(name).getImg()->clone();
-    } catch (const std::out_of_range &o) {
+    }
+    catch (const std::out_of_range& o)
+    {
       throw std::runtime_error("Image not found : '" + name + "'");
     }
   }
   cv::resize(original, scaled, cv::Size(wishedWidth, wishedHeight));
-  if (gray) {
+  if (gray)
+  {
     cv::cvtColor(scaled, final, CV_RGB2GRAY);
-  } else {
+  }
+  else
+  {
     final = scaled;
   }
   return final;
 }
 
-Json::Value Robocup::toJson() const {
+Json::Value Robocup::toJson() const
+{
   // Writing stream
   Json::Value v = Application::toJson();
   v["benchmark"] = benchmark;
@@ -232,18 +257,21 @@ Json::Value Robocup::toJson() const {
   v["writeBallStatus"] = writeBallStatus;
   v["ignoreOutOfFieldBalls"] = ignoreOutOfFieldBalls;
 
-  for (const auto &entry : featureProviders) {
-    const std::string &featureName = entry.first;
-    const std::vector<std::string> &providers = entry.second;
+  for (const auto& entry : featureProviders)
+  {
+    const std::string& featureName = entry.first;
+    const std::vector<std::string>& providers = entry.second;
     v[featureName + "Providers"] = vector2Json(providers);
   }
-  for (const SpecialImageHandler &sih : imageHandlers) {
+  for (const SpecialImageHandler& sih : imageHandlers)
+  {
     v[sih.name] = sih.display;
   }
   return v;
 }
 
-void Robocup::fromJson(const Json::Value &v, const std::string &dir_name) {
+void Robocup::fromJson(const Json::Value& v, const std::string& dir_name)
+{
   Application::fromJson(v, dir_name);
   rhoban_utils::tryRead(v, "benchmark", &benchmark);
   rhoban_utils::tryRead(v, "benchmarkDetail", &benchmarkDetail);
@@ -253,64 +281,81 @@ void Robocup::fromJson(const Json::Value &v, const std::string &dir_name) {
   rhoban_utils::tryRead(v, "logBallExtraTime", &logBallExtraTime);
   rhoban_utils::tryRead(v, "writeBallStatus", &writeBallStatus);
   rhoban_utils::tryRead(v, "ignoreOutOfFieldBalls", &ignoreOutOfFieldBalls);
-  for (auto &entry : featureProviders) {
-    const std::string &featureName = entry.first;
+  for (auto& entry : featureProviders)
+  {
+    const std::string& featureName = entry.first;
 
     std::string nodeName = featureName + "Providers";
     rhoban_utils::tryReadVector<std::string>(v, nodeName, &entry.second);
   }
-  for (SpecialImageHandler &sih : imageHandlers) {
+  for (SpecialImageHandler& sih : imageHandlers)
+  {
     rhoban_utils::tryRead(v, sih.name, &sih.display);
   }
 }
 
-void Robocup::init() {
+void Robocup::init()
+{
   Application::init();
   lastTS = ::rhoban_utils::TimeStamp::fromMS(0);
 
   initRhIO();
 }
 
-void Robocup::initImageHandlers() {
+void Robocup::initImageHandlers()
+{
   imageHandlers.push_back(SpecialImageHandler(
       "TaggedImg", 640, 480, [this](int width, int height) { return this->getTaggedImg(width, height); }));
   imageHandlers.push_back(SpecialImageHandler(
       "RadarImg", 640, 480, [this](int width, int height) { return this->getRadarImg(width, height); }));
 }
 
-void Robocup::initRhIO() {
+void Robocup::initRhIO()
+{
   // If a command has already been created do not pass here again
-  if (RhIO::Root.commandExist("Vision/logLocal")) {
+  if (RhIO::Root.commandExist("Vision/logLocal"))
+  {
     return;
   }
   RhIO::Root.newStr("/Vision/cameraStatus")->defaultValue("");
   RhIO::Root.newFloat("/Vision/lastUpdate")->defaultValue(-1)->comment("Time since last update [ms]");
   // Init interface with RhIO
-  if (isFakeMode()) {  /// Highgui is not available on robot
+  if (isFakeMode())
+  {  /// Highgui is not available on robot
     RhIO::Root.newCommand("Vision/showFilters", "Display the given filters",
-                          [this](const std::vector<std::string> &args) -> std::string {
-                            if (args.size() < 1) {
+                          [this](const std::vector<std::string>& args) -> std::string {
+                            if (args.size() < 1)
+                            {
                               throw std::runtime_error("Usage: showFilters <name1> <name2> ...");
                             }
-                            for (const std::string &name : args) {
-                              try {
+                            for (const std::string& name : args)
+                            {
+                              try
+                              {
                                 pipeline.get(name).display = true;
-                              } catch (const std::out_of_range &exc) {
+                              }
+                              catch (const std::out_of_range& exc)
+                              {
                                 throw std::runtime_error("Filter " + name + " is not found in pipeline");
                               }
                             }
                             return "Filters are now displayed";
                           });
     RhIO::Root.newCommand("Vision/hideFilters", "Hide the given filters",
-                          [this](const std::vector<std::string> &args) -> std::string {
-                            if (args.size() < 1) {
+                          [this](const std::vector<std::string>& args) -> std::string {
+                            if (args.size() < 1)
+                            {
                               throw std::runtime_error("Usage: hideFilters <name1> <name2> ...");
                             }
-                            for (const std::string &name : args) {
-                              try {
+                            for (const std::string& name : args)
+                            {
+                              try
+                              {
                                 pipeline.get(name).display = false;
                                 cv::destroyWindow(name);
-                              } catch (const std::out_of_range &exc) {
+                              }
+                              catch (const std::out_of_range& exc)
+                              {
                                 throw std::runtime_error("Filter " + name + " is not found in pipeline");
                               }
                             }
@@ -320,13 +365,15 @@ void Robocup::initRhIO() {
   RhIO::Root.newCommand("Vision/logLocal",
                         "Starts logging for a specified duration. Images are "
                         "saved on board for now.",
-                        [this](const std::vector<std::string> &args) -> std::string {
-                          if (args.size() < 1) {
+                        [this](const std::vector<std::string>& args) -> std::string {
+                          if (args.size() < 1)
+                          {
                             throw std::runtime_error("Usage: logLocal <duration[s]> <opt:log_dir>");
                           }
                           double duration = std::stof(args[0]);
                           std::string logDir("");
-                          if (args.size() >= 2) {
+                          if (args.size() >= 2)
+                          {
                             logDir = args[1];
                           }
                           this->startLogging((unsigned int)(duration * 1000), logDir);
@@ -355,7 +402,8 @@ void Robocup::initRhIO() {
       ->comment("Tolerance in pitch (degrees)");
 
   // Monitoring special images
-  for (const SpecialImageHandler &sih : imageHandlers) {
+  for (const SpecialImageHandler& sih : imageHandlers)
+  {
     std::string prefix = "Vision/" + sih.name;
     RhIO::Root.newFloat(prefix + "_scale")->defaultValue(1.0)->comment("");
     RhIO::Root.newFrame(prefix, "", RhIO::FrameFormat::BGR);
@@ -366,15 +414,21 @@ void Robocup::initRhIO() {
   robotFilter->bindToRhIO("robotFilter", "robotFilter");
 }
 
-void Robocup::initObservationTypes() {
-  observationTypes = {"ball", "post", "team_mate", "opponent", "t", "corner", "tag", "clipping", "compass"};
+void Robocup::initObservationTypes()
+{
+  observationTypes = { "ball", "post", "team_mate", "opponent", "t", "corner", "tag", "clipping", "compass" };
 }
 
-void Robocup::finish() {}
+void Robocup::finish()
+{
+}
 
-void Robocup::step() {
-  if (clearRememberObservations) {
-    for (auto &entry : rememberObservations) {
+void Robocup::step()
+{
+  if (clearRememberObservations)
+  {
+    for (auto& entry : rememberObservations)
+    {
       entry.second.clear();
     }
     clearRememberObservations = false;
@@ -382,26 +436,31 @@ void Robocup::step() {
 
   // Sometimes vision is useless and even bug prone, in this case, cancel the
   // step
-  DecisionService *decision = _scheduler->getServices()->decision;
+  DecisionService* decision = _scheduler->getServices()->decision;
   bool handled = decision->handled;
   bool fallen = decision->isFallen;
-  if (embedded && (handled || fallen)) {
+  if (embedded && (handled || fallen))
+  {
     publishToRhIO();
     std::ostringstream oss;
     // Updating handled/fallen and sending message
-    if (!wasHandled && handled) {
+    if (!wasHandled && handled)
+    {
       out.log("Disabling vision (handled)");
       wasHandled = true;
     }
-    if (wasHandled && !handled) {
+    if (wasHandled && !handled)
+    {
       out.log("Robot is not handled anymore");
       wasHandled = false;
     }
-    if (!wasFallen && fallen) {
+    if (!wasFallen && fallen)
+    {
       wasFallen = true;
       out.log("Disabling vision (fallen)");
     }
-    if (wasFallen && !fallen) {
+    if (wasFallen && !fallen)
+    {
       out.log("Robot is not fallen anymore");
       wasFallen = false;
     }
@@ -410,7 +469,8 @@ void Robocup::step() {
     usleep(ms_sleep * 1000);
     return;
   }
-  if (wasHandled || wasFallen) {
+  if (wasHandled || wasFallen)
+  {
     out.log("Starting to step vision again");
     wasHandled = false;
     wasFallen = false;
@@ -420,15 +480,16 @@ void Robocup::step() {
   // keeping the filters data
   {
     double timeSinceLastFrame = diffSec(lastTS, getNowTS());
-    if (timeSinceLastFrame > 5) {
+    if (timeSinceLastFrame > 5)
+    {
       out.warning("no frame for %f, reseting the ball filter", timeSinceLastFrame);
 
       // Resetting the ball stack filter
       ballStackFilter->clear();
 
       // Telling the localisation
-      LocalisationService *loc =
-          dynamic_cast<LocalisationService *>(_scheduler->getServices()->getService("localisation"));
+      LocalisationService* loc = dynamic_cast<LocalisationService*>(_scheduler->getServices()->getService("localisatio"
+                                                                                                          "n"));
       loc->setNoBall();
     }
   }
@@ -444,15 +505,19 @@ void Robocup::step() {
   Benchmark::close("Waiting for global mutex");
 
   Benchmark::open("Pipeline");
-  try {
+  try
+  {
     Application::step();
     activeSource = true;
     // If Vision application has finished, ask for scheduler to shut down
-    if (!isActive()) {
+    if (!isActive())
+    {
       out.log("Vision exiting, asking to scheduler to shut down");
       _scheduler->askQuit();
     }
-  } catch (const PtGreyException &exc) {
+  }
+  catch (const PtGreyException& exc)
+  {
     globalMutex.unlock();
     Benchmark::close("Pipeline");
     Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);
@@ -462,7 +527,9 @@ void Robocup::step() {
     int sleep_time_ms = 100;
     usleep(sleep_time_ms * 1000);
     return;
-  } catch (const PtGreyConnectionException &exc) {
+  }
+  catch (const PtGreyConnectionException& exc)
+  {
     globalMutex.unlock();
     Benchmark::close("Pipeline");
     Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);
@@ -492,18 +559,22 @@ void Robocup::step() {
 
   globalMutex.unlock();
 
-  for (SpecialImageHandler &sih : imageHandlers) {
+  for (SpecialImageHandler& sih : imageHandlers)
+  {
     std::string prefix = "Vision/" + sih.name;
     bool isStreaming = RhIO::Root.frameIsStreaming(prefix);
     // If frame is not displayed either streamed, avoid wasting CPU
-    if ((!sih.display) && !isStreaming) continue;
+    if ((!sih.display) && !isStreaming)
+      continue;
     Benchmark::open(sih.name);
     // Update image and update necessary parts
     int img_width = sih.getWidth();
     int img_height = sih.getHeight();
     sih.lastImg = sih.getter(img_width, img_height);
-    if (sih.display) cv::imshow(sih.name, sih.lastImg);
-    if (isStreaming) RhIO::Root.framePush(prefix, img_width, img_height, sih.lastImg.data, sih.getSize());
+    if (sih.display)
+      cv::imshow(sih.name, sih.lastImg);
+    if (isStreaming)
+      RhIO::Root.framePush(prefix, img_width, img_height, sih.lastImg.data, sih.getSize());
     Benchmark::close(sih.name.c_str());
   }
 
@@ -520,13 +591,15 @@ void Robocup::step() {
   Benchmark::close("Vision + Localisation", benchmark, benchmarkDetail);
 
   // Set the log timestamp during fake mode
-  if (isFakeMode()) {
+  if (isFakeMode())
+  {
     double ts = pipeline.getTimestamp().getTimeMS();
     _scheduler->getServices()->model->setReplayTimestamp(ts / 1000.0);
   }
 }
 
-void Robocup::importFromRhIO() {
+void Robocup::importFromRhIO()
+{
   autologMovingBall = RhIO::Root.getValueBool("/Vision/autologMovingBall").value;
   autolog_games = RhIO::Root.getValueBool("/Vision/autologGames").value;
   logBallExtraTime = RhIO::Root.getValueFloat("/Vision/logBallExtraTime").value;
@@ -535,30 +608,36 @@ void Robocup::importFromRhIO() {
   imageDelay = RhIO::Root.getValueInt("/Vision/imageDelay").value;
   angularPitchTolerance = RhIO::Root.getValueFloat("/Vision/angularPitchTolerance").value;
   // Import size update for images
-  for (SpecialImageHandler &sih : imageHandlers) {
+  for (SpecialImageHandler& sih : imageHandlers)
+  {
     std::string prefix = "Vision/" + sih.name;
     sih.scale = RhIO::Root.getValueFloat(prefix + "_scale").value;
   }
 }
 
-void Robocup::publishToRhIO() {
+void Robocup::publishToRhIO()
+{
   RhIO::Root.setFloat("/Vision/lastUpdate", diffMs(lastTS, getNowTS()));
   std::string cameraStatus = getCameraStatus();
   RhIO::Root.setStr("/Vision/cameraStatus", cameraStatus);
 }
 
-std::string Robocup::getCameraStatus() const {
-  if (!activeSource) {
+std::string Robocup::getCameraStatus() const
+{
+  if (!activeSource)
+  {
     return "Connection lost";
   }
-  DecisionService *decision = _scheduler->getServices()->decision;
-  if (decision->handled || decision->isFallen) {
+  DecisionService* decision = _scheduler->getServices()->decision;
+  if (decision->handled || decision->isFallen)
+  {
     return "Inactive (handled or fallen)";
   }
   return "Active";
 }
 
-void Robocup::readPipeline() {
+void Robocup::readPipeline()
+{
   std::vector<std::string> arenaProviders = featureProviders["arena"];
   std::vector<std::string> goalProviders = featureProviders["goal"];
   std::vector<std::string> ballProviders = featureProviders["ball"];
@@ -568,63 +647,80 @@ void Robocup::readPipeline() {
 
   // Goals:
   goalsMutex.lock();
-  for (const std::string &provider_name : goalProviders) {
-    try {
-      const Filters::GoalProvider &provider = dynamic_cast<const Filters::GoalProvider &>(pipeline.get(provider_name));
+  for (const std::string& provider_name : goalProviders)
+  {
+    try
+    {
+      const Filters::GoalProvider& provider = dynamic_cast<const Filters::GoalProvider&>(pipeline.get(provider_name));
       std::vector<double> providerGoalsX = provider.getGoalsX();
       std::vector<double> providerGoalsY = provider.getGoalsY();
       // Converting the goal from image basis to "origin" basis
       // and adding it to detected goals
-      for (size_t id = 0; id < providerGoalsX.size(); id++) {
+      for (size_t id = 0; id < providerGoalsX.size(); id++)
+      {
         double goal_x = providerGoalsX[id];
         double goal_y = providerGoalsY[id];
         cv::Point2f goal_pos_world = cs->worldPosFromImg(goal_x, goal_y);
         detectedGoals.push_back(goal_pos_world);
       }
-    } catch (const std::bad_cast &e) {
+    }
+    catch (const std::bad_cast& e)
+    {
       std::cerr << "Failed to import goal positions, check pipeline. Exception = " << e.what() << std::endl;
-    } catch (const std::runtime_error &exc) {
+    }
+    catch (const std::runtime_error& exc)
+    {
       std::cerr << "Robocup::readPipeline: goalProviders: runtime_error: " << exc.what() << std::endl;
     }
   }
   goalsMutex.unlock();
 
   // Ball
-  for (const std::string &providerName : ballProviders) {
-    try {
+  for (const std::string& providerName : ballProviders)
+  {
+    try
+    {
       // Balls from BallProviders
-      Vision::Filter &ballFilter = pipeline.get(providerName);
-      const BallProvider &provider = dynamic_cast<const BallProvider &>(ballFilter);
+      Vision::Filter& ballFilter = pipeline.get(providerName);
+      const BallProvider& provider = dynamic_cast<const BallProvider&>(ballFilter);
       ballsX = provider.getBallsX();
       ballsY = provider.getBallsY();
       ballsRadius = provider.getBallsRadius();
-    } catch (const std::bad_cast &e) {
+    }
+    catch (const std::bad_cast& e)
+    {
       std::cerr << "Failed to import ball positions, check pipeline. Exception = " << e.what() << std::endl;
     }
   }
 
   // Robot detection
-  if (pipeline.isFilterPresent("obstacleByDNN")) {
-    try {
-      Vision::Filter &robotDetector_f = pipeline.get("obstacleByDNN");
-      const Filters::ObstacleProvider &robotDetector = dynamic_cast<const Filters::ObstacleProvider &>(robotDetector_f);
+  if (pipeline.isFilterPresent("obstacleByDNN"))
+  {
+    try
+    {
+      Vision::Filter& robotDetector_f = pipeline.get("obstacleByDNN");
+      const Filters::ObstacleProvider& robotDetector = dynamic_cast<const Filters::ObstacleProvider&>(robotDetector_f);
 
-      const std::vector<Eigen::Vector2d> &frame_obstacles = robotDetector.getObstacles();
+      const std::vector<Eigen::Vector2d>& frame_obstacles = robotDetector.getObstacles();
 
-      if (robotFilter) {
+      if (robotFilter)
+      {
         std::vector<Eigen::Vector3d> positions;
-        for (const Eigen::Vector2d &obs : frame_obstacles) {
+        for (const Eigen::Vector2d& obs : frame_obstacles)
+        {
           auto tmp = cs->worldPosFromImg(obs.x(), obs.y());
           Eigen::Vector3d in_world(tmp.x, tmp.y, 0);
           positions.push_back(in_world);
         }
         robotFilter->newFrame(positions);
 
-        LocalisationService *loc = _scheduler->getServices()->localisation;
+        LocalisationService* loc = _scheduler->getServices()->localisation;
         std::vector<Eigen::Vector3d> filteredPositions;
-        for (auto &candidate : robotFilter->getCandidates()) {
+        for (auto& candidate : robotFilter->getCandidates())
+        {
           // XXX: Threshold to Rhioize
-          if (candidate.score > 0.45) {
+          if (candidate.score > 0.45)
+          {
             filteredPositions.push_back(candidate.object);
           }
         }
@@ -633,26 +729,34 @@ void Robocup::readPipeline() {
 
       detectedRobots.clear();
       // Going from pixels to world referential
-      for (const Eigen::Vector2d &obs : frame_obstacles) {
+      for (const Eigen::Vector2d& obs : frame_obstacles)
+      {
         detectedRobots.push_back(cs->worldPosFromImg(obs.x(), obs.y()));
       }
-    } catch (const std::bad_cast &e) {
+    }
+    catch (const std::bad_cast& e)
+    {
       std::cerr << "Failed to import robot positions, check pipeline. Exception = " << e.what() << std::endl;
-    } catch (const std::runtime_error &exc) {
+    }
+    catch (const std::runtime_error& exc)
+    {
       std::cerr << "Robocup::readPipeline: robot detection: runtime_error: " << exc.what() << std::endl;
     }
   }
 
   // Tags
-  for (const std::string &tagProviderName : tagProviders) {
-    Vision::Filter &tagFilter = pipeline.get(tagProviderName);
+  for (const std::string& tagProviderName : tagProviders)
+  {
+    Vision::Filter& tagFilter = pipeline.get(tagProviderName);
     cv::Size size = pipeline.get(tagProviderName).getImg()->size();
     tagsMutex.lock();
     detectedTimestamp = pipeline.getTimestamp().getTimeMS() / 1000.0;
-    try {
-      const TagsDetector &tagProvider = dynamic_cast<const TagsDetector &>(tagFilter);
-      const std::vector<TagsDetector::Marker> &new_tags = tagProvider.getDetectedMarkers();
-      for (const TagsDetector::Marker &marker : new_tags) {
+    try
+    {
+      const TagsDetector& tagProvider = dynamic_cast<const TagsDetector&>(tagFilter);
+      const std::vector<TagsDetector::Marker>& new_tags = tagProvider.getDetectedMarkers();
+      for (const TagsDetector::Marker& marker : new_tags)
+      {
         Eigen::Vector3d pos_camera;
         cv::cv2eigen(marker.tvec, pos_camera);
         Eigen::Vector3d marker_pos_in_world = cs->getWorldPosFromCamera(pos_camera);
@@ -665,7 +769,8 @@ void Robocup::readPipeline() {
         // TODO, if the barycenter is not good enough, do better (crossing the
         // diags?)
         Eigen::Vector2d avg_in_img(0, 0);
-        for (unsigned int i = 0; i < marker.corners.size(); i++) {
+        for (unsigned int i = 0; i < marker.corners.size(); i++)
+        {
           avg_in_img += Eigen::Vector2d(marker.corners[i].x, marker.corners[i].y);
         }
         avg_in_img /= 4.0;
@@ -682,10 +787,14 @@ void Robocup::readPipeline() {
         detectedTagsCenters.push_back(pair_in_img);
         detectedTagsCentersUndistort.push_back(pair_undistorded);
       }
-    } catch (const std::bad_cast &exc) {
+    }
+    catch (const std::bad_cast& exc)
+    {
       tagsMutex.unlock();
       throw std::runtime_error("Invalid type for filter 'TagsDetector'");
-    } catch (...) {
+    }
+    catch (...)
+    {
       tagsMutex.unlock();
       throw;
     }
@@ -710,13 +819,17 @@ void Robocup::readPipeline() {
   */
   // TEMP TEMP
 
-  if (pipeline.isFilterPresent("fieldBorder")) {
-    Vision::Filter &fieldBorder_f = pipeline.get("fieldBorder");
-    try {
-      const Filters::FieldBorder &fieldBorder = dynamic_cast<const Filters::FieldBorder &>(fieldBorder_f);
+  if (pipeline.isFilterPresent("fieldBorder"))
+  {
+    Vision::Filter& fieldBorder_f = pipeline.get("fieldBorder");
+    try
+    {
+      const Filters::FieldBorder& fieldBorder = dynamic_cast<const Filters::FieldBorder&>(fieldBorder_f);
       Filters::FieldBorderData data = fieldBorder.loc_data;
       clipping_data.push_back(data);
-    } catch (const std::bad_cast &e) {
+    }
+    catch (const std::bad_cast& e)
+    {
       // out.log("Failed to cast filter '%s' in FieldBorder", name.c_str());
       out.log("Failed to cast filter in FieldBorder");
     }
@@ -771,7 +884,8 @@ void Robocup::readPipeline() {
   //  compassMutex.unlock();
 }
 
-void Robocup::getUpdatedCameraStateFromPipeline() {
+void Robocup::getUpdatedCameraStateFromPipeline()
+{
   csMutex.lock();
 
   // Backup values
@@ -780,9 +894,11 @@ void Robocup::getUpdatedCameraStateFromPipeline() {
   sourceTS = cs->getTimeStamp();
 
   // TODO: identify if this part is only debug
-  if (!isFakeMode()) {
+  if (!isFakeMode())
+  {
     double timeSinceLastFrame = diffSec(lastTS, sourceTS);
-    if (timeSinceLastFrame > 2 || timeSinceLastFrame < 0) {
+    if (timeSinceLastFrame > 2 || timeSinceLastFrame < 0)
+    {
       out.warning("Suspicious elapsed time: %f [s]", timeSinceLastFrame);
     }
   }
@@ -798,33 +914,42 @@ void Robocup::getUpdatedCameraStateFromPipeline() {
   csMutex.unlock();
 }
 
-void Robocup::loggingStep() {
+void Robocup::loggingStep()
+{
   TimeStamp now = getNowTS();
 
-  DecisionService *decision = _scheduler->getServices()->decision;
-  RefereeService *referee = _scheduler->getServices()->referee;
+  DecisionService* decision = _scheduler->getServices()->decision;
+  RefereeService* referee = _scheduler->getServices()->referee;
 
   // Capture src_filter and throws a std::runtime_error if required
-  const Filter &src_filter = pipeline.get("source");
+  const Filter& src_filter = pipeline.get("source");
   ImageLogger::Entry entry(pipeline.getTimestamp(), *(src_filter.getImg()));
 
   logMutex.lock();
   // Handling manual logs
   bool dumpManualLogs = false;
-  if (manual_logger.isActive()) {
-    if (endLog < now) {  // If time is elapsed: close log
+  if (manual_logger.isActive())
+  {
+    if (endLog < now)
+    {  // If time is elapsed: close log
       dumpManualLogs = true;
-    } else {  // If there is still time left, add entry
-      try {
+    }
+    else
+    {  // If there is still time left, add entry
+      try
+      {
         manual_logger.pushEntry(entry);
-      } catch (const ImageLogger::SizeLimitException &exc) {
+      }
+      catch (const ImageLogger::SizeLimitException& exc)
+      {
         out.warning("Automatically stopping manual log because size limit was reached");
         dumpManualLogs = true;
       }
     }
   }
   // Handling moving ball logs
-  if (decision->isBallMoving) {
+  if (decision->isBallMoving)
+  {
     lastBallMoving = now;
   }
   double elapsedSinceBallMoving = diffSec(lastBallMoving, now);
@@ -834,17 +959,22 @@ void Robocup::loggingStep() {
   bool stopAutoLog = autoLogActive && !(elapsedSinceBallMoving < logBallExtraTime || decision->isMateKicking);
   bool useAutoLogEntry = startAutoLog || (autoLogActive && !stopAutoLog);
   // Starting autoLog
-  if (startAutoLog) {
+  if (startAutoLog)
+  {
     moving_ball_logger.initSession();
     out.log("Starting a session at '%s'", moving_ball_logger.getSessionPath().c_str());
     std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
     startLoggingLowLevel(lowLevelPath);
   }
   // Trying to log entry (can fail is maxSize is reached)
-  if (useAutoLogEntry) {
-    try {
+  if (useAutoLogEntry)
+  {
+    try
+    {
       moving_ball_logger.pushEntry(entry);
-    } catch (const ImageLogger::SizeLimitException &exc) {
+    }
+    catch (const ImageLogger::SizeLimitException& exc)
+    {
       stopAutoLog = true;
     }
   }
@@ -855,16 +985,21 @@ void Robocup::loggingStep() {
   bool useGameLogEntry = autolog_games && is_playing;
   bool startGameLog = !gameLogActive && useGameLogEntry;
   bool stopGameLog = gameLogActive && !useGameLogEntry;
-  if (startGameLog) {
+  if (startGameLog)
+  {
     game_logger.initSession();
     out.log("Starting a session at '%s'", game_logger.getSessionPath().c_str());
     std::string lowLevelPath = game_logger.getSessionPath() + "/lowLevel.log";
     startLoggingLowLevel(lowLevelPath);
   }
-  if (useGameLogEntry) {
-    try {
+  if (useGameLogEntry)
+  {
+    try
+    {
       game_logger.pushEntry(entry);
-    } catch (const ImageLogger::SizeLimitException &exc) {
+    }
+    catch (const ImageLogger::SizeLimitException& exc)
+    {
       stopGameLog = true;
     }
   }
@@ -872,39 +1007,47 @@ void Robocup::loggingStep() {
 
   // Writing logs is delayed until logMutex has been unlocked to avoid
   // unnecessary lock of ressources
-  if (dumpManualLogs) {
+  if (dumpManualLogs)
+  {
     _scheduler->stopMove("head", 0.5);
     endLogging();
   }
-  if (stopAutoLog) {
+  if (stopAutoLog)
+  {
     std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
     stopLoggingLowLevel(lowLevelPath);
     moving_ball_logger.endSession();
   }
-  if (stopGameLog) {
+  if (stopGameLog)
+  {
     std::string lowLevelPath = game_logger.getSessionPath() + "/lowLevel.log";
     stopLoggingLowLevel(lowLevelPath);
     game_logger.endSession();
   }
 }
 
-void Robocup::updateBallInformations() {
+void Robocup::updateBallInformations()
+{
   // Getting candidates in ball by ROI
   std::vector<Eigen::Vector3d> positions;
-  for (size_t k = 0; k < ballsX.size(); k++) {
-    try {
+  for (size_t k = 0; k < ballsX.size(); k++)
+  {
+    try
+    {
       cv::Point2f ballPix(ballsX[k], ballsY[k]);
       Eigen::Vector3d ballInWorld = cs->ballInWorldFromPixel(ballPix);
       Eigen::Vector3d ballInSelf = cs->worldToSelf * ballInWorld;
-      if (ignoreOutOfFieldBalls) {
-        LocalisationService *localisation = _scheduler->getServices()->localisation;
+      if (ignoreOutOfFieldBalls)
+      {
+        LocalisationService* localisation = _scheduler->getServices()->localisation;
         rhoban_geometry::Point robot = localisation->getFieldPos();
         Angle robotDir(rad2deg(localisation->getFieldOrientation()));
         double ballXField = robot.x + cos(robotDir) * ballInSelf.x() - sin(robotDir) * ballInSelf.y();
         double ballYField = robot.y + sin(robotDir) * ballInSelf.x() + cos(robotDir) * ballInSelf.y();
         // OPTION: Margin could be added here
         if (std::fabs(ballXField) > Constants::field.fieldLength / 2 + Constants::field.borderStripWidth ||
-            std::fabs(ballYField) > Constants::field.fieldWidth / 2 + Constants::field.borderStripWidth) {
+            std::fabs(ballYField) > Constants::field.fieldWidth / 2 + Constants::field.borderStripWidth)
+        {
           out.warning("Ignoring a ball candidate outside of the field at (%f,%f)", ballXField, ballYField);
           continue;
         }
@@ -912,7 +1055,9 @@ void Robocup::updateBallInformations() {
       // Usual code
       positions.push_back(ballInWorld);
       ballSpeedEstimator->update(cs->getTimeStamp(), Eigen::Vector2d(ballInWorld(0), ballInWorld(1)));
-    } catch (const std::runtime_error &exc) {
+    }
+    catch (const std::runtime_error& exc)
+    {
       out.warning("Ignoring a candidate at (%f,%f) because of '%s'", ballsX[k], ballsY[k], exc.what());
     }
   }
@@ -921,24 +1066,29 @@ void Robocup::updateBallInformations() {
 
   // Broadcast information to localisation service
   // Sending data to the loc
-  LocalisationService *loc = _scheduler->getServices()->localisation;
+  LocalisationService* loc = _scheduler->getServices()->localisation;
 
-  if (ballStackFilter->getCandidates().size() > 0) {
+  if (ballStackFilter->getCandidates().size() > 0)
+  {
     auto lookCandidate = ballStackFilter->getCandidates().back();
     auto bestCandidate = ballStackFilter->getBest();
     double bsfMaxScore = ballStackFilter->getMaximumScore();
     Point ballSpeed = ballSpeedEstimator->getUsableSpeed();
     loc->setBallWorld(bestCandidate.object, lookCandidate.object, bestCandidate.score / bsfMaxScore, ballSpeed,
                       cs->getTimeStamp());
-  } else {
+  }
+  else
+  {
     loc->setNoBall();
   }
 
   /// If active: write ballStatus
-  if (writeBallStatus) {
+  if (writeBallStatus)
+  {
     // Some properties are shared for the frame
     double time = getNowTS().getTimeSec();
-    for (const Eigen::Vector3d &pos_in_world : positions) {
+    for (const Eigen::Vector3d& pos_in_world : positions)
+    {
       Point ball_pos_in_field = loc->worldToField(pos_in_world);
       Point robot_pos = loc->getFieldPos();
       double field_dir = normalizeRad(loc->getFieldOrientation());
@@ -950,7 +1100,8 @@ void Robocup::updateBallInformations() {
   }
 }
 
-std::vector<cv::Point2f> Robocup::stealGoals() {
+std::vector<cv::Point2f> Robocup::stealGoals()
+{
   goalsMutex.lock();
   std::vector<cv::Point2f> goalsCopy = detectedGoals;
   detectedGoals.clear();
@@ -958,7 +1109,8 @@ std::vector<cv::Point2f> Robocup::stealGoals() {
   return goalsCopy;
 }
 
-std::vector<Filters::FieldBorderData> Robocup::stealClipping() {
+std::vector<Filters::FieldBorderData> Robocup::stealClipping()
+{
   clippingMutex.lock();
   std::vector<Filters::FieldBorderData> clippingCopy = clipping_data;
   clipping_data.clear();
@@ -966,9 +1118,10 @@ std::vector<Filters::FieldBorderData> Robocup::stealClipping() {
   return clippingCopy;
 }
 
-void Robocup::stealTags(std::vector<int> &indices, std::vector<Eigen::Vector3d> &positions,
-                        std::vector<std::pair<float, float>> &centers,
-                        std::vector<std::pair<float, float>> &undistorded_centers, double *timestamp) {
+void Robocup::stealTags(std::vector<int>& indices, std::vector<Eigen::Vector3d>& positions,
+                        std::vector<std::pair<float, float>>& centers,
+                        std::vector<std::pair<float, float>>& undistorded_centers, double* timestamp)
+{
   tagsMutex.lock();
   indices = detectedTagsIndices;
   positions = detectedTagsPositions;
@@ -982,7 +1135,8 @@ void Robocup::stealTags(std::vector<int> &indices, std::vector<Eigen::Vector3d> 
   tagsMutex.unlock();
 }
 
-void Robocup::stealCompasses(std::vector<double> &orientations, std::vector<double> &dispersions) {
+void Robocup::stealCompasses(std::vector<double>& orientations, std::vector<double>& dispersions)
+{
   compassMutex.lock();
   orientations = detectedOrientations;
   dispersions = detectedDispersions;
@@ -991,7 +1145,8 @@ void Robocup::stealCompasses(std::vector<double> &orientations, std::vector<doub
   compassMutex.unlock();
 }
 
-cv::Mat Robocup::getTaggedImg() {
+cv::Mat Robocup::getTaggedImg()
+{
   cv::Size size = pipeline.get("source").getImg()->size();
   return getTaggedImg(size.width, size.height);
 }
@@ -1013,8 +1168,10 @@ cv::Mat Robocup::getTaggedImg() {
 /// - Position of the ball inside the stack
 /// Magenta:
 /// - Detected robots
-cv::Mat Robocup::getTaggedImg(int width, int height) {
-  if (cs == NULL) throw std::runtime_error("TaggedImg not ready");
+cv::Mat Robocup::getTaggedImg(int width, int height)
+{
+  if (cs == NULL)
+    throw std::runtime_error("TaggedImg not ready");
   cv::Mat tmp, img, tmp_small;
   globalMutex.lock();
 
@@ -1028,14 +1185,17 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
     // Drawing candidates of balls
     auto candidates = ballStackFilter->getCandidates();
     int k = 0;
-    for (auto &candidate : candidates) {
+    for (auto& candidate : candidates)
+    {
       k++;
       Eigen::Vector3d cpos = candidate.object;
-      try {
+      try
+      {
         auto pos = cs->imgXYFromWorldPosition(cpos);
 
         // I candidate is outside of the image, ignore it
-        if (pos.x < 0 && pos.y < 0) continue;
+        if (pos.x < 0 && pos.y < 0)
+          continue;
 
         // Draw ball candidate
         cv::circle(img, pos, 6 * candidate.score, cv::Scalar(255, 255, 0), CV_FILLED);
@@ -1057,7 +1217,9 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
         Eigen::Vector3d next_cpos = cpos + ball_speed * elapsed;
         cv::Point2f futur_pos = cs->imgXYFromWorldPosition(next_cpos);
         cv::line(img, pos, futur_pos, cv::Scalar(255, 255, 0), 2);
-      } catch (const std::runtime_error &exc) {
+      }
+      catch (const std::runtime_error& exc)
+      {
       }
     }
   }
@@ -1066,14 +1228,17 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
     // Drawing candidates of robots
     auto candidates = robotFilter->getCandidates();
     int k = 0;
-    for (auto &candidate : candidates) {
+    for (auto& candidate : candidates)
+    {
       k++;
       Eigen::Vector3d cpos = candidate.object;
-      try {
+      try
+      {
         auto pos = cs->imgXYFromWorldPosition(cv::Point2f(cpos.x(), cpos.y()));
 
         // If candidate is outside of the image, ignore it
-        if (pos.x < 0 && pos.y < 0) continue;
+        if (pos.x < 0 && pos.y < 0)
+          continue;
 
         // Draw robot candidate
         cv::circle(img, pos, 6 * candidate.score, cv::Scalar(255, 0, 255), CV_FILLED);
@@ -1082,18 +1247,23 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
         std::stringstream ss;
         ss << (candidates.size() - k);
         cv::putText(img, ss.str(), pos, cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 0, 0), 1);
-      } catch (const std::runtime_error &exc) {
+      }
+      catch (const std::runtime_error& exc)
+      {
       }
     }
   }
 
   // Tagging balls seen on current image
-  for (unsigned int ballIndex = 0; ballIndex < ballsRadius.size(); ballIndex++) {
-    if (ballsRadius[ballIndex] <= 0) continue;
+  for (unsigned int ballIndex = 0; ballIndex < ballsRadius.size(); ballIndex++)
+  {
+    if (ballsRadius[ballIndex] <= 0)
+      continue;
     cv::Point center(ballsX[ballIndex], ballsY[ballIndex]);
     cv::circle(img, center, ballsRadius[ballIndex], cv::Scalar(100, 0, 100), 2);
     double ballRadius = cs->computeBallRadiusFromPixel(center);
-    if (ballRadius > 0) {
+    if (ballRadius > 0)
+    {
       cv::circle(img, center, (int)ballRadius, cv::Scalar(0, 0, 0), 2);
     }
   }
@@ -1105,18 +1275,24 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
   std::vector<cv::Point2f> horizonKeypoints;
   Eigen::Vector3d cameraPos = cs->getWorldPosFromCamera(Eigen::Vector3d::Zero());
   Eigen::Vector3d cameraDir = cs->getWorldPosFromCamera(Eigen::Vector3d::UnitZ()) - cameraPos;
-  for (double yaw = -M_PI; yaw <= M_PI; yaw += angleStep) {
+  for (double yaw = -M_PI; yaw <= M_PI; yaw += angleStep)
+  {
     Eigen::Vector3d offset(cos(yaw), sin(yaw), 0);
     // skip to next value if object is behind camera plane
-    if (cameraDir.dot(offset) <= 0) continue;
+    if (cameraDir.dot(offset) <= 0)
+      continue;
     Eigen::Vector3d target = cameraPos + offset;
-    try {
+    try
+    {
       cv::Point p = cs->imgXYFromWorldPosition(target);
       horizonKeypoints.push_back(p);
-    } catch (const std::runtime_error &exc) {
+    }
+    catch (const std::runtime_error& exc)
+    {
     }
   }
-  for (size_t idx = 1; idx < horizonKeypoints.size(); idx++) {
+  for (size_t idx = 1; idx < horizonKeypoints.size(); idx++)
+  {
     cv::line(img, horizonKeypoints[idx - 1], horizonKeypoints[idx], cv::Scalar(255, 0, 0), 2);
   }
 
@@ -1125,8 +1301,10 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
   return img;
 }
 
-cv::Mat Robocup::getRadarImg(int width, int height) {
-  if (cs == NULL) throw std::runtime_error("RadarImg not ready");
+cv::Mat Robocup::getRadarImg(int width, int height)
+{
+  if (cs == NULL)
+    throw std::runtime_error("RadarImg not ready");
   cv::Mat img;
   img = cv::Mat(height, width, CV_8UC3, cv::Scalar(0, 30, 0));
   // Drawing the robot
@@ -1148,7 +1326,8 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
                            // angular condition instead
 
   // Drawing satic distance marquers each meter (light circles are 0.5 meters)
-  for (int i = 1; i < (1 + 2 * Constants::field.fieldLength); i++) {
+  for (int i = 1; i < (1 + 2 * Constants::field.fieldLength); i++)
+  {
     cv::circle(img, cv::Point2i(width / 2, height / 2), (i / 2.0) * scale_factor, cv::Scalar(0, 150, 0), 2 - (i % 2));
   }
   // Drawing vision cone
@@ -1162,67 +1341,88 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
   // 0° orientation (front)
   cv::line(img, cv::Point2i(width / 2, height / 2), cv::Point2f(width, height / 2), cv::Scalar(255, 0, 0), 1);
 
-  for (std::string obsType : observationTypes) {
-    std::vector<std::pair<cv::Point2f, float>> &storedObservations = rememberObservations[obsType];
+  for (std::string obsType : observationTypes)
+  {
+    std::vector<std::pair<cv::Point2f, float>>& storedObservations = rememberObservations[obsType];
     // Discounting and Killing observations
     delete_me.clear();
     freshObservations.clear();
-    for (unsigned int i = 0; i < storedObservations.size(); i++) {
+    for (unsigned int i = 0; i < storedObservations.size(); i++)
+    {
       auto scored_obs = storedObservations[i];
       // Discounting all the old observations
       storedObservations[i].second = storedObservations[i].second - discount;
-      if (scored_obs.second < 0) {
+      if (scored_obs.second < 0)
+      {
         // This observation is considered dead now (checking this only once)
         delete_me.push_back(i);
       }
     }
 
-    for (int i = delete_me.size() - 1; i > -1; i--) {
+    for (int i = delete_me.size() - 1; i > -1; i--)
+    {
       // Erasing from the end of the vector to the start, so the smaller indexes
       // don't change.
       storedObservations.erase(storedObservations.begin() + delete_me[i]);
     }
 
     // Reading the fresh observations (observation type dependent)
-    if (obsType == "ball") {
-      for (unsigned int ballIndex = 0; ballIndex < ballsX.size(); ballIndex++) {
+    if (obsType == "ball")
+    {
+      for (unsigned int ballIndex = 0; ballIndex < ballsX.size(); ballIndex++)
+      {
         // Going from and image position to a position on the field, in the
         // origin (of world) frame
-        try {
+        try
+        {
           auto point = cs->worldPosFromImg(ballsX[ballIndex], ballsY[ballIndex]);
           // std::cout << "DEBUG Ball seen at (origin frame) " << point << std::endl;
           freshObservations.push_back(point);
-        } catch (const std::runtime_error &exc) {
+        }
+        catch (const std::runtime_error& exc)
+        {
           // Ignore the candidate
         }
       }
-    } else if (obsType == "post") {
+    }
+    else if (obsType == "post")
+    {
       // Reading posts
       cv::Point2f goal;
-      for (unsigned int index = 0; index < detectedGoals.size(); index++) {
+      for (unsigned int index = 0; index < detectedGoals.size(); index++)
+      {
         goal = detectedGoals[index];
         // std::cout << "Goal seen at (origin frame) " << goal << std::endl;
         freshObservations.push_back(goal);
       }
-    } else if (obsType == "tag") {
+    }
+    else if (obsType == "tag")
+    {
       // Reading tags
       // Going from and image position to a position on the field, in the origin
       // (of world) frame
-      for (unsigned int index = 0; index < detectedTagsCenters.size(); index++) {
-        try {
+      for (unsigned int index = 0; index < detectedTagsCenters.size(); index++)
+      {
+        try
+        {
           std::cout << "DetectedTagsCenter at " << detectedTagsCenters[index].first << ", "
                     << detectedTagsCenters[index].second << std::endl;
           // Going from and image position to a position on the field, in the
           // origin (of world) frame
           auto point = cs->worldPosFromImg(detectedTagsCenters[index].first, detectedTagsCenters[index].second);
           freshObservations.push_back(point);
-        } catch (const std::runtime_error &exc) {
+        }
+        catch (const std::runtime_error& exc)
+        {
           // Ignore the candidate
         }
       }
-    } else if (obsType == "compass") {
+    }
+    else if (obsType == "compass")
+    {
       cv::Point2f opponentDir;
-      for (unsigned int index = 0; index < radarOrientations.size(); index++) {
+      for (unsigned int index = 0; index < radarOrientations.size(); index++)
+      {
         // we got a direction => transforming into a point
         // x: angle in degree
         // y: quality in [0,1]
@@ -1230,9 +1430,12 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         opponentDir.y = tmpdispersions[index];
         freshObservations.push_back(opponentDir);
       }
-    } else if (obsType == "clipping") {
+    }
+    else if (obsType == "clipping")
+    {
       // From position in world to robot relative position
-      for (unsigned int index = 0; index < clipping_data.size(); index++) {
+      for (unsigned int index = 0; index < clipping_data.size(); index++)
+      {
         // ** CAUTION : HACK ** ... une observation peut être
         // - plusieurs lignes
         // - un coin ou pas
@@ -1240,56 +1443,70 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         // x contient le nombre de ligne et y s'il y a un coin (1) ou pas.
         // Ensuite, chaque ligne est représenté par 2 élements et
         // le coin optionel 1 élément.
-        if (clipping_data[index].is_obs_valid()) {
+        if (clipping_data[index].is_obs_valid())
+        {
           int has_coin = clipping_data[index].hasCorner ? 1 : 0;
           int has_segment = clipping_data[index].hasSegment ? 1 : 0;
           std::vector<std::pair<cv::Point2f, cv::Point2f>> lines;
-          if (has_coin) {
+          if (has_coin)
+          {
             lines = clipping_data[index].getLinesInWorldFrame();
           }
-          if (has_segment) {
+          if (has_segment)
+          {
             lines.push_back(clipping_data[index].getSegmentInWorld());
           }
           int line_nb = lines.size();
           // int line_nb = clipping_data[index].getLinesInWorldFrame().size();
           freshObservations.push_back(cv::Point2f(line_nb, has_coin));
-          for (auto L : lines) {
+          for (auto L : lines)
+          {
             freshObservations.push_back(L.first);
             freshObservations.push_back(L.second);
             // printf("Find line (%f,%f)->(%f,%f)\n",
             //       L.first.x, L.first.y, L.second.x, L.second.y);
           }
-          if (clipping_data[index].hasCorner) {
+          if (clipping_data[index].hasCorner)
+          {
             freshObservations.push_back(clipping_data[index].getCornerInWorldFrame());
             // printf("Find corner %f %f\n", clipping_data[index].getCornerInWorldFrame().x,
             // clipping_data[index].getCornerInWorldFrame().y);
           }
         }
       }
-    } else if (obsType == "opponent") {
+    }
+    else if (obsType == "opponent")
+    {
       // Reading posts
       cv::Point2f robot;
-      for (unsigned int index = 0; index < detectedRobots.size(); index++) {
+      for (unsigned int index = 0; index < detectedRobots.size(); index++)
+      {
         robot = detectedRobots[index];
         std::cout << "New robot seen at (origin frame) " << robot << std::endl;
         freshObservations.push_back(robot);
       }
-    } else {
+    }
+    else
+    {
       // Unhandled observation type
       continue;
     }
 
     // Adding the observations to the old ones if need be, and updating the
     // intensities
-    for (unsigned int j = 0; j < freshObservations.size(); j++) {
+    for (unsigned int j = 0; j < freshObservations.size(); j++)
+    {
       bool found = false;
       cv::Point2f new_obs = freshObservations[j];
-      if (obsType != "clipping") {  // Pas d'identification pour le clipping
-        for (unsigned int i = 0; i < storedObservations.size(); i++) {
+      if (obsType != "clipping")
+      {  // Pas d'identification pour le clipping
+        for (unsigned int i = 0; i < storedObservations.size(); i++)
+        {
           auto scored_obs = storedObservations[i];
           float dist = sqrt((new_obs.x - scored_obs.first.x) * (new_obs.x - scored_obs.first.x) +
                             (new_obs.y - scored_obs.first.y) * (new_obs.y - scored_obs.first.y));
-          if (dist < merge_dist) {
+          if (dist < merge_dist)
+          {
             // We're assuming it's the same observation
             storedObservations[i].second = 1.0;
             found = true;
@@ -1299,7 +1516,8 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
           }
         }
       }
-      if (!found) {
+      if (!found)
+      {
         // Adding the observation
         storedObservations.push_back(std::pair<cv::Point2f, float>(new_obs, 1.0));
       }
@@ -1310,8 +1528,10 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
     //             << storedObservations[i].second << std::endl;
     // }
     // Drawing
-    if (obsType == "opponent") {
-      for (unsigned int i = 0; i < storedObservations.size(); i++) {
+    if (obsType == "opponent")
+    {
+      for (unsigned int i = 0; i < storedObservations.size(); i++)
+      {
         // Going from meters to pixels, and from the origin frame to the robot
         // one
         cv::Point2f robot_in_self = cs->getPosInSelf(storedObservations[i].first);
@@ -1320,8 +1540,11 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
 
         cv::circle(img, robot_in_self, 15, cv::Scalar(200, 0, 200), -1);
       }
-    } else if (obsType == "ball") {
-      for (unsigned int i = 0; i < storedObservations.size(); i++) {
+    }
+    else if (obsType == "ball")
+    {
+      for (unsigned int i = 0; i < storedObservations.size(); i++)
+      {
         // Going from meters to pixels, and from the origin frame to the robot
         // one
         cv::Point2f ball_in_self = cs->getPosInSelf(storedObservations[i].first);
@@ -1330,9 +1553,11 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
 
         cv::circle(img, ball_in_self, ball_radius, ball_color, -1);
       }
-
-    } else if (obsType == "post") {
-      for (unsigned int i = 0; i < storedObservations.size(); i++) {
+    }
+    else if (obsType == "post")
+    {
+      for (unsigned int i = 0; i < storedObservations.size(); i++)
+      {
         // Going from meters to pixels, and from the origin frame to the robot
         // one
         cv::Point2f goal_in_self = cs->getPosInSelf(storedObservations[i].first);
@@ -1342,8 +1567,11 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         cv::Point2i second_point(goal_in_self.x + goal_size, goal_in_self.y + goal_size / 2);
         cv::rectangle(img, goal_in_self, second_point, goal_color, -1);
       }
-    } else if (obsType == "tag") {
-      for (unsigned int i = 0; i < storedObservations.size(); i++) {
+    }
+    else if (obsType == "tag")
+    {
+      for (unsigned int i = 0; i < storedObservations.size(); i++)
+      {
         // Going from meters to pixels, and from the origin frame to the robot
         // one
         cv::Point2f tag_in_self = cs->getPosInSelf(storedObservations[i].first);
@@ -1352,8 +1580,11 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
 
         cv::circle(img, tag_in_self, 5, cv::Scalar(0, 0, 0), -1);
       }
-    } else if (obsType == "compass") {
-      for (unsigned int i = 0; i < storedObservations.size(); i++) {
+    }
+    else if (obsType == "compass")
+    {
+      for (unsigned int i = 0; i < storedObservations.size(); i++)
+      {
         cv::Point2f opponent = storedObservations[i].first;
         cv::Point2f tmp;
 
@@ -1377,15 +1608,20 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         cv::Scalar lineColor(0, 0, 255 * opponent.y);  // quality is in y
         cv::line(img, center, tmp, lineColor, 1);
       }
-    } else if (obsType == "clipping") {
+    }
+    else if (obsType == "clipping")
+    {
       int idx = 0;
-      while (idx < (int)storedObservations.size()) {
+      while (idx < (int)storedObservations.size())
+      {
         int start_idx = idx;
         int line_nb = (int)storedObservations[idx].first.x;
         int has_corner = (int)storedObservations[idx].first.y;
         idx++;
-        for (int k = 0; k < line_nb; k++) {
-          if (idx >= (int)storedObservations.size() - 1) break;  // au cas où ...
+        for (int k = 0; k < line_nb; k++)
+        {
+          if (idx >= (int)storedObservations.size() - 1)
+            break;  // au cas où ...
           cv::Point2f A = cs->getPosInSelf(storedObservations[idx].first);
           cv::Point2f B = cs->getPosInSelf(storedObservations[idx + 1].first);
           A.x = max(0, (int)(A.x * scale_factor + width / 2));
@@ -1395,8 +1631,10 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
           cv::line(img, A, B, cv::Scalar::all(255), 2);
           idx += 2;
         }
-        if (idx >= (int)storedObservations.size()) break;  // au cas où ...
-        if (has_corner && idx == start_idx + line_nb * 2 + 1) {
+        if (idx >= (int)storedObservations.size())
+          break;  // au cas où ...
+        if (has_corner && idx == start_idx + line_nb * 2 + 1)
+        {
           cv::Point2f C = cs->getPosInSelf(storedObservations[idx].first);
           C.x = max(0, (int)(C.x * scale_factor + width / 2));
           C.y = max(0, (int)(-C.y * scale_factor + height / 2));
@@ -1411,51 +1649,76 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
   return img;
 }
 
-std::vector<cv::Point2f> Robocup::keepFrontRobots(std::vector<cv::Point2f> &robots) {
+std::vector<cv::Point2f> Robocup::keepFrontRobots(std::vector<cv::Point2f>& robots)
+{
   // TODO, this function should take into account the size of a standard robot and hide any candidate that should be
   // behind another robot
   return robots;
 }
 
-void Robocup::run() { launch(); }
+void Robocup::run()
+{
+  launch();
+}
 
-void Robocup::closeCamera() {
-  if (pipeline.isFilterPresent("source")) {
+void Robocup::closeCamera()
+{
+  if (pipeline.isFilterPresent("source"))
+  {
     std::cerr << "Someone asked to close camera in Robocup, not implemented "
                  "for PtGrey"
               << std::endl;
-  } else {
+  }
+  else
+  {
     std::cout << "source filter not found (camera might not be closed properly)" << std::endl;
   }
 }
 
-TimeStamp Robocup::getNowTS() const {
-  if (isFakeMode()) {
+TimeStamp Robocup::getNowTS() const
+{
+  if (isFakeMode())
+  {
     return sourceTS;
   }
   return TimeStamp::now();
 }
 
-bool Robocup::isFakeMode() const { return _scheduler->getServices()->model->isFakeMode(); }
+bool Robocup::isFakeMode() const
+{
+  return _scheduler->getServices()->model->isFakeMode();
+}
 
-void Robocup::ballClear() { ballStackFilter->clear(); }
+void Robocup::ballClear()
+{
+  ballStackFilter->clear();
+}
 
-void Robocup::robotsClear() { robotFilter->clear(); }
+void Robocup::robotsClear()
+{
+  robotFilter->clear();
+}
 
-void Robocup::ballReset(float x, float y) { ballStackFilter->reset(x, y); }
+void Robocup::ballReset(float x, float y)
+{
+  ballStackFilter->reset(x, y);
+}
 
-void Robocup::setLogMode(const std::string path) {
+void Robocup::setLogMode(const std::string path)
+{
   _scheduler->getServices()->model->loadReplays(path);
 
   std::cout << "Loaded replay" << std::endl;
 }
 
-void Robocup::startLoggingLowLevel(const std::string &path) {
+void Robocup::startLoggingLowLevel(const std::string& path)
+{
   std::cout << DEBUG_INFO << ": " << path << std::endl;
   _scheduler->getServices()->model->startNamedLog(path);
 }
 
-void Robocup::stopLoggingLowLevel(const std::string &path) {
+void Robocup::stopLoggingLowLevel(const std::string& path)
+{
   out.log("Saving lowlevel log to: %s", path.c_str());
   TimeStamp start_save = TimeStamp::now();
   _scheduler->getServices()->model->stopNamedLog(path);
@@ -1463,8 +1726,14 @@ void Robocup::stopLoggingLowLevel(const std::string &path) {
   out.log("Lowlevel logs saved in %f seconds", diffSec(start_save, end_save));
 }
 
-int Robocup::getFrames() { return pipeline.frames; }
+int Robocup::getFrames()
+{
+  return pipeline.frames;
+}
 
-double Robocup::getLastUpdate() const { return diffMs(lastTS, getNowTS()); }
+double Robocup::getLastUpdate() const
+{
+  return diffMs(lastTS, getNowTS());
+}
 
 }  // namespace Vision

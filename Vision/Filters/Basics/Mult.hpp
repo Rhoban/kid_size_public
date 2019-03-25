@@ -2,21 +2,28 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Mult
  *
  * Multiply each channel of the image by the given ratio
  */
-class Mult : public Filter {
- public:
-  Mult() : Filter("Mult") {}
+class Mult : public Filter
+{
+public:
+  Mult() : Filter("Mult")
+  {
+  }
 
-  virtual std::string getClassName() const override { return "Mult"; }
+  virtual std::string getClassName() const override
+  {
+    return "Mult";
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -24,7 +31,7 @@ class Mult : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
   ParamFloat _ratio;
 };
 }  // namespace Filters

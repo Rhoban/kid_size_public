@@ -3,10 +3,12 @@
 #include <string>
 #include <cstdlib>
 
-namespace Vision {
-namespace Filters {
-
-void AbsDiff::process() {
+namespace Vision
+{
+namespace Filters
+{
+void AbsDiff::process()
+{
   cv::Mat A = *(getDependency(_dependencies[0]).getImg());
   cv::Mat B = *(getDependency(_dependencies[1]).getImg());
   img() = abs(A - B);

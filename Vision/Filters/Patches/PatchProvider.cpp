@@ -6,12 +6,16 @@
 
 using namespace Vision::Utils;
 
-namespace Vision {
-namespace Filters {
+namespace Vision
+{
+namespace Filters
+{
+PatchProvider::PatchProvider(const std::string& name) : Filter(name)
+{
+}
 
-PatchProvider::PatchProvider(const std::string& name) : Filter(name) {}
-
-void PatchProvider::setParameters() {
+void PatchProvider::setParameters()
+{
   patchHeight = ParamInt(64, 2, 128);
   patchWidth = ParamInt(64, 2, 128);
   resizePolicy = ParamInt(1, 0, 2);
@@ -21,13 +25,21 @@ void PatchProvider::setParameters() {
   params()->define<ParamInt>("resizePolicy", &resizePolicy);
 }
 
-void PatchProvider::clearPatches() { patches.clear(); }
+void PatchProvider::clearPatches()
+{
+  patches.clear();
+}
 
-const std::vector<cv::Mat>& PatchProvider::getPatches() const { return patches; }
+const std::vector<cv::Mat>& PatchProvider::getPatches() const
+{
+  return patches;
+}
 
-void PatchProvider::addPatches(const std::vector<cv::Rect>& rois, const cv::Mat& roi_img, const cv::Mat& src) {
+void PatchProvider::addPatches(const std::vector<cv::Rect>& rois, const cv::Mat& roi_img, const cv::Mat& src)
+{
   std::vector<cv::Mat> result;
-  for (const cv::Rect& roi : rois) {
+  for (const cv::Rect& roi : rois)
+  {
     cv::Rect roi_src = resizeROI(roi, roi_img, src);
     cv::Mat raw_patch(src, roi_src);
     // Determine scale if resizing is required
@@ -35,18 +47,21 @@ void PatchProvider::addPatches(const std::vector<cv::Rect>& rois, const cv::Mat&
     double row_scale = patchHeight / (double)raw_patch.rows;
     double scale = std::min(col_scale, row_scale);
     float roi_quality = 1.0;  // Quality are required but have no real meaning here
-    switch ((int)resizePolicy) {
+    switch ((int)resizePolicy)
+    {
       case 0:  // Never resize
         patches.push_back(raw_patch);
         addRoi(roi_quality, toRotatedRect(roi_src));
         break;
       case 1:  // Resize patches which are too large
-        if (scale >= 1) {
+        if (scale >= 1)
+        {
           patches.push_back(raw_patch);
           addRoi(roi_quality, toRotatedRect(roi_src));
           break;
         }
-      case 2: {  // All patches have the same size
+      case 2:
+      {  // All patches have the same size
         cv::Size patch_size(raw_patch.cols * scale, raw_patch.rows * scale);
         // Obtaining scaled patch
         cv::Mat scaled_patch;
@@ -59,9 +74,11 @@ void PatchProvider::addPatches(const std::vector<cv::Rect>& rois, const cv::Mat&
   }
 }
 
-void PatchProvider::addPatches(const std::vector<cv::RotatedRect>& rois, const cv::Mat& roi_img, const cv::Mat& src) {
+void PatchProvider::addPatches(const std::vector<cv::RotatedRect>& rois, const cv::Mat& roi_img, const cv::Mat& src)
+{
   std::vector<cv::Rect> rect_rois;
-  for (const cv::RotatedRect& roi : rois) {
+  for (const cv::RotatedRect& roi : rois)
+  {
     rect_rois.push_back(cropRect(toRect(roi), roi_img));
   }
   addPatches(rect_rois, roi_img, src);

@@ -5,29 +5,36 @@
 #include <string>
 #include <RhIO.hpp>
 
-namespace Vision {
-namespace Localisation {
-
+namespace Vision
+{
+namespace Localisation
+{
 template <typename T>
-class RadarFilter {
- public:
-  struct Candidate {
+class RadarFilter
+{
+public:
+  struct Candidate
+  {
     T object;
     float score;
   };
 
   RadarFilter()
-      : bind(NULL),
-        initialScore(0.2),
-        maximumScore(1.0),
-        scoreIncrease(0.2),
-        scoreReduction(0.02),
-        scoreReductionOut(0.0025),
-        positionDiscount(0.7),
-        normalizeSum(true) {}
+    : bind(NULL)
+    , initialScore(0.2)
+    , maximumScore(1.0)
+    , scoreIncrease(0.2)
+    , scoreReduction(0.02)
+    , scoreReductionOut(0.0025)
+    , positionDiscount(0.7)
+    , normalizeSum(true)
+  {
+  }
 
-  virtual ~RadarFilter() {
-    if (bind != NULL) {
+  virtual ~RadarFilter()
+  {
+    if (bind != NULL)
+    {
       delete bind;
       bind = NULL;
     }
@@ -36,23 +43,31 @@ class RadarFilter {
   /**
    * Are two objects similar ?
    */
-  virtual bool isSimilar(const T &obj1, const T &obj2) = 0;
+  virtual bool isSimilar(const T& obj1, const T& obj2) = 0;
 
   /**
    * Do I see the object ?
    */
-  virtual bool isVisible(const T &obj) { return true; }
+  virtual bool isVisible(const T& obj)
+  {
+    return true;
+  }
 
   /**
    * Converts an object to string
    */
-  virtual std::string toString(const T &obj) { return "?"; }
+  virtual std::string toString(const T& obj)
+  {
+    return "?";
+  }
 
   /**
    * Binds the current filter to RhIO using the given node name
    */
-  virtual bool bindToRhIO(std::string node, std::string command = "") {
-    if (bind == NULL) {
+  virtual bool bindToRhIO(std::string node, std::string command = "")
+  {
+    if (bind == NULL)
+    {
       bind = new RhIO::Bind(node);
 
       bind->bindNew("initialScore", initialScore, RhIO::Bind::PullOnly)
@@ -85,7 +100,8 @@ class RadarFilter {
           ->comment("If enabled, the sum of all elements can never be greater than 1")
           ->defaultValue(normalizeSum);
 
-      if (command != "") {
+      if (command != "")
+      {
         bind->bindFunc(command, "Show filter candiadtes", &RadarFilter<T>::showCandidates, *this);
       }
 
@@ -98,15 +114,20 @@ class RadarFilter {
   /**
    * Shows the candidates from the filter
    */
-  std::string showCandidates() {
+  std::string showCandidates()
+  {
     std::stringstream ss;
 
     mutex.lock();
-    if (!candidates.size()) {
+    if (!candidates.size())
+    {
       ss << "No candidates";
-    } else {
+    }
+    else
+    {
       ss << candidates.size() << " candidates:" << std::endl;
-      for (auto &candidate : candidates) {
+      for (auto& candidate : candidates)
+      {
         ss << "- Score: " << candidate.score << ", Object: " << toString(candidate.object) << std::endl;
       }
     }
@@ -118,13 +139,16 @@ class RadarFilter {
   /**
    * Getting best candidate
    */
-  virtual Candidate getBest() {
+  virtual Candidate getBest()
+  {
     Candidate best;
     best.score = -1;
 
     mutex.lock();
-    for (auto &candidate : candidates) {
-      if (candidate.score > best.score) {
+    for (auto& candidate : candidates)
+    {
+      if (candidate.score > best.score)
+      {
         best = candidate;
       }
     }
@@ -136,12 +160,16 @@ class RadarFilter {
   /**
    * Getting maximum possible score
    */
-  virtual double getMaximumScore() { return maximumScore; }
+  virtual double getMaximumScore()
+  {
+    return maximumScore;
+  }
 
   /**
    * Resets (clear all te candidates);
    */
-  virtual void clear() {
+  virtual void clear()
+  {
     mutex.lock();
     candidates.clear();
     mutex.unlock();
@@ -150,31 +178,43 @@ class RadarFilter {
   /**
    * Decrease the scores of all item
    */
-  virtual void decreaseScores() {
-    for (auto &candidate : candidates) {
-      if (isVisible(candidate.object)) {
+  virtual void decreaseScores()
+  {
+    for (auto& candidate : candidates)
+    {
+      if (isVisible(candidate.object))
+      {
         candidate.score -= scoreReduction;
-      } else {
+      }
+      else
+      {
         candidate.score -= scoreReductionOut;
       }
     }
   }
 
   /// Return the weighted average of o1 and o2 using their weights
-  virtual T mergeObjects(const T &o1, const T &o2, double w1, double w2) { return (o1 * w1 + o2 * w2) / (w1 + w2); }
+  virtual T mergeObjects(const T& o1, const T& o2, double w1, double w2)
+  {
+    return (o1 * w1 + o2 * w2) / (w1 + w2);
+  }
 
   /**
    * Increase the scores when an object is similar to a candidate
    */
-  virtual void increaseScores(const std::vector<T> &objects) {
+  virtual void increaseScores(const std::vector<T>& objects)
+  {
     // Increasing candidates score if positions of balls declared
     // match the existing candidates
-    std::vector<Candidate *> toIncrease;
+    std::vector<Candidate*> toIncrease;
 
-    for (auto &object : objects) {
+    for (auto& object : objects)
+    {
       bool matched = false;
-      for (auto &candidate : candidates) {
-        if (isSimilar(candidate.object, object)) {
+      for (auto& candidate : candidates)
+      {
+        if (isSimilar(candidate.object, object))
+        {
           matched = true;
 
           // Same candidate -> update object properties
@@ -183,7 +223,8 @@ class RadarFilter {
           toIncrease.push_back(&candidate);
         }
       }
-      if (!matched) {
+      if (!matched)
+      {
         Candidate candidate;
         candidate.object = object;
         candidate.score = initialScore;
@@ -192,48 +233,59 @@ class RadarFilter {
     }
 
     // Increasing candidate scores
-    if (toIncrease.size()) {
+    if (toIncrease.size())
+    {
       float increaseScore = scoreIncrease / toIncrease.size();
-      for (auto candidate : toIncrease) {
+      for (auto candidate : toIncrease)
+      {
         candidate->score += increaseScore;
       }
     }
   }
 
   /// Merge two similar candidates with weights depending on their scores
-  virtual Candidate mergeCandidates(const Candidate &c1, const Candidate &c2) {
+  virtual Candidate mergeCandidates(const Candidate& c1, const Candidate& c2)
+  {
     Candidate res;
     res.score = c1.score + c2.score;
     res.object = mergeObjects(c1.object, c2.object, c1.score, c2.score);
     return res;
   }
 
-  virtual void mergeSimilars() {
+  virtual void mergeSimilars()
+  {
     std::vector<Candidate> clusters;
 
     // For each candidate, try to insert it to existing clusters, otherwise
     // create a new cluster
-    for (const Candidate &c : candidates) {
+    for (const Candidate& c : candidates)
+    {
       int cluster_id = -1;
       // cci -> cluster candidate index
-      for (size_t cci = 0; cci < clusters.size(); cci++) {
-        if (isSimilar(clusters[cci].object, c.object)) {
+      for (size_t cci = 0; cci < clusters.size(); cci++)
+      {
+        if (isSimilar(clusters[cci].object, c.object))
+        {
           cluster_id = cci;
           break;
         }
       }
 
-      if (cluster_id == -1) {
+      if (cluster_id == -1)
+      {
         clusters.push_back(c);
-      } else {
+      }
+      else
+      {
         // Merge candidates
-        const Candidate &cc = clusters[cluster_id];
+        const Candidate& cc = clusters[cluster_id];
         clusters[cluster_id] = mergeCandidates(c, cc);
       }
     }
 
     candidates.clear();
-    for (auto &candidate : clusters) {
+    for (auto& candidate : clusters)
+    {
       candidates.push_back(candidate);
     }
   }
@@ -242,20 +294,28 @@ class RadarFilter {
    * Normalize the score, if normalizeSum is true the sum is
    * normalized to be 1, else the score are just limited to maximumScore
    */
-  virtual void normalizeScores() {
+  virtual void normalizeScores()
+  {
     // Normalizing
-    if (normalizeSum) {
+    if (normalizeSum)
+    {
       float total(0);
-      for (auto &candidate : candidates) {
+      for (auto& candidate : candidates)
+      {
         total += candidate.score;
       }
-      if (total > maximumScore) {
-        for (auto &candidate : candidates) {
+      if (total > maximumScore)
+      {
+        for (auto& candidate : candidates)
+        {
           candidate.score /= total;
         }
       }
-    } else {
-      for (auto &candidate : candidates) {
+    }
+    else
+    {
+      for (auto& candidate : candidates)
+      {
         candidate.score = std::min(maximumScore, candidate.score);
       }
     }
@@ -264,21 +324,27 @@ class RadarFilter {
   /**
    * Cleanup the candidates with negative scores
    */
-  virtual void clean() {
+  virtual void clean()
+  {
     // Removing elements with negative score
     typename std::deque<Candidate>::iterator it = candidates.begin();
 
-    while (it != candidates.end()) {
-      auto &candidate = *it;
+    while (it != candidates.end())
+    {
+      auto& candidate = *it;
       bool remove = false;
 
-      if (candidate.score < 0) {
+      if (candidate.score < 0)
+      {
         remove = true;
       }
 
-      if (remove) {
+      if (remove)
+      {
         it = candidates.erase(it);
-      } else {
+      }
+      else
+      {
         it++;
       }
     }
@@ -287,8 +353,10 @@ class RadarFilter {
   /**
    * Push new observations
    */
-  virtual void newFrame(const std::vector<T> &objects) {
-    if (bind != NULL) bind->pull();
+  virtual void newFrame(const std::vector<T>& objects)
+  {
+    if (bind != NULL)
+      bind->pull();
     mutex.lock();
 
     decreaseScores();
@@ -298,13 +366,15 @@ class RadarFilter {
     clean();
 
     mutex.unlock();
-    if (bind != NULL) bind->push();
+    if (bind != NULL)
+      bind->push();
   }
 
   /**
    * Get the current candidates
    */
-  std::deque<Candidate> getCandidates() {
+  std::deque<Candidate> getCandidates()
+  {
     mutex.lock();
     std::deque<Candidate> tmp = candidates;
     mutex.unlock();
@@ -312,12 +382,12 @@ class RadarFilter {
     return tmp;
   }
 
- protected:
+protected:
   // Mutex for thread safe operations
   std::mutex mutex;
 
   // RhIO binder
-  RhIO::Bind *bind;
+  RhIO::Bind* bind;
 
   // Inital score at candidate creation
   float initialScore;

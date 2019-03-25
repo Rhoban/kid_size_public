@@ -2,21 +2,28 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Dilate
  *
  * Dilate the image with a kernel of a given width, height and shape
  */
-class Dilate : public Filter {
- public:
-  Dilate() : Filter("Dilate") {}
+class Dilate : public Filter
+{
+public:
+  Dilate() : Filter("Dilate")
+  {
+  }
 
-  virtual std::string getClassName() const override { return "Dilate"; }
+  virtual std::string getClassName() const override
+  {
+    return "Dilate";
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -24,7 +31,7 @@ class Dilate : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
   /**
    * Shape :
    * 0 - Rect

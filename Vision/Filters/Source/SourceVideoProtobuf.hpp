@@ -7,9 +7,10 @@
 
 #include <opencv2/videoio.hpp>
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * SourceLogs
  *
@@ -17,8 +18,9 @@ namespace Filters {
  * - A video provides the images
  * - A protobuf file provides timestamps, and camera states
  */
-class SourceVideoProtobuf : public Source {
- public:
+class SourceVideoProtobuf : public Source
+{
+public:
   SourceVideoProtobuf();
 
   // JSON stuff
@@ -39,7 +41,7 @@ class SourceVideoProtobuf : public Source {
   void previous() override;
   void updateImg();
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -53,7 +55,7 @@ class SourceVideoProtobuf : public Source {
 
   Utils::CameraState* buildCameraState() override;
 
- private:
+private:
   int startIndex;
   /// Path to the video including extension
   std::string videoPath;

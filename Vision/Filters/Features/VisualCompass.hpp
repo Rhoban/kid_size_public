@@ -12,20 +12,28 @@
 #include <string>
 #include <vector>
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * VisualCompass
  *
  */
-class VisualCompass : public CompassProvider {
- public:
+class VisualCompass : public CompassProvider
+{
+public:
   VisualCompass();
-  virtual std::string getClassName() const override { return "VisualCompass"; }
+  virtual std::string getClassName() const override
+  {
+    return "VisualCompass";
+  }
 
   virtual void setParameters() override;
-  virtual int expectedDependencies() const override { return 1; }
+  virtual int expectedDependencies() const override
+  {
+    return 1;
+  }
 
   void getPoints(const std::vector<cv::KeyPoint>& kpts_train, const std::vector<cv::KeyPoint>& kpts_query,
                  std::vector<cv::Point2f>& pts_train, std::vector<cv::Point2f>& pts_query,
@@ -43,13 +51,13 @@ class VisualCompass : public CompassProvider {
 
   virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
 
- protected:
+protected:
   /**
    * @Inherit
    */
   virtual void process() override;
 
- private:
+private:
   /// Should we update the field
   int active_field;
 

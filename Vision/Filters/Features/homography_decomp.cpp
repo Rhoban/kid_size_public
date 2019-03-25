@@ -52,62 +52,88 @@
 #include <cstdlib>
 #include "Filters/Features/homography_decomp.hpp"
 
-namespace cv {
-
-namespace HomographyDecomposition {
-
+namespace cv
+{
+namespace HomographyDecomposition
+{
 // struct to hold solutions of homography decomposition
-typedef struct _CameraMotion {
+typedef struct _CameraMotion
+{
   cv::Matx33d R;  //!< rotation matrix
   cv::Vec3d n;    //!< normal of the plane the camera is looking at
   cv::Vec3d t;    //!< translation vector
 } CameraMotion;
 
-inline int signd(const double x) { return (x >= 0 ? 1 : -1); }
+inline int signd(const double x)
+{
+  return (x >= 0 ? 1 : -1);
+}
 
-class HomographyDecomp {
- public:
-  HomographyDecomp() {}
-  virtual ~HomographyDecomp() {}
+class HomographyDecomp
+{
+public:
+  HomographyDecomp()
+  {
+  }
+  virtual ~HomographyDecomp()
+  {
+  }
   virtual void decomposeHomography(const cv::Matx33d& H, const cv::Matx33d& K, std::vector<CameraMotion>& camMotions);
   bool isRotationValid(const cv::Matx33d& R, const double epsilon = 0.01);
 
- protected:
+protected:
   bool passesSameSideOfPlaneConstraint(CameraMotion& motion);
   virtual void decompose(std::vector<CameraMotion>& camMotions) = 0;
-  const cv::Matx33d& getHnorm() const { return _Hnorm; }
+  const cv::Matx33d& getHnorm() const
+  {
+    return _Hnorm;
+  }
 
- private:
+private:
   cv::Matx33d normalize(const cv::Matx33d& H, const cv::Matx33d& K);
   void removeScale();
   cv::Matx33d _Hnorm;
 };
 
-class HomographyDecompZhang : public HomographyDecomp {
- public:
-  HomographyDecompZhang() : HomographyDecomp() {}
-  virtual ~HomographyDecompZhang() {}
+class HomographyDecompZhang : public HomographyDecomp
+{
+public:
+  HomographyDecompZhang() : HomographyDecomp()
+  {
+  }
+  virtual ~HomographyDecompZhang()
+  {
+  }
 
- private:
+private:
   virtual void decompose(std::vector<CameraMotion>& camMotions);
   bool findMotionFrom_tstar_n(const cv::Vec3d& tstar, const cv::Vec3d& n, CameraMotion& motion);
 };
 
-class HomographyDecompInria : public HomographyDecomp {
- public:
-  HomographyDecompInria() : HomographyDecomp() {}
-  virtual ~HomographyDecompInria() {}
+class HomographyDecompInria : public HomographyDecomp
+{
+public:
+  HomographyDecompInria() : HomographyDecomp()
+  {
+  }
+  virtual ~HomographyDecompInria()
+  {
+  }
 
- private:
+private:
   virtual void decompose(std::vector<CameraMotion>& camMotions);
   double oppositeOfMinor(const cv::Matx33d& M, const int row, const int col);
   void findRmatFrom_tstar_n(const cv::Vec3d& tstar, const cv::Vec3d& n, const double v, cv::Matx33d& R);
 };
 
 // normalizes homography with intrinsic camera parameters
-Matx33d HomographyDecomp::normalize(const Matx33d& H, const Matx33d& K) { return K.inv() * H * K; }
+Matx33d HomographyDecomp::normalize(const Matx33d& H, const Matx33d& K)
+{
+  return K.inv() * H * K;
+}
 
-void HomographyDecomp::removeScale() {
+void HomographyDecomp::removeScale()
+{
   Mat W;
   SVD::compute(_Hnorm, W);
   _Hnorm = _Hnorm * (1.0 / W.at<double>(1));
@@ -116,25 +142,30 @@ void HomographyDecomp::removeScale() {
 /*! This checks that the input is a pure rotation matrix 'm'.
  * The conditions for this are: R' * R = I and det(R) = 1 (proper rotation matrix)
  */
-bool HomographyDecomp::isRotationValid(const Matx33d& R, const double epsilon) {
+bool HomographyDecomp::isRotationValid(const Matx33d& R, const double epsilon)
+{
   Matx33d RtR = R.t() * R;
   Matx33d I(1, 0, 0, 0, 1, 0, 0, 0, 1);
-  if (norm(RtR, I, NORM_INF) > epsilon) return false;
+  if (norm(RtR, I, NORM_INF) > epsilon)
+    return false;
   return (fabs(determinant(R) - 1.0) < epsilon);
 }
 
-bool HomographyDecomp::passesSameSideOfPlaneConstraint(CameraMotion& motion) {
+bool HomographyDecomp::passesSameSideOfPlaneConstraint(CameraMotion& motion)
+{
   typedef Matx<double, 1, 1> Matx11d;
   Matx31d t = Matx31d(motion.t);
   Matx31d n = Matx31d(motion.n);
   Matx11d proj = n.t() * motion.R.t() * t;
-  if ((1 + proj(0, 0)) <= 0) return false;
+  if ((1 + proj(0, 0)) <= 0)
+    return false;
   return true;
 }
 
 //! main routine to decompose homography
 void HomographyDecomp::decomposeHomography(const Matx33d& H, const cv::Matx33d& K,
-                                           std::vector<CameraMotion>& camMotions) {
+                                           std::vector<CameraMotion>& camMotions)
+{
   // normalize homography matrix with intrinsic camera matrix
   _Hnorm = normalize(H, K);
   // remove scale of the normalized homography
@@ -148,7 +179,8 @@ void HomographyDecomp::decomposeHomography(const Matx33d& H, const cv::Matx33d& 
  t = R * tstar;
  returns true if computed R&t is a valid solution
  */
-bool HomographyDecompZhang::findMotionFrom_tstar_n(const cv::Vec3d& tstar, const cv::Vec3d& n, CameraMotion& motion) {
+bool HomographyDecompZhang::findMotionFrom_tstar_n(const cv::Vec3d& tstar, const cv::Vec3d& n, CameraMotion& motion)
+{
   Matx31d tstar_m = Mat(tstar);
   Matx31d n_m = Mat(n);
   Matx33d temp = tstar_m * n_m.t();
@@ -161,7 +193,8 @@ bool HomographyDecompZhang::findMotionFrom_tstar_n(const cv::Vec3d& tstar, const
   return passesSameSideOfPlaneConstraint(motion);
 }
 
-void HomographyDecompZhang::decompose(std::vector<CameraMotion>& camMotions) {
+void HomographyDecompZhang::decompose(std::vector<CameraMotion>& camMotions)
+{
   Mat W, U, Vt;
   SVD::compute(getHnorm(), W, U, Vt);
   double lambda1 = W.at<double>(0);
@@ -194,12 +227,14 @@ void HomographyDecompZhang::decompose(std::vector<CameraMotion>& camMotions) {
   double e1v3me3v1[3], e1v3pe3v1[3];
   double inv_e1me3 = 1.0 / (e1 - e3);
 
-  for (int kk = 0; kk < 3; ++kk) {
+  for (int kk = 0; kk < 3; ++kk)
+  {
     v1pmv3p[kk] = v1p[kk] - v3p[kk];
     v1ppv3p[kk] = v1p[kk] + v3p[kk];
   }
 
-  for (int kk = 0; kk < 3; ++kk) {
+  for (int kk = 0; kk < 3; ++kk)
+  {
     double e1v3 = e1 * v3p[kk];
     double e3v1 = e3 * v1p[kk];
     e1v3me3v1[kk] = e1v3 - e3v1;
@@ -210,7 +245,8 @@ void HomographyDecompZhang::decompose(std::vector<CameraMotion>& camMotions) {
   Vec3d n_p, n_n;
 
   /// Solution group A
-  for (int kk = 0; kk < 3; ++kk) {
+  for (int kk = 0; kk < 3; ++kk)
+  {
     tstar_p[kk] = v1pmv3p[kk] * inv_e1me3;
     tstar_n[kk] = -tstar_p[kk];
     n_p[kk] = e1v3me3v1[kk] * inv_e1me3;
@@ -220,19 +256,24 @@ void HomographyDecompZhang::decompose(std::vector<CameraMotion>& camMotions) {
   CameraMotion cmotion;
   //(A) Four different combinations for solution A
   // (i)  (+, +)
-  if (findMotionFrom_tstar_n(tstar_p, n_p, cmotion)) camMotions.push_back(cmotion);
+  if (findMotionFrom_tstar_n(tstar_p, n_p, cmotion))
+    camMotions.push_back(cmotion);
 
   // (ii)  (+, -)
-  if (findMotionFrom_tstar_n(tstar_p, n_n, cmotion)) camMotions.push_back(cmotion);
+  if (findMotionFrom_tstar_n(tstar_p, n_n, cmotion))
+    camMotions.push_back(cmotion);
 
   // (iii)  (-, +)
-  if (findMotionFrom_tstar_n(tstar_n, n_p, cmotion)) camMotions.push_back(cmotion);
+  if (findMotionFrom_tstar_n(tstar_n, n_p, cmotion))
+    camMotions.push_back(cmotion);
 
   // (iv)  (-, -)
-  if (findMotionFrom_tstar_n(tstar_n, n_n, cmotion)) camMotions.push_back(cmotion);
+  if (findMotionFrom_tstar_n(tstar_n, n_n, cmotion))
+    camMotions.push_back(cmotion);
   //////////////////////////////////////////////////////////////////
   /// Solution group B
-  for (int kk = 0; kk < 3; ++kk) {
+  for (int kk = 0; kk < 3; ++kk)
+  {
     tstar_p[kk] = v1ppv3p[kk] * inv_e1me3;
     tstar_n[kk] = -tstar_p[kk];
     n_p[kk] = e1v3pe3v1[kk] * inv_e1me3;
@@ -241,19 +282,24 @@ void HomographyDecompZhang::decompose(std::vector<CameraMotion>& camMotions) {
 
   //(B) Four different combinations for solution B
   // (i)  (+, +)
-  if (findMotionFrom_tstar_n(tstar_p, n_p, cmotion)) camMotions.push_back(cmotion);
+  if (findMotionFrom_tstar_n(tstar_p, n_p, cmotion))
+    camMotions.push_back(cmotion);
 
   // (ii)  (+, -)
-  if (findMotionFrom_tstar_n(tstar_p, n_n, cmotion)) camMotions.push_back(cmotion);
+  if (findMotionFrom_tstar_n(tstar_p, n_n, cmotion))
+    camMotions.push_back(cmotion);
 
   // (iii)  (-, +)
-  if (findMotionFrom_tstar_n(tstar_n, n_p, cmotion)) camMotions.push_back(cmotion);
+  if (findMotionFrom_tstar_n(tstar_n, n_p, cmotion))
+    camMotions.push_back(cmotion);
 
   // (iv)  (-, -)
-  if (findMotionFrom_tstar_n(tstar_n, n_n, cmotion)) camMotions.push_back(cmotion);
+  if (findMotionFrom_tstar_n(tstar_n, n_n, cmotion))
+    camMotions.push_back(cmotion);
 }
 
-double HomographyDecompInria::oppositeOfMinor(const Matx33d& M, const int row, const int col) {
+double HomographyDecompInria::oppositeOfMinor(const Matx33d& M, const int row, const int col)
+{
   int x1 = col == 0 ? 1 : 0;
   int x2 = col == 2 ? 1 : 2;
   int y1 = row == 0 ? 1 : 0;
@@ -264,7 +310,8 @@ double HomographyDecompInria::oppositeOfMinor(const Matx33d& M, const int row, c
 
 // computes R = H( I - (2/v)*te_star*ne_t )
 void HomographyDecompInria::findRmatFrom_tstar_n(const cv::Vec3d& tstar, const cv::Vec3d& n, const double v,
-                                                 cv::Matx33d& R) {
+                                                 cv::Matx33d& R)
+{
   Matx31d tstar_m = Matx31d(tstar);
   Matx31d n_m = Matx31d(n);
   Matx33d I(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
@@ -272,7 +319,8 @@ void HomographyDecompInria::findRmatFrom_tstar_n(const cv::Vec3d& tstar, const c
   R = getHnorm() * (I - (2 / v) * tstar_m * n_m.t());
 }
 
-void HomographyDecompInria::decompose(std::vector<CameraMotion>& camMotions) {
+void HomographyDecompInria::decompose(std::vector<CameraMotion>& camMotions)
+{
   const double epsilon = 0.001;
   Matx33d S;
 
@@ -283,7 +331,8 @@ void HomographyDecompInria::decompose(std::vector<CameraMotion>& camMotions) {
   S(2, 2) -= 1.0;
 
   // check if H is rotation matrix
-  if (norm(S, NORM_INF) < epsilon) {
+  if (norm(S, NORM_INF) < epsilon)
+  {
     CameraMotion motion;
     motion.R = Matx33d(getHnorm());
     motion.t = Vec3d(0, 0, 0);
@@ -317,14 +366,20 @@ void HomographyDecompInria::decompose(std::vector<CameraMotion>& camMotions) {
 
   // find max( |Sii| ), i=0, 1, 2
   int indx = 0;
-  if (nS00 < nS11) {
+  if (nS00 < nS11)
+  {
     indx = 1;
-    if (nS11 < nS22) indx = 2;
-  } else {
-    if (nS00 < nS22) indx = 2;
+    if (nS11 < nS22)
+      indx = 2;
+  }
+  else
+  {
+    if (nS00 < nS22)
+      indx = 2;
   }
 
-  switch (indx) {
+  switch (indx)
+  {
     case 0:
       npa[0] = S(0, 0), npb[0] = S(0, 0);
       npa[1] = S(0, 1) + rtM22, npb[1] = S(0, 1) - rtM22;
@@ -418,23 +473,29 @@ int decomposeHomographyMat(cv::InputArray _H, cv::InputArray _K, cv::OutputArray
   int nsols = static_cast<int>(motions.size());
   int depth = CV_64F;  // double precision matrices used in CameraMotion struct
 
-  if (_rotations.needed()) {
+  if (_rotations.needed())
+  {
     _rotations.create(nsols, 1, depth);
-    for (int k = 0; k < nsols; ++k) {
+    for (int k = 0; k < nsols; ++k)
+    {
       _rotations.getMatRef(k) = Mat(motions[k].R);
     }
   }
 
-  if (_translations.needed()) {
+  if (_translations.needed())
+  {
     _translations.create(nsols, 1, depth);
-    for (int k = 0; k < nsols; ++k) {
+    for (int k = 0; k < nsols; ++k)
+    {
       _translations.getMatRef(k) = Mat(motions[k].t);
     }
   }
 
-  if (_normals.needed()) {
+  if (_normals.needed())
+  {
     _normals.create(nsols, 1, depth);
-    for (int k = 0; k < nsols; ++k) {
+    for (int k = 0; k < nsols; ++k)
+    {
       _normals.getMatRef(k) = Mat(motions[k].n);
     }
   }

@@ -2,17 +2,21 @@
 
 #include "Utils/ROITools.hpp"
 
-namespace Vision {
-namespace Utils {
-
+namespace Vision
+{
+namespace Utils
+{
 // Specificity of integral images: one more column and row than original image
-cv::Rect iiCropRect(const cv::Rect& patch, const cv::Size& iiSize) {
+cv::Rect iiCropRect(const cv::Rect& patch, const cv::Size& iiSize)
+{
   return Utils::cropRect(patch, cv::Size(iiSize.width - 1, iiSize.height - 1));
 }
 
-double getPatchSum(const cv::Rect& patch, const cv::Mat& integralImage, bool crop) {
+double getPatchSum(const cv::Rect& patch, const cv::Mat& integralImage, bool crop)
+{
   cv::Rect rect = patch;
-  if (crop) {
+  if (crop)
+  {
     rect = iiCropRect(patch, integralImage.size());
   }
 
@@ -29,13 +33,16 @@ double getPatchSum(const cv::Rect& patch, const cv::Mat& integralImage, bool cro
   return (A + D) - (B + C);
 }
 
-double getPatchDensity(const cv::Rect& patch, const cv::Mat& integralImage, bool crop) {
+double getPatchDensity(const cv::Rect& patch, const cv::Mat& integralImage, bool crop)
+{
   cv::Rect rect = patch;
-  if (crop) {
+  if (crop)
+  {
     rect = iiCropRect(patch, integralImage.size());
   }
 
-  if (rect.area() == 0) {
+  if (rect.area() == 0)
+  {
     throw std::runtime_error("Patch is out of image");
   }
 

@@ -4,16 +4,18 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * SourceOpencv
  *
  * Very basic support to open cameras using openCV
  */
-class SourceOpenCV : public Source {
- public:
+class SourceOpenCV : public Source
+{
+public:
   SourceOpenCV();
   virtual ~SourceOpenCV();
 
@@ -25,10 +27,10 @@ class SourceOpenCV : public Source {
 
   Type getType() const override;
 
- protected:
+protected:
   void process() override;
 
- private:
+private:
   std::string device_name;
   int device_index;
 

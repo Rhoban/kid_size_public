@@ -2,8 +2,9 @@
 
 #include <Eigen/Core>
 
-class ArucoTag {
- public:
+class ArucoTag
+{
+public:
   ArucoTag();
 
   ArucoTag(int marker_id, double marker_size, const Eigen::Vector3d& marker_center, const Eigen::Vector3d& x_axis,
