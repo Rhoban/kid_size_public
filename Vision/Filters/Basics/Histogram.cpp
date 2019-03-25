@@ -2,17 +2,22 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 
-namespace Vision {
-namespace Filters {
+namespace Vision
+{
+namespace Filters
+{
+Histogram::Histogram() : Filter("Histogram")
+{
+}
 
-Histogram::Histogram() : Filter("Histogram") {}
-
-void Histogram::setParameters() {
+void Histogram::setParameters()
+{
   bins = ParamInt(256, 0, 256);
   params()->define<ParamInt>("bins", &bins);
 }
 
-void Histogram::process() {
+void Histogram::process()
+{
   cv::Mat src = *(getDependency().getImg());
 
   std::vector<cv::Mat> yuv;
@@ -21,8 +26,8 @@ void Histogram::process() {
   int histSize = bins;
 
   // Set the ranges
-  float range[] = {1, 256};
-  const float *histRange = {range};
+  float range[] = { 1, 256 };
+  const float* histRange = { range };
 
   bool uniform = true;
   bool accumulate = false;
@@ -47,7 +52,8 @@ void Histogram::process() {
   cv::normalize(vHist, vHist, 0, img().rows, cv::NORM_MINMAX, -1, cv::Mat());
 
   // Draw for each channel
-  for (int i = 1; i < histSize; i++) {
+  for (int i = 1; i < histSize; i++)
+  {
     line(img(), cv::Point(bin_w * (i - 1), hist_h - cvRound(yHist.at<float>(i - 1))),
          cv::Point(bin_w * (i), hist_h - cvRound(yHist.at<float>(i))), cv::Scalar(255, 255, 255), 2, 8, 0);
     line(img(), cv::Point(bin_w * (i - 1), hist_h - cvRound(uHist.at<float>(i - 1))),

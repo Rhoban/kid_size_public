@@ -2,10 +2,12 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 
-namespace Vision {
-namespace Filters {
-
-void Erode::setParameters() {
+namespace Vision
+{
+namespace Filters
+{
+void Erode::setParameters()
+{
   shape = ParamInt(2, 0, 2);
   kWidth = ParamInt(5, 1, 11);
   kHeight = ParamInt(5, 1, 11);
@@ -14,7 +16,8 @@ void Erode::setParameters() {
   params()->define<ParamInt>("kernel height", &kHeight);
 }
 
-void Erode::process() {
+void Erode::process()
+{
   cv::Mat src = *(getDependency().getImg());
   cv::Mat kernel = getStructuringElement(shape, cv::Size(kWidth, kHeight));
   erode(*(getDependency().getImg()), img(), kernel);

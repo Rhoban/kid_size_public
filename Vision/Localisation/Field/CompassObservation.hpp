@@ -3,11 +3,13 @@
 #include "Localisation/Field/SerializableFieldObservation.hpp"
 #include <string>
 
-namespace Vision {
-namespace Localisation {
-
-class CompassObservation : public SerializableFieldObservation {
- private:
+namespace Vision
+{
+namespace Localisation
+{
+class CompassObservation : public SerializableFieldObservation
+{
+private:
   typedef rhoban_utils::Angle Angle;
 
   /// Visual compass value which should be provided when facing opponent goal
@@ -18,7 +20,7 @@ class CompassObservation : public SerializableFieldObservation {
 
   static double pError, maxError, sigmoidOffset, sigmoidLambda;
 
- public:
+public:
   /// Return the field orientation corresponding to the visual compass orientation
   /// given as a parameter
   static Angle compassToField(Angle visualCompassAngle);

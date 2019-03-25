@@ -5,14 +5,17 @@
 
 #include "Filters/Pipeline.hpp"
 
-namespace Vision {
-namespace Application {
-class Application : public rhoban_utils::JsonSerializable {
- public:
+namespace Vision
+{
+namespace Application
+{
+class Application : public rhoban_utils::JsonSerializable
+{
+public:
   Application();
   virtual ~Application();
 
-  virtual void configure(int argc, char *argv[]);
+  virtual void configure(int argc, char* argv[]);
   virtual void launch();
 
   /// Return false if application has finished
@@ -21,14 +24,17 @@ class Application : public rhoban_utils::JsonSerializable {
   virtual void printHelp();
 
   // Json stuff
-  virtual void fromJson(const Json::Value &v, const std::string &dir_name) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
   virtual Json::Value toJson() const override;
-  virtual std::string getClassName() const override { return "Application"; }
+  virtual std::string getClassName() const override
+  {
+    return "Application";
+  }
 
   /// Throws a logic_error if content is inconsistent (replay vs realtime)
   void checkConsistency() const;
 
- protected:
+protected:
   // Pair of callback and comment
   typedef std::pair<std::function<void()>, std::string> KeyAction;
 

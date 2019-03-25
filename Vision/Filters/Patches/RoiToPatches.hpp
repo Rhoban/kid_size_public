@@ -2,16 +2,18 @@
 
 #include "PatchProvider.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /// This filter allows to extract patches in an image from ROI
 ///
 /// Takes two dependencies:
 /// 1. Filter providing the image from which patch will be extracted
 /// 2. Filter providing the regions of interest
-class RoiToPatches : public PatchProvider {
- public:
+class RoiToPatches : public PatchProvider
+{
+public:
   RoiToPatches();
 
   virtual std::string getClassName() const override;
@@ -19,7 +21,7 @@ class RoiToPatches : public PatchProvider {
 
   virtual void setParameters() override;
 
- protected:
+protected:
   virtual void process() override;
 
   /// Define the tagging of images on the output image

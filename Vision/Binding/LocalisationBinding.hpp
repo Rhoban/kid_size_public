@@ -12,27 +12,31 @@
 class MoveScheduler;
 
 // Forward declaration to reduce compile time
-namespace Vision {
+namespace Vision
+{
 class Robocup;
-namespace Localisation {
+namespace Localisation
+{
 class CompassObservation;
 class FieldPF;
 class GoalObservation;
 class TagsObservation;
 }  // namespace Localisation
-namespace Utils {
+namespace Utils
+{
 class CameraState;
 }
 
 /// Charged of all the localisation services for the Robocup
 ///
 /// It can be used in a separate thread
-class LocalisationBinding {
- private:
-  typedef std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition> *> ObservationVector;
+class LocalisationBinding
+{
+private:
+  typedef std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition>*> ObservationVector;
 
- public:
-  LocalisationBinding(MoveScheduler *scheduler, Robocup *vision_binding);
+public:
+  LocalisationBinding(MoveScheduler* scheduler, Robocup* vision_binding);
 
   ~LocalisationBinding();
 
@@ -54,17 +58,17 @@ class LocalisationBinding {
   /// Steal all the localisation informations provided by the vision
   void stealFromVision();
 
-  std::vector<Localisation::GoalObservation *> extractGoalObservations();
-  std::vector<Localisation::TagsObservation *> extractTagsObservations();
-  std::vector<Localisation::CompassObservation *> extractCompassObservations();
-  std::vector<Localisation::ArenaCornerObservation *> extractArenaCornerObservations();
+  std::vector<Localisation::GoalObservation*> extractGoalObservations();
+  std::vector<Localisation::TagsObservation*> extractTagsObservations();
+  std::vector<Localisation::CompassObservation*> extractCompassObservations();
+  std::vector<Localisation::ArenaCornerObservation*> extractArenaCornerObservations();
   /// Use the provided informations in origin basis to create observations
   ObservationVector extractObservations();
 
   /// Tick the filter with the provided informations
-  void updateFilter(const ObservationVector &obs);
+  void updateFilter(const ObservationVector& obs);
   /// Tick the consistency watcher using provided informations
-  void applyWatcher(const ObservationVector &obs);
+  void applyWatcher(const ObservationVector& obs);
 
   /// Ask for a reset of the particle filter
   void fieldReset(Localisation::FieldPF::ResetType type, float x = 0, float y = 0, float noise = 0, float theta = 0,
@@ -80,13 +84,13 @@ class LocalisationBinding {
   bool refereeAllowsToPlay();
 
   /// Link to the vision binding is required to retrieve information
-  Robocup *vision_binding;
+  Robocup* vision_binding;
 
   /// Direct link to the scheduler
-  MoveScheduler *scheduler;
+  MoveScheduler* scheduler;
 
   /// The particle filter containing the position of the robot
-  Localisation::FieldPF *field_filter;
+  Localisation::FieldPF* field_filter;
 
   /// Number of particles for the field
   int nb_particles_ff;
@@ -126,7 +130,7 @@ class LocalisationBinding {
   double consistencyMaxNoise;
 
   /// Camera states
-  Utils::CameraState *cs;
+  Utils::CameraState* cs;
 
   /// Wished period between two ticks of the localisationBinding
   double period;
@@ -180,12 +184,12 @@ class LocalisationBinding {
   /// Verbosity level
   int debugLevel;
 
- private:
+private:
   /// The binding for RhIO variables
-  RhIO::Bind *bind;
+  RhIO::Bind* bind;
 
   /// Main thread running
-  std::thread *_runThread;
+  std::thread* _runThread;
 
   /// Locking access
   std::mutex filterMutex;

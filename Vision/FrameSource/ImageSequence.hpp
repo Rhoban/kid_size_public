@@ -2,11 +2,13 @@
 
 #include <opencv2/core/core.hpp>
 
-namespace Vision {
-namespace Utils {
-
-class ImageSequence {
- private:
+namespace Vision
+{
+namespace Utils
+{
+class ImageSequence
+{
+private:
   int frameNo, nextFrameNo;
   int64_t clock_offset;
   cv::Mat img;
@@ -17,16 +19,16 @@ class ImageSequence {
 
   void update();
 
- public:
+public:
   ImageSequence();
   /**
    * @see loadImages
    */
-  ImageSequence(const std::string &fileName);
+  ImageSequence(const std::string& fileName);
 
   std::string imgFileName() const;
   std::string imgOriginalName() const;
-  const cv::Mat &getImg() const;
+  const cv::Mat& getImg() const;
   unsigned long getTimestamp() const;
 
   /// Load a set of images from a csv file containing the list of image
@@ -34,7 +36,7 @@ class ImageSequence {
   /// File can easily be created by using:
   /// ls <folder>/*.jpg > filename
   /// or something similar
-  void loadImages(const std::string &fileName);
+  void loadImages(const std::string& fileName);
 
   /* Load previous or next image, throw exception if operation cannot be
    * done (beginning/end of imageSequence)
@@ -46,7 +48,10 @@ class ImageSequence {
    * Move to given index and load image
    */
   void setIndex(int index);
-  int getIndex() const { return frameNo; }
+  int getIndex() const
+  {
+    return frameNo;
+  }
 
   /**
    * Return the total number of images available in the sequence

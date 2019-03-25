@@ -17,12 +17,13 @@
 #include <map>
 
 class MoveScheduler;
-namespace Vision {
-
+namespace Vision
+{
 class LogBenchmark;
 class RobocupBenchmark;
 
-namespace Localisation {
+namespace Localisation
+{
 class BallStackFilter;
 class RobotFilter;
 class SpeedEstimator;
@@ -35,10 +36,11 @@ class SpeedEstimator;
  * is defined here using VisionReloaded
  * framework
  */
-class Robocup : public Vision::Application::Application {
+class Robocup : public Vision::Application::Application
+{
   friend class Vision::RobocupBenchmark;  // RobocupBenchmark need an access
   friend class Vision::LogBenchmark;      // LogBenchmark need an access
- private:
+private:
   /**
    * Note on mutex:
    * - globalMutex:
@@ -97,9 +99,9 @@ class Robocup : public Vision::Application::Application {
   void publishToRhIO();
   void importFromRhIO();
 
-  MoveScheduler *_scheduler;
+  MoveScheduler* _scheduler;
 
- public:
+public:
   // Properties for monitoring images
   std::vector<SpecialImageHandler> imageHandlers;
 
@@ -111,17 +113,17 @@ class Robocup : public Vision::Application::Application {
    * Initialize and start
    * the Robocup pipeline
    */
-  Robocup(MoveScheduler *scheduler);
+  Robocup(MoveScheduler* scheduler);
 
   // Create a robocup config based on configFile
   // Required for config file
-  Robocup(const std::string &configFile, MoveScheduler *scheduler);
+  Robocup(const std::string& configFile, MoveScheduler* scheduler);
 
   /**
    * Initialize and start
    * the Robocup pipeline with cmd-line args
    */
-  Robocup(int argc, char **argv);
+  Robocup(int argc, char** argv);
 
   /**
    * Stop the pipeline
@@ -134,7 +136,7 @@ class Robocup : public Vision::Application::Application {
   virtual void step() override;
   virtual void finish() override;
 
-  void startLogging(unsigned int timeMS, const std::string &logDir);
+  void startLogging(unsigned int timeMS, const std::string& logDir);
   void endLogging();
 
   // How many frames were captured?
@@ -152,9 +154,9 @@ class Robocup : public Vision::Application::Application {
   void robotsClear();
 
   /// Asks the model to start a logging session with given path as a target
-  void startLoggingLowLevel(const std::string &path);
+  void startLoggingLowLevel(const std::string& path);
   /// Asks the model to end and save a session with given path
-  void stopLoggingLowLevel(const std::string &path);
+  void stopLoggingLowLevel(const std::string& path);
   /// Tells the model to read the low level values from a log file instead than
   /// from the actual low level
   void setLogMode(const std::string path);
@@ -169,12 +171,12 @@ class Robocup : public Vision::Application::Application {
 
   /// Lock mutex on tags, retrieve indices and position of tags
   /// Finally clear all memory about tags
-  void stealTags(std::vector<int> &indices, std::vector<Eigen::Vector3d> &positions,
-                 std::vector<std::pair<float, float>> &centers,
-                 std::vector<std::pair<float, float>> &undistorded_centers, double *timestamp);
+  void stealTags(std::vector<int>& indices, std::vector<Eigen::Vector3d>& positions,
+                 std::vector<std::pair<float, float>>& centers,
+                 std::vector<std::pair<float, float>>& undistorded_centers, double* timestamp);
 
   // steal the observations from the visual compass
-  void stealCompasses(std::vector<double> &orientations, std::vector<double> &dispersions);
+  void stealCompasses(std::vector<double>& orientations, std::vector<double>& dispersions);
 
   /// Get all clipping loc info currently stored and remove them from the list
   std::vector<Vision::Filters::FieldBorderData> stealClipping();
@@ -187,17 +189,23 @@ class Robocup : public Vision::Application::Application {
   cv::Mat getTaggedImg(int width, int height);
   cv::Mat getRadarImg(int width, int height);
 
-  cv::Mat getImg(const std::string &name, int wishedWidth, int wishedHeight, bool gray);
+  cv::Mat getImg(const std::string& name, int wishedWidth, int wishedHeight, bool gray);
 
-  const Pipeline &getPipeline() const { return pipeline; }
+  const Pipeline& getPipeline() const
+  {
+    return pipeline;
+  }
 
   /* JSON STUFF */
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value &v, const std::string &dir_name) override;
-  virtual std::string getClassName() const override { return "vision_config"; }
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
+  virtual std::string getClassName() const override
+  {
+    return "vision_config";
+  }
 
   // TODO : move this into radar refactoring
-  std::vector<cv::Point2f> keepFrontRobots(std::vector<cv::Point2f> &robots);
+  std::vector<cv::Point2f> keepFrontRobots(std::vector<cv::Point2f>& robots);
 
   void closeCamera();
 
@@ -211,19 +219,19 @@ class Robocup : public Vision::Application::Application {
   /**
    * Pipeline main loop thread
    */
-  std::thread *_runThread;
+  std::thread* _runThread;
   bool _doRun;
 
   // BALL
   /// Ball position filter
-  Localisation::BallStackFilter *ballStackFilter;
+  Localisation::BallStackFilter* ballStackFilter;
   //  Opponent robots filter
-  Localisation::RobotFilter *robotFilter;
+  Localisation::RobotFilter* robotFilter;
   /// Ball speed estimator
-  Localisation::SpeedEstimator *ballSpeedEstimator;
+  Localisation::SpeedEstimator* ballSpeedEstimator;
 
   // Sensors and related
-  Utils::CameraState *cs;
+  Utils::CameraState* cs;
   ::rhoban_utils::TimeStamp lastTS, sourceTS;
 
   bool ballDetected;
@@ -239,7 +247,7 @@ class Robocup : public Vision::Application::Application {
   /// vision tick
   bool clearRememberObservations;
 
- private:
+private:
   /// Detected positions for goals in "origin" basis
   std::vector<cv::Point2f> detectedGoals;
 

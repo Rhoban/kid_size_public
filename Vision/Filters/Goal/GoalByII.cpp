@@ -15,10 +15,14 @@ using rhoban_utils::Benchmark;
 
 static rhoban_utils::Logger logger("GoalByII");
 
-static bool isFilledMask(const cv::Mat& mask) {
-  for (int y = 0; y < mask.rows; y++) {
-    for (int x = 0; x < mask.cols; x++) {
-      if (mask.at<uchar>(y, x) == 0) {
+static bool isFilledMask(const cv::Mat& mask)
+{
+  for (int y = 0; y < mask.rows; y++)
+  {
+    for (int x = 0; x < mask.cols; x++)
+    {
+      if (mask.at<uchar>(y, x) == 0)
+      {
         return false;
       }
     }
@@ -26,16 +30,26 @@ static bool isFilledMask(const cv::Mat& mask) {
   return true;
 }
 
-namespace Vision {
-namespace Filters {
+namespace Vision
+{
+namespace Filters
+{
+GoalByII::GoalByII() : Filter("GoalByII")
+{
+}
 
-GoalByII::GoalByII() : Filter("GoalByII") {}
+std::string GoalByII::getClassName() const
+{
+  return "GoalByII";
+}
 
-std::string GoalByII::getClassName() const { return "GoalByII"; }
+int GoalByII::expectedDependencies() const
+{
+  return 4;
+}
 
-int GoalByII::expectedDependencies() const { return 4; }
-
-void GoalByII::setParameters() {
+void GoalByII::setParameters()
+{
   widthScale = ParamFloat(2.0, 0.1, 10.0);
   aboveRatio = ParamFloat(2.0, 0.1, 10.0);
   belowRatio = ParamFloat(2.0, 0.1, 10.0);
@@ -67,7 +81,8 @@ void GoalByII::setParameters() {
   params()->define<ParamFloat>("filledMaskMinWidth", &filledMaskMinWidth);
 }
 
-void GoalByII::process() {
+void GoalByII::process()
+{
   // Get names of dependencies
   const std::string& whiteName = _dependencies[0];
   const std::string& greenName = _dependencies[1];
@@ -108,25 +123,31 @@ void GoalByII::process() {
   // If we use the mask and it is entirely filled, this mean that computation
   // the field borders might have failed, therefore we ignore small areas
   // because they might be located on other fields
-  if (useMask && isFilledMask(mask)) {
+  if (useMask && isFilledMask(mask))
+  {
     frameMinWidth = filledMaskMinWidth;
   }
 
   Benchmark::open("computing decimated scores");
   // Computing score matrix and ROI at once
   cv::Mat scoresImg;
-  if (tagLevel > 0) {
+  if (tagLevel > 0)
+  {
     scoresImg = cv::Mat(rows, cols, CV_32SC1, cv::Scalar(0.0));
   }
-  for (int y = 0; y * decimationRate < rows; y++) {
-    for (int x = 0; x * decimationRate < cols; x++) {
+  for (int y = 0; y * decimationRate < rows; y++)
+  {
+    for (int x = 0; x * decimationRate < cols; x++)
+    {
       // Computing limits of the current area
       int start_x = x * decimationRate;
       int start_y = y * decimationRate;
       int end_x = (x + 1) * decimationRate;
       int end_y = (y + 1) * decimationRate;
-      if (end_x >= cols) end_x = cols - 1;
-      if (end_y >= rows) end_y = rows - 1;
+      if (end_x >= cols)
+        end_x = cols - 1;
+      if (end_y >= rows)
+        end_y = rows - 1;
 
       // Getting the middle point and the width of the image
       int center_x = (start_x + end_x) / 2;
@@ -142,8 +163,10 @@ void GoalByII::process() {
 
       // logger.log("(%d,%d) -> (%d,%d) -> %d", center_x, center_y, mask_center_x, mask_center_y, maskValue);
 
-      if (outOfMask || tooThin) {
-        if (tagLevel > 0) {
+      if (outOfMask || tooThin)
+      {
+        if (tagLevel > 0)
+        {
           fillScore(scoresImg, 0, start_x, end_x, start_y, end_y);
         }
         continue;
@@ -160,8 +183,10 @@ void GoalByII::process() {
       // If mode discard partial ROIs and boundaryPatch is not inside ROI:
       // Skip ROI and use a '0' score
       if (!Utils::isContained(above_patch, srcSize) || !Utils::isContained(boundary_patch, srcSize) ||
-          !Utils::isContained(roi_patch, srcSize)) {
-        if (tagLevel > 0) {
+          !Utils::isContained(roi_patch, srcSize))
+      {
+        if (tagLevel > 0)
+        {
           fillScore(scoresImg, 0, start_x, end_x, start_y, end_y);
         }
         continue;
@@ -181,19 +206,23 @@ void GoalByII::process() {
       double score = (belowCoeff * (above_score - below_score) + sideCoeff * (2 * above_score - L - R)) / (totalCoeff);
 
       // Write score in scores map
-      if (tagLevel > 0) {
+      if (tagLevel > 0)
+      {
         fillScore(scoresImg, (int)score, start_x, end_x, start_y, end_y);
         // Update score boundaries
-        if (score > imgMaxScore) {
+        if (score > imgMaxScore)
+        {
           imgMaxScore = score;
         }
-        if (score < imgMinScore) {
+        if (score < imgMinScore)
+        {
           imgMinScore = score;
         }
       }
 
       // If score of patch is too low to use it, skip
-      if (score < minScore) {
+      if (score < minScore)
+      {
         continue;
       }
 
@@ -205,54 +234,66 @@ void GoalByII::process() {
       bool dominated = false;
       double worstScore = score;
       int worstId = -1;
-      for (size_t id = 0; id < boundaryPatches.size(); id++) {
+      for (size_t id = 0; id < boundaryPatches.size(); id++)
+      {
         // If there is an overlap with 'id'
-        if (Utils::isOverlapping(boundaryPatches[id], boundary_patch)) {
+        if (Utils::isOverlapping(boundaryPatches[id], boundary_patch))
+        {
           // If new region is better, then it dominates 'id'
-          if (scores[id] < score) {
+          if (scores[id] < score)
+          {
             dominated_rois.push_back(id);
           }
           // If new region is not better, simply stop the process and ignore the region
-          else {
+          else
+          {
             dominated = true;
             break;
           }
         }
         // If score is lower than previously met, update
-        if (worstScore > scores[id]) {
+        if (worstScore > scores[id])
+        {
           worstScore = scores[id];
           worstId = id;
         }
       }
       // If the new roi is dominated, ignore it
-      if (dominated) {
+      if (dominated)
+      {
       }
       // No areas directly dominated
-      else if (dominated_rois.size() == 0) {
+      else if (dominated_rois.size() == 0)
+      {
         // If there is enough space remaining, push element
-        if ((int)scores.size() < maxRois) {
+        if ((int)scores.size() < maxRois)
+        {
           scores.push_back(score);
           boundaryPatches.push_back(boundary_patch);
           roiPatches.push_back(roi_patch);
         }
         // If there is not enough space: replace worst ROI
-        else if (worstId != -1) {
+        else if (worstId != -1)
+        {
           scores[worstId] = score;
           boundaryPatches[worstId] = boundary_patch;
           roiPatches[worstId] = roi_patch;
         }
       }
       // If one area is dominated, replace it
-      else if (dominated_rois.size() == 1) {
+      else if (dominated_rois.size() == 1)
+      {
         size_t dominated_idx = dominated_rois[0];
         scores[dominated_idx] = score;
         boundaryPatches[dominated_idx] = boundary_patch;
         roiPatches[dominated_idx] = roi_patch;
       }
       // If more than one area is dominated, remove all dominated areas and add current one
-      else {
+      else
+      {
         std::vector<bool> removeFlags(scores.size(), false);
-        for (size_t roi_id : dominated_rois) {
+        for (size_t roi_id : dominated_rois)
+        {
           removeFlags[roi_id] = true;
         }
         std::vector<double> oldScores = scores;
@@ -261,8 +302,10 @@ void GoalByII::process() {
         scores.clear();
         boundaryPatches.clear();
         roiPatches.clear();
-        for (size_t roi_idx = 0; roi_idx < oldScores.size(); roi_idx++) {
-          if (!removeFlags[roi_idx]) {
+        for (size_t roi_idx = 0; roi_idx < oldScores.size(); roi_idx++)
+        {
+          if (!removeFlags[roi_idx])
+          {
             scores.push_back(oldScores[roi_idx]);
             boundaryPatches.push_back(oldBoundaries[roi_idx]);
             roiPatches.push_back(oldRois[roi_idx]);
@@ -277,36 +320,49 @@ void GoalByII::process() {
 
   Benchmark::close("computing decimated scores");
 
-  for (size_t roi_idx = 0; roi_idx < scores.size(); roi_idx++) {
+  for (size_t roi_idx = 0; roi_idx < scores.size(); roi_idx++)
+  {
     addRoi(scores[roi_idx], Utils::toRotatedRect(roiPatches[roi_idx]));
   }
 
   Benchmark::open("getHeatMap");
-  if (tagLevel > 0) {
+  if (tagLevel > 0)
+  {
     img() = getHeatMap(scoresImg, imgMinScore, imgMaxScore);
-  } else {
+  }
+  else
+  {
     img() = cv::Mat(rows, cols, CV_8UC3, cv::Scalar(0, 0, 0));
   }
   Benchmark::close("getHeatMap");
 }
 
-cv::Mat GoalByII::getHeatMap(const cv::Mat& scores, double imgMinScore, double imgMaxScore) const {
+cv::Mat GoalByII::getHeatMap(const cv::Mat& scores, double imgMinScore, double imgMaxScore) const
+{
   cv::Mat result(rows, cols, CV_8UC3, cv::Scalar(0, 0, 0));
   double diffScore = imgMaxScore - imgMinScore;
-  if (diffScore > 0) {
+  if (diffScore > 0)
+  {
     double factorBelow = 0;
     double factorAbove = 0;
     // Normalizing the scores between [0-255]
-    if (imgMaxScore > 0) factorAbove = 255.0 / imgMaxScore;
-    if (imgMinScore < 0) factorBelow = 255.0 / imgMinScore;
+    if (imgMaxScore > 0)
+      factorAbove = 255.0 / imgMaxScore;
+    if (imgMinScore < 0)
+      factorBelow = 255.0 / imgMinScore;
     // Going back to color
-    for (int y = 0; y < rows; y++) {
-      for (int x = 0; x < cols; x++) {
+    for (int y = 0; y < rows; y++)
+    {
+      for (int x = 0; x < cols; x++)
+      {
         int score = scores.at<int>(y, x);
-        if (score > 0) {
+        if (score > 0)
+        {
           int intensity = (int)(score * factorAbove);
           result.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, intensity);
-        } else {
+        }
+        else
+        {
           int intensity = (int)(score * factorBelow);
           result.at<cv::Vec3b>(y, x) = cv::Vec3b(intensity, 0, 0);
         }
@@ -316,7 +372,8 @@ cv::Mat GoalByII::getHeatMap(const cv::Mat& scores, double imgMinScore, double i
   return result;
 }
 
-cv::Rect_<float> GoalByII::getAbovePatch(int x, int y, float width) {
+cv::Rect_<float> GoalByII::getAbovePatch(int x, int y, float width)
+{
   float half_width = width * widthScale / 2.0;
   float height = half_width * aboveRatio;
   // Creating inner patch
@@ -324,7 +381,8 @@ cv::Rect_<float> GoalByII::getAbovePatch(int x, int y, float width) {
   return cv::Rect_<float>(center - cv::Point2f(half_width, height), center + cv::Point2f(half_width, 0));
 }
 
-cv::Rect_<float> GoalByII::getAboveRightPatch(int x, int y, float width) {
+cv::Rect_<float> GoalByII::getAboveRightPatch(int x, int y, float width)
+{
   float low_limit = width * widthScale / 2.0;
   float far_limit = low_limit * boundaryWidthRatio;
   float height = low_limit * aboveRatio;
@@ -333,7 +391,8 @@ cv::Rect_<float> GoalByII::getAboveRightPatch(int x, int y, float width) {
   return cv::Rect_<float>(center + cv::Point2f(low_limit, -height), center + cv::Point2f(far_limit, 0));
 }
 
-cv::Rect_<float> GoalByII::getAboveLeftPatch(int x, int y, float width) {
+cv::Rect_<float> GoalByII::getAboveLeftPatch(int x, int y, float width)
+{
   float low_limit = width * widthScale / 2.0;
   float far_limit = low_limit * boundaryWidthRatio;
   float height = low_limit * aboveRatio;
@@ -342,7 +401,8 @@ cv::Rect_<float> GoalByII::getAboveLeftPatch(int x, int y, float width) {
   return cv::Rect_<float>(center - cv::Point2f(far_limit, height), center - cv::Point2f(low_limit, 0));
 }
 
-cv::Rect_<float> GoalByII::getBelowPatch(int x, int y, float width) {
+cv::Rect_<float> GoalByII::getBelowPatch(int x, int y, float width)
+{
   float half_width = width * widthScale / 2.0;
   float far_limit = half_width * boundaryWidthRatio;
   float below = width * widthScale * belowRatio;
@@ -351,7 +411,8 @@ cv::Rect_<float> GoalByII::getBelowPatch(int x, int y, float width) {
   return cv::Rect_<float>(center - cv::Point2f(far_limit, 0), center + cv::Point2f(far_limit, below));
 }
 
-cv::Rect_<float> GoalByII::getBoundaryPatch(int x, int y, float width) {
+cv::Rect_<float> GoalByII::getBoundaryPatch(int x, int y, float width)
+{
   float half_width = width * widthScale * boundaryWidthRatio / 2.0;
   float above = width * widthScale * aboveRatio;
   float below = width * widthScale * belowRatio;
@@ -360,19 +421,22 @@ cv::Rect_<float> GoalByII::getBoundaryPatch(int x, int y, float width) {
   return cv::Rect_<float>(center - cv::Point2f(half_width, above), center + cv::Point2f(half_width, below));
 }
 
-cv::Rect_<float> GoalByII::getROIPatch(int x, int y, float width) {
+cv::Rect_<float> GoalByII::getROIPatch(int x, int y, float width)
+{
   float half_size = width * widthScale * roiRatio / 2.0;
   // Creating inner patch
   cv::Point2f center(x, y);
   return cv::Rect_<float>(center - cv::Point2f(half_size, half_size), center + cv::Point2f(half_size, half_size));
 }
 
-double GoalByII::getPatchScore(const cv::Rect& patch, const cv::Mat& whiteII, const cv::Mat& greenII) {
+double GoalByII::getPatchScore(const cv::Rect& patch, const cv::Mat& whiteII, const cv::Mat& greenII)
+{
   // Use cropped rectangle
   cv::Rect cropped = Utils::cropRect(patch, cv::Size(cols, rows));
 
   // Return 0 score for empty areas
-  if (cropped.area() == 0) return 0;
+  if (cropped.area() == 0)
+    return 0;
 
   // Top left and bottom right corners
   cv::Point2i tl, br;
@@ -390,9 +454,12 @@ double GoalByII::getPatchScore(const cv::Rect& patch, const cv::Mat& whiteII, co
   return (A + D - B - C) / area;
 }
 
-void GoalByII::fillScore(cv::Mat& img, int score, int start_x, int end_x, int start_y, int end_y) {
-  for (int y = start_y; y < end_y; y++) {
-    for (int x = start_x; x < end_x; x++) {
+void GoalByII::fillScore(cv::Mat& img, int score, int start_x, int end_x, int start_y, int end_y)
+{
+  for (int y = start_y; y < end_y; y++)
+  {
+    for (int x = start_x; x < end_x; x++)
+    {
       img.at<int>(y, x) = score;
     }
   }

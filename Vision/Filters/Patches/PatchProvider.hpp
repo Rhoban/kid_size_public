@@ -2,15 +2,17 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /// A patch provider is a Filter producing one or several patches. Those patches
 /// may further be used for classification.
 /// Position and size of the patch are provided (using a relative scale based on
 /// source image)
-class PatchProvider : public Filter {
- public:
+class PatchProvider : public Filter
+{
+public:
   PatchProvider(const std::string& name);
 
   virtual void setParameters() override;
@@ -29,7 +31,7 @@ class PatchProvider : public Filter {
   /// Transforms RotatedRect in Rect and then extract patches
   void addPatches(const std::vector<cv::RotatedRect>& rois, const cv::Mat& roi_img, const cv::Mat& src);
 
- protected:
+protected:
   /// The list of patches detected
   std::vector<cv::Mat> patches;
 

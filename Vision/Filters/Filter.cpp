@@ -27,87 +27,118 @@ static rhoban_utils::Logger out("Filter");
 
 using Vision::Utils::CameraState;
 
-namespace Vision {
-
+namespace Vision
+{
 bool Filter::GPU_ON = false;
 
 std::vector<std::string> Filter::listOfPresentWindows;
 
-Filter::Filter(const std::string &n, const Dependencies &dependencies)
-    : display(false),
-      _dependencies(dependencies),
-      name(n),
-      _availableImg(0),
-      _img1(480, 640, CV_8UC3),
-      _img2(480, 640, CV_8UC3),
-      _params(),
-      _lockParams(),
-      _lockImgs(),
-      _pipeline(nullptr),
-      monitor_scale(1),
-      rhio_initialized(false),
-      warningExecutionTime(0.01) {
+Filter::Filter(const std::string& n, const Dependencies& dependencies)
+  : display(false)
+  , _dependencies(dependencies)
+  , name(n)
+  , _availableImg(0)
+  , _img1(480, 640, CV_8UC3)
+  , _img2(480, 640, CV_8UC3)
+  , _params()
+  , _lockParams()
+  , _lockImgs()
+  , _pipeline(nullptr)
+  , monitor_scale(1)
+  , rhio_initialized(false)
+  , warningExecutionTime(0.01)
+{
   _defaultRoi = false;
   setParameters();
 }
 
-Filter::~Filter() {
-  if (display) {
+Filter::~Filter()
+{
+  if (display)
+  {
     cv::destroyWindow(name);
   }
 }
 
-const std::string &Filter::getName() const { return name; }
+const std::string& Filter::getName() const
+{
+  return name;
+}
 
-SafePtr<const cv::Mat> Filter::getImg() const {
+SafePtr<const cv::Mat> Filter::getImg() const
+{
   _lockImgs.lock();
-  if (_availableImg == 0) {
+  if (_availableImg == 0)
+  {
     return SafePtr<const cv::Mat>(_img1, _lockImgs, true);
-  } else {
+  }
+  else
+  {
     return SafePtr<const cv::Mat>(_img2, _lockImgs, true);
   }
 }
 
-void Filter::addDependency(const std::string &name) { _dependencies.push_back(name); }
+void Filter::addDependency(const std::string& name)
+{
+  _dependencies.push_back(name);
+}
 
-SafePtr<const Filter::Parameters> Filter::params() const {
+SafePtr<const Filter::Parameters> Filter::params() const
+{
   return SafePtr<const Filter::Parameters>(_params, _lockParams);
 }
-SafePtr<Filter::Parameters> Filter::params() { return SafePtr<Filter::Parameters>(_params, _lockParams); }
+SafePtr<Filter::Parameters> Filter::params()
+{
+  return SafePtr<Filter::Parameters>(_params, _lockParams);
+}
 
-const Utils::CameraState &Filter::getCS() const {
-  if (_pipeline == NULL) {
+const Utils::CameraState& Filter::getCS() const
+{
+  if (_pipeline == NULL)
+  {
     throw std::runtime_error(DEBUG_INFO + "Requesting CameraState in a filter not attached to a pipeline");
   }
-  Utils::CameraState *cs = _pipeline->getCameraState();
-  if (cs == NULL) {
+  Utils::CameraState* cs = _pipeline->getCameraState();
+  if (cs == NULL)
+  {
     throw std::runtime_error(DEBUG_INFO + "Invalid camera state");
-  } else {
+  }
+  else
+  {
     return *cs;
   }
 }
 
-Utils::CameraState &Filter::getCS() {
-  if (_pipeline == NULL) {
+Utils::CameraState& Filter::getCS()
+{
+  if (_pipeline == NULL)
+  {
     throw std::runtime_error(DEBUG_INFO + "Requesting CameraState in a filter not attached to a pipeline");
   }
-  Utils::CameraState *cs = _pipeline->getCameraState();
-  if (cs == NULL) {
+  Utils::CameraState* cs = _pipeline->getCameraState();
+  if (cs == NULL)
+  {
     throw std::runtime_error(DEBUG_INFO + "Invalid camera state");
-  } else {
+  }
+  else
+  {
     return *cs;
   }
 }
 
-Pipeline *Filter::getPipeline() {
-  if (_pipeline == NULL) {
+Pipeline* Filter::getPipeline()
+{
+  if (_pipeline == NULL)
+  {
     throw std::runtime_error("Requesting CameraState in a filter not attached to a pipeline");
   }
   return _pipeline;
 }
 
-void Filter::initWindow() {
-  if (!display) {
+void Filter::initWindow()
+{
+  if (!display)
+  {
     return;
   }
 
@@ -117,14 +148,15 @@ void Filter::initWindow() {
   // Set up and initialize mouse callback
   cv::setMouseCallback(
       name,
-      [](int event, int x, int y, int, void *param) -> void {
-        Filter *filter = (Filter *)param;
-        if (event != cv::EVENT_LBUTTONDOWN) {
+      [](int event, int x, int y, int, void* param) -> void {
+        Filter* filter = (Filter*)param;
+        if (event != cv::EVENT_LBUTTONDOWN)
+        {
           return;
         }
         // Print coordinate, pixel value and world estimated position
-        const CameraState &cs = filter->getCS();
-        const Leph::CameraModel &cameraModel = cs.getCameraModel();
+        const CameraState& cs = filter->getCS();
+        const Leph::CameraModel& cameraModel = cs.getCameraModel();
         cv::Vec3b pixel = filter->getImg()->at<cv::Vec3b>(y, x);
         cv::Point2f ball_center_in_img = cv::Point2f(x, y);
         std::cout << "filter->getCS()->timestamp" << cs.getTimeStampDouble() << std::endl;
@@ -158,9 +190,12 @@ void Filter::initWindow() {
         std::cout << "-> viewVectorInWorld: " << viewVectorInWorld.transpose() << std::endl;
         std::cout << "-> camera pos in world: " << (cs.cameraToWorld * Eigen::Vector3d(0, 0, 0)).transpose()
                   << std::endl;
-        if (viewVectorInWorld(2) > 0) {
+        if (viewVectorInWorld(2) > 0)
+        {
           std::cout << "-> ViewVector is above horizon, no additional elements" << std::endl;
-        } else {
+        }
+        else
+        {
           Eigen::Vector3d ball_pos = cs.ballInWorldFromPixel(ball_center_in_img);
           double ballRadius = cs.computeBallRadiusFromPixel(ball_center_in_img);
           cv::Point2f posInSelf = cs.robotPosFromImg(x, y);
@@ -169,7 +204,8 @@ void Filter::initWindow() {
                     << "-> Pos in self: (" << posInSelf.x << "," << posInSelf.y << ")" << std::endl
                     << "-> ball expected radius: " << ballRadius << std::endl;
           // Draw radiusMin and radiusMax circles on the image
-          if (ballRadius > 0) {
+          if (ballRadius > 0)
+          {
             cv::circle(filter->cachedImg(), ball_center_in_img, (int)ballRadius, cv::Scalar(255, 0, 0), 2);
           }
           filter->displayCurrent();
@@ -178,11 +214,18 @@ void Filter::initWindow() {
       this);
 }
 
-void Filter::update() { throw std::runtime_error("Update is not implemented for filter: " + getClassName()); }
+void Filter::update()
+{
+  throw std::runtime_error("Update is not implemented for filter: " + getClassName());
+}
 
-void Filter::previous() { throw std::runtime_error("Previous is not implemented for filter: " + getClassName()); }
+void Filter::previous()
+{
+  throw std::runtime_error("Previous is not implemented for filter: " + getClassName());
+}
 
-void Filter::runStep(UpdateType updateType) {
+void Filter::runStep(UpdateType updateType)
+{
   Benchmark::open(name);
   // List of filters name
   // cout << getName() << endl;
@@ -190,8 +233,10 @@ void Filter::runStep(UpdateType updateType) {
   importFromRhIO("Vision/");
   Benchmark::close("ImportFromRhio");
   // Call virtual implementation
-  try {
-    switch (updateType) {
+  try
+  {
+    switch (updateType)
+    {
       case forward:
         process();
         break;
@@ -204,13 +249,17 @@ void Filter::runStep(UpdateType updateType) {
       default:
         std::cout << "Unhandled type of step in filter" << std::endl;
     }
-  } catch (const cv::Exception &exc) {
+  }
+  catch (const cv::Exception& exc)
+  {
     Benchmark::close(name.c_str());
     std::ostringstream oss;
     oss << "Filter '" << name << "' of class '" << getClassName() << "' failed to update throwing error:" << std::endl
         << exc.what();
     throw std::runtime_error(oss.str());
-  } catch (...) {
+  }
+  catch (...)
+  {
     Benchmark::closeUntil(name);
     throw;
   }
@@ -225,96 +274,121 @@ void Filter::runStep(UpdateType updateType) {
 
   // Switch image double buffer
   _lockImgs.lock();
-  if (_availableImg == 0) {
+  if (_availableImg == 0)
+  {
     _availableImg = 1;
-  } else {
+  }
+  else
+  {
     _availableImg = 0;
   }
   _lockImgs.unlock();
 
   /// Show output image if enabled
-  if (display) displayCurrent();
+  if (display)
+    displayCurrent();
 
   // Close filter benchmark
   double filterTime = Benchmark::close(name.c_str());
-  if (filterTime > warningExecutionTime) {
+  if (filterTime > warningExecutionTime)
+  {
     out.warning("Filter '%s' took %f ms for step", name.c_str(), filterTime * 1000);
   }
 }
 
-const Filter &Filter::getDependency(const std::string &name) const {
-  if (_pipeline == nullptr) {
+const Filter& Filter::getDependency(const std::string& name) const
+{
+  if (_pipeline == nullptr)
+  {
     throw std::logic_error("Filter not registered in pipeline");
   }
   auto it = find(_dependencies.begin(), _dependencies.end(), name);
-  if (it == _dependencies.end()) {
+  if (it == _dependencies.end())
+  {
     throw std::logic_error("Filter dependency unknown : looking for " + name + " in " + getName());
   }
 
   return _pipeline->get(*it);
 }
 
-void Filter::initRhIO(const std::string &path) {
+void Filter::initRhIO(const std::string& path)
+{
   // Lazy init
-  if (rhio_initialized) return;
+  if (rhio_initialized)
+    return;
 
   rhio_initialized = true;
   rhio_path = path;
 
   std::string filterPath = path + getName();
   RhIO::Root.newChild(filterPath);
-  RhIO::IONode &node = RhIO::Root.child(filterPath);
+  RhIO::IONode& node = RhIO::Root.child(filterPath);
 
   // Declare variable if they have not been declared yet
-  try {
+  try
+  {
     // This will fail if node do not exist yet
     node.getFloat("monitor_scale");
-  } catch (const std::logic_error &err) {
+  }
+  catch (const std::logic_error& err)
+  {
     node.newFloat("monitor_scale")->defaultValue(monitor_scale)->minimum(0.01)->maximum(10);
     // Advertise format
     node.newFrame("out", "Output frame of the filter '" + getName() + "'", RhIO::FrameFormat::BGR);
   }
 }
 
-void Filter::importFromRhIO(const std::string &path) {
+void Filter::importFromRhIO(const std::string& path)
+{
   initRhIO(path);
   std::string filterPath = path + getName();
-  RhIO::IONode &node = RhIO::Root.child(filterPath);
+  RhIO::IONode& node = RhIO::Root.child(filterPath);
   // Updating monitor scale
   monitor_scale = node.getValueFloat("monitor_scale").value;
   // Updating parameters
-  for (const auto &param : params()->params<ParamInt>()) {
-    if (!param.second.importFromRhIO()) {
+  for (const auto& param : params()->params<ParamInt>())
+  {
+    if (!param.second.importFromRhIO())
+    {
       continue;
     }
-    if (node.getValueType(param.first) != RhIO::NoValue) {
+    if (node.getValueType(param.first) != RhIO::NoValue)
+    {
       param.second.value = node.getInt(param.first);
     }
   }
-  for (const auto &param : params()->params<ParamFloat>()) {
-    if (!param.second.importFromRhIO()) {
+  for (const auto& param : params()->params<ParamFloat>())
+  {
+    if (!param.second.importFromRhIO())
+    {
       continue;
     }
-    if (node.getValueType(param.first) != RhIO::NoValue) {
+    if (node.getValueType(param.first) != RhIO::NoValue)
+    {
       param.second.value = node.getFloat(param.first);
     }
   }
 }
 
-void Filter::publishToRhIO(const std::string &path) {
+void Filter::publishToRhIO(const std::string& path)
+{
   initRhIO(path);
   std::string filterPath = path + getName();
-  RhIO::IONode &node = RhIO::Root.child(filterPath);
+  RhIO::IONode& node = RhIO::Root.child(filterPath);
 
-  if (node.frameIsStreaming("out")) {
+  if (node.frameIsStreaming("out"))
+  {
     // Publish frame to RhIO
     int monitor_width = (int)(monitor_scale * img().cols);
     int monitor_height = (int)(monitor_scale * img().rows);
     // Ensure that image is on three channels
     cv::Mat tmp_img1;
-    if (img().channels() == 1) {
+    if (img().channels() == 1)
+    {
       cv::cvtColor(img(), tmp_img1, CV_GRAY2BGR);
-    } else {
+    }
+    else
+    {
       tmp_img1 = img();
     }
     // Resize image if necessary
@@ -325,13 +399,17 @@ void Filter::publishToRhIO(const std::string &path) {
   }
 
   // Publish parameters to RhIO if they have never been published
-  for (const auto &param : params()->params<ParamInt>()) {
-    if (node.getValueType(param.first) == RhIO::NoValue) {
+  for (const auto& param : params()->params<ParamInt>())
+  {
+    if (node.getValueType(param.first) == RhIO::NoValue)
+    {
       node.newInt(param.first)->defaultValue(param.second.value)->minimum(param.second.min)->maximum(param.second.max);
     }
   }
-  for (const auto &param : params()->params<ParamFloat>()) {
-    if (node.getValueType(param.first) == RhIO::NoValue) {
+  for (const auto& param : params()->params<ParamFloat>())
+  {
+    if (node.getValueType(param.first) == RhIO::NoValue)
+    {
       node.newFloat(param.first)
           ->defaultValue(param.second.value)
           ->minimum(param.second.min)
@@ -340,42 +418,56 @@ void Filter::publishToRhIO(const std::string &path) {
   }
 }
 
-const Filter &Filter::getDependency() const {
-  for (const auto &it : _dependencies) {
+const Filter& Filter::getDependency() const
+{
+  for (const auto& it : _dependencies)
+  {
     return getDependency(it);
   }
   throw std::logic_error("Filter no dependency");
 }
 
-cv::Mat &Filter::img() {
-  if (_availableImg == 0) {
+cv::Mat& Filter::img()
+{
+  if (_availableImg == 0)
+  {
     return _img2;
-  } else {
+  }
+  else
+  {
     return _img1;
   }
 }
 
-cv::Mat &Filter::cachedImg() {
-  if (_availableImg == 0) {
+cv::Mat& Filter::cachedImg()
+{
+  if (_availableImg == 0)
+  {
     return _img1;
-  } else {
+  }
+  else
+  {
     return _img2;
   }
 }
 
-unsigned long Filter::now() const {
+unsigned long Filter::now() const
+{
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
       .count();
 }
 
-void Filter::waitDependencies() const {
+void Filter::waitDependencies() const
+{
   // No wait of no dependency
-  if (_dependencies.size() == 0) {
+  if (_dependencies.size() == 0)
+  {
     return;
   }
 }
 
-Json::Value Filter::toJson() const {
+Json::Value Filter::toJson() const
+{
   Json::Value v;
   v["className"] = getClassName();
   v["name"] = name;
@@ -387,10 +479,12 @@ Json::Value Filter::toJson() const {
   return v;
 }
 
-void Filter::fromJson(const Json::Value &v, const std::string &dir_name) {
+void Filter::fromJson(const Json::Value& v, const std::string& dir_name)
+{
   // First set parameters
   setParameters();
-  try {
+  try
+  {
     // Then update content from json data
     rhoban_utils::tryRead(v, "name", &name);
     rhoban_utils::tryRead(v, "display", &display);
@@ -398,7 +492,8 @@ void Filter::fromJson(const Json::Value &v, const std::string &dir_name) {
     // Read dependencies
     rhoban_utils::tryReadVector(v, "dependencies", &_dependencies);
     // Checking dependencies size
-    if (_dependencies.size() != (size_t)expectedDependencies()) {
+    if (_dependencies.size() != (size_t)expectedDependencies())
+    {
       std::ostringstream oss;
       oss << "Filter::fromJson: '" << getName() << "' of class '" << getClassName()
           << "': invalid number of dependencies (" << _dependencies.size() << " received, " << expectedDependencies()
@@ -408,7 +503,9 @@ void Filter::fromJson(const Json::Value &v, const std::string &dir_name) {
     // Read Parameters
     tryParametersUpdate<int>(v, "paramInts");
     tryParametersUpdate<float>(v, "paramFloats");
-  } catch (const rhoban_utils::JsonParsingError &err) {
+  }
+  catch (const rhoban_utils::JsonParsingError& err)
+  {
     std::ostringstream oss;
     oss << err.what() << " in filter with name '" << name << "' of class '" << getClassName() << "'";
     throw rhoban_utils::JsonParsingError(oss.str());
@@ -420,49 +517,66 @@ void Filter::fromJson(const Json::Value &v, const std::string &dir_name) {
   publishToRhIO("Vision/");
 }
 
-const std::vector<std::pair<float, cv::RotatedRect>> &Filter::getRois() const { return _rois; }
+const std::vector<std::pair<float, cv::RotatedRect>>& Filter::getRois() const
+{
+  return _rois;
+}
 
-const std::vector<std::pair<float, Circle>> &Filter::getCircleRois() const { return _circleRois; }
+const std::vector<std::pair<float, Circle>>& Filter::getCircleRois() const
+{
+  return _circleRois;
+}
 
-void Filter::addRoi(float quality, cv::RotatedRect _rect) {
-  if (_defaultRoi) {
+void Filter::addRoi(float quality, cv::RotatedRect _rect)
+{
+  if (_defaultRoi)
+  {
     _defaultRoi = false;
     _rois.clear();
   }
   // std::pair<cv::RotatedRect , float> duo(_rect, quality);
   // _rois.insert(duo);
-  _rois.push_back({quality, _rect});
+  _rois.push_back({ quality, _rect });
 }
 
-void Filter::addRoi(float quality, Circle _circle) {
+void Filter::addRoi(float quality, Circle _circle)
+{
   // _circleRois.insert(std::pair<Circle, float >(_circle, quality));
-  _circleRois.push_back({quality, _circle});
+  _circleRois.push_back({ quality, _circle });
   // _circleRois[_circle] = quality;
 }
 
-void Filter::clearRois() {
+void Filter::clearRois()
+{
   _rois.clear();
   _circleRois.clear();
 }
 
-void Filter::displayCurrent() {
+void Filter::displayCurrent()
+{
   Benchmark::open("display");
 
   // Computing current image
-  cv::Mat &current_img = cachedImg();
+  cv::Mat& current_img = cachedImg();
 
   // TODO : make it cleaner, with values configurable outside the code
   // Resizing the windows to fit better their images
   float higherSize = 320.0;  // Other side will be 240 if we're in 3/4
   int width, height;
-  if (current_img.cols == 0 || current_img.rows == 0) {
+  if (current_img.cols == 0 || current_img.rows == 0)
+  {
     width = 320;
     height = 320;
-  } else {
-    if (current_img.cols > current_img.rows) {
+  }
+  else
+  {
+    if (current_img.cols > current_img.rows)
+    {
       width = higherSize;
       height = current_img.rows / (current_img.cols / higherSize);
-    } else {
+    }
+    else
+    {
       height = higherSize;
       width = current_img.cols / (current_img.rows / higherSize);
     }
@@ -475,7 +589,8 @@ void Filter::displayCurrent() {
    * Positionning the images. TODO : make it cleaner, with values configurable
    * outside the code
    */
-  if (std::find(listOfPresentWindows.begin(), listOfPresentWindows.end(), name) == listOfPresentWindows.end()) {
+  if (std::find(listOfPresentWindows.begin(), listOfPresentWindows.end(), name) == listOfPresentWindows.end())
+  {
     // First time with ask to print this
     int nbElements = listOfPresentWindows.size();
     int xOffset = 50;

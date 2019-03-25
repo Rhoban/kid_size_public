@@ -34,8 +34,9 @@
 ///        |          |          |          |
 ///        |          |          |          |
 ///  ------|----------|----------|--------- |------
-class CalibrationSet : public TagsCollection {
- public:
+class CalibrationSet : public TagsCollection
+{
+public:
   CalibrationSet();
 
   virtual std::map<int, ArucoTag> getMarkers() const;
@@ -44,7 +45,7 @@ class CalibrationSet : public TagsCollection {
   virtual void fromJson(const Json::Value& v, const std::string& dir_path) override;
   virtual std::string getClassName() const override;
 
- private:
+private:
   /// Update the content/position of the sheets
   void updateSheets();
 

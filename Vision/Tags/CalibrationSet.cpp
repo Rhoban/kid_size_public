@@ -3,29 +3,33 @@
 #include <rhoban_utils/util.h>
 
 CalibrationSet::CalibrationSet()
-    : marker_size(0.09),
-      robot_pos(-0.14, 0.065),
-      panel_size(0.63, 0.315),
-      panel_thickness(0.003),
-      border_to_center_1(0.185),
-      border_to_center_2(0.15),
-      sheet_dx(0.099),
-      sheet_dy(0.099),
-      sheets_spacing(0.3) {
+  : marker_size(0.09)
+  , robot_pos(-0.14, 0.065)
+  , panel_size(0.63, 0.315)
+  , panel_thickness(0.003)
+  , border_to_center_1(0.185)
+  , border_to_center_2(0.15)
+  , sheet_dx(0.099)
+  , sheet_dy(0.099)
+  , sheets_spacing(0.3)
+{
   updateSheets();
   getMarkers();
 }
 
-void CalibrationSet::updateSheets() {
+void CalibrationSet::updateSheets()
+{
   sheets.clear();
 
-  for (int panel_idx = 0; panel_idx < 10; panel_idx++) {
+  for (int panel_idx = 0; panel_idx < 10; panel_idx++)
+  {
     Eigen::Vector3d dx = getXDir(panel_idx) * sheet_dx;
     Eigen::Vector3d dy = getYDir(panel_idx) * sheet_dy;
     Eigen::Vector3d sheet1 = sheet1Center(panel_idx);
     std::vector<int> markers1 = getMarkersIndices(panel_idx, 0);
     sheets.push_back(TagsSheet(marker_size, dx, dy, sheet1, markers1));
-    if (panel_idx != 9) {
+    if (panel_idx != 9)
+    {
       Eigen::Vector3d sheet2 = sheet2Center(panel_idx);
       std::vector<int> markers2 = getMarkersIndices(panel_idx, 1);
       sheets.push_back(TagsSheet(marker_size, dx, dy, sheet2, markers2));
@@ -33,11 +37,15 @@ void CalibrationSet::updateSheets() {
   }
 }
 
-std::map<int, ArucoTag> CalibrationSet::getMarkers() const {
+std::map<int, ArucoTag> CalibrationSet::getMarkers() const
+{
   std::map<int, ArucoTag> dictionary;
-  for (const TagsSheet& sheet : sheets) {
-    for (const std::pair<int, ArucoTag>& entry : sheet.getMarkers()) {
-      if (dictionary.count(entry.first)) {
+  for (const TagsSheet& sheet : sheets)
+  {
+    for (const std::pair<int, ArucoTag>& entry : sheet.getMarkers())
+    {
+      if (dictionary.count(entry.first))
+      {
         throw std::logic_error(DEBUG_INFO + " duplicated entry for id: " + std::to_string(entry.first));
       }
       dictionary[entry.first] = entry.second;
@@ -46,7 +54,8 @@ std::map<int, ArucoTag> CalibrationSet::getMarkers() const {
   return dictionary;
 }
 
-Json::Value CalibrationSet::toJson() const {
+Json::Value CalibrationSet::toJson() const
+{
   Json::Value v;
   v["marker_size"] = marker_size;
   v["panel_thickness"] = panel_thickness;
@@ -60,7 +69,8 @@ Json::Value CalibrationSet::toJson() const {
   return v;
 }
 
-void CalibrationSet::fromJson(const Json::Value& v, const std::string& dir_path) {
+void CalibrationSet::fromJson(const Json::Value& v, const std::string& dir_path)
+{
   (void)dir_path;
   rhoban_utils::tryRead(v, "marker_size", &marker_size);
   rhoban_utils::tryRead(v, "panel_thickness", &panel_thickness);
@@ -73,10 +83,15 @@ void CalibrationSet::fromJson(const Json::Value& v, const std::string& dir_path)
   rhoban_utils::tryReadEigen(v, "robot_pos", &robot_pos);
 }
 
-std::string CalibrationSet::getClassName() const { return "CalibrationSet"; }
+std::string CalibrationSet::getClassName() const
+{
+  return "CalibrationSet";
+}
 
-Eigen::Vector3d CalibrationSet::getXDir(int panel_idx) const {
-  switch (panel_idx) {
+Eigen::Vector3d CalibrationSet::getXDir(int panel_idx) const
+{
+  switch (panel_idx)
+  {
     case 1:
     case 2:  // left panels
       return Eigen::Vector3d(1, 0, 0);
@@ -92,15 +107,18 @@ Eigen::Vector3d CalibrationSet::getXDir(int panel_idx) const {
   }
 }
 
-Eigen::Vector3d CalibrationSet::getYDir(int panel_idx) const {
-  if (panel_idx >= 1 && panel_idx <= 7) {  // vertical panels
+Eigen::Vector3d CalibrationSet::getYDir(int panel_idx) const
+{
+  if (panel_idx >= 1 && panel_idx <= 7)
+  {  // vertical panels
     return Eigen::Vector3d(0, 0, -1);
   }
   // horizontal panels
   return Eigen::Vector3d(-1, 0, 0);
 }
 
-Eigen::Vector3d CalibrationSet::sheet1Center(int panel_idx) const {
+Eigen::Vector3d CalibrationSet::sheet1Center(int panel_idx) const
+{
   // Explicit naming
   double panel_length = panel_size(0);
   double panel_width = panel_size(1);
@@ -109,7 +127,8 @@ Eigen::Vector3d CalibrationSet::sheet1Center(int panel_idx) const {
   double z_vertical = panel_length - border_to_center_2;
   // First extracting world pos (ref is center of P9)
   Eigen::Vector3d world_pos;
-  switch (panel_idx) {
+  switch (panel_idx)
+  {
     case 0:
       world_pos = Eigen::Vector3d(x_horizontal, panel_width, panel_thickness);
       break;
@@ -148,13 +167,16 @@ Eigen::Vector3d CalibrationSet::sheet1Center(int panel_idx) const {
   return pos_in_self;
 }
 
-Eigen::Vector3d CalibrationSet::sheet2Center(int panel_idx) const {
+Eigen::Vector3d CalibrationSet::sheet2Center(int panel_idx) const
+{
   return sheet1Center(panel_idx) + getYDir(panel_idx) * sheets_spacing;
 }
 
-std::vector<int> CalibrationSet::getMarkersIndices(int panel_idx, int sheet_idx) {
+std::vector<int> CalibrationSet::getMarkersIndices(int panel_idx, int sheet_idx)
+{
   std::vector<int> indices;
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 6; i++)
+  {
     int marker_id = panel_idx * 12 + sheet_idx * 6 + i;
     indices.push_back(marker_id);
   }

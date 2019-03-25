@@ -1,10 +1,12 @@
 #include <opencv2/core/core.hpp>
 #include "Filters/Basics/MaskOr.hpp"
 
-namespace Vision {
-namespace Filters {
-
-void MaskOr::process() {
+namespace Vision
+{
+namespace Filters
+{
+void MaskOr::process()
+{
   std::string srcName = _dependencies[0];
   std::string maskName = _dependencies[1];
 
@@ -19,12 +21,18 @@ void MaskOr::process() {
   // I did a quick test but for some reason the results change significantly on
   // the same image with
   // the same code. To be tested seriously, no time now.
-  for (int col = 0; col < tmp.cols; col++) {
-    for (int row = 0; row < tmp.rows; row++) {
-      if (mask.at<char>(row / ratio, col / ratio) != 0) {
-        if (src.channels() == 3) {
+  for (int col = 0; col < tmp.cols; col++)
+  {
+    for (int row = 0; row < tmp.rows; row++)
+    {
+      if (mask.at<char>(row / ratio, col / ratio) != 0)
+      {
+        if (src.channels() == 3)
+        {
           tmp.at<cv::Vec3b>(row, col) = cv::Vec3b(255, 255, 255);
-        } else if (src.channels() == 1) {
+        }
+        else if (src.channels() == 1)
+        {
           tmp.at<unsigned char>(row, col) = 255;
         }
       }

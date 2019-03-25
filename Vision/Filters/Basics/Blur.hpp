@@ -2,21 +2,28 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Blur
  *
  * Blur the image with a kernel of a given width and height
  */
-class Blur : public Filter {
- public:
-  Blur() : Filter("Blur") {}
+class Blur : public Filter
+{
+public:
+  Blur() : Filter("Blur")
+  {
+  }
 
-  virtual std::string getClassName() const override { return "Blur"; }
+  virtual std::string getClassName() const override
+  {
+    return "Blur";
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -24,7 +31,7 @@ class Blur : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
   ParamInt kWidth;
   ParamInt kHeight;
 };

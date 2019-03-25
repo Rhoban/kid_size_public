@@ -2,21 +2,28 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Erode
  *
  * Erode the image with a kernel of a given width, height and shape
  */
-class Erode : public Filter {
- public:
-  Erode() : Filter("Erode") {}
+class Erode : public Filter
+{
+public:
+  Erode() : Filter("Erode")
+  {
+  }
 
-  virtual std::string getClassName() const override { return "Erode"; }
+  virtual std::string getClassName() const override
+  {
+    return "Erode";
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -24,7 +31,7 @@ class Erode : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
   /**
    * Shape :
    * 0 - Rect

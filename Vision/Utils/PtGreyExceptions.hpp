@@ -2,16 +2,19 @@
 
 #include <stdexcept>
 
-namespace Vision {
-namespace Utils {
-
-class PtGreyException : public std::runtime_error {
- public:
+namespace Vision
+{
+namespace Utils
+{
+class PtGreyException : public std::runtime_error
+{
+public:
   PtGreyException(const std::string& msg);
 };
 
-class PtGreyConnectionException : public std::runtime_error {
- public:
+class PtGreyConnectionException : public std::runtime_error
+{
+public:
   PtGreyConnectionException(const std::string& msg);
 };
 

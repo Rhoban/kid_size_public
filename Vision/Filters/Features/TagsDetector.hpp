@@ -12,18 +12,21 @@
 #include <opencv2/aruco.hpp>
 #include <string>
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * TagsDetector
  *
  */
-class TagsDetector : public Filter {
- public:
+class TagsDetector : public Filter
+{
+public:
   /// Aruco::Marker does not exist in OpenCV3
-  class Marker {
-   public:
+  class Marker
+  {
+  public:
     Marker();
     Marker(int id, float size, const std::vector<cv::Point2f>& corners, const cv::Vec3d& rvec, const cv::Vec3d& tvec);
 
@@ -46,20 +49,23 @@ class TagsDetector : public Filter {
   // Json stuff
   // virtual void fromJson(const Json::Value & v, const std::string & dir_name);
   // virtual Json::Value toJson() const;
-  virtual std::string getClassName() const override { return "TagsDetector"; }
+  virtual std::string getClassName() const override
+  {
+    return "TagsDetector";
+  }
 
   virtual void setParameters() override;
   virtual int expectedDependencies() const override;
 
   const std::vector<Marker>& getDetectedMarkers() const;
 
- protected:
+protected:
   /**
    * @Inherit
    */
   virtual void process() override;
 
- private:
+private:
   ParamFloat adaptiveThreshConstant;
   ParamInt adaptiveThreshWinSizeMin;
   ParamInt adaptiveThreshWinSizeMax;

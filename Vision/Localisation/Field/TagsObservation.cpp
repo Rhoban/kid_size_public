@@ -15,9 +15,10 @@ static rhoban_utils::Logger out("TagsObservation");
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 
-namespace Vision {
-namespace Localisation {
-
+namespace Vision
+{
+namespace Localisation
+{
 double TagsObservation::pError = std::pow(10, -3);
 double TagsObservation::angleFlatTol = 1;
 double TagsObservation::angleMaxErr = 5;
@@ -26,13 +27,17 @@ double TagsObservation::normMaxErr = 0.5;
 double TagsObservation::distFactor = 0.5;
 bool TagsObservation::angleMode = true;
 
-TagsObservation::TagsObservation(const int &id_, const cv::Point3f &seenPos_, const cv::Point3f &seenDev_,
+TagsObservation::TagsObservation(const int& id_, const cv::Point3f& seenPos_, const cv::Point3f& seenDev_,
                                  double robotHeight_, double weight_)
-    : id(id_), seenPos(seenPos_), stdDev(seenDev_), robotHeight(robotHeight_), weight(weight_) {}
+  : id(id_), seenPos(seenPos_), stdDev(seenDev_), robotHeight(robotHeight_), weight(weight_)
+{
+}
 
-cv::Point3f TagsObservation::getTagPosInParticleSelf(int tagId, const FieldPosition &p) const {
-  const std::map<int, cv::Point3f> &knowntags = Field::Field::getTags();
-  if (knowntags.find(id) == knowntags.end()) {
+cv::Point3f TagsObservation::getTagPosInParticleSelf(int tagId, const FieldPosition& p) const
+{
+  const std::map<int, cv::Point3f>& knowntags = Field::Field::getTags();
+  if (knowntags.find(id) == knowntags.end())
+  {
     throw std::logic_error("Unknown tag: " + std::to_string(tagId));
   }
   // Getting ground position of the tag in the robot referential
@@ -49,18 +54,23 @@ cv::Point3f TagsObservation::getTagPosInParticleSelf(int tagId, const FieldPosit
   return pos_in_self;
 }
 
-cv::Point3f TagsObservation::getSeenVec(const cv::Point3f &posInSelf) const {
+cv::Point3f TagsObservation::getSeenVec(const cv::Point3f& posInSelf) const
+{
   return posInSelf - cv::Point3f(0, 0, robotHeight);
 }
 
-double TagsObservation::potential(const FieldPosition &p) const {
-  const std::map<int, cv::Point3f> &knowntags = Field::Field::getTags();
+double TagsObservation::potential(const FieldPosition& p) const
+{
+  const std::map<int, cv::Point3f>& knowntags = Field::Field::getTags();
 
-  if (knowntags.find(id) == knowntags.end()) {
+  if (knowntags.find(id) == knowntags.end())
+  {
     // If a tag is found which is unknown, then the observations is in fault and
     // not the particle
     return 1.0;
-  } else if (angleMode) {
+  }
+  else if (angleMode)
+  {
     cv::Point3f pos_in_self = getTagPosInParticleSelf(id, p);
     cv::Point3f seen_dir = getSeenVec(seenPos);
     cv::Point3f expected_dir = getSeenVec(pos_in_self);
@@ -69,23 +79,31 @@ double TagsObservation::potential(const FieldPosition &p) const {
     Angle deltaAngle = angleBetween(seen_dir, expected_dir);
     double dAngleDeg = std::fabs(deltaAngle.getSignedValue());
     double angleScore = 1;
-    if (dAngleDeg > angleMaxErr) {
+    if (dAngleDeg > angleMaxErr)
+    {
       angleScore = pError;
-    } else if (dAngleDeg > angleFlatTol) {
+    }
+    else if (dAngleDeg > angleFlatTol)
+    {
       double gamma = (dAngleDeg - angleFlatTol) / (angleMaxErr - angleFlatTol);
       angleScore = (1 - gamma) * (1 - pError) + pError;
     }
     // Compute norm score
     double deltaNorm = std::fabs(cv::norm(seen_dir) - cv::norm(expected_dir));
     double normScore = 1;
-    if (deltaNorm > normMaxErr) {
+    if (deltaNorm > normMaxErr)
+    {
       normScore = pError;
-    } else if (deltaNorm > normFlatTol) {
+    }
+    else if (deltaNorm > normFlatTol)
+    {
       double gamma = (deltaNorm - normFlatTol) / (normMaxErr - normFlatTol);
       normScore = (1 - gamma) * (1 - pError) + pError;
     }
     return angleScore * normScore;
-  } else {
+  }
+  else
+  {
     cv::Point3f pos_in_self = getTagPosInParticleSelf(id, p);
 
     double dx = seenPos.x - pos_in_self.x;
@@ -98,7 +116,8 @@ double TagsObservation::potential(const FieldPosition &p) const {
   }
 }
 
-void TagsObservation::bindWithRhIO() {
+void TagsObservation::bindWithRhIO()
+{
   RhIO::Root.newFloat("/localisation/field/TagsObservation/angleFlatTol")
       ->defaultValue(angleFlatTol)
       ->minimum(0.0)
@@ -134,8 +153,9 @@ void TagsObservation::bindWithRhIO() {
       ->comment("Minimal potential for an observation with weight 1");
 }
 
-void TagsObservation::importFromRhIO() {
-  RhIO::IONode &node = RhIO::Root.child("localisation/field/TagsObservation");
+void TagsObservation::importFromRhIO()
+{
+  RhIO::IONode& node = RhIO::Root.child("localisation/field/TagsObservation");
   angleFlatTol = node.getValueFloat("angleFlatTol").value;
   angleMaxErr = node.getValueFloat("angleMaxErr").value;
   normFlatTol = node.getValueFloat("normFlatTol").value;
@@ -145,23 +165,32 @@ void TagsObservation::importFromRhIO() {
   pError = node.getValueFloat("pError").value;
 }
 
-std::string TagsObservation::getClassName() const { return "TagsObservation"; }
+std::string TagsObservation::getClassName() const
+{
+  return "TagsObservation";
+}
 
-double TagsObservation::getMinScore() const { return pow(pError, weight); }
+double TagsObservation::getMinScore() const
+{
+  return pow(pError, weight);
+}
 
-std::string TagsObservation::toStr() const {
+std::string TagsObservation::toStr() const
+{
   std::ostringstream oss;
   oss << "[TagsObservation: id=" << id << " pos=(" << seenPos.x << ", " << seenPos.y << ", " << seenPos.z << ")]";
   return oss.str();
 }
 
-void TagsObservation::fromJson(const Json::Value &v, const std::string &dir_name) {
+void TagsObservation::fromJson(const Json::Value& v, const std::string& dir_name)
+{
   (void)v;
   (void)dir_name;
   throw std::logic_error("TagsObservation::fromJson: not implemented yet");
 }
 
-Json::Value TagsObservation::toJson() const {
+Json::Value TagsObservation::toJson() const
+{
   throw std::logic_error("TagsObservation::fromJson: not implemented yet");
 }
 

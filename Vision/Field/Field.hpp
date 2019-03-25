@@ -14,25 +14,27 @@
  * accordingly
  */
 
-namespace Vision {
-namespace Field {
-
-class Field {
- public:
-  static void drawField(cv::Mat &dst, const cv::Scalar &bgColor = cv::Scalar(0, 128, 0));
+namespace Vision
+{
+namespace Field
+{
+class Field
+{
+public:
+  static void drawField(cv::Mat& dst, const cv::Scalar& bgColor = cv::Scalar(0, 128, 0));
   // Creates the singleton if needed
-  static Field *getField();
+  static Field* getField();
 
   /// Number of pixels per meter
-  static double getScale(const cv::Mat &img);
+  static double getScale(const cv::Mat& img);
 
-  static const std::vector<Utils::Segment> &getLines();
-  static const std::vector<Utils::Segment> &getGoals();
-  static const std::vector<rhoban_geometry::ParametricLine> &getArenaBorders();
+  static const std::vector<Utils::Segment>& getLines();
+  static const std::vector<Utils::Segment>& getGoals();
+  static const std::vector<rhoban_geometry::ParametricLine>& getArenaBorders();
   static std::vector<cv::Point2f> getGoalPosts();
   static std::vector<cv::Point2f> getArenaCorners();
 
-  static const std::map<int, cv::Point3f> &getTags();
+  static const std::map<int, cv::Point3f>& getTags();
 
   /**
    * postNo:
@@ -47,16 +49,16 @@ class Field {
   /**
    * Convert from field basis to img basis
    */
-  static cv::Point2f fieldToImg(const cv::Mat &img, const cv::Point2f &p);
-  static cv::Point2i fieldToImg(const cv::Mat &img, const cv::Point2i &p);
+  static cv::Point2f fieldToImg(const cv::Mat& img, const cv::Point2f& p);
+  static cv::Point2i fieldToImg(const cv::Mat& img, const cv::Point2i& p);
 
- private:
+private:
   Field();
 
   void initBorders();
   void initArena();
   void initCenter();
-  void initGoalZone(const cv::Point2f &init, int dir);
+  void initGoalZone(const cv::Point2f& init, int dir);
   void initMarks();
   void initGoals();
   void initTags();
@@ -64,11 +66,11 @@ class Field {
   static int totalHeight();
   static int totalWidth();
 
-  static int lineWidth(const cv::Mat &img);
-  static int markWidth(const cv::Mat &img);
-  static int centerDiameter(const cv::Mat &img);
+  static int lineWidth(const cv::Mat& img);
+  static int markWidth(const cv::Mat& img);
+  static int centerDiameter(const cv::Mat& img);
 
-  static Field *singleton;
+  static Field* singleton;
 
   std::vector<Utils::Segment> fieldLines;
   // Center of penalty marks

@@ -2,14 +2,16 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /// Write images too disk:
 /// - write only images when enabled becomes false
 /// TODO: add a maximal length
-class Recorder : public Filter {
- public:
+class Recorder : public Filter
+{
+public:
   /// Initially not recording
   Recorder();
 
@@ -17,7 +19,7 @@ class Recorder : public Filter {
 
   virtual std::string getClassName() const override;
 
- protected:
+protected:
   virtual void process() override;
 
   /// Lazy mechanism
@@ -25,7 +27,7 @@ class Recorder : public Filter {
 
   void updateControl();
 
- private:
+private:
   bool activated;
 
   /// Dumping images directly consumes too much time

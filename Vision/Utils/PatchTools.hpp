@@ -4,9 +4,10 @@
 
 /// A list of common function useful for working on patches on integral images
 
-namespace Vision {
-namespace Utils {
-
+namespace Vision
+{
+namespace Utils
+{
 /// Return the sum of pixel values over all the pixels inside the patch
 /// If crop is activated, then the patch is first cropped to be inside the image
 /// If patch area is 0, return 0

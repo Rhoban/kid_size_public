@@ -2,22 +2,27 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Hisogram
  *
  * Separates the input image in 3 channels and draws an histogram for each of
  *them
  */
-class Histogram : public Filter {
- public:
+class Histogram : public Filter
+{
+public:
   Histogram();
 
-  virtual std::string getClassName() const override { return "Histogram"; }
+  virtual std::string getClassName() const override
+  {
+    return "Histogram";
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -25,7 +30,7 @@ class Histogram : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
   ParamInt bins;
 };
 }  // namespace Filters

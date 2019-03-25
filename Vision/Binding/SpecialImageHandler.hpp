@@ -4,16 +4,17 @@
 
 #include <functional>
 
-namespace Vision {
-
+namespace Vision
+{
 /// Provides all the information required to represent a special image such as
 /// TopView, RobotView or TaggedImg
-class SpecialImageHandler {
- public:
+class SpecialImageHandler
+{
+public:
   typedef std::function<cv::Mat(int width, int height)> Getter;
 
   SpecialImageHandler();
-  SpecialImageHandler(const std::string &name, int width, int height, Getter getter, double scale = 1.0,
+  SpecialImageHandler(const std::string& name, int width, int height, Getter getter, double scale = 1.0,
                       bool display = false);
 
   int getSize() const;

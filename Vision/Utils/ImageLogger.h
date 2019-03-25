@@ -8,9 +8,10 @@
 #include <map>
 #include <stdexcept>
 
-namespace Vision {
-namespace Utils {
-
+namespace Vision
+{
+namespace Utils
+{
 /// Handles logging of images and lowlevel data
 ///
 /// This class uses the notion of 'logSession':
@@ -23,8 +24,9 @@ namespace Utils {
 /// There are two different modes of logging:
 /// 1. Images are stored and logged at the end of the session
 /// 2. Images are written directly
-class ImageLogger {
- public:
+class ImageLogger
+{
+public:
   typedef std::pair<rhoban_utils::TimeStamp, cv::Mat> Entry;
 
   /// Create a Logger
@@ -51,12 +53,15 @@ class ImageLogger {
   /// Return the path to current session (empty if no session is in progress)
   const std::string& getSessionPath();
 
-  class SizeLimitException : public std::runtime_error {
-   public:
-    SizeLimitException(const std::string& what) : std::runtime_error(what) {}
+  class SizeLimitException : public std::runtime_error
+  {
+  public:
+    SizeLimitException(const std::string& what) : std::runtime_error(what)
+    {
+    }
   };
 
- private:
+private:
   /// The prefix of the folder name containing the logs
   std::string logger_prefix;
   /// Are images written directly or stored in memory?

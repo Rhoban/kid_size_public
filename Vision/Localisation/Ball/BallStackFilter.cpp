@@ -10,15 +10,19 @@
 using namespace Vision::Utils;
 using namespace rhoban_utils;
 
-namespace Vision {
-namespace Localisation {
-
-BallStackFilter::BallStackFilter(Utils::CameraState *cameraState) : RadarFilterPoint(cameraState) {
+namespace Vision
+{
+namespace Localisation
+{
+BallStackFilter::BallStackFilter(Utils::CameraState* cameraState) : RadarFilterPoint(cameraState)
+{
   lastKick = TimeStamp::now();
 }
 
-bool BallStackFilter::bindToRhIO(std::string node, std::string command) {
-  if (RadarFilterPoint::bindToRhIO(node, command)) {
+bool BallStackFilter::bindToRhIO(std::string node, std::string command)
+{
+  if (RadarFilterPoint::bindToRhIO(node, command))
+  {
     bind->bindNew("afterKickPermissiveDuration", afterKickPermissiveDuration, RhIO::Bind::PullOnly)
         ->defaultValue(3.0)
         ->comment("Duration (s) of permissive merge after kick");
@@ -29,7 +33,8 @@ bool BallStackFilter::bindToRhIO(std::string node, std::string command) {
   return false;
 }
 
-void BallStackFilter::reset(float x, float y) {
+void BallStackFilter::reset(float x, float y)
+{
   mutex.lock();
   candidates.clear();
 
@@ -42,40 +47,48 @@ void BallStackFilter::reset(float x, float y) {
   mutex.unlock();
 }
 
-void BallStackFilter::applyKick(float x, float y) {
+void BallStackFilter::applyKick(float x, float y)
+{
   mutex.lock();
 
   lastKick = TimeStamp::now();
 
   std::vector<Candidate> new_candidates;
 
-  for (Candidate candidate : candidates) {
+  for (Candidate candidate : candidates)
+  {
     Candidate kicked_candidate = candidate;
     auto pos = cameraState->getSelfFromWorld(candidate.object);
     pos.x() += x;
     pos.y() += y;
     kicked_candidate.object = cameraState->getWorldFromSelf(pos);
-    if (duplicateOnKick) {
+    if (duplicateOnKick)
+    {
       candidate.score /= 2;
       kicked_candidate.score /= 2;
       new_candidates.push_back(candidate);
       new_candidates.push_back(kicked_candidate);
-    } else {
+    }
+    else
+    {
       new_candidates.push_back(kicked_candidate);
     }
   }
 
   candidates.clear();
-  for (const Candidate &c : new_candidates) {
+  for (const Candidate& c : new_candidates)
+  {
     candidates.push_back(c);
   }
 
   mutex.unlock();
 }
 
-bool BallStackFilter::isSimilar(const Eigen::Vector3d &pt1, const Eigen::Vector3d &pt2) {
+bool BallStackFilter::isSimilar(const Eigen::Vector3d& pt1, const Eigen::Vector3d& pt2)
+{
   auto now = TimeStamp::now();
-  if (diffMs(lastKick, now) < afterKickPermissiveDuration * 1000) {
+  if (diffMs(lastKick, now) < afterKickPermissiveDuration * 1000)
+  {
     return true;
   }
 

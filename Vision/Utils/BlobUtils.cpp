@@ -10,7 +10,8 @@ using namespace cv;
 
 // Function from :
 // - http://nghiaho.com/uploads/code/opencv_connected_component/blob.cpp
-void addBlobs(const Mat &binary, vector<vector<Point2i>> &blobs, bool gpuOn, float fgValue, Mat *output) {
+void addBlobs(const Mat& binary, vector<vector<Point2i>>& blobs, bool gpuOn, float fgValue, Mat* output)
+{
   blobs.clear();
 
   // Fill the label_image with the blobs
@@ -18,18 +19,22 @@ void addBlobs(const Mat &binary, vector<vector<Point2i>> &blobs, bool gpuOn, flo
   // fgValue          - unlabelled foreground
   // [fgValue+1, ...] - labelled foreground
   bool toBeReleased = false;
-  if (output == NULL) {
+  if (output == NULL)
+  {
     toBeReleased = true;
     output = new cv::Mat();
   }
-  if (gpuOn) {
+  if (gpuOn)
+  {
     Benchmark::open("(OpenCL) Addblob: binary_convert");
     cv::UMat gpuIn, gpuOut;
     binary.copyTo(gpuIn);
     gpuIn.convertTo(gpuOut, CV_32FC1);
     gpuOut.copyTo(*output);
     Benchmark::close("(OpenCL) Addblob: binary_convert");
-  } else {
+  }
+  else
+  {
     Benchmark::open("(OpenCL) Addblob: binary_convert");
     binary.convertTo(*output, CV_32FC1);
     Benchmark::close("(OpenCL) Addblob: binary_convert");
@@ -39,10 +44,13 @@ void addBlobs(const Mat &binary, vector<vector<Point2i>> &blobs, bool gpuOn, flo
   int label_count = fgValue + 1;
 
   Benchmark::open("Addblob: loops");
-  for (int y = 0; y < output->rows; y++) {
-    for (int x = 0; x < output->cols; x++) {
+  for (int y = 0; y < output->rows; y++)
+  {
+    for (int x = 0; x < output->cols; x++)
+    {
       float checker = output->at<float>(y, x);
-      if (checker != fgValue) {
+      if (checker != fgValue)
+      {
         continue;
       }
 
@@ -53,10 +61,13 @@ void addBlobs(const Mat &binary, vector<vector<Point2i>> &blobs, bool gpuOn, flo
 
       std::vector<cv::Point2i> blob;
 
-      for (int i = rect.y; i < (rect.y + rect.height); i++) {
-        for (int j = rect.x; j < (rect.x + rect.width); j++) {
+      for (int i = rect.y; i < (rect.y + rect.height); i++)
+      {
+        for (int j = rect.x; j < (rect.x + rect.width); j++)
+        {
           float check = output->at<float>(i, j);
-          if (check != label_count) {
+          if (check != label_count)
+          {
             continue;
           }
 
@@ -70,12 +81,14 @@ void addBlobs(const Mat &binary, vector<vector<Point2i>> &blobs, bool gpuOn, flo
     }
   }
   Benchmark::close("Addblob: loops");
-  if (toBeReleased) {
+  if (toBeReleased)
+  {
     delete output;
   }
 }
 
-void addBlobsRects(const Mat &binary, std::vector<cv::Rect> &rects, bool gpuOn, float fgValue, cv::Mat *output) {
+void addBlobsRects(const Mat& binary, std::vector<cv::Rect>& rects, bool gpuOn, float fgValue, cv::Mat* output)
+{
   rects.clear();
 
   // Fill the label_image with the blobs
@@ -83,18 +96,22 @@ void addBlobsRects(const Mat &binary, std::vector<cv::Rect> &rects, bool gpuOn, 
   // fgValue          - unlabelled foreground
   // [fgValue+1, ...] - labelled foreground
   bool toBeReleased = false;
-  if (output == NULL) {
+  if (output == NULL)
+  {
     toBeReleased = true;
     output = new cv::Mat();
   }
-  if (gpuOn) {
+  if (gpuOn)
+  {
     Benchmark::open("(OpenCL) Addblob: binary_convert");
     cv::UMat gpuIn, gpuOut;
     binary.copyTo(gpuIn);
     gpuIn.convertTo(gpuOut, CV_32FC1);
     gpuOut.copyTo(*output);
     Benchmark::close("(OpenCL) Addblob: binary_convert");
-  } else {
+  }
+  else
+  {
     Benchmark::open("(OpenCL) Addblob: binary_convert");
     binary.convertTo(*output, CV_32FC1);
     Benchmark::close("(OpenCL) Addblob: binary_convert");
@@ -104,10 +121,13 @@ void addBlobsRects(const Mat &binary, std::vector<cv::Rect> &rects, bool gpuOn, 
   int label_count = fgValue + 1;
 
   Benchmark::open("AddblobRects: loops");
-  for (int y = 0; y < output->rows; y++) {
-    for (int x = 0; x < output->cols; x++) {
+  for (int y = 0; y < output->rows; y++)
+  {
+    for (int x = 0; x < output->cols; x++)
+    {
       float checker = output->at<float>(y, x);
-      if (checker != fgValue) {
+      if (checker != fgValue)
+      {
         continue;
       }
 
@@ -121,27 +141,33 @@ void addBlobsRects(const Mat &binary, std::vector<cv::Rect> &rects, bool gpuOn, 
     }
   }
   Benchmark::close("AddblobRects: loops");
-  if (toBeReleased) {
+  if (toBeReleased)
+  {
     delete output;
   }
 }
 
-void colorBlobs(Mat &output, vector<vector<Point2i>> &blobs, bool randomColor, Scalar color) {
+void colorBlobs(Mat& output, vector<vector<Point2i>>& blobs, bool randomColor, Scalar color)
+{
   // If no color specified, use random color
   unsigned char r(255), g(255), b(255);
-  if (!randomColor) {
+  if (!randomColor)
+  {
     r = color[0];
     g = color[1];
     b = color[2];
   }
-  for (size_t i = 0; i < blobs.size(); i++) {
-    if (randomColor) {
+  for (size_t i = 0; i < blobs.size(); i++)
+  {
+    if (randomColor)
+    {
       r = 255 * (rand() / (1.0 + RAND_MAX));
       g = 255 * (rand() / (1.0 + RAND_MAX));
       b = 255 * (rand() / (1.0 + RAND_MAX));
     }
 
-    for (size_t j = 0; j < blobs[i].size(); j++) {
+    for (size_t j = 0; j < blobs[i].size(); j++)
+    {
       int x = blobs[i][j].x;
       int y = blobs[i][j].y;
 
@@ -152,8 +178,9 @@ void colorBlobs(Mat &output, vector<vector<Point2i>> &blobs, bool randomColor, S
   }
 }
 
-void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<std::pair<int, cv::Rect>> &blobRect,
-                    const std::vector<std::pair<int, cv::Rect>> &whiteRect, cv::Mat &adjMat, int maxDist) {
+void FindBlobsGraph(const cv::Mat& binary, const cv::Mat& whiteImg, std::vector<std::pair<int, cv::Rect>>& blobRect,
+                    const std::vector<std::pair<int, cv::Rect>>& whiteRect, cv::Mat& adjMat, int maxDist)
+{
   /*
     Compute the connectivity between the "binary" blobs and the "whiteImg" blobs
     Returns a matrix of size (nb whiteImg labels+2)x(nb binary labels+2). It is
@@ -174,9 +201,11 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
   // 1  - unlabelled foreground
   // 2+ - labelled foreground
 
-  if (binary.size() != whiteImg.size()) throw std::logic_error("FindBlobsGraph: binary and whiteImg not the same size");
+  if (binary.size() != whiteImg.size())
+    throw std::logic_error("FindBlobsGraph: binary and whiteImg not the same size");
 
-  if (whiteImg.type() != CV_32SC1) whiteImg.convertTo(whiteImg, CV_32SC1);
+  if (whiteImg.type() != CV_32SC1)
+    whiteImg.convertTo(whiteImg, CV_32SC1);
 
   cv::Mat label_image;
   binary.convertTo(label_image, CV_32SC1);
@@ -185,11 +214,14 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
 
   // TODO keep the rectangles
   // First pass, label pixels
-  for (int y = 0; y < label_image.rows; y++) {
-    int *row = (int *)label_image.ptr(y);
-    for (int x = 0; x < label_image.cols; x++) {
+  for (int y = 0; y < label_image.rows; y++)
+  {
+    int* row = (int*)label_image.ptr(y);
+    for (int x = 0; x < label_image.cols; x++)
+    {
       // std::cout<<"pix: "<<row[x]<<std::endl;
-      if (row[x] != 1) {
+      if (row[x] != 1)
+      {
         continue;
       }
       cv::Rect rect;
@@ -204,13 +236,16 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
   adjMat = cv::Mat(label_count, whiteRect.size() + 2, CV_8U, cv::Scalar::all(0));
 
   // Second pass, create the graph
-  for (int y = 0; y < label_image.rows; y++) {
-    int *row = (int *)label_image.ptr(y);
+  for (int y = 0; y < label_image.rows; y++)
+  {
+    int* row = (int*)label_image.ptr(y);
     // uchar *whiterow = (uchar*)whiteImg.ptr(y);
-    int *whiterow = (int *)whiteImg.ptr(y);
+    int* whiterow = (int*)whiteImg.ptr(y);
 
-    for (int x = 0; x < label_image.cols; x++) {
-      if (whiterow[x] == 0) {  // Do we have white here?
+    for (int x = 0; x < label_image.cols; x++)
+    {
+      if (whiterow[x] == 0)
+      {  // Do we have white here?
         continue;
       }
 
@@ -218,7 +253,8 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
       // Only 4 connectivity... should be enough
 
       // WEST
-      if (x > 0) {
+      if (x > 0)
+      {
         if (row[x - 1] > 1)  // labeled
         {
           // DEBUG
@@ -226,12 +262,15 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
           // "<<(int)whiterow[x]<<std::endl;
           // adjMat.at<uchar>(whiterow[x],row[x-1])=1;
           adjMat.at<uchar>(row[x - 1], whiterow[x]) = 1;  // symmetric, probably useless
-        } else {
+        }
+        else
+        {
           if (maxDist > 1)  // we look a little farther
           {
             int dist = 2;
             bool done = false;
-            while ((x - dist) > 0 && dist <= maxDist && !done) {
+            while ((x - dist) > 0 && dist <= maxDist && !done)
+            {
               if (row[x - dist] > 1)  // labeled
               {
                 // adjMat.at<uchar>(whiterow[x],row[x-dist])=1;
@@ -245,8 +284,9 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
       }
 
       // NORTH
-      if (y > 0) {
-        int *nrow = (int *)label_image.ptr(y - 1);
+      if (y > 0)
+      {
+        int* nrow = (int*)label_image.ptr(y - 1);
         if (nrow[x] > 1)  // labeled
         {
           // DEBUG
@@ -254,13 +294,16 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
           // "<<(int)whiterow[x]<<std::endl;
           // adjMat.at<uchar>(whiterow[x],nrow[x])=1;
           adjMat.at<uchar>(nrow[x], whiterow[x]) = 1;  // symmetric, probably useless
-        } else {
+        }
+        else
+        {
           if (maxDist > 1)  // we look a little farther
           {
             int dist = 2;
             bool done = false;
-            while ((y - dist) > 0 && dist <= maxDist && !done) {
-              nrow = (int *)label_image.ptr(y - dist);
+            while ((y - dist) > 0 && dist <= maxDist && !done)
+            {
+              nrow = (int*)label_image.ptr(y - dist);
               if (nrow[x] > 1)  // labeled
               {
                 // adjMat.at<uchar>(whiterow[x],nrow[x])=1;
@@ -275,7 +318,8 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
 
       /////////
       // EAST
-      if (x < (label_image.cols - 1)) {
+      if (x < (label_image.cols - 1))
+      {
         if (row[x + 1] > 1)  // labeled
         {
           // DEBUG
@@ -283,12 +327,15 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
           // "<<(int)whiterow[x]<<std::endl;
           // adjMat.at<uchar>(0,row[x+1])=whiterow[x];
           adjMat.at<uchar>(row[x + 1], whiterow[x]) = 1;  // symmetric, probably useless
-        } else {
+        }
+        else
+        {
           if (maxDist > 1)  // we look a little farther
           {
             int dist = 2;
             bool done = false;
-            while ((x + dist) < (label_image.cols - 1) && dist <= maxDist && !done) {
+            while ((x + dist) < (label_image.cols - 1) && dist <= maxDist && !done)
+            {
               if (row[x + dist] > 1)  // labeled
               {
                 // adjMat.at<uchar>(0,row[x+dist])=whiterow[x];
@@ -302,8 +349,9 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
       }
 
       // SOUTH
-      if (y < (label_image.rows - 1)) {
-        int *nrow = (int *)label_image.ptr(y + 1);
+      if (y < (label_image.rows - 1))
+      {
+        int* nrow = (int*)label_image.ptr(y + 1);
         if (nrow[x] > 1)  // labeled
         {
           // DEBUG
@@ -311,13 +359,16 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
           // "<<(int)whiterow[x]<<std::endl;
           // adjMat.at<uchar>(whiterow[x],nrow[x])=1;
           adjMat.at<uchar>(nrow[x], whiterow[x]) = 1;  // symmetric, probably useless
-        } else {
+        }
+        else
+        {
           if (maxDist > 1)  // we look a little farther
           {
             int dist = 2;
             bool done = false;
-            while ((y + dist) < (label_image.rows - 1) && dist <= maxDist && !done) {
-              nrow = (int *)label_image.ptr(y + dist);
+            while ((y + dist) < (label_image.rows - 1) && dist <= maxDist && !done)
+            {
+              nrow = (int*)label_image.ptr(y + dist);
               if (nrow[x] > 1)  // labeled
               {
                 // adjMat.at<uchar>(whiterow[x],nrow[x])=1;
@@ -336,7 +387,8 @@ void FindBlobsGraph(const cv::Mat &binary, const cv::Mat &whiteImg, std::vector<
   // std::cout<<adjMat<<std::endl;
 }
 
-void FindBlobsLabels(const cv::Mat &binary, cv::Mat &label_image, std::vector<std::pair<int, cv::Rect>> &blobs) {
+void FindBlobsLabels(const cv::Mat& binary, cv::Mat& label_image, std::vector<std::pair<int, cv::Rect>>& blobs)
+{
   /*
     input a binary image and labels it into label_image with the label and the
     rectangle into blobs
@@ -352,11 +404,14 @@ void FindBlobsLabels(const cv::Mat &binary, cv::Mat &label_image, std::vector<st
   // label_image=binary;
   int label_count = 2;  // starts at 2 because 0,1 are used already
 
-  for (int y = 0; y < label_image.rows; y++) {
-    int *row = (int *)label_image.ptr(y);
-    for (int x = 0; x < label_image.cols; x++) {
+  for (int y = 0; y < label_image.rows; y++)
+  {
+    int* row = (int*)label_image.ptr(y);
+    for (int x = 0; x < label_image.cols; x++)
+    {
       // std::cout<<"pix: "<<row[x]<<std::endl;
-      if (row[x] != 1) {
+      if (row[x] != 1)
+      {
         continue;
       }
 
@@ -370,8 +425,10 @@ void FindBlobsLabels(const cv::Mat &binary, cv::Mat &label_image, std::vector<st
 }
 
 // Oh
-void paintBlob(cv::Mat &blobPainted, std::vector<cv::Point2i> blob, unsigned char value) {
-  for (auto point : blob) {
+void paintBlob(cv::Mat& blobPainted, std::vector<cv::Point2i> blob, unsigned char value)
+{
+  for (auto point : blob)
+  {
     blobPainted.at<uchar>(point.y, point.x) = value;
   }
 }

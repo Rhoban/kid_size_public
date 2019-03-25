@@ -17,9 +17,10 @@ using Vision::Utils::CameraState;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 
-namespace Vision {
-namespace Localisation {
-
+namespace Vision
+{
+namespace Localisation
+{
 double ArenaBorderObservation::pError = 0.1;
 
 double ArenaBorderObservation::lAngleMaxError = 10;
@@ -35,11 +36,15 @@ bool ArenaBorderObservation::debug = false;
 int ArenaBorderObservation::maxTries = 10;
 double ArenaBorderObservation::minDist = 0.2;  //[m]
 
-ArenaBorderObservation::ArenaBorderObservation() {}
+ArenaBorderObservation::ArenaBorderObservation()
+{
+}
 
-ArenaBorderObservation::ArenaBorderObservation(const ParametricLine &imgSeenLine, int imgWidth, int imgHeight,
-                                               CameraState &cs) {
-  if (debug) {
+ArenaBorderObservation::ArenaBorderObservation(const ParametricLine& imgSeenLine, int imgWidth, int imgHeight,
+                                               CameraState& cs)
+{
+  if (debug)
+  {
     std::ostringstream oss;
     oss << "Creating an observation with seenLine : [rho=" << imgSeenLine.getRho()
         << ",theta=" << imgSeenLine.getTheta() << "]"
@@ -53,16 +58,22 @@ ArenaBorderObservation::ArenaBorderObservation(const ParametricLine &imgSeenLine
   imgBorders.push_back(ParametricLine(Point(imgWidth - 1, imgHeight - 1), Point(0, imgHeight - 1)));
   // Determining the extremum positions of the line on the image
   std::vector<Point> extremums;
-  for (const auto &line : imgBorders) {
-    try {
+  for (const auto& line : imgBorders)
+  {
+    try
+    {
       Point p = imgSeenLine.intersection(line);
-      if (p.x >= 0 && p.x <= imgWidth - 1 && p.y >= 0 && p.y <= imgHeight - 1) {
+      if (p.x >= 0 && p.x <= imgWidth - 1 && p.y >= 0 && p.y <= imgHeight - 1)
+      {
         extremums.push_back(p);
       }
-    } catch (const CollinearException &exc) {
+    }
+    catch (const CollinearException& exc)
+    {
     }
   }
-  if (extremums.size() != 2) {
+  if (extremums.size() != 2)
+  {
     // TODO is it possible for this to happen? To check
     throw std::runtime_error("Failed to find extremums of lines in ArenaBorder");
   }
@@ -80,23 +91,29 @@ ArenaBorderObservation::ArenaBorderObservation(const ParametricLine &imgSeenLine
   std::uniform_real_distribution<double> rndDiff(0, 1);
   auto generator = rhoban_random::getRandomEngine();
   int nbTries = 0;
-  while (nbTries < maxTries && points.size() < 2) {
+  while (nbTries < maxTries && points.size() < 2)
+  {
     Point pImg = src + diff * rndDiff(generator);
-    try {
+    try
+    {
       // Converting to centimeters
       cv::Point2f p_2f = cs.robotPosFromImg(pImg.x, pImg.y);
       Point p = 100 * cv2rg(p_2f);
       // std::cerr<<"DEBUG point; "<<pImg.x<<" "<<pImg.y<<" "<<imgWidth<<"
       // "<<imgHeight<<" "<<p.x<<" "<<p.y<<std::endl;
-      if (points.size() == 0 || points[0].getDist(p) > minDist) {
+      if (points.size() == 0 || points[0].getDist(p) > minDist)
+      {
         points.push_back(p);
       }
-    } catch (const std::runtime_error &exc) {
+    }
+    catch (const std::runtime_error& exc)
+    {
       std::cerr << "In ArenaBorderObservation: " << exc.what() << std::endl;
     }
     nbTries++;
   }
-  if (points.size() != 2) {
+  if (points.size() != 2)
+  {
     std::ostringstream oss;
     oss << "Failed to obtain 2 points after " << maxTries << " tries";
     throw std::runtime_error(oss.str());
@@ -113,19 +130,23 @@ ArenaBorderObservation::ArenaBorderObservation(const ParametricLine &imgSeenLine
   //          << "\trobotSeenLine: " << robotSeenLine << std::endl;
 }
 
-double ArenaBorderObservation::angleScore(const FieldPosition &p, const ParametricLine &theoricLine) const {
+double ArenaBorderObservation::angleScore(const FieldPosition& p, const ParametricLine& theoricLine) const
+{
   Angle expectedAngle = theoricLine.getTheta() - p.getOrientation();
   Angle diffAngle = expectedAngle - robotSeenLine.getTheta();
-  if (std::fabs(diffAngle.getSignedValue()) > 90) {
+  if (std::fabs(diffAngle.getSignedValue()) > 90)
+  {
     diffAngle = diffAngle + Angle(180);
   }
   double absAngleDiff = std::fabs(diffAngle.getSignedValue());
-  if (absAngleDiff > lAngleMaxError) return 0.0;
+  if (absAngleDiff > lAngleMaxError)
+    return 0.0;
   double score = sigmoidScore(absAngleDiff, lAngleMaxError, 0.0, lSigmoidOffset, lSigmoidLambda);
   return score;
 }
 
-double ArenaBorderObservation::closestPointScore(const FieldPosition &p, const ParametricLine &theoricLine) const {
+double ArenaBorderObservation::closestPointScore(const FieldPosition& p, const ParametricLine& theoricLine) const
+{
   Point fieldThClosestPoint = theoricLine.projectPoint(p.getRobotPosition());
   Point robotThClosestPoint = (fieldThClosestPoint - p.getRobotPosition()).rotation(-p.getOrientation());
 
@@ -137,24 +158,29 @@ double ArenaBorderObservation::closestPointScore(const FieldPosition &p, const P
   cv::Point3f expectedDir(expPos.x, expPos.y, -robotHeight);
   Angle aDiff = angleBetween(seenDir, expectedDir);
   // Parameters of scoring
-  if (aDiff.getValue() > cpAngleMaxError) return 0;
+  if (aDiff.getValue() > cpAngleMaxError)
+    return 0;
   return sigmoidScore(aDiff.getValue(), cpAngleMaxError, 0.0, cpSigmoidOffset, cpSigmoidLambda);
 }
 
-double ArenaBorderObservation::potential(const FieldPosition &p) const {
+double ArenaBorderObservation::potential(const FieldPosition& p) const
+{
   double bestScore = 0;
-  for (const auto &thLine : Field::Field::getArenaBorders()) {
+  for (const auto& thLine : Field::Field::getArenaBorders())
+  {
     double score = 1.0;
     score *= angleScore(p, thLine);
     score *= closestPointScore(p, thLine);
-    if (score > bestScore) {
+    if (score > bestScore)
+    {
       bestScore = score;
     }
   }
   return bestScore * (1 - pError) + pError;
 }
 
-void ArenaBorderObservation::bindWithRhIO() {
+void ArenaBorderObservation::bindWithRhIO()
+{
   RhIO::Root.newFloat("/localisation/field/ArenaBorderObservation/pError")
       ->defaultValue(pError)
       ->minimum(0.0)
@@ -199,8 +225,9 @@ void ArenaBorderObservation::bindWithRhIO() {
       ->comment("Print message on observation creation");
 }
 
-void ArenaBorderObservation::importFromRhIO() {
-  RhIO::IONode &node = RhIO::Root.child("localisation/field/ArenaBorderObservation");
+void ArenaBorderObservation::importFromRhIO()
+{
+  RhIO::IONode& node = RhIO::Root.child("localisation/field/ArenaBorderObservation");
   pError = node.getValueFloat("pError").value;
   lAngleMaxError = node.getValueFloat("lAngleMaxError").value;
   lSigmoidOffset = node.getValueFloat("lSigmoidOffset").value;
@@ -213,9 +240,13 @@ void ArenaBorderObservation::importFromRhIO() {
   debug = node.getValueBool("debug").value;
 }
 
-std::string ArenaBorderObservation::getClassName() const { return "ArenaBorderObservation"; }
+std::string ArenaBorderObservation::getClassName() const
+{
+  return "ArenaBorderObservation";
+}
 
-Json::Value ArenaBorderObservation::toJson() const {
+Json::Value ArenaBorderObservation::toJson() const
+{
   double rho = robotSeenLine.getRho();
   double theta = robotSeenLine.getTheta().getSignedValue();
   Json::Value v;
@@ -225,7 +256,8 @@ Json::Value ArenaBorderObservation::toJson() const {
   return v;
 }
 
-void ArenaBorderObservation::fromJson(const Json::Value &v, const std::string &dir_name) {
+void ArenaBorderObservation::fromJson(const Json::Value& v, const std::string& dir_name)
+{
   rhoban_utils::tryRead(v, "robotHeight", &robotHeight);
   double rho(0.0), theta(0.0);
   rhoban_utils::tryRead(v, "rho", &rho);
@@ -234,6 +266,9 @@ void ArenaBorderObservation::fromJson(const Json::Value &v, const std::string &d
   robotClosestPoint = robotSeenLine.projectPoint(Point(0, 0));
 }
 
-double ArenaBorderObservation::getMinScore() const { return pError; }
+double ArenaBorderObservation::getMinScore() const
+{
+  return pError;
+}
 }  // namespace Localisation
 }  // namespace Vision

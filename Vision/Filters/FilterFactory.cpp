@@ -14,10 +14,12 @@
 #include <string>
 #include <vector>
 
-namespace Vision {
-namespace Filters {
-
-FilterFactory::FilterFactory() {
+namespace Vision
+{
+namespace Filters
+{
+FilterFactory::FilterFactory()
+{
   registerBallFilters(this);
   registerBasicsFilters(this);
   registerColorsFilters(this);

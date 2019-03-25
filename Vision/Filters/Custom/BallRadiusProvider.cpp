@@ -2,21 +2,30 @@
 
 #include "CameraState/CameraState.hpp"
 
-namespace Vision {
-namespace Filters {
+namespace Vision
+{
+namespace Filters
+{
+std::string BallRadiusProvider::getClassName() const
+{
+  return "BallRadiusProvider";
+}
 
-std::string BallRadiusProvider::getClassName() const { return "BallRadiusProvider"; }
+int BallRadiusProvider::expectedDependencies() const
+{
+  return 1;
+}
 
-int BallRadiusProvider::expectedDependencies() const { return 1; }
-
-void BallRadiusProvider::setParameters() {
+void BallRadiusProvider::setParameters()
+{
   nbCols = ParamInt(4, 2, 200);
   nbRows = ParamInt(4, 2, 200);
   params()->define<ParamInt>("nbCols", &nbCols);
   params()->define<ParamInt>("nbRows", &nbRows);
 }
 
-void BallRadiusProvider::process() {
+void BallRadiusProvider::process()
+{
   cv::Size size = getDependency().getImg()->size();
   // 1: Compute key columns and key rows
   std::vector<int> key_cols, key_rows;
@@ -26,10 +35,12 @@ void BallRadiusProvider::process() {
   // 1.b: add intermediary values
   double step_x = size.width / (double)nbCols;
   double step_y = size.height / (double)nbRows;
-  for (int col = 1; col < nbCols - 1; col++) {
+  for (int col = 1; col < nbCols - 1; col++)
+  {
     key_cols.push_back((int)(col * step_x));
   }
-  for (int row = 1; row < nbRows - 1; row++) {
+  for (int row = 1; row < nbRows - 1; row++)
+  {
     key_rows.push_back((int)(row * step_y));
   }
   // 1.c: always use last pixel
@@ -40,18 +51,23 @@ void BallRadiusProvider::process() {
   cv::Mat tmp_img(size, CV_32FC1);
 
   // 3: Place values at key points
-  for (int col : key_cols) {
-    for (int row : key_rows) {
+  for (int col : key_cols)
+  {
+    for (int row : key_rows)
+    {
       double ballRadius = getCS().computeBallRadiusFromPixel(cv::Point2f(col, row));
       // For points above horizon, set ballRadius to 0
-      if (ballRadius < 0) ballRadius = 0;
+      if (ballRadius < 0)
+        ballRadius = 0;
       tmp_img.at<float>(row, col) = ballRadius;
     }
   }
 
   // 4: Interpolate on key columns
-  for (int col : key_cols) {
-    for (int row_idx = 0; row_idx < nbRows - 1; row_idx++) {
+  for (int col : key_cols)
+  {
+    for (int row_idx = 0; row_idx < nbRows - 1; row_idx++)
+    {
       int start_row = key_rows[row_idx];
       int end_row = key_rows[row_idx + 1];
       double start_val = tmp_img.at<float>(start_row, col);
@@ -59,7 +75,8 @@ void BallRadiusProvider::process() {
       int dist = end_row - start_row;
       double diff = end_val - start_val;
       double slope = diff / dist;
-      for (int row = start_row + 1; row < end_row; row++) {
+      for (int row = start_row + 1; row < end_row; row++)
+      {
         double val = start_val + slope * (row - start_row);
         tmp_img.at<float>(row, col) = val;
       }
@@ -67,8 +84,10 @@ void BallRadiusProvider::process() {
   }
 
   // 5: Interpolate between key rows
-  for (int row = 0; row < size.height; row++) {
-    for (int col_idx = 0; col_idx < nbCols - 1; col_idx++) {
+  for (int row = 0; row < size.height; row++)
+  {
+    for (int col_idx = 0; col_idx < nbCols - 1; col_idx++)
+    {
       int start_col = key_cols[col_idx];
       int end_col = key_cols[col_idx + 1];
       int dist = end_col - start_col;
@@ -76,7 +95,8 @@ void BallRadiusProvider::process() {
       double end_val = tmp_img.at<float>(row, end_col);
       double diff = end_val - start_val;
       double slope = diff / dist;
-      for (int col = start_col + 1; col < end_col; col++) {
+      for (int col = start_col + 1; col < end_col; col++)
+      {
         double val = start_val + slope * (col - start_col);
         tmp_img.at<float>(row, col) = val;
       }

@@ -5,9 +5,12 @@
 
 #include "../FilterFactory.hpp"
 
-namespace Vision {
-namespace Filters {
-void registerGoalFilters(FilterFactory* ff) {
+namespace Vision
+{
+namespace Filters
+{
+void registerGoalFilters(FilterFactory* ff)
+{
   ff->registerBuilder("GoalByDNN", []() { return std::unique_ptr<Filter>(new GoalByDNN); });
   ff->registerBuilder("GoalByII", []() { return std::unique_ptr<Filter>(new GoalByII); });
 }

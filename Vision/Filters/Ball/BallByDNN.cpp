@@ -21,8 +21,10 @@ using namespace std;
 using namespace rhoban_geometry;
 using ::rhoban_utils::Benchmark;
 
-static void patchToNN(const cv::Mat &patch, double minv, double maxv, int w, int h, tiny_dnn::vec_t &data) {
-  if (patch.data == nullptr) return;  // cannot open, or it's not an image
+static void patchToNN(const cv::Mat& patch, double minv, double maxv, int w, int h, tiny_dnn::vec_t& data)
+{
+  if (patch.data == nullptr)
+    return;  // cannot open, or it's not an image
   cv::Mat resized, res;
   cv::resize(patch, resized, cv::Size(w, h), .0, .0, cv::INTER_AREA);
   data.resize(w * h * resized.channels(), minv);
@@ -40,19 +42,26 @@ static void patchToNN(const cv::Mat &patch, double minv, double maxv, int w, int
   cv::Size sz = ch1.size();
   int size = sz.height * sz.width;
 
-  for (int i = 0; i < size; i++) data[j * size + i] = minv + (maxv - minv) * ch1.data[i] / 255.0;
+  for (int i = 0; i < size; i++)
+    data[j * size + i] = minv + (maxv - minv) * ch1.data[i] / 255.0;
   j++;
-  for (int i = 0; i < size; i++) data[j * size + i] = minv + (maxv - minv) * ch2.data[i] / 255.0;
+  for (int i = 0; i < size; i++)
+    data[j * size + i] = minv + (maxv - minv) * ch2.data[i] / 255.0;
   j++;
-  for (int i = 0; i < size; i++) data[j * size + i] = minv + (maxv - minv) * ch3.data[i] / 255.0;
+  for (int i = 0; i < size; i++)
+    data[j * size + i] = minv + (maxv - minv) * ch3.data[i] / 255.0;
 }
 
-namespace Vision {
-namespace Filters {
+namespace Vision
+{
+namespace Filters
+{
+BallByDNN::BallByDNN() : BallProvider("BallByDNN"), arch_path("arch.json"), weights_path("weights.data")
+{
+}
 
-BallByDNN::BallByDNN() : BallProvider("BallByDNN"), arch_path("arch.json"), weights_path("weights.data") {}
-
-void BallByDNN::setParameters() {
+void BallByDNN::setParameters()
+{
   debugLevel = ParamInt(0, 0, 1);
   scoreThreshold = ParamFloat(0.5, 0.0, 1.0);
 
@@ -60,15 +69,20 @@ void BallByDNN::setParameters() {
   params()->define<ParamFloat>("scoreThreshold", &scoreThreshold);
 }
 
-std::string BallByDNN::getClassName() const { return "BallByDNN"; }
-Json::Value BallByDNN::toJson() const {
+std::string BallByDNN::getClassName() const
+{
+  return "BallByDNN";
+}
+Json::Value BallByDNN::toJson() const
+{
   Json::Value v = Filter::toJson();
   v["arch_path"] = arch_path;
   v["weights_path"] = weights_path;
   return v;
 }
 
-void BallByDNN::fromJson(const Json::Value &v, const std::string &dir_name) {
+void BallByDNN::fromJson(const Json::Value& v, const std::string& dir_name)
+{
   Filter::fromJson(v, dir_name);
   rhoban_utils::tryRead(v, "arch_path", &arch_path);
   rhoban_utils::tryRead(v, "weights_path", &weights_path);
@@ -76,16 +90,21 @@ void BallByDNN::fromJson(const Json::Value &v, const std::string &dir_name) {
   updateNN();
 }
 
-int BallByDNN::expectedDependencies() const { return 1; }
+int BallByDNN::expectedDependencies() const
+{
+  return 1;
+}
 
-void BallByDNN::updateNN() {
+void BallByDNN::updateNN()
+{
   // load the architecture of the model in json format
   nn.load(arch_path, tiny_dnn::content_type::model, tiny_dnn::file_format::json);
   // load the weights of the model in binary format
   nn.load(weights_path, tiny_dnn::content_type::weights, tiny_dnn::file_format::binary);
 }
 
-double BallByDNN::getScore(const cv::Mat &patch) {
+double BallByDNN::getScore(const cv::Mat& patch)
+{
   tiny_dnn::vec_t data;
 
   Benchmark::open("resize");
@@ -101,54 +120,66 @@ double BallByDNN::getScore(const cv::Mat &patch) {
   return res[1];
 }
 
-void BallByDNN::process() {
+void BallByDNN::process()
+{
   clearBallsData();
 
   cv::Mat output;
 
-  try {
-    const PatchProvider &dep = dynamic_cast<const PatchProvider &>(getDependency());
+  try
+  {
+    const PatchProvider& dep = dynamic_cast<const PatchProvider&>(getDependency());
 
     Benchmark::open("Cloning src");
     output = dep.getImg()->clone();
     Benchmark::close("Cloning src");
 
-    const std::vector<cv::Mat> &patches = dep.getPatches();
+    const std::vector<cv::Mat>& patches = dep.getPatches();
     const std::vector<std::pair<float, cv::RotatedRect>> rois = dep.getRois();
 
-    if (rois.size() != patches.size()) {
+    if (rois.size() != patches.size())
+    {
       throw std::runtime_error("BallByDNN:: number of rois does not match number of patches");
     }
 
     Benchmark::open("Analyzing patches");
     std::ostringstream debug_message;
-    if (debugLevel > 0) {
+    if (debugLevel > 0)
+    {
       debug_message << rois.size() << " patches in filter '" << name << "'" << std::endl;
     }
-    for (size_t patch_id = 0; patch_id < rois.size(); patch_id++) {
-      const cv::Mat &patch = patches[patch_id];
-      const cv::RotatedRect &roi = rois[patch_id].second;
+    for (size_t patch_id = 0; patch_id < rois.size(); patch_id++)
+    {
+      const cv::Mat& patch = patches[patch_id];
+      const cv::RotatedRect& roi = rois[patch_id].second;
 
       double score = getScore(patch);
 
-      if (debugLevel > 0) {
+      if (debugLevel > 0)
+      {
         debug_message << "\t" << Utils::toRect(roi) << " score: " << score << std::endl;
       }
 
       bool isValid = score >= scoreThreshold;
 
-      if (isValid) {
+      if (isValid)
+      {
         pushBall(Circle(cv2rg(roi.center), getCS().computeBallRadiusFromPixel(roi.center)), output);
         drawRotatedRectangle(output, roi, cv::Scalar(0, 255, 0), 2);
-      } else {
+      }
+      else
+      {
         drawRotatedRectangle(output, roi, cv::Scalar(0, 0, 255), 2);
       }
     }
-    if (debugLevel > 0) {
+    if (debugLevel > 0)
+    {
       std::cout << debug_message.str();
     }
     Benchmark::close("Analyzing patches");
-  } catch (const std::bad_alloc &exc) {
+  }
+  catch (const std::bad_alloc& exc)
+  {
     std::ostringstream oss;
     oss << "Pipeline structure is invalid: "
         << "filter " << name << " dependency is not a PatchProvider" << std::endl;

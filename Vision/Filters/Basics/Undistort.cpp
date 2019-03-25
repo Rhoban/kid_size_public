@@ -11,55 +11,68 @@
 
 using rhoban_utils::Benchmark;
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 using namespace cv;
 using namespace std;
 
-class MyData {
- public:
-  MyData() {}
+class MyData
+{
+public:
+  MyData()
+  {
+  }
 
-  void write(FileStorage &fs) const  // Write serialization for this class
+  void write(FileStorage& fs) const  // Write serialization for this class
   {
     std::cout << "Write not implemented" << std::endl;
   }
-  void read(const FileNode &node)  // Read serialization for this class
+  void read(const FileNode& node)  // Read serialization for this class
   {
     /*    A = (int)node["A"];
           X = (double)node["X"];
           id = (string)node["id"];*/
   }
 
- public:
+public:
   Mat mat1;
   Mat mat2;
 };
 
-Undistort::Undistort() : Filter("Undistort") { _first = true; }
+Undistort::Undistort() : Filter("Undistort")
+{
+  _first = true;
+}
 
-cv::Point Undistort::predecessor(const cv::Point &p) const {
+cv::Point Undistort::predecessor(const cv::Point& p) const
+{
   cv::Point result;
   result.x = _map1Inverted.at<cv::Vec2s>(p)[0];
   result.y = _map1Inverted.at<cv::Vec2s>(p)[1];
   return result;
 }
 
-void Undistort::setParameters() {}
+void Undistort::setParameters()
+{
+}
 
-cv::Mat Undistort::undistortOneShot(cv::Mat input) {
+cv::Mat Undistort::undistortOneShot(cv::Mat input)
+{
   cv::Mat output;
   cv::remap(input, output, _map1Inverted, _map2, cv::INTER_LINEAR);
   return output;
 }
 
-void Undistort::process() {
+void Undistort::process()
+{
   Benchmark::open("input");
   cv::Mat input = *(getDependency().getImg());
   Benchmark::close("input");
 
-  if (_first) {
+  if (_first)
+  {
     _first = false;
     Benchmark::open("initUndistortRectifyMap (should be done only once)");
     // calculating the correction matrix only once
@@ -92,7 +105,8 @@ void Undistort::process() {
     // MAIS DE QUOI FIXME? Il est très bien ce nom.
     fs.open(filename, FileStorage::READ);
 
-    if (!fs.isOpened()) {
+    if (!fs.isOpened())
+    {
       throw runtime_error("Failed to open " + filename);
     }
 
@@ -128,8 +142,10 @@ void Undistort::process() {
     */
 
     // FIXME: Transpose. De quoi FIXME? FIXME toi même.
-    for (int i = 0; i < _map1Inverted.rows; i++) {
-      for (int j = 0; j < _map1Inverted.cols; j++) {
+    for (int i = 0; i < _map1Inverted.rows; i++)
+    {
+      for (int j = 0; j < _map1Inverted.cols; j++)
+      {
         // short temp = _map1.at<cv::Vec2s>(i,j)[0];
         // Works for first log (was the camera upside down?)
         //	_map1Inverted.at<cv::Vec2s>(i,j)[0] =
@@ -155,13 +171,15 @@ void Undistort::process() {
     */
     Benchmark::close("Reading huge map1 and map2 (only once)");
 
-    if (Filter::GPU_ON) {
+    if (Filter::GPU_ON)
+    {
       _map1Inverted.copyTo(map1);
       _map2.copyTo(map2);
     }
   }
 
-  if (Filter::GPU_ON) {
+  if (Filter::GPU_ON)
+  {
     Benchmark::open("OPENCL REMAP");
     cv::UMat image_gpu, image_gpu_undist;
     input.copyTo(image_gpu);
@@ -171,7 +189,9 @@ void Undistort::process() {
     // std::cerr<<"OPENCL"<<std::endl;
 
     Benchmark::close("OPENCL REMAP");
-  } else {
+  }
+  else
+  {
     Benchmark::open("remap");
     cv::remap(input, img(), _map1Inverted, _map2, cv::INTER_LINEAR);
     Benchmark::close("remap");

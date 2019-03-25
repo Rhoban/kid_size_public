@@ -3,14 +3,20 @@
 #include <iostream>
 
 TagsSheet::TagsSheet()
-    : marker_size(0.09), dx(0.12, 0, 0), dy(0, 0.10, 0), sheet_center(0, 0, 0), markers_ids({0, 1, 2, 3, 4, 5}) {}
+  : marker_size(0.09), dx(0.12, 0, 0), dy(0, 0.10, 0), sheet_center(0, 0, 0), markers_ids({ 0, 1, 2, 3, 4, 5 })
+{
+}
 TagsSheet::TagsSheet(double marker_size, const Eigen::Vector3d& dx, const Eigen::Vector3d& dy,
                      const Eigen::Vector3d& sheet_center, const std::vector<int>& markers_ids)
-    : marker_size(marker_size), dx(dx), dy(dy), sheet_center(sheet_center), markers_ids(markers_ids) {}
+  : marker_size(marker_size), dx(dx), dy(dy), sheet_center(sheet_center), markers_ids(markers_ids)
+{
+}
 
-std::map<int, ArucoTag> TagsSheet::getMarkers() const {
+std::map<int, ArucoTag> TagsSheet::getMarkers() const
+{
   std::map<int, ArucoTag> markers;
-  for (int idx = 0; idx < 6; idx++) {
+  for (int idx = 0; idx < 6; idx++)
+  {
     int marker_id = markers_ids[idx];
     double coeffX = (idx % 2 == 0) ? -0.5 : 0.5;
     double coeffY = std::floor(idx / 2) - 1;
@@ -20,7 +26,8 @@ std::map<int, ArucoTag> TagsSheet::getMarkers() const {
   return markers;
 }
 
-Json::Value TagsSheet::toJson() const {
+Json::Value TagsSheet::toJson() const
+{
   Json::Value v;
   v["marker_size"] = marker_size;
   v["markers_ids"] = rhoban_utils::vector2Json(markers_ids);
@@ -30,7 +37,8 @@ Json::Value TagsSheet::toJson() const {
   return v;
 }
 
-void TagsSheet::fromJson(const Json::Value& v, const std::string& dir_path) {
+void TagsSheet::fromJson(const Json::Value& v, const std::string& dir_path)
+{
   (void)dir_path;
   rhoban_utils::tryRead(v, "marker_size", &marker_size);
   rhoban_utils::tryReadEigen(v, "dx", &dx);
@@ -39,4 +47,7 @@ void TagsSheet::fromJson(const Json::Value& v, const std::string& dir_path) {
   rhoban_utils::tryReadVector(v, "markers_ids", &markers_ids);
 }
 
-std::string TagsSheet::getClassName() const { return "tags_sheet"; }
+std::string TagsSheet::getClassName() const
+{
+  return "tags_sheet";
+}

@@ -3,11 +3,13 @@
 #include "Localisation/Field/SerializableFieldObservation.hpp"
 #include "Filters/Custom/FieldBorderData.hpp"
 
-namespace Vision {
-namespace Localisation {
-
-class ArenaCornerObservation : public SerializableFieldObservation {
- private:
+namespace Vision
+{
+namespace Localisation
+{
+class ArenaCornerObservation : public SerializableFieldObservation
+{
+private:
   Vision::Filters::FieldBorderData brut_data;
   double weight;
 
@@ -18,7 +20,7 @@ class ArenaCornerObservation : public SerializableFieldObservation {
   double seg_dir;
   static bool debug;
 
- public:
+public:
   static double pError, maxAngleError, sigmoidOffset, sigmoidLambda;
   static double potential_pos50, potential_angle50;
   static double potential_exp;
@@ -27,12 +29,12 @@ class ArenaCornerObservation : public SerializableFieldObservation {
   /**
    * panToArenaCorner angle is given in robot referential (left = +, right = -)
    */
-  ArenaCornerObservation(const Vision::Filters::FieldBorderData &brut_data_, double weight_ = 1);
+  ArenaCornerObservation(const Vision::Filters::FieldBorderData& brut_data_, double weight_ = 1);
 
-  virtual double potential(const FieldPosition &p) const;
-  double corner_potential(const FieldPosition &p) const;
-  double potential(const FieldPosition &candidate, const FieldPosition &p) const;
-  double segment_potential(const FieldPosition &p) const;
+  virtual double potential(const FieldPosition& p) const;
+  double corner_potential(const FieldPosition& p) const;
+  double potential(const FieldPosition& candidate, const FieldPosition& p) const;
+  double segment_potential(const FieldPosition& p) const;
 
   double getWeight() const;
 
@@ -42,7 +44,7 @@ class ArenaCornerObservation : public SerializableFieldObservation {
   std::string getClassName() const override;
   Json::Value toJson() const override;
   virtual std::string toStr() const override;
-  void fromJson(const Json::Value &v, const std::string &dir_name) override;
+  void fromJson(const Json::Value& v, const std::string& dir_name) override;
 
   double getMinScore() const override;
   Vision::Filters::FieldBorderData getBrutData();

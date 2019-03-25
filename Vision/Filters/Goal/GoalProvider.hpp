@@ -2,22 +2,24 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /// This class describe the architecture of a goal provider and some common code
-class GoalProvider : public Filter {
- public:
-  GoalProvider(const std::string &name);
+class GoalProvider : public Filter
+{
+public:
+  GoalProvider(const std::string& name);
 
   /// Values are in [0,1]
-  const std::vector<double> &getGoalsX() const;
+  const std::vector<double>& getGoalsX() const;
   /// Values are in [0,1]
-  const std::vector<double> &getGoalsY() const;
+  const std::vector<double>& getGoalsY() const;
 
- protected:
+protected:
   /// Automatically rescale provided point to fit the standard
-  void pushGoal(double x, double y, const cv::Mat &goal_img);
+  void pushGoal(double x, double y, const cv::Mat& goal_img);
 
   /// Remove previously published data for the goal
   void clearGoalsData();

@@ -2,21 +2,28 @@
 
 #include "Filters/Filter.hpp"
 
-namespace Vision {
-namespace Filters {
-
+namespace Vision
+{
+namespace Filters
+{
 /**
  * Rescale
  *
  * Divide the width and the height of the given image by a ratio
  */
-class Rescale : public Filter {
- public:
-  Rescale() : Filter("Rescale") {}
+class Rescale : public Filter
+{
+public:
+  Rescale() : Filter("Rescale")
+  {
+  }
 
-  virtual std::string getClassName() const override { return "Rescale"; }
+  virtual std::string getClassName() const override
+  {
+    return "Rescale";
+  }
 
- protected:
+protected:
   /**
    * @Inherit
    */
@@ -24,7 +31,7 @@ class Rescale : public Filter {
 
   virtual void setParameters() override;
 
- private:
+private:
   ParamFloat _ratio;
 };
 }  // namespace Filters
