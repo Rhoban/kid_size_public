@@ -25,7 +25,7 @@ ViveService::ViveService()
     ->defaultValue(90);
   bind.bindNew("camera_pitch", camera_pitch, RhIO::Bind::PullOnly)
     ->comment("Rotation along y-axis [deg]")
-    ->defaultValue(90);
+    ->defaultValue(-90);
   bind.bindNew("camera_yaw", camera_yaw, RhIO::Bind::PullOnly)
     ->comment("Rotation along z-axis [deg]")
     ->defaultValue(0);
@@ -74,8 +74,30 @@ Eigen::Affine3d ViveService::getViveToCamera() const
 {
   Eigen::Vector3d center(camera_x, camera_y, camera_z);
   Eigen::Matrix3d rotation;
-  rotation = Eigen::AngleAxisd(camera_yaw * M_PI / 180, Eigen::Vector3d::UnitZ()) *
-             Eigen::AngleAxisd(camera_pitch * M_PI / 180, Eigen::Vector3d::UnitY()) *
-             Eigen::AngleAxisd(camera_roll * M_PI / 180, Eigen::Vector3d::UnitX());
-  return Eigen::Translation3d(center) * Eigen::Affine3d(rotation);
+  rotation =
+    Eigen::AngleAxisd(camera_yaw * M_PI / 180, Eigen::Vector3d::UnitZ()) *
+    Eigen::AngleAxisd(camera_pitch * M_PI / 180, Eigen::Vector3d::UnitY()) *
+    Eigen::AngleAxisd(camera_roll * M_PI / 180, Eigen::Vector3d::UnitX());
+  return Eigen::Affine3d(rotation) * Eigen::Translation3d(-center);
+}
+
+void ViveService::setPosOffset(const Eigen::Vector3d & pos)
+{
+  camera_x = pos.x();
+  camera_y = pos.y();
+  camera_z = pos.z();
+}
+
+void ViveService::setRoll(double roll)
+{
+  camera_roll = roll;
+}
+void ViveService::setPitch(double pitch)
+{
+  camera_pitch = pitch;
+}
+
+void ViveService::setYaw(double yaw)
+{
+  camera_yaw = yaw;
 }

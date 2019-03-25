@@ -212,3 +212,17 @@ if (BUILD_KID_SIZE_PROGRAM_VISION)
     target_link_libraries(Player ${LINKED_LIBRARIES} kid_size)
 endif ()
 
+enable_testing()
+
+set(TESTS
+  services/vive_service
+  )
+
+if (CATKIN_ENABLE_TESTING)
+  # create an executable for each test
+  foreach(test ${TESTS})
+    string(REPLACE "/" "_" id ${test})
+    catkin_add_gtest(${id} tests/${test}.cpp)
+    target_link_libraries(${id} ${LINKED_LIBRARIES} kid_size)
+  endforeach(test)
+endif()

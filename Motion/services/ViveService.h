@@ -41,6 +41,11 @@ public:
    */
   Eigen::Affine3d getViveToCamera() const;
 
+  void setPosOffset(const Eigen::Vector3d & pos);
+  void setRoll(double roll);
+  void setPitch(double pitch);
+  void setYaw(double yaw);
+
 private:
   /**
    * Manager for vive messages
