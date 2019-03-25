@@ -1120,6 +1120,17 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
     cv::line(img, horizonKeypoints[idx - 1], horizonKeypoints[idx], cv::Scalar(255, 0, 0), 2);
   }
 
+  //
+  // TODO remove it and do something cleaner lates
+  std::vector<Eigen::Vector3d> field_points =
+    {
+      Eigen::Vector3d(0,0,0), Eigen::Vector3d(0,3,0), Eigen::Vector3d(0,-3,0)
+    };
+  for (const Eigen::Vector3d & field_point : field_points) {
+    cv::Point p = cs->imgXYFromWorldPosition(field_point);
+    cv::circle(img, p, 10, cv::Scalar(0,0,0), 3);
+  }
+
   globalMutex.unlock();
 
   return img;

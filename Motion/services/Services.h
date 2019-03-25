@@ -16,6 +16,7 @@ class DecisionService;
 class MaintenanceService;
 class StrategyService;
 class CaptainService;
+class ViveService;
 
 /**
  * Services
@@ -56,6 +57,7 @@ public:
   MaintenanceService* maintenance;
   StrategyService* strategy;
   CaptainService* captain;
+  ViveService* vive;
 
 private:
   /**

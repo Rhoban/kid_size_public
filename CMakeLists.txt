@@ -17,12 +17,13 @@ find_package(catkin REQUIRED COMPONENTS
   rhoban_team_play
   rhoban_model_learning
   csa_mdp_experiments
+  vive_provider
   )
 
 catkin_package(
   INCLUDE_DIRS Motion/
   #LIBRARIES #TODO: which libraries are published?
-  CATKIN_DEPENDS tclap RhAL model robocup_referee rhoban_graphs rhoban_team_play rhoban_random rhoban_unsorted rhoban_model_learning hl_communication
+  CATKIN_DEPENDS tclap RhAL model robocup_referee rhoban_graphs rhoban_team_play rhoban_random rhoban_unsorted rhoban_model_learning hl_communication vive_provider
   )
 
 #Build option

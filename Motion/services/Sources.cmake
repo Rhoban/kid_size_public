@@ -10,5 +10,6 @@ set (SOURCES
     MaintenanceService.cpp
     StrategyService.cpp
     CaptainService.cpp
+    ViveService.cpp
 )
 

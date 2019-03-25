@@ -5,6 +5,7 @@
 
 #include "Utils/HomogeneousTransform.hpp"
 #include "services/ModelService.h"
+#include "services/ViveService.h"
 
 #include <rhoban_utils/util.h>
 #include <rhoban_utils/logging/logger.h>
@@ -145,16 +146,23 @@ void CameraState::updateInternalModel(double timeStamp) {
   _timeStamp = timeStamp;
 
   if (_moveScheduler != nullptr) {
+    ViveService * vive = _moveScheduler->getServices()->vive;
+    if (vive->isActive()) {
+      worldToCamera = vive->getFieldToVive((int64)(timeStamp * 1000 * 1000));
+      //TODO: update worldToSelf properly (require to use head info as well)
+      worldToSelf = Eigen::Affine3d();
+    } else {
+      _model->setAutoUpdate(true);
+      _moveScheduler->getServices()->model->pastReadModel(timeStamp, _pastReadModel);
+      _model = &(_pastReadModel.get());
+      _model->setAutoUpdate(false);
+      _model->updateDOFPosition();
+    
+      worldToSelf = _model->selfFrameTransform("origin");
+      worldToCamera = _model->getTransform("camera", "origin");
+    }
     _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
-    _model->setAutoUpdate(true);
-    _moveScheduler->getServices()->model->pastReadModel(timeStamp, _pastReadModel);
-    _model = &(_pastReadModel.get());
-    _model->setAutoUpdate(false);
-    _model->updateDOFPosition();
-
-    worldToSelf = _model->selfFrameTransform("origin");
     selfToWorld = worldToSelf.inverse();
-    worldToCamera = _model->getTransform("camera", "origin");
     cameraToWorld = worldToCamera.inverse();
   } else {
     logger.warning("Not updating internal model (no moveScheduler available)");
