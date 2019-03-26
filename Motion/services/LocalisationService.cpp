@@ -15,7 +15,6 @@
 #include "RhIO.hpp"
 
 #ifdef VISION_COMPONENT
-#include "Field/Field.hpp"
 #include <Binding/Robocup.hpp>
 #include <Binding/LocalisationBinding.hpp>
 #endif
