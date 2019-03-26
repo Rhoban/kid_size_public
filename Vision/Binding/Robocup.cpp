@@ -1070,12 +1070,10 @@ void Robocup::updateBallInformations()
 
   if (ballStackFilter->getCandidates().size() > 0)
   {
-    auto lookCandidate = ballStackFilter->getCandidates().back();
     auto bestCandidate = ballStackFilter->getBest();
     double bsfMaxScore = ballStackFilter->getMaximumScore();
     Point ballSpeed = ballSpeedEstimator->getUsableSpeed();
-    loc->setBallWorld(bestCandidate.object, lookCandidate.object, bestCandidate.score / bsfMaxScore, ballSpeed,
-                      cs->getTimeStamp());
+    loc->setBallWorld(bestCandidate.object, bestCandidate.score / bsfMaxScore, ballSpeed, cs->getTimeStamp());
   }
   else
   {
