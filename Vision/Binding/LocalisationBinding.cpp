@@ -43,7 +43,6 @@ LocalisationBinding::LocalisationBinding(MoveScheduler* scheduler_, Robocup* vis
   : vision_binding(vision_binding_)
   , scheduler(scheduler_)
   , nb_particles_ff(5000)
-  , toGoalQ(-1)
   , robotQ(-1)
   , enableFieldFilter(true)
   , isGoalKeeper(false)
@@ -749,13 +748,10 @@ void LocalisationBinding::publishToLoc()
   LocalisationService* loc = scheduler->getServices()->localisation;
 
   // update the loc service
-  cv::Point2d lg = field_filter->getLeftGoalPositionInSelf();
-  cv::Point2d rg = field_filter->getRightGoalPositionInSelf();
   cv::Point2d c = field_filter->getCenterPositionInSelf();
   Angle o = field_filter->getOrientation();
 
-  loc->setPosSelf(Eigen::Vector3d(lg.x, lg.y, 0), Eigen::Vector3d(rg.x, rg.y, 0), Eigen::Vector3d(c.x, c.y, 0),
-                  deg2rad(o.getValue()), robotQ, consistencyScore, consistencyEnabled);
+  loc->setPosSelf(Eigen::Vector3d(c.x, c.y, 0), deg2rad(o.getValue()), robotQ, consistencyScore, consistencyEnabled);
 }
 
 void LocalisationBinding::applyWatcher(
@@ -837,9 +833,6 @@ void LocalisationBinding::applyWatcher(
 void LocalisationBinding::importFiltersResults()
 {
   filterMutex.lock();
-  // Goal
-  toGoal = field_filter->getAngleToGoal();
-  toGoalQ = field_filter->angleToGoalQuality();
   // Robot
   robot = field_filter->getRepresentativeParticle();
   robotQ = field_filter->getRepresentativeQuality();

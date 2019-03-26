@@ -120,11 +120,8 @@ ModelService::ModelService()
                           this->_goalModel.setOrientation(Eigen::Matrix3d::Identity(), true);
                           this->_goalModel.setOdometryState(Eigen::Vector2d(0.0, 0.0));
                           // Reset localization
-                          Eigen::Vector3d leftGoalInWorld(4.5, 0.9, 0.0);
-                          Eigen::Vector3d rightGoalInWorld(4.5, -0.9, 0.0);
                           Eigen::Vector3d fieldInWorld(0.0, 0.0, 0.0);
-                          Helpers::getServices()->localisation->setPosSelf(leftGoalInWorld, rightGoalInWorld,
-                                                                           fieldInWorld, 0.0, 1.0, 1.0);
+                          Helpers::getServices()->localisation->setPosSelf(fieldInWorld, 0.0, 1.0, 1.0);
                           Helpers::getServices()->localisation->resetFieldFilter();
                           return "Reset odometry and localization to origin";
                         });

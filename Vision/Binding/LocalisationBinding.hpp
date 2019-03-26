@@ -96,9 +96,8 @@ public:
   int nb_particles_ff;
 
   /// Filters results
-  rhoban_utils::Angle toGoal;
   Localisation::FieldPosition robot;
-  double toGoalQ, robotQ;
+  double robotQ;
 
   bool enableFieldFilter;
   bool isGoalKeeper;

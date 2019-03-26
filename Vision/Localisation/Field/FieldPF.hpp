@@ -18,8 +18,6 @@ namespace Localisation
 class FieldPF : public rhoban_unsorted::ParticleFilter<FieldPosition>
 {
 public:
-  typedef std::pair<int, int> GoalKey;
-  typedef std::tuple<int, int, int> QualityKey;
   enum ResetType
   {
     None,
@@ -37,15 +35,9 @@ private:
   ResetType resetType;
 
   // Points which should be tracked
-  std::vector<GoalKey> trackedGoals;
   std::vector<int> errorTols;  // Tolerance to angle error to average
 
-  // Directions and qualities of goals points of interest
-  std::map<GoalKey, rhoban_utils::Angle> goalDirections;
-  std::map<QualityKey, double> goalQualities;
-
   virtual void updateInternalValues() override;
-  void updateToGoalQuality();
 
 protected:
   virtual void updateRepresentativeQuality();
@@ -75,20 +67,10 @@ public:
 
   void draw(cv::Mat& img) const;
 
-  rhoban_utils::Angle getAngleToGoal(const GoalKey& gk) const;
-  double angleToGoalQuality(const QualityKey& qk) const;
-
-  rhoban_utils::Angle getAngleToGoal();
-  double angleToGoalQuality();
-
   /// Return robot position in field [m]
   cv::Point2d getRobotPosition();
   cv::Point2d getCenterPosition();
-  cv::Point2d getLeftGoalPosition();
-  cv::Point2d getRightGoalPosition();
   cv::Point2d getCenterPositionInSelf();
-  cv::Point2d getLeftGoalPositionInSelf();
-  cv::Point2d getRightGoalPositionInSelf();
   rhoban_utils::Angle getOrientation();
   double getQuality();
 

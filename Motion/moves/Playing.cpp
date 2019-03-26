@@ -11,7 +11,6 @@
 #include "Placer.h"
 #include "Playing.h"
 #include "Walk.h"
-#include "Approach.h"
 #include "rhoban_utils/logging/logger.h"
 
 #define STATE_APPROACH "approach"
@@ -67,7 +66,6 @@ std::string PlayingMove::getName()
 
 void PlayingMove::onStart()
 {
-  approach = (Approach*)getMoves()->getMove("approach");
   head = (Head*)getMoves()->getMove("head");
   placer = (Placer*)getMoves()->getMove("placer");
   head->setDisabled(false);

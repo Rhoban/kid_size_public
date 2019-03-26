@@ -1,5 +1,4 @@
 set (SOURCES
-    Approach.cpp
     ApproachPotential.cpp
     ApproachMove.cpp
     AutonomousPlaying.cpp
@@ -32,13 +31,6 @@ set (SOURCES
 #    OdometryCalibration.cpp
 #    ModelCalibration.cpp
 )
-
-if (BUILD_KID_SIZE_VISION)
-set (SOURCES
-    ${SOURCES}
-    ArucoCalibration.cpp
-)
-endif ()
 
 if (csa_mdp_experiments_FOUND)
   set(SOURCES

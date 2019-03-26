@@ -34,27 +34,15 @@ public:
   rhoban_utils::TimeStamp ballTS;
 
   // Goal
-  rhoban_geometry::Point getGoalPosWorld();
-  rhoban_geometry::Point getGoalPosSelf();
   rhoban_geometry::Point getGoalPosField();
   rhoban_geometry::Point getOurGoalPosField();
-  rhoban_geometry::Point getLeftGoalPosSelf();
-  rhoban_geometry::Point getRightGoalPosSelf();
   rhoban_geometry::Point getFieldPos();
   double getFieldOrientation();  // Return value in [rad]
-  Eigen::Vector3d goalLeftPosWorld;
-  Eigen::Vector3d goalRightPosWorld;
   Eigen::Vector3d fieldCenterWorld;
   rhoban_utils::Angle getOurBallToGoalDirSelf();
 
   float fieldQ, fieldConsistency;
   bool consistencyEnabled;
-  double getGoalCap();
-  double getLeftGoalCap();
-  double getRightGoalCap();
-  double getPenaltyLeftGoalCap();
-  double getPenaltyRightGoalCap();
-  rhoban_geometry::Point getGoalPos();
 
   // Opponent
   std::vector<rhoban_geometry::Point> getOpponentsField();
@@ -96,14 +84,18 @@ public:
   void updateBallPos();
   void setNoBall();
 
-  // Tell the localisation service we know where the goals are
-  void setPosSelf(const Eigen::Vector3d& left, const Eigen::Vector3d& right, const Eigen::Vector3d& center,
+  /**
+   * Tell the localisation service we know where we are on the field
+   * - center: position of center in self basis [m]
+   * - orientation: orientation of the field in self basis [rad]
+   */
+  void setPosSelf(const Eigen::Vector3d& center,
                   float orientation, float quality, float consistency, bool consistencyEnabled = false);
-  void updatePosSelf();
 
-  // Goal Scanner target
-  float goalTargetPan;
-  float goalTargetTilt;
+  /**
+   * Update internal informations based on 
+   */
+  void updatePosSelf();
 
   /// x,y -> [m]
   void applyKick(float x, float y);
@@ -142,12 +134,6 @@ public:
   void isGoalKeeper(bool status = false);
 
 #ifdef VISION_COMPONENT
-  void stealTags(std::vector<int>& indices, std::vector<Eigen::Vector3d>& positions,
-                 std::vector<std::pair<float, float>>& centers,
-                 std::vector<std::pair<float, float>>& centersUndistorded, double* timestamp);
-#endif
-
-#ifdef VISION_COMPONENT
   void setRobocup(Vision::Robocup* robocup);
   void setLocBinding(Vision::LocalisationBinding* locBinding);
 #endif
@@ -164,8 +150,16 @@ protected:
   float ballPredictedX, ballPredictedY;
 
   // For RhIO
-  float goalPosX, goalPosY, goalCap, goalLeftCap, goalRightCap;
-  float fieldPosX, fieldPosY, fieldOrientation, fieldOrientationWorld;
+  float fieldPosX, fieldPosY;
+
+  /**
+   * The orientation of the robot in field referential [deg]
+   */
+  float fieldOrientation;
+  /**
+   * The field orienta
+   */
+  float fieldOrientationWorld;
   std::string opponents;
   std::string mates;
   std::string sharedOpponents;
@@ -182,6 +176,20 @@ protected:
   Vision::LocalisationBinding* locBinding;
 #endif
 
+  /**
+   * Update the basis transforms between field and world based on the following internal information.
+   * - fieldCenterWorld
+   * - fieldOrientationWorld
+   */
+  void updateFieldToWorld();
+  
+  /**
+   * Update the basis transforms between self and world based on ModelService
+   * - If fake mode is enabled, uses goalModel
+   * - If fake mode is disabled, uses correctedModel
+   */
+  void updateSelfToWorld();
+
 private:
   bool simulateWalk;
 
@@ -189,11 +197,23 @@ private:
   bool visualCompassActivated;
 
   /**
+   * Conversion from field basis to world basis
+   */
+  Eigen::Affine3d field_to_world;
+  Eigen::Affine3d world_to_field;
+
+  /**
+   * Conversion from self basis to world basis
+   */
+  Eigen::Affine3d self_to_world;
+  Eigen::Affine3d world_to_self;
+
+  /**
    * RhIO command to set the ball /goal position in fake mode
    */
   std::string cmdFakeBall(double x, double y);
   std::string cmdFakeOpponents(std::vector<std::string> args);
-  std::string cmdFakeLoc(double leftX, double leftY, double rightX, double rightY, double fieldX, double fieldY);
+  std::string cmdFakeLoc(double fieldX, double fieldY, double orientation);
   std::string cmdResetPosition();
   std::string cmdMoveOnField(double x, double y, double yaw);
 };
