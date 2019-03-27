@@ -91,7 +91,7 @@ public:
   /**
    * Updates the location of the field in the world referential based on information in self referential
    * - center: position of center in self basis [m]
-   * - orientation: orientation of the field in self basis [rad]
+   * - orientation: orientation of the robot on the field [rad]
    */
   void setPosSelf(const Eigen::Vector3d& center,
                   float orientation, float quality, float consistency, bool consistencyEnabled = false);
@@ -136,6 +136,7 @@ public:
    * Convert given position from world refential to field referential (not thread safe)
    */
   rhoban_geometry::Point worldToField(const Eigen::Vector3d & pos_in_world);
+  Eigen::Vector3d fieldToWorld(const Eigen::Vector3d& pos_in_field);
 
   void enableFieldFilter(bool enable = true);
   void isGoalKeeper(bool status = false);

@@ -1298,10 +1298,12 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
     {
       Eigen::Vector3d(0,0,0), Eigen::Vector3d(0,3,0), Eigen::Vector3d(0,-3,0)
     };
-  for (const Eigen::Vector3d & field_point : field_points) {
+  LocalisationService * loc = _scheduler->getServices()->localisation;
+  for (const Eigen::Vector3d & point_in_field : field_points) {
     try
     {
-      cv::Point p = cs->imgXYFromWorldPosition(field_point);
+      Eigen::Vector3d point_in_world = loc->fieldToWorld(point_in_field);
+      cv::Point p = cs->imgXYFromWorldPosition(point_in_world);
       cv::circle(img, p, 10, cv::Scalar(0,0,0), 3);
     }
     catch (const std::runtime_error& exc)

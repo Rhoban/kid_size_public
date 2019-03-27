@@ -198,6 +198,11 @@ Point LocalisationService::worldToField(const Eigen::Vector3d & pos_in_world)
   return Point(pos_in_field.x(), pos_in_field.y());
 }
 
+Eigen::Vector3d LocalisationService::fieldToWorld(const Eigen::Vector3d & pos_in_field)
+{
+  return world_from_field * pos_in_field;
+}
+
 std::vector<Point> LocalisationService::getOpponentsField()
 {
   std::vector<Point> result;
@@ -397,7 +402,7 @@ void LocalisationService::setPosSelf(const Eigen::Vector3d& center, float orient
 
   fieldCenterWorld = world_from_self * center;
 
-  Eigen::Vector3d field_dir_in_self(cos(orientation), sin(orientation), 0);
+  Eigen::Vector3d field_dir_in_self(cos(-orientation), sin(-orientation), 0);
   Eigen::Vector3d field_dir_in_world = world_from_self * field_dir_in_self;
 
   fieldOrientationWorld = atan2(field_dir_in_world.y(), field_dir_in_world.x());
@@ -697,7 +702,7 @@ void LocalisationService::updateFieldWorldTransforms()
 {
   Eigen::Matrix3d world_from_field_orientation;
   world_from_field_orientation = Eigen::AngleAxisd(fieldOrientationWorld, Eigen::Vector3d::UnitZ());
-  world_from_field = Eigen::Affine3d(world_from_field_orientation) * Eigen::Translation3d(fieldCenterWorld);
+  world_from_field = Eigen::Translation3d(fieldCenterWorld) * Eigen::Affine3d(world_from_field_orientation);
   field_from_world = world_from_field.inverse();
 }
 
@@ -715,6 +720,8 @@ void LocalisationService::updateSelfWorldTransforms()
     self_pos = getServices()->model->correctedModel().get().selfInFrame("origin");
     robot_dir_in_world = getServices()->model->correctedModel().get().orientationYaw("trunk", "origin");
   }
-  world_from_self = Eigen::Affine3d(Eigen::AngleAxisd(robot_dir_in_world, Eigen::Vector3d::UnitZ())) * Eigen::Translation3d(self_pos);
+  Eigen::Matrix3d rotation;
+  rotation = Eigen::AngleAxisd(-robot_dir_in_world, Eigen::Vector3d::UnitZ());
+  world_from_self = Eigen::Affine3d(rotation) * Eigen::Translation3d(-self_pos);
   self_from_world = world_from_self.inverse();
 }
