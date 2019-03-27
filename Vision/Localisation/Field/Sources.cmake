@@ -1,5 +1,4 @@
 set(SOURCES
-    ArenaBorderObservation.cpp
     ArenaCornerObservation.cpp
     GoalObservation.cpp
     TagsObservation.cpp

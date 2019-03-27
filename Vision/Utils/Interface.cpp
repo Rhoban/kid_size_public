@@ -14,6 +14,11 @@ rhoban_geometry::Point cv2rg(const cv::Point2f& p)
   return rhoban_geometry::Point(p.x, p.y);
 }
 
+rhoban_geometry::Point cv2rg(const cv::Point3f& p)
+{
+  return rhoban_geometry::Point(p.x, p.y);
+}
+
 cv::Point rg2cv(const rhoban_geometry::Point& p)
 {
   return cv::Point((int)p.x, (int)p.y);

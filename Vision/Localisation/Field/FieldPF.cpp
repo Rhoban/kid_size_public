@@ -2,11 +2,12 @@
 
 #include "FieldPF.hpp"
 
-#include "Field/Field.hpp"
-
 #include "rhoban_utils/logging/logger.h"
 
+#include <hl_monitoring/top_view_drawer.h>
 #include <robocup_referee/constants.h>
+
+#include <opencv2/imgproc.hpp>
 #include <vector>
 #include <map>
 #include <sstream>
@@ -19,6 +20,7 @@ using namespace rhoban_geometry;
 using namespace rhoban_utils;
 using namespace rhoban_unsorted;
 using namespace robocup_referee;
+using namespace hl_monitoring;
 
 namespace Vision
 {
@@ -70,13 +72,13 @@ FieldPF::FieldPF()
       ->comment("Orientation noise applied at border reset in [-x,x] [deg]");
   rhioNode->newFloat("customX")
       ->defaultValue(0)
-      ->minimum(-Constants::field.fieldLength / 2)
-      ->maximum(Constants::field.fieldLength / 2)
+      ->minimum(-Constants::field.field_length / 2)
+      ->maximum(Constants::field.field_length / 2)
       ->comment("X-Position used for customReset [m]");
   rhioNode->newFloat("customY")
       ->defaultValue(0)
-      ->minimum(-Constants::field.fieldWidth / 2)
-      ->maximum(Constants::field.fieldWidth / 2)
+      ->minimum(-Constants::field.field_width / 2)
+      ->maximum(Constants::field.field_width / 2)
       ->comment("Y-position used for customReset [m]");
   rhioNode->newFloat("customTheta")
       ->defaultValue(0)
@@ -156,8 +158,8 @@ void FieldPF::applyReset(ResetType t)
   std::string reset_name = resetNames.at(t);
   logger.log("Applying a reset of type: '%s'", reset_name.c_str());
 
-  double mins[3] = { -Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0 };
-  double maxs[3] = { Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360 };
+  double mins[3] = { -Constants::field.field_length / 2, -Constants::field.field_width / 2, 0 };
+  double maxs[3] = { Constants::field.field_length / 2, Constants::field.field_width / 2, 360 };
 
   switch (t)
   {
@@ -209,8 +211,8 @@ void FieldPF::step(Controller<FieldPosition>& ctrl, const std::vector<Observatio
 
   if (stepReset == ResetType::None)
   {
-    double mins[3] = { -Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0 };
-    double maxs[3] = { Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360 };
+    double mins[3] = { -Constants::field.field_length / 2, -Constants::field.field_width / 2, 0 };
+    double maxs[3] = { Constants::field.field_length / 2, Constants::field.field_width / 2, 360 };
     // If no reset is planned, apply observations, resampling if required and return
     ParticleFilter::step(ctrl, observations, elapsedTime);
     partialUniformResampling(resamplingRatio, mins, maxs);
@@ -233,7 +235,7 @@ void FieldPF::resetOnLines(int side)
 {
   auto generator = rhoban_random::getRandomEngine();
   // According to rules, robot start in its own half
-  double xOffset = Constants::field.penaltyMarkDist - Constants::field.fieldLength / 2;
+  double xOffset = Constants::field.penalty_mark_dist - Constants::field.field_length / 2;
   std::uniform_real_distribution<double> xDistribution(-borderNoise, borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta, borderNoiseTheta);
   std::uniform_int_distribution<int> sideDistribution(0, 1);
@@ -255,7 +257,7 @@ void FieldPF::resetOnLines(int side)
     {
       currSide = sideDistribution(engine) == 0 ? 1 : -1;
     }
-    double y = currSide * Constants::field.fieldWidth / 2;
+    double y = currSide * Constants::field.field_width / 2;
     double dirNoise = dirNoiseDistribution(generator);
     double dir = -currSide * 90;
     p.first = FieldPosition(x, y, Angle(dir + dirNoise).getSignedValue());
@@ -291,17 +293,34 @@ void FieldPF::customReset()
              customX, customY, customTheta, customNoise, customThetaNoise);
 }
 
+static void tag(cv::Mat& img, const FieldPosition & p, const TopViewDrawer & drawer,
+                const cv::Scalar& color = cv::Scalar(255, 0, 255), int thickness = 1)
+{
+  cv::Point2f pos_field = p.getRobotPositionCV();
+  Angle orientation = p.getOrientation();
+  double vec_length = 0.2;//[m]
+  cv::Point2f delta(cos(orientation) * vec_length, sin(orientation) * vec_length);
+  double radius = 3;
+  cv::Point2f end_field = pos_field + delta;
+
+  cv::Point pos_img = drawer.getImgFromField(Constants::field, pos_field);
+  cv::Point end_img = drawer.getImgFromField(Constants::field, end_field);
+
+  cv::circle(img, pos_img, radius, color, thickness);
+  cv::line(img, pos_img, end_img, color, thickness);
+}
+
 void FieldPF::draw(cv::Mat& img) const
 {
-  std::cout << "Drawing field" << std::endl;
-  Field::Field::drawField(img);
-  std::cout << "Drawing particles" << std::endl;
+  TopViewDrawer drawer(cv::Size(img.cols, img.rows));
+  
+  img = drawer.getImg(Constants::field);
   for (unsigned int i = 0; i < nbParticles(); i++)
   {
-    getParticle(i).tag(img, 0.0, cv::Scalar(getParticleQ(i) * 255, 0, 0));
+    const FieldPosition& p = getParticle(i);
+    tag(img, p, drawer, cv::Scalar(255, 0, 0));
   }
-  std::cout << "Drawing representative particles" << std::endl;
-  representativeParticle.tag(img, 0.0, cv::Scalar(0, 0, 255), 3);
+  tag(img, representativeParticle, drawer, cv::Scalar(0, 0, 255), 3);
 }
 
 void FieldPF::updateRepresentativeQuality()
@@ -425,8 +444,8 @@ std::string FieldPF::getName(ResetType t)
 
 void FieldPF::initializeAtUniformRandom(unsigned int particlesNb)
 {
-  double mins[3] = { -Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0 };
-  double maxs[3] = { Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360 };
+  double mins[3] = { -Constants::field.field_length / 2, -Constants::field.field_width / 2, 0 };
+  double maxs[3] = { Constants::field.field_length / 2, Constants::field.field_width / 2, 360 };
   ParticleFilter::initializeAtUniformRandom(mins, maxs, particlesNb);
 }
 

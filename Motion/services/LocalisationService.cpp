@@ -30,7 +30,6 @@ using namespace rhoban_utils;
 using namespace robocup_referee;
 
 #ifdef VISION_COMPONENT
-using namespace Vision::Field;
 using Vision::Localisation::FieldPF;
 #endif
 
@@ -148,17 +147,17 @@ Point LocalisationService::getBallPosSelf()
 
 Point LocalisationService::getOurGoalPosField()
 {
-  return Point(-Constants::field.fieldLength / 2.0, 0);
+  return Point(-Constants::field.field_length / 2.0, 0);
 }
 
 Point LocalisationService::getGoalPosField()
 {
-  return Point(Constants::field.fieldLength / 2.0, 0);
+  return Point(Constants::field.field_length / 2.0, 0);
 }
 
 Angle LocalisationService::getOurBallToGoalDirSelf()
 {
-  Point goalField(-Constants::field.fieldLength / 2, 0);
+  Point goalField(-Constants::field.field_length / 2, 0);
   auto ball = getBallPosField();
   auto orientationRad = getFieldOrientation();
 
@@ -392,8 +391,6 @@ void LocalisationService::setPosSelf(const Eigen::Vector3d& center, float orient
 {
   bind.pull();
 
-  mutex.lock();
-
   fieldQ = quality;
   fieldConsistency = consistency;
   consistencyEnabled = consistencyEnabled_;
@@ -461,7 +458,7 @@ void LocalisationService::penaltyReset(float x)
 void LocalisationService::penaltyGoalReset()
 {
 #ifdef VISION_COMPONENT
-  customFieldReset(Constants::field.fieldLength / 2, 0, 0.05, 180, 3);
+  customFieldReset(Constants::field.field_length / 2, 0, 0.05, 180, 3);
   robocup->robotsClear();
 #endif
 }
@@ -471,7 +468,7 @@ void LocalisationService::goalReset()
 #ifdef VISION_COMPONENT
   RhIO::Root.setFloat("/Localisation/Field/RobotController/angleExploration", 0.5);
   RhIO::Root.setFloat("/Localisation/Field/RobotController/posExploration", 0.5);
-  customFieldReset(-Constants::field.fieldLength / 2, 0, 0.01, 0, 1);
+  customFieldReset(-Constants::field.field_length / 2, 0, 0.01, 0, 1);
   robocup->robotsClear();
 #endif
 }
@@ -496,8 +493,8 @@ void LocalisationService::gameStartReset()
 void LocalisationService::kickOffReset()
 {
 #ifdef VISION_COMPONENT
-  robocup->ballReset(Constants::field.centerRadius, 0);
-  customFieldReset(-Constants::field.centerRadius, 0, 0.3, 0, 5);
+  robocup->ballReset(Constants::field.center_radius, 0);
+  customFieldReset(-Constants::field.center_radius, 0, 0.3, 0, 5);
   robocup->robotsClear();
 #endif
 }

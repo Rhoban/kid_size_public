@@ -1,7 +1,5 @@
 #include "FieldObservation.hpp"
 
-#include "Field/Field.hpp"
-
 #include <robocup_referee/constants.h>
 
 using namespace rhoban_geometry;
@@ -23,9 +21,10 @@ double FieldObservation::potential(const FieldPosition& p) const
   Point pos = p.getRobotPosition();
   // Refusing entirely to be behind the goal because it can cause weird
   // approaches
-  double dx = abs(pos.x) - Constants::field.fieldLength / 2;
+  // TODO: this should not be done, approaches should take it into account
+  double dx = abs(pos.x) - Constants::field.field_length / 2;
   // Accepting to go slightly out of the field laterally
-  double dy = abs(pos.y) - (Constants::field.fieldWidth / 2 - Constants::field.borderStripWidth);
+  double dy = abs(pos.y) - (Constants::field.field_width / 2 - Constants::field.border_strip_width_y);
   if (dx > 0 || dy > 0)
   {
     return pError;

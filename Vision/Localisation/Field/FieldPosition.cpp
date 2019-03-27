@@ -2,9 +2,6 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "Field/Field.hpp"
-
-using namespace Vision::Utils;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 
@@ -56,26 +53,6 @@ void FieldPosition::move(Point& dist)
 void FieldPosition::rotate(const Angle& rotation)
 {
   values[2] = (getOrientation() + rotation).getSignedValue();
-}
-
-void FieldPosition::tag(cv::Mat& img, Angle pan, const cv::Scalar& color, int thickness) const
-{
-  double vecLength = 0.2;  /// [m]
-  cv::Point2f src = getRobotPositionCV();
-  Angle orientation = getOrientation() + pan;
-  double dx = cos(orientation);
-  double dy = sin(orientation);
-  cv::Point2f delta(dx * vecLength, dy * vecLength);
-  double radius = 3;
-  cv::Point2f srcImg = Field::Field::fieldToImg(img, src);
-  cv::Point2f endImg = Field::Field::fieldToImg(img, src + delta);
-
-  //  std::cout << "src: " << src.x << ", " << src.y << std::endl;
-  //  std::cout << "dst: " << src.x << ", " << src.y << std::endl;
-
-  // circle(img, srcImg, radius, color, CV_FILLED);
-  circle(img, srcImg, radius, color, thickness);
-  line(img, srcImg, endImg, color, thickness);
 }
 
 }  // namespace Localisation

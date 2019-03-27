@@ -196,17 +196,17 @@ void QKickController::updateAction()
               // The ball goes backward on the field
               ok = false;
             }
-            else if (fabs(target.x) > Constants::field.fieldLength / 2 ||
-                     fabs(target.y) > Constants::field.fieldWidth / 2)
+            else if (fabs(target.x) > Constants::field.field_length / 2 ||
+                     fabs(target.y) > Constants::field.field_width / 2)
             {
               // Ball goes out of the field
               ok = false;
-              if (target.x > Constants::field.fieldLength / 2 && ball.x <= Constants::field.fieldLength / 2)
+              if (target.x > Constants::field.field_length / 2 && ball.x <= Constants::field.field_length / 2)
               {
                 double dY = (target.y - ball.y) / (target.x - ball.x);
-                double yIntersect = ball.y + (Constants::field.fieldLength / 2 - ball.x) * dY;
+                double yIntersect = ball.y + (Constants::field.field_length / 2 - ball.x) * dY;
 
-                if (fabs(yIntersect) < Constants::field.goalWidth * 0.8 / 2)
+                if (fabs(yIntersect) < Constants::field.goal_width * 0.8 / 2)
                 {
                   // But a goal is scored
                   ok = true;

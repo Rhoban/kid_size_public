@@ -1,11 +1,11 @@
 #pragma once
 
 #include "FieldPosition.hpp"
-#include "Field/Field.hpp"
 
 #include "rhoban_unsorted/particle_filter/particle_filter.h"
 
 #include "RhIO.hpp"
+
 #include <utility>
 #include <vector>
 #include <map>

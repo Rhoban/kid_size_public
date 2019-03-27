@@ -1045,8 +1045,7 @@ void Robocup::updateBallInformations()
         double ballXField = robot.x + cos(robotDir) * ballInSelf.x() - sin(robotDir) * ballInSelf.y();
         double ballYField = robot.y + sin(robotDir) * ballInSelf.x() + cos(robotDir) * ballInSelf.y();
         // OPTION: Margin could be added here
-        if (std::fabs(ballXField) > Constants::field.fieldLength / 2 + Constants::field.borderStripWidth ||
-            std::fabs(ballYField) > Constants::field.fieldWidth / 2 + Constants::field.borderStripWidth)
+        if (!Constants::field.isInArena(cv::Point2f(ballXField, ballYField)))
         {
           out.warning("Ignoring a ball candidate outside of the field at (%f,%f)", ballXField, ballYField);
           continue;
@@ -1294,15 +1293,21 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
     cv::line(img, horizonKeypoints[idx - 1], horizonKeypoints[idx], cv::Scalar(255, 0, 0), 2);
   }
 
-  //
   // TODO remove it and do something cleaner lates
   std::vector<Eigen::Vector3d> field_points =
     {
       Eigen::Vector3d(0,0,0), Eigen::Vector3d(0,3,0), Eigen::Vector3d(0,-3,0)
     };
   for (const Eigen::Vector3d & field_point : field_points) {
-    cv::Point p = cs->imgXYFromWorldPosition(field_point);
-    cv::circle(img, p, 10, cv::Scalar(0,0,0), 3);
+    try
+    {
+      cv::Point p = cs->imgXYFromWorldPosition(field_point);
+      cv::circle(img, p, 10, cv::Scalar(0,0,0), 3);
+    }
+    catch (const std::runtime_error& exc)
+    {
+      //tmp code so no treatment
+    }
   }
 
   globalMutex.unlock();
@@ -1323,7 +1328,7 @@ cv::Mat Robocup::getRadarImg(int width, int height)
   std::vector<cv::Point2f> freshObservations;
   std::vector<int> delete_me;
   // scale_factor -> conversion [m] -> [px]
-  float scale_factor = width / (2 * Constants::field.fieldLength);
+  float scale_factor = width / (2 * Constants::field.field_length);
   int ball_radius = 5;  // px
   cv::Scalar ball_color = cv::Scalar(0, 0, 200);
   int goal_size = 8;  // px
@@ -1335,7 +1340,7 @@ cv::Mat Robocup::getRadarImg(int width, int height)
                            // angular condition instead
 
   // Drawing satic distance marquers each meter (light circles are 0.5 meters)
-  for (int i = 1; i < (1 + 2 * Constants::field.fieldLength); i++)
+  for (int i = 1; i < (1 + 2 * Constants::field.field_length); i++)
   {
     cv::circle(img, cv::Point2i(width / 2, height / 2), (i / 2.0) * scale_factor, cv::Scalar(0, 150, 0), 2 - (i % 2));
   }

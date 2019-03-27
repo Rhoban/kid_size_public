@@ -305,7 +305,7 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
     return -1;
   }
 
-  Plane ballPlane(Eigen::Vector3d::UnitZ(), Constants::field.ballRadius);
+  Plane ballPlane(Eigen::Vector3d::UnitZ(), Constants::field.ball_radius);
 
   if (!isIntersectionPoint(viewRay, ballPlane))
   {
@@ -322,7 +322,7 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
 
   // Getting one of the points on the side of the ball, this is not an exact
   // method, but the approximation should be good enough
-  Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ballRadius;
+  Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ball_radius;
 
   // Getting pixel for ballSide
   cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
@@ -332,7 +332,7 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
 
 Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f& pos) const
 {
-  return posInWorldFromPixel(pos, Constants::field.ballRadius);
+  return posInWorldFromPixel(pos, Constants::field.ball_radius);
 }
 
 rhoban_geometry::Ray CameraState::getRayInWorldFromPixel(const cv::Point2f& img_pos) const

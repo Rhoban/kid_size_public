@@ -1,6 +1,5 @@
 #include "GoalObservation.hpp"
 
-#include "Field/Field.hpp"
 #include "CameraState/CameraState.hpp"
 
 #include "RhIO.hpp"
@@ -10,11 +9,14 @@
 
 #include "Utils/Interface.h"
 
+#include <robocup_referee/constants.h>
+
 static rhoban_utils::Logger out("GoalObservation");
 
 using Vision::Utils::CameraState;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
+using namespace robocup_referee;
 
 namespace Vision
 {
@@ -77,7 +79,7 @@ double GoalObservation::potential(const FieldPosition& p, bool debug) const
         << ") -> seenDir: " << seenDir << std::endl;
   }
 
-  for (auto& goalPost : Field::Field::getGoalPosts())
+  for (auto& goalPost : Constants::field.getGoalPosts())
   {
     Point field_postPos = cv2rg(goalPost) - p.getRobotPosition();
     Point robot_postPos = field_postPos.rotation(-p.getOrientation());

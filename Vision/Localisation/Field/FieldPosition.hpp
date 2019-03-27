@@ -52,9 +52,6 @@ public:
   {
     return new FieldPosition(*this);
   }
-
-  void tag(cv::Mat& img, rhoban_utils::Angle pan = rhoban_utils::Angle(0),
-           const cv::Scalar& color = cv::Scalar(255, 0, 255), int thickness = 1) const;
 };
 }  // namespace Localisation
 }  // namespace Vision

@@ -9,6 +9,10 @@ namespace Vision
 {
 rhoban_geometry::Point cv2rg(const cv::Point& p);
 rhoban_geometry::Point cv2rg(const cv::Point2f& p);
+/**
+ * Ignores the last dimension of 'p'
+ */
+rhoban_geometry::Point cv2rg(const cv::Point3f& p);
 
 cv::Point rg2cv(const rhoban_geometry::Point& p);
 cv::Point2f rg2cv2f(const rhoban_geometry::Point& p);

@@ -23,9 +23,9 @@ static Logger logger("CaptainService");
  */
 static void boundPosition(Point& point)
 {
-  double xMin = -Constants::field.fieldLength / 2 + Constants::field.goalAreaLength + 0.5;
-  double xMax = Constants::field.fieldLength / 2 - Constants::field.goalAreaLength;
-  double yMax = Constants::field.goalAreaWidth / 2;
+  double xMin = -Constants::field.field_length / 2 + Constants::field.goal_area_length + 0.5;
+  double xMax = Constants::field.field_length / 2 - Constants::field.goal_area_length;
+  double yMax = Constants::field.goal_area_width / 2;
 
   if (point.x > xMax)
   {
@@ -444,7 +444,7 @@ void CaptainService::computeBasePositions()
   // Sending the goalie in the goals
   if (goalId)
   {
-    info.robotTarget[goalId - 1][0] = -Constants::field.fieldLength / 2 + 0.25;
+    info.robotTarget[goalId - 1][0] = -Constants::field.field_length / 2 + 0.25;
     info.robotTarget[goalId - 1][1] = 0;
     info.robotTarget[goalId - 1][2] = 0;
     info.order[goalId - 1] = rhoban_team_play::CaptainOrder::Place;
@@ -460,14 +460,14 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point
   Point vect = (ballTarget - ball) * passPlacingRatio - (ballTarget - ball).normalize() * passPlacingOffset;
   Point nVect = vect.perpendicular().normalize(perpendicularBallDistance);
   bool backward = ballTarget.x - 0.1 <= ball.x;
-  Point ourGoalCenter(-Constants::field.fieldLength / 2, 0);
+  Point ourGoalCenter(-Constants::field.field_length / 2, 0);
   auto oppositeCorner = corner;
   oppositeCorner.y *= -1;
 
   {
     PlacementOptimizer::Target target;
 
-    corner = Point(Constants::field.fieldLength / 2, Constants::field.goalWidth / 2 + 0.25);
+    corner = Point(Constants::field.field_length / 2, Constants::field.goal_width / 2 + 0.25);
 
     if (backward)
     {
@@ -483,7 +483,7 @@ std::vector<PlacementOptimizer::Target> CaptainService::getTargetPositions(Point
   }
   {
     PlacementOptimizer::Target target;
-    corner = Point(Constants::field.fieldLength / 2, -Constants::field.goalWidth / 2 - 0.25);
+    corner = Point(Constants::field.field_length / 2, -Constants::field.goal_width / 2 - 0.25);
 
     if (backward)
     {
@@ -644,7 +644,7 @@ void CaptainService::computePlayingPositions()
   // std::cout << "Captain: There is " << otherIds.size() << " to place" << std::endl;
 
   // Adaptative aggressivity
-  double ballRatio = (info.common_ball.x + Constants::field.fieldLength / 2) / Constants::field.fieldLength;
+  double ballRatio = (info.common_ball.x + Constants::field.field_length / 2) / Constants::field.field_length;
   aggressivity = minAggressivity + ballRatio * (maxAggressivity - minAggressivity);
 
   auto solution =
