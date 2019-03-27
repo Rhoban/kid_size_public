@@ -58,7 +58,17 @@ std::string ViveService::cmdVive()
 
   uint64_t ts = rhoban_utils::TimeStamp::now().getTimeMS()*1000.0;
   Eigen::Affine3d transform = getFieldToVive(ts);
-  oss << transform.matrix();
+  Eigen::Matrix4d m = transform.matrix();
+  Eigen::Matrix3d m3 = m.block(0, 0, 3, 3);
+  Eigen::Vector3d rpy = m3.eulerAngles(2, 0, 2);
+
+  oss << "- X: " << m(0, 3) << std::endl;
+  oss << "- Y: " << m(1, 3) << std::endl;
+  oss << "- Z: " << m(2, 3) << std::endl;
+  oss << "- Roll: " << (rpy[0]*180.0/M_PI) << std::endl;
+  oss << "- Pitch: " << (rpy[1]*180.0/M_PI) << std::endl;
+  oss << "- Yaw: " << (rpy[2]*180.0/M_PI) << std::endl;
+  oss << m << std::endl;
 
   return oss.str();
 }
@@ -78,7 +88,10 @@ Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clo
       return vive_provider::getWorldToTracker(tracker);
     }
   }
-  throw std::out_of_range(DEBUG_INFO + " no entry with serial: " + tracker_serial);
+
+  return Eigen::Affine3d::Identity();
+  // XXX: This should be catched by the camera state (temporary fix above)
+  // throw std::out_of_range(DEBUG_INFO + " no entry with serial: " + tracker_serial);
 }
 
 Eigen::Affine3d ViveService::getFieldToCamera(uint64_t time_stamp, bool system_clock) const
