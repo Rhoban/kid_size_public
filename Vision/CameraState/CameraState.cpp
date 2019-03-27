@@ -164,11 +164,11 @@ void CameraState::updateInternalModel(double timeStamp)
 
   if (_moveScheduler != nullptr)
   {
-    ViveService * vive = _moveScheduler->getServices()->vive;
+    ViveService* vive = _moveScheduler->getServices()->vive;
     if (vive->isActive())
     {
       worldToCamera = vive->getFieldToVive((int64)(timeStamp * 1000 * 1000));
-      //TODO: update worldToSelf properly (require to use head info as well)
+      // TODO: update worldToSelf properly (require to use head info as well)
       worldToSelf = Eigen::Affine3d();
     }
     else
@@ -178,12 +178,12 @@ void CameraState::updateInternalModel(double timeStamp)
       _model = &(_pastReadModel.get());
       _model->setAutoUpdate(false);
       _model->updateDOFPosition();
-    
-      worldToSelf = _model->selfFrameTransform("origin");
+
+      selfToWorld = _model->selfFrameTransform("origin");
       worldToCamera = _model->getTransform("camera", "origin");
     }
     _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
-    selfToWorld = worldToSelf.inverse();
+    worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
   }
   else

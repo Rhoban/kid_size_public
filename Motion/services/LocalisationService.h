@@ -83,8 +83,8 @@ public:
   std::map<int, std::vector<Eigen::Vector2d>> sharedOpponentsField;
 
   // Tell the localisation service we see the ball
-  void setBallWorld(const Eigen::Vector3d& pos, float quality,
-                    const rhoban_geometry::Point& speed, const rhoban_utils::TimeStamp& ts);
+  void setBallWorld(const Eigen::Vector3d& pos, float quality, const rhoban_geometry::Point& speed,
+                    const rhoban_utils::TimeStamp& ts);
   void updateBallPos();
   void setNoBall();
 
@@ -93,8 +93,8 @@ public:
    * - center: position of center in self basis [m]
    * - orientation: orientation of the robot on the field [rad]
    */
-  void setPosSelf(const Eigen::Vector3d& center,
-                  float orientation, float quality, float consistency, bool consistencyEnabled = false);
+  void setPosSelf(const Eigen::Vector3d& center, float orientation, float quality, float consistency,
+                  bool consistencyEnabled = false);
 
   /**
    * Updates transforms between field and world basis and then updates variables monitored by RhIO
@@ -135,7 +135,7 @@ public:
   /**
    * Convert given position from world refential to field referential (not thread safe)
    */
-  rhoban_geometry::Point worldToField(const Eigen::Vector3d & pos_in_world);
+  rhoban_geometry::Point worldToField(const Eigen::Vector3d& pos_in_world);
   Eigen::Vector3d fieldToWorld(const Eigen::Vector3d& pos_in_field);
 
   void enableFieldFilter(bool enable = true);
@@ -190,13 +190,18 @@ protected:
    * - fieldOrientationWorld
    */
   void updateFieldWorldTransforms();
-  
+
   /**
    * Update the basis transforms between self and world based on ModelService
    * - If fake mode is enabled, uses goalModel
    * - If fake mode is disabled, uses correctedModel
    */
   void updateSelfWorldTransforms();
+
+  /**
+   * Return the direction of the trunk in world referential
+   */
+  rhoban_utils::Angle getSelfOrientationInWorld();
 
 private:
   bool simulateWalk;
@@ -205,7 +210,8 @@ private:
   bool visualCompassActivated;
 
   // Conversions between self, field and world referentials
-  
+
+public:
   Eigen::Affine3d field_from_world;
   Eigen::Affine3d world_from_field;
   Eigen::Affine3d self_from_world;
@@ -219,6 +225,7 @@ private:
   std::string cmdFakeLoc(double fieldX, double fieldY, double orientation);
   std::string cmdResetPosition();
   std::string cmdMoveOnField(double x, double y, double yaw);
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

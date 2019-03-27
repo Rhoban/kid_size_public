@@ -1294,21 +1294,20 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
   }
 
   // TODO remove it and do something cleaner lates
-  std::vector<Eigen::Vector3d> field_points =
-    {
-      Eigen::Vector3d(0,0,0), Eigen::Vector3d(0,3,0), Eigen::Vector3d(0,-3,0)
-    };
-  LocalisationService * loc = _scheduler->getServices()->localisation;
-  for (const Eigen::Vector3d & point_in_field : field_points) {
+  std::vector<Eigen::Vector3d> field_points = { Eigen::Vector3d(0, 0, 0), Eigen::Vector3d(0, 3, 0),
+                                                Eigen::Vector3d(0, -3, 0) };
+  LocalisationService* loc = _scheduler->getServices()->localisation;
+  for (const Eigen::Vector3d& point_in_field : field_points)
+  {
     try
     {
       Eigen::Vector3d point_in_world = loc->fieldToWorld(point_in_field);
       cv::Point p = cs->imgXYFromWorldPosition(point_in_world);
-      cv::circle(img, p, 10, cv::Scalar(0,0,0), 3);
+      cv::circle(img, p, 10, cv::Scalar(0, 0, 0), 3);
     }
     catch (const std::runtime_error& exc)
     {
-      //tmp code so no treatment
+      // tmp code so no treatment
     }
   }
 
