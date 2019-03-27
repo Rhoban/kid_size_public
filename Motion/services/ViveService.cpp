@@ -8,7 +8,6 @@ using namespace vive_provider;
 
 ViveService::ViveService()
   : vive_manager(getDefaultPort(), -1)
-  , tracker_id(-1)
   , bind("vive")
 {
   bind.bindNew("camera_x", camera_x, RhIO::Bind::PullOnly)
@@ -22,13 +21,19 @@ ViveService::ViveService()
     ->defaultValue(0.0);
   bind.bindNew("camera_roll", camera_roll, RhIO::Bind::PullOnly)
     ->comment("Rotation along x-axis [deg]")
-    ->defaultValue(90);
+    ->defaultValue(0);
   bind.bindNew("camera_pitch", camera_pitch, RhIO::Bind::PullOnly)
     ->comment("Rotation along y-axis [deg]")
-    ->defaultValue(-90);
+    ->defaultValue(0);
   bind.bindNew("camera_yaw", camera_yaw, RhIO::Bind::PullOnly)
     ->comment("Rotation along z-axis [deg]")
     ->defaultValue(0);
+  bind.bindNew("tracker_serial", tracker_serial, RhIO::Bind::PullOnly)
+    ->comment("Tracker serial number")
+    ->persisted(true)
+    ->defaultValue("");
+  bind.bindFunc("vive", "View vive status", &ViveService::cmdVive, *this);
+
   bind.pull();
 }
 
@@ -44,7 +49,28 @@ bool ViveService::tick(double elapsed)
 
 bool ViveService::isActive() const
 {
-  return tracker_id > 0 && vive_manager.getMessages().size() > 0;
+  return tracker_serial != "" && vive_manager.getMessages().size() > 0;
+}
+
+std::string ViveService::cmdVive()
+{
+  std::ostringstream oss;
+
+  uint64_t ts = rhoban_utils::TimeStamp::now().getTimeMS()*1000.0;
+  Eigen::Affine3d transform = getFieldToVive(ts);
+  Eigen::Matrix4d m = transform.matrix();
+  Eigen::Matrix3d m3 = m.block(0, 0, 3, 3);
+  Eigen::Vector3d rpy = m3.eulerAngles(0, 1, 2);
+
+  oss << "- X: " << m(0, 3) << std::endl;
+  oss << "- Y: " << m(1, 3) << std::endl;
+  oss << "- Z: " << m(2, 3) << std::endl;
+  oss << "- Roll: " << (rpy[0]*180.0/M_PI) << std::endl;
+  oss << "- Pitch: " << (rpy[1]*180.0/M_PI) << std::endl;
+  oss << "- Yaw: " << (rpy[2]*180.0/M_PI) << std::endl;
+  oss << m << std::endl;
+
+  return oss.str();
 }
 
 Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clock) const
@@ -57,12 +83,15 @@ Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clo
 
   for (const TrackerMsg & tracker : vive_status.trackers())
   {
-    if ((int)tracker.tracker_idx() == tracker_id)
+    if (tracker.serial_number() == tracker_serial)
     {
       return vive_provider::getWorldToTracker(tracker);
     }
   }
-  throw std::out_of_range(DEBUG_INFO + " no entry with id: " + std::to_string(tracker_id));
+
+  return Eigen::Affine3d::Identity();
+  // XXX: This should be catched by the camera state (temporary fix above)
+  // throw std::out_of_range(DEBUG_INFO + " no entry with serial: " + tracker_serial);
 }
 
 Eigen::Affine3d ViveService::getFieldToCamera(uint64_t time_stamp, bool system_clock) const

@@ -41,21 +41,18 @@ public:
    */
   Eigen::Affine3d getViveToCamera() const;
 
-  void setPosOffset(const Eigen::Vector3d & pos);
+  void setPosOffset(const Eigen::Vector3d& pos);
   void setRoll(double roll);
   void setPitch(double pitch);
   void setYaw(double yaw);
+
+  std::string cmdVive();
 
 private:
   /**
    * Manager for vive messages
    */
   vive_provider::UDPMessageManager vive_manager;
-
-  /**
-   * Each robot has its own tracker id
-   */
-  int tracker_id;
 
   /**
    * RhIO binding
@@ -69,4 +66,6 @@ private:
   double camera_roll;
   double camera_pitch;
   double camera_yaw;
+
+  std::string tracker_serial;
 };
