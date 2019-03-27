@@ -60,7 +60,7 @@ std::string ViveService::cmdVive()
   Eigen::Affine3d transform = getFieldToVive(ts);
   Eigen::Matrix4d m = transform.matrix();
   Eigen::Matrix3d m3 = m.block(0, 0, 3, 3);
-  Eigen::Vector3d rpy = m3.eulerAngles(2, 0, 2);
+  Eigen::Vector3d rpy = m3.eulerAngles(0, 1, 2);
 
   oss << "- X: " << m(0, 3) << std::endl;
   oss << "- Y: " << m(1, 3) << std::endl;
