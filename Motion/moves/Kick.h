@@ -16,6 +16,7 @@ public:
   bool over;
   bool live;
   std::string cmdKickGen();
+
   void loadKick(std::string filename);
 
   void set(bool left, const std::string& kickName);

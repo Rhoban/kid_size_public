@@ -148,7 +148,7 @@ std::string Kick::cmdKickGen()
       {
         // Loading the kick
         loadKick(getPath(kickName, true));
-        std::string tmp = kickName+"_left";
+        std::string tmp = kickName + "_left";
         preloadedSplines[tmp] = splines;
         maxTimes[tmp] = tMax;
         // Writing it to output file
