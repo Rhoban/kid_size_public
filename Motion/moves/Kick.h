@@ -16,14 +16,11 @@ public:
   bool over;
   bool live;
   std::string cmdKickGen();
-  std::map<std::string, rhoban_utils::Function> loadCompiledKick(std::string filename);
-  void loadCompiledKicks();
   void loadKick(std::string filename);
 
   void set(bool left, const std::string& kickName);
 
   static std::string getPath(const std::string kickName, bool left = false);
-  static std::string getCompiledPath(const std::string kickName, bool left = false);
 
 protected:
   typedef std::map<std::string, rhoban_utils::Function> Splines;
