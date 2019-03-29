@@ -159,7 +159,11 @@ public:
   void stopLoggingLowLevel(const std::string& path);
   /// Tells the model to read the low level values from a log file instead than
   /// from the actual low level
-  void setLogMode(const std::string path);
+  void setLogMode(const std::string& path);
+  /**
+   * Forces the vive service to load information from the given path
+   */
+  void setViveLog(const std::string& path);
 
   void readPipeline();
   void getUpdatedCameraStateFromPipeline();
@@ -307,5 +311,10 @@ private:
 
   /// Are the ball outside of the field (according to localization) ignored
   bool ignoreOutOfFieldBalls;
+
+  /**
+   * Log to the vive
+   */
+  std::string viveLogPath;
 };
 }  // namespace Vision

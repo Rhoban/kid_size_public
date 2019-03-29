@@ -48,6 +48,8 @@ public:
 
   std::string cmdVive();
 
+  void loadLog(const std::string& path);
+
 private:
   /**
    * Manager for vive messages
@@ -68,4 +70,9 @@ private:
   double camera_yaw;
 
   std::string tracker_serial;
+
+  /**
+   * Time difference in seconds between the clock of the computer recording vive_information and the NUC
+   */
+  double extra_time_offset;
 };

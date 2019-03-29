@@ -4,7 +4,9 @@
 #include "camera_state.pb.h"
 
 #include "Utils/HomogeneousTransform.hpp"
+#include "services/DecisionService.h"
 #include "services/ModelService.h"
+#include "services/LocalisationService.h"
 #include "services/ViveService.h"
 
 #include <rhoban_utils/util.h>
@@ -84,7 +86,7 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, rhoban_vision_proto::P
 }
 
 CameraState::CameraState(MoveScheduler* moveScheduler)
-  : _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+  : _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>()), has_camera_field_transform(false)
 {
   _moveScheduler = moveScheduler;
   _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
@@ -97,7 +99,9 @@ CameraState::CameraState(MoveScheduler* moveScheduler)
 
 CameraState::CameraState(const rhoban_vision_proto::IntrinsicParameters& camera_parameters,
                          const rhoban_vision_proto::CameraState& cs)
-  : _moveScheduler(nullptr), _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+  : _moveScheduler(nullptr)
+  , _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+  , has_camera_field_transform(false)
 {
   importFromProtobuf(camera_parameters);
   importFromProtobuf(cs);
@@ -164,27 +168,54 @@ void CameraState::updateInternalModel(double timeStamp)
 
   if (_moveScheduler != nullptr)
   {
-    ViveService* vive = _moveScheduler->getServices()->vive;
-    if (vive->isActive())
-    {
-      worldToCamera = vive->getFieldToVive((int64)(timeStamp * 1000 * 1000));
-      // TODO: update worldToSelf properly (require to use head info as well)
-      worldToSelf = Eigen::Affine3d();
-    }
-    else
-    {
-      _model->setAutoUpdate(true);
-      _moveScheduler->getServices()->model->pastReadModel(timeStamp, _pastReadModel);
-      _model = &(_pastReadModel.get());
-      _model->setAutoUpdate(false);
-      _model->updateDOFPosition();
-
-      selfToWorld = _model->selfFrameTransform("origin");
-      worldToCamera = _model->getTransform("camera", "origin");
-    }
+    // Update World, Self and Camera transforms based on model
+    _model->setAutoUpdate(true);
+    _moveScheduler->getServices()->model->pastReadModel(timeStamp, _pastReadModel);
+    _model = &(_pastReadModel.get());
+    _model->setAutoUpdate(false);
+    _model->updateDOFPosition();
+    
+    selfToWorld = _model->selfFrameTransform("origin");
+    worldToCamera = _model->getTransform("camera", "origin");
     _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
+    // Update camera/field transform based on (by order of priority)
+    // 1. Vive
+    // 2. LocalisationService if field quality is good
+    // 3. If nothing is available set info to false
+    ViveService* vive = _moveScheduler->getServices()->vive;
+    DecisionService* decision = _moveScheduler->getServices()->decision;
+    if (vive->isActive())
+    {
+      try
+      {
+        camera_from_field = vive->getFieldToCamera((int64)(timeStamp * 1000 * 1000));
+        std::cout << "Vive based update: cameraPosInField: "
+                  << (camera_from_field.inverse() * Eigen::Vector3d::Zero()).transpose() << std::endl;
+        has_camera_field_transform = true;
+      }
+      catch (const std::out_of_range& exc)
+      {
+        has_camera_field_transform = false;
+        camera_from_field = Eigen::Affine3d::Identity();
+        std::cerr << "Failed to import transform from Vive: " << exc.what() << std::endl;
+      }
+    }
+    else if (decision->isFieldQualityGood)
+    {
+      std::cout << "Localisation based update" << std::endl;
+      LocalisationService * loc = _moveScheduler->getServices()->localisation;
+      camera_from_field = worldToCamera * loc->world_from_field;
+      has_camera_field_transform = true;
+    }
+    else
+    {
+      std::cout << "Loc is bad -> no update" << std::endl;
+      has_camera_field_transform = false;
+      camera_from_field = Eigen::Affine3d::Identity();
+    }
+    field_from_camera = camera_from_field.inverse();
   }
   else
   {

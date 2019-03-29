@@ -44,6 +44,7 @@
 #include "services/LocalisationService.h"
 #include "services/ModelService.h"
 #include "services/RefereeService.h"
+#include "services/ViveService.h"
 #include <cmath>
 #include <cstdlib>
 #include <sstream>
@@ -126,6 +127,10 @@ Robocup::Robocup(MoveScheduler* scheduler)
     // The low level info will come from a log
     setLogMode(pathToLog);
   }
+  if (viveLogPath != "")
+  {
+    setViveLog(viveLogPath);
+  }
   scheduler->getServices()->localisation->setRobocup(this);
 }
 
@@ -174,6 +179,10 @@ Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
   {
     // The low level info will come from a log
     setLogMode(pathToLog);
+  }
+  if (viveLogPath != "")
+  {
+    setViveLog(viveLogPath);
   }
   scheduler->getServices()->localisation->setRobocup(this);
 }
@@ -248,6 +257,7 @@ Json::Value Robocup::toJson() const
 {
   // Writing stream
   Json::Value v = Application::toJson();
+  v["viveLogPath"] = viveLogPath;
   v["benchmark"] = benchmark;
   v["benchmarkDetail"] = benchmarkDetail;
   v["imageDelay"] = imageDelay;
@@ -273,6 +283,7 @@ Json::Value Robocup::toJson() const
 void Robocup::fromJson(const Json::Value& v, const std::string& dir_name)
 {
   Application::fromJson(v, dir_name);
+  rhoban_utils::tryRead(v, "viveLogPath", &viveLogPath);
   rhoban_utils::tryRead(v, "benchmark", &benchmark);
   rhoban_utils::tryRead(v, "benchmarkDetail", &benchmarkDetail);
   rhoban_utils::tryRead(v, "imageDelay", &imageDelay);
@@ -488,9 +499,7 @@ void Robocup::step()
       ballStackFilter->clear();
 
       // Telling the localisation
-      LocalisationService* loc = dynamic_cast<LocalisationService*>(_scheduler->getServices()->getService("localisatio"
-                                                                                                          "n"));
-      loc->setNoBall();
+      _scheduler->getServices()->localisation->setNoBall();
     }
   }
 
@@ -1036,18 +1045,13 @@ void Robocup::updateBallInformations()
     {
       cv::Point2f ballPix(ballsX[k], ballsY[k]);
       Eigen::Vector3d ballInWorld = cs->ballInWorldFromPixel(ballPix);
-      Eigen::Vector3d ballInSelf = cs->worldToSelf * ballInWorld;
-      if (ignoreOutOfFieldBalls)
+      if (ignoreOutOfFieldBalls && cs->has_camera_field_transform)
       {
-        LocalisationService* localisation = _scheduler->getServices()->localisation;
-        rhoban_geometry::Point robot = localisation->getFieldPos();
-        Angle robotDir(rad2deg(localisation->getFieldOrientation()));
-        double ballXField = robot.x + cos(robotDir) * ballInSelf.x() - sin(robotDir) * ballInSelf.y();
-        double ballYField = robot.y + sin(robotDir) * ballInSelf.x() + cos(robotDir) * ballInSelf.y();
+        Eigen::Vector3d ballInField = cs->field_from_camera * cs->worldToCamera * ballInWorld;
         // OPTION: Margin could be added here
-        if (!Constants::field.isInArena(cv::Point2f(ballXField, ballYField)))
+        if (!Constants::field.isInArena(cv::Point2f(ballInField.x(), ballInField.y())))
         {
-          out.warning("Ignoring a ball candidate outside of the field at (%f,%f)", ballXField, ballYField);
+          out.warning("Ignoring a ball candidate outside of the field at (%f,%f)", ballInField.x(), ballInField.y());
           continue;
         }
       }
@@ -1294,20 +1298,26 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
   }
 
   // TODO remove it and do something cleaner lates
-  std::vector<Eigen::Vector3d> field_points = { Eigen::Vector3d(0, 0, 0), Eigen::Vector3d(0, 3, 0),
-                                                Eigen::Vector3d(0, -3, 0) };
-  LocalisationService* loc = _scheduler->getServices()->localisation;
-  for (const Eigen::Vector3d& point_in_field : field_points)
+  if (cs->has_camera_field_transform)
   {
-    try
+    std::cout << "Drawing points" << std::endl;
+    std::vector<Eigen::Vector3d> field_points = { Eigen::Vector3d(0, 0, 0), Eigen::Vector3d(0, -2, 0) };
+    //,                                                  Eigen::Vector3d(0, -3, 0) };
+    for (const Eigen::Vector3d& point_in_field : field_points)
     {
-      Eigen::Vector3d point_in_world = loc->fieldToWorld(point_in_field);
-      cv::Point p = cs->imgXYFromWorldPosition(point_in_world);
-      cv::circle(img, p, 10, cv::Scalar(0, 0, 0), 3);
-    }
-    catch (const std::runtime_error& exc)
-    {
-      // tmp code so no treatment
+      try
+      {
+        std::cout << "point_in_field: " << point_in_field.transpose() << std::endl;
+        Eigen::Vector3d point_in_camera = cs->camera_from_field * point_in_field;
+        std::cout << "point_in_camera: " << point_in_camera.transpose() << std::endl;
+        cv::Point2f p = cs->getCameraModel().getImgFromObject(eigen2CV(point_in_camera));
+        std::cout << "point_in_img: " << p << std::endl;
+        cv::circle(img, p, 10, cv::Scalar(0, 0, 0), 3);
+      }
+      catch (const std::runtime_error& exc)
+      {
+        // tmp code so no treatment
+      }
     }
   }
 
@@ -1719,11 +1729,16 @@ void Robocup::ballReset(float x, float y)
   ballStackFilter->reset(x, y);
 }
 
-void Robocup::setLogMode(const std::string path)
+void Robocup::setLogMode(const std::string& path)
 {
   _scheduler->getServices()->model->loadReplays(path);
 
   std::cout << "Loaded replay" << std::endl;
+}
+
+void Robocup::setViveLog(const std::string& path)
+{
+  _scheduler->getServices()->vive->loadLog(path);
 }
 
 void Robocup::startLoggingLowLevel(const std::string& path)

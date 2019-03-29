@@ -173,6 +173,13 @@ public:
   Eigen::Affine3d worldToCamera;
   Eigen::Affine3d cameraToWorld;
 
+  /**
+   * Depending on information source, transform between camera and field basis is not available
+   */
+  bool has_camera_field_transform;
+  Eigen::Affine3d camera_from_field;
+  Eigen::Affine3d field_from_camera;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

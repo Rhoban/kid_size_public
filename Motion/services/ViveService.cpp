@@ -32,6 +32,10 @@ ViveService::ViveService()
     ->comment("Tracker serial number")
     ->persisted(true)
     ->defaultValue("");
+  bind.bindNew("extra_time_offset", extra_time_offset, RhIO::Bind::PullOnly)
+    ->comment("Unit: seconds")
+    ->persisted(true)
+    ->defaultValue(0.0);;
   bind.bindFunc("vive", "View vive status", &ViveService::cmdVive, *this);
 
   bind.pull();
@@ -73,13 +77,29 @@ std::string ViveService::cmdVive()
   return oss.str();
 }
 
+void ViveService::loadLog(const std::string& path)
+{
+  vive_manager.loadMessages(path);
+}
+
+
 Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clock) const
 {
+  std::cout << "Getting FieldToVive at " << time_stamp << std::endl;
   if (!system_clock)
   {
     time_stamp += rhoban_utils::getSteadyClockOffset();
+    std::cout << "TimeStamp corrected to " << time_stamp << " after applying offset" << std::endl;
+    time_stamp += (uint64_t)(extra_time_offset * 1000000);
+    std::cout << "TimeStamp corrected to " << time_stamp << " (extra-time-offset)" << std::endl;
   }
-  GlobalMsg vive_status = vive_manager.getMessage(time_stamp, system_clock);
+
+  std::cout << "ViveManager start (steady):" << vive_manager.getStart() << std::endl;
+  std::cout << "ViveManager end   (steady):" << vive_manager.getLast() << std::endl;
+  std::cout << "ViveManager start (system):" << vive_manager.getStart(true) << std::endl;
+  std::cout << "ViveManager end   (system):" << vive_manager.getLast(true) << std::endl;
+  
+  GlobalMsg vive_status = vive_manager.getMessage(time_stamp, true);
 
   for (const TrackerMsg & tracker : vive_status.trackers())
   {
@@ -89,9 +109,7 @@ Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clo
     }
   }
 
-  return Eigen::Affine3d::Identity();
-  // XXX: This should be catched by the camera state (temporary fix above)
-  // throw std::out_of_range(DEBUG_INFO + " no entry with serial: " + tracker_serial);
+  throw std::out_of_range(DEBUG_INFO + " no entry with serial: " + tracker_serial);
 }
 
 Eigen::Affine3d ViveService::getFieldToCamera(uint64_t time_stamp, bool system_clock) const
