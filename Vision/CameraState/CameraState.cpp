@@ -86,7 +86,9 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, rhoban_vision_proto::P
 }
 
 CameraState::CameraState(MoveScheduler* moveScheduler)
-  : _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>()), has_camera_field_transform(false)
+  : _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+  , has_camera_field_transform(false)
+  , clock_offset(0)
 {
   _moveScheduler = moveScheduler;
   _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
@@ -102,6 +104,7 @@ CameraState::CameraState(const rhoban_vision_proto::IntrinsicParameters& camera_
   : _moveScheduler(nullptr)
   , _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
   , has_camera_field_transform(false)
+  , clock_offset(0)
 {
   importFromProtobuf(camera_parameters);
   importFromProtobuf(cs);
@@ -174,7 +177,7 @@ void CameraState::updateInternalModel(double timeStamp)
     _model = &(_pastReadModel.get());
     _model->setAutoUpdate(false);
     _model->updateDOFPosition();
-    
+
     selfToWorld = _model->selfFrameTransform("origin");
     worldToCamera = _model->getTransform("camera", "origin");
     _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
@@ -190,7 +193,8 @@ void CameraState::updateInternalModel(double timeStamp)
     {
       try
       {
-        camera_from_field = vive->getFieldToCamera((int64)(timeStamp * 1000 * 1000));
+        int64_t system_ts = (int64_t)(timeStamp * 1000 * 1000) + clock_offset;
+        camera_from_field = vive->getFieldToCamera(system_ts, true);
         std::cout << "Vive based update: cameraPosInField: "
                   << (camera_from_field.inverse() * Eigen::Vector3d::Zero()).transpose() << std::endl;
         has_camera_field_transform = true;
@@ -205,7 +209,7 @@ void CameraState::updateInternalModel(double timeStamp)
     else if (decision->isFieldQualityGood)
     {
       std::cout << "Localisation based update" << std::endl;
-      LocalisationService * loc = _moveScheduler->getServices()->localisation;
+      LocalisationService* loc = _moveScheduler->getServices()->localisation;
       camera_from_field = worldToCamera * loc->world_from_field;
       has_camera_field_transform = true;
     }
@@ -399,6 +403,11 @@ Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f& pos, double 
 double CameraState::getTimeStampDouble() const
 {
   return _timeStamp * 1000;
+}
+
+void CameraState::setClockOffset(int64_t new_offset)
+{
+  clock_offset = new_offset;
 }
 
 }  // namespace Utils

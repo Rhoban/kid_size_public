@@ -161,6 +161,11 @@ public:
   /// Return the timestamp in [ms]
   double getTimeStampDouble() const;
 
+  /**
+   * Sets the offset in micro-seconds between
+   */
+  void setClockOffset(int64_t new_offset);
+
   MoveScheduler* _moveScheduler;
   Leph::HumanoidFixedPressureModel _pastReadModel;
   Leph::HumanoidModel* _model;
@@ -179,6 +184,11 @@ public:
   bool has_camera_field_transform;
   Eigen::Affine3d camera_from_field;
   Eigen::Affine3d field_from_camera;
+
+  /**
+   * Offset between steady_clock and system clock for the given camera state
+   */
+  int64_t clock_offset;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
