@@ -142,6 +142,7 @@ void Pipeline::step(Filter::UpdateType updateType)
 
           if (cs != nullptr)
           {
+            cs->setClockOffset(src->getClockOffset());
             cs->updateInternalModel(csTimeStampSeconds);
           }
           break;
@@ -152,6 +153,7 @@ void Pipeline::step(Filter::UpdateType updateType)
             delete (cs);
           }
           setCameraState(src->buildCameraState());
+          cs->setClockOffset(src->getClockOffset());
           break;
       }
     }

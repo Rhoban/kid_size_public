@@ -36,6 +36,11 @@ public:
   {
     throw std::logic_error(DEBUG_INFO + "Not implemented for class " + getClassName());
   }
+
+  /**
+   * Returns the offset in micro-seconds between
+   */
+  virtual int64_t getClockOffset() const;
 };
 }  // namespace Filters
 }  // namespace Vision

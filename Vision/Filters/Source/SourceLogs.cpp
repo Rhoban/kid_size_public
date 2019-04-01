@@ -81,6 +81,11 @@ void SourceLogs::update()
   updateImg();
 }
 
+int64_t SourceLogs::getClockOffset() const
+{
+  return images.getClockOffset();
+}
+
 }  // namespace Filters
 
 }  // namespace Vision

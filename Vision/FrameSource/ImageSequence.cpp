@@ -141,5 +141,11 @@ unsigned long ImageSequence::getTimestamp() const
 {
   return timestamps[frameNo];
 }
+
+int64_t ImageSequence::getClockOffset() const
+{
+  return clock_offset;
+}
+
 }  // namespace Utils
 }  // namespace Vision

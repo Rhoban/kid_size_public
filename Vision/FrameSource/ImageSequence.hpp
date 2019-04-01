@@ -63,6 +63,8 @@ public:
   bool isLast() const;
 
   bool isValid() const;
+
+  int64_t getClockOffset() const;
 };
 }  // namespace Utils
 }  // namespace Vision
