@@ -175,7 +175,7 @@ double LocalisationService::getFieldOrientation()
 {
   Eigen::Vector3d field_dir_in_world(cos(fieldOrientationWorld), sin(fieldOrientationWorld), 0);
   Eigen::Vector3d field_dir_in_self = self_from_world.linear() * field_dir_in_world;
-  return atan2(field_dir_in_self.y(), field_dir_in_self.x());
+  return -atan2(field_dir_in_self.y(), field_dir_in_self.x());
 }
 
 Point LocalisationService::getBallPosWorld()
@@ -710,7 +710,12 @@ void LocalisationService::updateSelfWorldTransforms()
 {
   if (Helpers::isFakeMode())
   {
+    // XXX: Should have a "log mode" ?
+    #ifdef VISION_COMPONENT
     world_from_self = getServices()->model->readModel().get().selfFrameTransform("origin");
+    #else
+    world_from_self = getServices()->model->goalModel().get().selfFrameTransform("origin");
+    #endif
   }
   else
   {
