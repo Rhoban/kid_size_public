@@ -1319,6 +1319,16 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
         // tmp code so no treatment
       }
     }
+    cv::Mat camera_matrix, distortion_coeffs, rvec, tvec;
+    camera_matrix = cs->getCameraModel().getCameraMatrix();
+    distortion_coeffs = cs->getCameraModel().getDistortionCoeffs();
+    affineToCV(cs->camera_from_field, &rvec, &tvec);
+
+    cv::Scalar line_color(0,0,0);
+    double line_thickness = 2.0;//px
+    int nb_segments = 10;
+    Constants::field.tagLines(camera_matrix, distortion_coeffs, rvec, tvec, &img, line_color, line_thickness,
+                              nb_segments);
   }
 
   globalMutex.unlock();
