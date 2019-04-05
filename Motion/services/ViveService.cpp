@@ -96,12 +96,19 @@ Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clo
 
   GlobalMsg vive_status = vive_manager.getMessage(time_stamp, true);
 
+  uint64_t msg_ts = vive_status.time_since_epoch();
+  int64_t elapsed_since_msg = time_stamp - msg_ts;
+
   std::vector<std::string> available_serials;
 
   for (const TrackerMsg& tracker : vive_status.trackers())
   {
     if (tracker.serial_number() == tracker_serial)
     {
+      uint64_t tslt = tracker.time_since_last_tracked();
+      if (tslt > 0) {
+        throw std::runtime_error("Tracking has been lost for " + std::to_string(tslt/1000) + "ms");
+      }
       return vive_provider::getWorldToTracker(tracker);
     }
     available_serials.push_back(tracker.serial_number());

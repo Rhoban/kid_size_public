@@ -203,7 +203,13 @@ void CameraState::updateInternalModel(double timeStamp)
       {
         has_camera_field_transform = false;
         camera_from_field = Eigen::Affine3d::Identity();
-        std::cerr << "Failed to import transform from Vive: " << exc.what() << std::endl;
+        logger.error("Failed to import transform from Vive: %s", exc.what());
+      }
+      catch (const std::runtime_error& exc)
+      {
+        has_camera_field_transform = false;
+        camera_from_field = Eigen::Affine3d::Identity();
+        logger.error("Failed to import transform from Vive: %s", exc.what());
       }
     }
     else if (decision->isFieldQualityGood)
