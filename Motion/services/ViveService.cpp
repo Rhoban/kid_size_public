@@ -142,7 +142,7 @@ std::vector<Eigen::Vector3d> ViveService::getTaggedPositions(uint64_t time_stamp
   std::vector<Eigen::Vector3d> positions;
   for (const Vector3d & pos : vive_status.tagged_positions())
   {
-    vive_provider::getPos(pos);
+    positions.push_back(vive_provider::getPos(pos));
   }
   return positions;
 }
