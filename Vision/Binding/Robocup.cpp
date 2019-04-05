@@ -120,7 +120,6 @@ Robocup::Robocup(MoveScheduler* scheduler)
   initImageHandlers();
   loadFile();
   _doRun = true;
-  _runThread = new std::thread(std::bind(&Robocup::run, this));
   Filter::GPU_ON = gpuOn;
   if (pathToLog != "")
   {
@@ -132,6 +131,7 @@ Robocup::Robocup(MoveScheduler* scheduler)
     setViveLog(viveLogPath);
   }
   scheduler->getServices()->localisation->setRobocup(this);
+  _runThread = new std::thread(std::bind(&Robocup::run, this));
 }
 
 Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)

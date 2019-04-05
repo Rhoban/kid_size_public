@@ -111,7 +111,6 @@ int main(int argc, char** argv)
     std::cout << "Move scheduler initilized." << std::endl;
     // Initialize and start Vision
 #ifdef VISION_COMPONENT
-    usleep(100 * 1000);//When RoboCup ticks before first tick of MoveScheduler, some memory issues might arise
     std::cout << "Initializing Vision" << std::endl;
     visionRobocup = new Vision::Robocup(moveScheduler);
     std::cout << "Vision initialized." << std::endl;

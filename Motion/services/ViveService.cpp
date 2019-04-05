@@ -2,11 +2,14 @@
 
 #include <vive_provider/utils.h>
 #include <rhoban_utils/util.h>
+#include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/timing/time_stamp.h>
 
 #include <sstream>
 
 using namespace vive_provider;
+
+static rhoban_utils::Logger logger("vive_service");
 
 ViveService::ViveService() : vive_manager(getDefaultPort(), -1), bind("vive")
 {
@@ -80,6 +83,7 @@ std::string ViveService::cmdVive()
 void ViveService::loadLog(const std::string& path)
 {
   vive_manager.loadMessages(path);
+  logger.log("Messages loaded from '%s'", path.c_str());
 }
 
 Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clock) const
@@ -111,7 +115,8 @@ Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clo
   }
   oss << "]";
 
-  throw std::out_of_range(DEBUG_INFO + " no entry with serial: " + tracker_serial + " available_serials: " + oss.str());
+  throw std::out_of_range(DEBUG_INFO + " no entry with serial: " + tracker_serial + " available_serials: " + oss.str() +
+                          " at time " + std::to_string(time_stamp));
 }
 
 Eigen::Affine3d ViveService::getFieldToCamera(uint64_t time_stamp, bool system_clock) const
