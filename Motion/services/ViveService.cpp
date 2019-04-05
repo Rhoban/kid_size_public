@@ -129,6 +129,25 @@ Eigen::Affine3d ViveService::getViveToCamera() const
   return Eigen::Affine3d(rotation) * Eigen::Translation3d(-center);
 }
 
+std::vector<Eigen::Vector3d> ViveService::getTaggedPositions(uint64_t time_stamp, bool system_clock) const
+{
+  if (!system_clock)
+  {
+    time_stamp += rhoban_utils::getSteadyClockOffset();
+  }
+  time_stamp += (uint64_t)(extra_time_offset * 1000000);
+
+  GlobalMsg vive_status = vive_manager.getMessage(time_stamp, true);
+
+  std::vector<Eigen::Vector3d> positions;
+  for (const Vector3d & pos : vive_status.tagged_positions())
+  {
+    vive_provider::getPos(pos);
+  }
+  return positions;
+}
+
+
 void ViveService::setPosOffset(const Eigen::Vector3d& pos)
 {
   camera_x = pos.x();

@@ -1300,25 +1300,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
   // TODO remove it and do something cleaner lates
   if (cs->has_camera_field_transform)
   {
-    std::cout << "Drawing points" << std::endl;
-    std::vector<Eigen::Vector3d> field_points = { Eigen::Vector3d(0, 0, 0), Eigen::Vector3d(0, -2, 0) };
-    //,                                                  Eigen::Vector3d(0, -3, 0) };
-    for (const Eigen::Vector3d& point_in_field : field_points)
-    {
-      try
-      {
-        std::cout << "point_in_field: " << point_in_field.transpose() << std::endl;
-        Eigen::Vector3d point_in_camera = cs->camera_from_field * point_in_field;
-        std::cout << "point_in_camera: " << point_in_camera.transpose() << std::endl;
-        cv::Point2f p = cs->getCameraModel().getImgFromObject(eigen2CV(point_in_camera));
-        std::cout << "point_in_img: " << p << std::endl;
-        cv::circle(img, p, 10, cv::Scalar(0, 0, 0), 3);
-      }
-      catch (const std::runtime_error& exc)
-      {
-        // tmp code so no treatment
-      }
-    }
+    // Drawing field_lines
     cv::Mat camera_matrix, distortion_coeffs, rvec, tvec;
     camera_matrix = cs->getCameraModel().getCameraMatrix();
     distortion_coeffs = cs->getCameraModel().getDistortionCoeffs();
@@ -1329,6 +1311,25 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
     int nb_segments = 10;
     Constants::field.tagLines(camera_matrix, distortion_coeffs, rvec, tvec, &img, line_color, line_thickness,
                               nb_segments);
+    // Drawing tagged points
+    ViveService * vive = _scheduler->getServices()->vive;
+    if (vive->isActive())
+    {
+      std::vector<Eigen::Vector3d> field_points = vive->getTaggedPositions(cs->getTimeStampDouble() * 1000 * 1000, false);
+      for (const Eigen::Vector3d& point_in_field : field_points)
+      {
+        try
+        {
+          Eigen::Vector3d point_in_camera = cs->camera_from_field * point_in_field;
+          cv::Point2f p = cs->getCameraModel().getImgFromObject(eigen2CV(point_in_camera));
+          cv::circle(img, p, 10, cv::Scalar(0, 0, 0), 3);
+        }
+        catch (const std::runtime_error& exc)
+        {
+          // Just avoid drawing the point if it is not inside the image
+        }
+      }
+    }
   }
 
   globalMutex.unlock();
