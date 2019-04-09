@@ -56,8 +56,8 @@ if (BUILD_VISION_OPENCL)
     add_definitions(-DENABLE_OPENCL)
 endif ()
 
-#Enable C++11
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+#Enable C++17
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 #Enable real warnings
 set(CMAKE_CXX_FLAGS
