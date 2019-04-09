@@ -24,7 +24,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>hl_communication</build_depend> <!-- medrimonia/hl_communication -->
+  <build_depend>hl_communication</build_depend> <!-- rhoban/hl_communication -->
   <build_depend>RhAL</build_depend> <!-- rhoban/rhal -->
   <build_depend>model</build_depend> <!-- rhoban/model -->
   <build_depend>robocup_referee</build_depend> <!-- rhoban/robocupreferee -->
