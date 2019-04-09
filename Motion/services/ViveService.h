@@ -41,12 +41,19 @@ public:
    */
   Eigen::Affine3d getViveToCamera() const;
 
+  /**
+   * Return the tagged positions in field referential
+   */
+  std::vector<Eigen::Vector3d> getTaggedPositions(uint64_t time_stamp, bool system_clock = false) const;
+
   void setPosOffset(const Eigen::Vector3d& pos);
   void setRoll(double roll);
   void setPitch(double pitch);
   void setYaw(double yaw);
 
   std::string cmdVive();
+
+  void loadLog(const std::string& path);
 
 private:
   /**
@@ -68,4 +75,9 @@ private:
   double camera_yaw;
 
   std::string tracker_serial;
+
+  /**
+   * Time difference in seconds between the clock of the computer recording vive_information and the NUC
+   */
+  double extra_time_offset;
 };

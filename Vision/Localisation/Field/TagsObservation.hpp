@@ -7,6 +7,12 @@ namespace Vision
 {
 namespace Localisation
 {
+
+/**
+ * This observation is not working anymore, in order to be updated, it would require to
+ * store the position of the tags at an appropriate location (unclear where it should be done).
+ * Then, initialization of 'knownTags' in getTagPosInParticleSelf and potential should be updated.
+ */
 class TagsObservation : public SerializableFieldObservation
 {
 public:

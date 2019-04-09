@@ -1,7 +1,5 @@
 #include "CompassObservation.hpp"
 
-#include "Field/Field.hpp"
-
 #include "RhIO.hpp"
 
 #include <rhoban_utils/logging/logger.h>

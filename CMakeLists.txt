@@ -124,7 +124,6 @@ if (BUILD_KID_SIZE_VISION)
     Vision/Application
     Vision/Binding
     Vision/CameraState
-    Vision/Field
     Vision/Filters
     Vision/Filters/Ball
     Vision/Filters/Basics

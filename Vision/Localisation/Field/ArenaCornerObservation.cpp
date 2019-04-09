@@ -1,9 +1,8 @@
 #include "ArenaCornerObservation.hpp"
 #include <math.h>
-#include "robocup_referee/constants.h"
-#include "Field/Field.hpp"
 #include "CameraState/CameraState.hpp"
 #include "Filters/Custom/FieldBorderData.hpp"
+#include <robocup_referee/constants.h>
 #include <vector>
 #include "RhIO.hpp"
 
@@ -25,9 +24,6 @@ namespace Localisation
 double ArenaCornerObservation::maxAngleError = 30;
 double ArenaCornerObservation::sigmoidOffset = 0.6;
 double ArenaCornerObservation::sigmoidLambda = 5;
-
-static double arenaLength = Constants::field.fieldLength + 2 * Constants::field.borderStripWidth;
-static double arenaWidth = Constants::field.fieldWidth + 2 * Constants::field.borderStripWidth;
 
 bool ArenaCornerObservation::debug = false;
 
@@ -70,6 +66,9 @@ ArenaCornerObservation::ArenaCornerObservation(const Vision::Filters::FieldBorde
 
     candidates.clear();
 
+    double arenaLength = Constants::field.getArenaLength();
+    double arenaWidth = Constants::field.getArenaWidth();
+
     FieldPosition br_corner_pos(-arenaLength / 2 + bot_in_corner_frm.x, -arenaWidth / 2 + bot_in_corner_frm.y,
                                 bot_orient.getSignedValue());
     candidates.push_back(br_corner_pos);
@@ -99,6 +98,10 @@ ArenaCornerObservation::ArenaCornerObservation(const Vision::Filters::FieldBorde
     double dist_bot_seg = fabs(dot_bot_seg);
     sign_dot = (dot_bot_seg >= 0) ? 1 : -1;
     seg_dir = rad2deg(atan2(AB.y, AB.x));
+
+    
+    double arenaLength = Constants::field.getArenaLength();
+    double arenaWidth = Constants::field.getArenaWidth();
 
     // On peut faire mieux, les position et les angles sont liés...
     x_candidates.clear();

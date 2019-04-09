@@ -107,7 +107,7 @@ bool StrategyService::tick(double elapsed)
   // auto &info = teamPlay->selfInfo();
   // XXX: Todo share the ball target X
 
-  static std::vector<std::string> approach_candidates = { "approach", "approach_potential" };
+  static std::vector<std::string> approach_candidates = { "approach_potential" };
   static std::vector<std::string> kick_controler_candidates = { "q_kick_controler", "clearing_kick_controler",
                                                                 "penalty_kick_controler" };
 

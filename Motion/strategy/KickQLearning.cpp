@@ -47,8 +47,8 @@ double KickQLearning::rewardFor(State* from, State* state)
   double Y = accuracy * state->y;
   double multiplier = corridorProfile.getWeight(X, Y);
 
-  if (X > (Constants::field.fieldLength - Constants::field.goalAreaLength) &&
-      fabs(Y - Constants::field.fieldWidth / 2) < Constants::field.goalAreaWidth)
+  if (X > (Constants::field.field_length - Constants::field.goal_area_length) &&
+      fabs(Y - Constants::field.field_width / 2) < Constants::field.goal_area_width)
   {
     multiplier = penaltyMultiplier;
   }
@@ -56,21 +56,21 @@ double KickQLearning::rewardFor(State* from, State* state)
   if (enableExcentric)
   {
     bool ok = false;
-    double limitA = Constants::field.fieldLength * 0.5;
-    double yOff = fabs(Y - Constants::field.fieldWidth / 2);
+    double limitA = Constants::field.field_length * 0.5;
+    double yOff = fabs(Y - Constants::field.field_width / 2);
     if (X < limitA)
     {
-      ok = (yOff < Constants::field.goalWidth / 2);
+      ok = (yOff < Constants::field.goal_width / 2);
     }
     else
     {
       /*
       double dX = X - limitA;
-      ok = (yOff < Constants::field.goalWidth/2 - dX*1.5);
+      ok = (yOff < Constants::field.goal_width/2 - dX*1.5);
       */
     }
     /*
-    if (yOff > Constants::field.fieldWidth/2 - 0.25) {
+    if (yOff > Constants::field.field_width/2 - 0.25) {
         ok = true;
     }
     */
@@ -134,7 +134,7 @@ KickStrategy KickQLearning::generate()
         }
 
         double tmpTol = tolerance;
-        if (X < Constants::field.fieldLength / 2)
+        if (X < Constants::field.field_length / 2)
           tmpTol *= 2;
         if (fabs(actionScore - states[x][y].score) < tmpTol)
         {
@@ -187,8 +187,8 @@ KickStrategy KickQLearning::generate()
 
 void KickQLearning::generateStates()
 {
-  xSteps = 1 + Constants::field.fieldLength / (accuracy);
-  ySteps = 1 + Constants::field.fieldWidth / (accuracy);
+  xSteps = 1 + Constants::field.field_length / (accuracy);
+  ySteps = 1 + Constants::field.field_width / (accuracy);
   aSteps = 360 / angleAccuracy;
 
   successState.score = 0;
@@ -275,11 +275,11 @@ void KickQLearning::generateModels()
           }
           else
           {
-            if (kickX > Constants::field.fieldLength)
+            if (kickX > Constants::field.field_length)
             {
               double dY = (kickY - Y) / (kickX - X);
-              double yIntersect = Y + (Constants::field.fieldLength - X) * dY;
-              yIntersect -= Constants::field.fieldWidth / 2;
+              double yIntersect = Y + (Constants::field.field_length - X) * dY;
+              yIntersect -= Constants::field.field_width / 2;
 
               // Goal
               if (fabs(yIntersect) < goalieWidth / 2.0)
@@ -287,13 +287,13 @@ void KickQLearning::generateModels()
                 double goalProbability = 0.25;
 
                 auto goalFeet =
-                    stateFor(Constants::field.fieldLength - 0.1, Constants::field.fieldWidth / 2 + yIntersect);
+                    stateFor(Constants::field.field_length - 0.1, Constants::field.field_width / 2 + yIntersect);
 
                 count[goalFeet] += p * goalProbability;
 
                 count[&successState] += p * (1 - goalProbability);
               }
-              else if (fabs(yIntersect) < (Constants::field.goalWidth * 0.95) / 2)
+              else if (fabs(yIntersect) < (Constants::field.goal_width * 0.95) / 2)
               {
                 count[&successState] += p;
               }

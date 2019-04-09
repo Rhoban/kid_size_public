@@ -1,11 +1,12 @@
 #include "TagsObservation.hpp"
 
-#include "Field/Field.hpp"
 #include "Utils/Interface.h"
 
 #include "RhIO.hpp"
 
 #include "rhoban_utils/logging/logger.h"
+
+#include <robocup_referee/constants.h>
 #include <string>
 #include <sstream>
 #include <cmath>
@@ -14,6 +15,7 @@ static rhoban_utils::Logger out("TagsObservation");
 
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
+using namespace robocup_referee;
 
 namespace Vision
 {
@@ -35,7 +37,7 @@ TagsObservation::TagsObservation(const int& id_, const cv::Point3f& seenPos_, co
 
 cv::Point3f TagsObservation::getTagPosInParticleSelf(int tagId, const FieldPosition& p) const
 {
-  const std::map<int, cv::Point3f>& knowntags = Field::Field::getTags();
+  std::map<int, cv::Point3f> knowntags;
   if (knowntags.find(id) == knowntags.end())
   {
     throw std::logic_error("Unknown tag: " + std::to_string(tagId));
@@ -61,7 +63,7 @@ cv::Point3f TagsObservation::getSeenVec(const cv::Point3f& posInSelf) const
 
 double TagsObservation::potential(const FieldPosition& p) const
 {
-  const std::map<int, cv::Point3f>& knowntags = Field::Field::getTags();
+  std::map<int, cv::Point3f> knowntags;
 
   if (knowntags.find(id) == knowntags.end())
   {

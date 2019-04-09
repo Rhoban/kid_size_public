@@ -25,36 +25,28 @@ public:
   rhoban_geometry::Point getBallPosField();
   rhoban_geometry::Point getBallSpeedSelf();
   rhoban_geometry::Point getPredictedBallSelf();
+  /**
+   * Returns the predicted ball position in self referential at time 't', using linear interpolation
+   */
   rhoban_geometry::Point getPredictedBallSelf(rhoban_utils::TimeStamp t);
-  rhoban_geometry::Point getLookBallPosWorld();
   Eigen::Vector3d ballPosWorld;
-  Eigen::Vector3d ballLookPosWorld;
   float ballQ;
   rhoban_geometry::Point ballSpeed;  // In world referential
   rhoban_utils::TimeStamp ballTS;
 
   // Goal
-  rhoban_geometry::Point getGoalPosWorld();
-  rhoban_geometry::Point getGoalPosSelf();
   rhoban_geometry::Point getGoalPosField();
   rhoban_geometry::Point getOurGoalPosField();
-  rhoban_geometry::Point getLeftGoalPosSelf();
-  rhoban_geometry::Point getRightGoalPosSelf();
+  /**
+   * Returns the position of the field in self referential
+   */
   rhoban_geometry::Point getFieldPos();
   double getFieldOrientation();  // Return value in [rad]
-  Eigen::Vector3d goalLeftPosWorld;
-  Eigen::Vector3d goalRightPosWorld;
   Eigen::Vector3d fieldCenterWorld;
   rhoban_utils::Angle getOurBallToGoalDirSelf();
 
   float fieldQ, fieldConsistency;
   bool consistencyEnabled;
-  double getGoalCap();
-  double getLeftGoalCap();
-  double getRightGoalCap();
-  double getPenaltyLeftGoalCap();
-  double getPenaltyRightGoalCap();
-  rhoban_geometry::Point getGoalPos();
 
   // Opponent
   std::vector<rhoban_geometry::Point> getOpponentsField();
@@ -91,19 +83,23 @@ public:
   std::map<int, std::vector<Eigen::Vector2d>> sharedOpponentsField;
 
   // Tell the localisation service we see the ball
-  void setBallWorld(const Eigen::Vector3d& pos, const Eigen::Vector3d& lookPos, float quality,
-                    const rhoban_geometry::Point& speed, const rhoban_utils::TimeStamp& ts);
+  void setBallWorld(const Eigen::Vector3d& pos, float quality, const rhoban_geometry::Point& speed,
+                    const rhoban_utils::TimeStamp& ts);
   void updateBallPos();
   void setNoBall();
 
-  // Tell the localisation service we know where the goals are
-  void setPosSelf(const Eigen::Vector3d& left, const Eigen::Vector3d& right, const Eigen::Vector3d& center,
-                  float orientation, float quality, float consistency, bool consistencyEnabled = false);
-  void updatePosSelf();
+  /**
+   * Updates the location of the field in the world referential based on information in self referential
+   * - center: position of center in self basis [m]
+   * - orientation: orientation of the robot on the field [rad]
+   */
+  void setPosSelf(const Eigen::Vector3d& center, float orientation, float quality, float consistency,
+                  bool consistencyEnabled = false);
 
-  // Goal Scanner target
-  float goalTargetPan;
-  float goalTargetTilt;
+  /**
+   * Updates transforms between field and world basis and then updates variables monitored by RhIO
+   */
+  void updatePosSelf();
 
   /// x,y -> [m]
   void applyKick(float x, float y);
@@ -136,16 +132,14 @@ public:
   void setVisualCompassStatus(bool inUse);
   bool getVisualCompassStatus() const;
 
-  rhoban_geometry::Point worldToField(Eigen::Vector3d world);
+  /**
+   * Convert given position from world refential to field referential (not thread safe)
+   */
+  rhoban_geometry::Point worldToField(const Eigen::Vector3d& pos_in_world);
+  Eigen::Vector3d fieldToWorld(const Eigen::Vector3d& pos_in_field);
 
   void enableFieldFilter(bool enable = true);
   void isGoalKeeper(bool status = false);
-
-#ifdef VISION_COMPONENT
-  void stealTags(std::vector<int>& indices, std::vector<Eigen::Vector3d>& positions,
-                 std::vector<std::pair<float, float>>& centers,
-                 std::vector<std::pair<float, float>>& centersUndistorded, double* timestamp);
-#endif
 
 #ifdef VISION_COMPONENT
   void setRobocup(Vision::Robocup* robocup);
@@ -164,8 +158,16 @@ protected:
   float ballPredictedX, ballPredictedY;
 
   // For RhIO
-  float goalPosX, goalPosY, goalCap, goalLeftCap, goalRightCap;
-  float fieldPosX, fieldPosY, fieldOrientation, fieldOrientationWorld;
+  float fieldPosX, fieldPosY;
+
+  /**
+   * The orientation of the robot in field referential [deg]
+   */
+  float fieldOrientation;
+  /**
+   * The field orienta
+   */
+  float fieldOrientationWorld;
   std::string opponents;
   std::string mates;
   std::string sharedOpponents;
@@ -182,18 +184,48 @@ protected:
   Vision::LocalisationBinding* locBinding;
 #endif
 
+  /**
+   * Update the basis transforms between field and world based on the following internal information.
+   * - fieldCenterWorld
+   * - fieldOrientationWorld
+   */
+  void updateFieldWorldTransforms();
+
+  /**
+   * Update the basis transforms between self and world based on ModelService
+   * - If fake mode is enabled, uses goalModel
+   * - If fake mode is disabled, uses correctedModel
+   */
+  void updateSelfWorldTransforms();
+
+  /**
+   * Return the direction of the trunk in world referential
+   */
+  rhoban_utils::Angle getSelfOrientationInWorld();
+
 private:
   bool simulateWalk;
 
   /// Is the visual compass currently enabled in Localisation?
   bool visualCompassActivated;
 
+  // Conversions between self, field and world referentials
+
+public:
+  Eigen::Affine3d field_from_world;
+  Eigen::Affine3d world_from_field;
+  Eigen::Affine3d self_from_world;
+  Eigen::Affine3d world_from_self;
+
   /**
    * RhIO command to set the ball /goal position in fake mode
    */
   std::string cmdFakeBall(double x, double y);
   std::string cmdFakeOpponents(std::vector<std::string> args);
-  std::string cmdFakeLoc(double leftX, double leftY, double rightX, double rightY, double fieldX, double fieldY);
+  std::string cmdFakeLoc(double fieldX, double fieldY, double orientation);
   std::string cmdResetPosition();
   std::string cmdMoveOnField(double x, double y, double yaw);
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

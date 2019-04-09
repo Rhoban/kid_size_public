@@ -53,6 +53,8 @@ protected:
 
   void openImageSequence();
 
+  int64_t getClockOffset() const override;
+
 private:
   int startIndex;
   std::string imagesFile;

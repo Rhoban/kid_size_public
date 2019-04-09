@@ -2,11 +2,12 @@
 
 #include "FieldPF.hpp"
 
-#include "Field/Field.hpp"
-
 #include "rhoban_utils/logging/logger.h"
 
+#include <hl_monitoring/top_view_drawer.h>
 #include <robocup_referee/constants.h>
+
+#include <opencv2/imgproc.hpp>
 #include <vector>
 #include <map>
 #include <sstream>
@@ -19,6 +20,7 @@ using namespace rhoban_geometry;
 using namespace rhoban_utils;
 using namespace rhoban_unsorted;
 using namespace robocup_referee;
+using namespace hl_monitoring;
 
 namespace Vision
 {
@@ -35,22 +37,6 @@ std::map<FieldPF::ResetType, std::string> FieldPF::resetNames = { { ResetType::N
 FieldPF::FieldPF()
   : ParticleFilter(), resetType(ResetType::None), errorTols({ 8 }), resamplingRatio(0.0), tolDist(1), tolDiffAngle(15)
 {
-  std::vector<int> goalsToTrack = { 1 };
-  std::vector<int> postsToTrack = { -1, 0, 1 };
-  for (int goal : goalsToTrack)
-  {
-    for (int post : postsToTrack)
-    {
-      GoalKey gk(goal, post);
-      trackedGoals.push_back(gk);
-      goalDirections[gk] = Angle(0);
-      for (int errorTol : errorTols)
-      {
-        QualityKey qk(goal, post, errorTol);
-        goalQualities[qk] = 0;
-      }
-    }
-  }
   RhIO::Root.newChild("/localisation/field/fieldPF");
   rhioNode = &(RhIO::Root.child("/localisation/field/fieldPF"));
   rhioNode->newFloat("resamplingRatio")
@@ -58,10 +44,6 @@ FieldPF::FieldPF()
       ->minimum(0)
       ->maximum(1)
       ->comment("Ratio of particles resampled");
-  rhioNode->newFloat("goalDir")->defaultValue(0);
-  rhioNode->newFloat("goalDirQ")->defaultValue(0)->minimum(0)->maximum(1);
-  rhioNode->newFloat("leftGoalDir")->defaultValue(0);
-  rhioNode->newFloat("rightGoalDir")->defaultValue(0);
   rhioNode->newFloat("posX")->defaultValue(0);
   rhioNode->newFloat("posY")->defaultValue(0);
   rhioNode->newFloat("azimuth")->defaultValue(0);
@@ -90,13 +72,13 @@ FieldPF::FieldPF()
       ->comment("Orientation noise applied at border reset in [-x,x] [deg]");
   rhioNode->newFloat("customX")
       ->defaultValue(0)
-      ->minimum(-Constants::field.fieldLength / 2)
-      ->maximum(Constants::field.fieldLength / 2)
+      ->minimum(-Constants::field.field_length / 2)
+      ->maximum(Constants::field.field_length / 2)
       ->comment("X-Position used for customReset [m]");
   rhioNode->newFloat("customY")
       ->defaultValue(0)
-      ->minimum(-Constants::field.fieldWidth / 2)
-      ->maximum(Constants::field.fieldWidth / 2)
+      ->minimum(-Constants::field.field_width / 2)
+      ->maximum(Constants::field.field_width / 2)
       ->comment("Y-position used for customReset [m]");
   rhioNode->newFloat("customTheta")
       ->defaultValue(0)
@@ -113,59 +95,6 @@ FieldPF::FieldPF()
       ->minimum(0)
       ->maximum(4)
       ->comment("Uniform noise used for custom reset [m]");
-}
-
-void FieldPF::updateToGoalQuality()
-{
-  // Initializing data for average computation
-  std::map<GoalKey, std::vector<Angle>> viewedAngles;
-  for (const auto& goalPost : trackedGoals)
-  {
-    viewedAngles[goalPost] = {};
-  }
-  // Calculating differences
-  for (const auto& p : particles)
-  {
-    Point tmp = p.first.getRobotPosition();
-    for (const auto& gk : trackedGoals)
-    {
-      cv::Point dst = Field::Field::getGoal(gk.first, gk.second);
-      cv::Point2f pos(tmp.getX(), tmp.getY());
-      // Angle in robot referential = aToGoal - robotAngle
-      Angle aToGoal = Angle::fromXY(dst.x - pos.x, dst.y - pos.y);
-      Angle viewedAngle = aToGoal - p.first.getOrientation();
-      viewedAngles[gk].push_back(viewedAngle);
-    }
-  }
-  // Calculating average and qualities
-  for (const auto& gk : trackedGoals)
-  {
-    Angle average = Angle::mean(viewedAngles[gk]);
-    std::map<int, int> goodParticulesByTol;
-    for (int errorTol : errorTols)
-    {
-      goodParticulesByTol[errorTol] = 0;
-    }
-    // Counting particules around average
-    for (const auto& viewedAngle : viewedAngles[gk])
-    {
-      double aDiff = fabs((average - viewedAngle).getSignedValue());
-      for (int errorTol : errorTols)
-      {
-        if (aDiff < errorTol)
-        {
-          goodParticulesByTol[errorTol]++;
-        }
-      }
-    }
-    // Apply calculated values
-    for (int errorTol : errorTols)
-    {
-      QualityKey qk(gk.first, gk.second, errorTol);
-      goalQualities[qk] = (float)goodParticulesByTol[errorTol] / (float)particles.size();
-    }
-    goalDirections[gk] = average;
-  }
 }
 
 void FieldPF::askForReset(ResetType t)
@@ -229,8 +158,8 @@ void FieldPF::applyReset(ResetType t)
   std::string reset_name = resetNames.at(t);
   logger.log("Applying a reset of type: '%s'", reset_name.c_str());
 
-  double mins[3] = { -Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0 };
-  double maxs[3] = { Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360 };
+  double mins[3] = { -Constants::field.field_length / 2, -Constants::field.field_width / 2, 0 };
+  double maxs[3] = { Constants::field.field_length / 2, Constants::field.field_width / 2, 360 };
 
   switch (t)
   {
@@ -282,8 +211,8 @@ void FieldPF::step(Controller<FieldPosition>& ctrl, const std::vector<Observatio
 
   if (stepReset == ResetType::None)
   {
-    double mins[3] = { -Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0 };
-    double maxs[3] = { Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360 };
+    double mins[3] = { -Constants::field.field_length / 2, -Constants::field.field_width / 2, 0 };
+    double maxs[3] = { Constants::field.field_length / 2, Constants::field.field_width / 2, 360 };
     // If no reset is planned, apply observations, resampling if required and return
     ParticleFilter::step(ctrl, observations, elapsedTime);
     partialUniformResampling(resamplingRatio, mins, maxs);
@@ -306,7 +235,7 @@ void FieldPF::resetOnLines(int side)
 {
   auto generator = rhoban_random::getRandomEngine();
   // According to rules, robot start in its own half
-  double xOffset = Constants::field.penaltyMarkDist - Constants::field.fieldLength / 2;
+  double xOffset = Constants::field.penalty_mark_dist - Constants::field.field_length / 2;
   std::uniform_real_distribution<double> xDistribution(-borderNoise, borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta, borderNoiseTheta);
   std::uniform_int_distribution<int> sideDistribution(0, 1);
@@ -328,7 +257,7 @@ void FieldPF::resetOnLines(int side)
     {
       currSide = sideDistribution(engine) == 0 ? 1 : -1;
     }
-    double y = currSide * Constants::field.fieldWidth / 2;
+    double y = currSide * Constants::field.field_width / 2;
     double dirNoise = dirNoiseDistribution(generator);
     double dir = -currSide * 90;
     p.first = FieldPosition(x, y, Angle(dir + dirNoise).getSignedValue());
@@ -364,17 +293,34 @@ void FieldPF::customReset()
              customX, customY, customTheta, customNoise, customThetaNoise);
 }
 
+static void tag(cv::Mat& img, const FieldPosition & p, const TopViewDrawer & drawer,
+                const cv::Scalar& color = cv::Scalar(255, 0, 255), int thickness = 1)
+{
+  cv::Point2f pos_field = p.getRobotPositionCV();
+  Angle orientation = p.getOrientation();
+  double vec_length = 0.2;//[m]
+  cv::Point2f delta(cos(orientation) * vec_length, sin(orientation) * vec_length);
+  double radius = 3;
+  cv::Point2f end_field = pos_field + delta;
+
+  cv::Point pos_img = drawer.getImgFromField(Constants::field, pos_field);
+  cv::Point end_img = drawer.getImgFromField(Constants::field, end_field);
+
+  cv::circle(img, pos_img, radius, color, thickness);
+  cv::line(img, pos_img, end_img, color, thickness);
+}
+
 void FieldPF::draw(cv::Mat& img) const
 {
-  std::cout << "Drawing field" << std::endl;
-  Field::Field::drawField(img);
-  std::cout << "Drawing particles" << std::endl;
+  TopViewDrawer drawer(cv::Size(img.cols, img.rows));
+  
+  img = drawer.getImg(Constants::field);
   for (unsigned int i = 0; i < nbParticles(); i++)
   {
-    getParticle(i).tag(img, 0.0, cv::Scalar(getParticleQ(i) * 255, 0, 0));
+    const FieldPosition& p = getParticle(i);
+    tag(img, p, drawer, cv::Scalar(255, 0, 0));
   }
-  std::cout << "Drawing representative particles" << std::endl;
-  representativeParticle.tag(img, 0.0, cv::Scalar(0, 0, 255), 3);
+  tag(img, representativeParticle, drawer, cv::Scalar(0, 0, 255), 3);
 }
 
 void FieldPF::updateRepresentativeQuality()
@@ -421,47 +367,6 @@ void FieldPF::updateRepresentativeParticle()
 void FieldPF::updateInternalValues()
 {
   ParticleFilter::updateInternalValues();
-  updateToGoalQuality();
-}
-
-Angle FieldPF::getAngleToGoal(const GoalKey& gk) const
-{
-  try
-  {
-    return goalDirections.at(gk);
-  }
-  catch (const std::out_of_range& exc)
-  {
-    ostringstream oss;
-    oss << "Error while getting Angle to goal, goalKey not found: "
-        << "goal: " << gk.first << ", post: " << gk.second << std::endl;
-    throw std::runtime_error(oss.str());
-  }
-}
-
-double FieldPF::angleToGoalQuality(const QualityKey& qk) const
-{
-  try
-  {
-    return goalQualities.at(qk);
-  }
-  catch (const std::out_of_range& exc)
-  {
-    ostringstream oss;
-    oss << "Error while getting Angle to goal Quality, qualityKey not found: "
-        << "goal: " << std::get<0>(qk) << ", post: " << std::get<1>(qk) << ", errTol: " << std::get<2>(qk) << std::endl;
-    throw std::runtime_error(oss.str());
-  }
-}
-
-Angle FieldPF::getAngleToGoal()
-{
-  return getAngleToGoal(GoalKey(1, 0));
-}
-
-double FieldPF::angleToGoalQuality()
-{
-  return angleToGoalQuality(QualityKey(1, 0, 8));
 }
 
 double FieldPF::getQuality()
@@ -479,18 +384,6 @@ cv::Point2d FieldPF::getCenterPosition()
   return cv::Point2d(-representativeParticle.x(), -representativeParticle.y());
 }
 
-cv::Point2d FieldPF::getLeftGoalPosition()
-{
-  cv::Point2d g(Field::Field::getAdvGoal(1).x, Field::Field::getAdvGoal(1).y);
-  return g - getRobotPosition();
-}
-
-cv::Point2d FieldPF::getRightGoalPosition()
-{
-  cv::Point2d g(Field::Field::getAdvGoal(-1).x, Field::Field::getAdvGoal(-1).y);
-  return g - getRobotPosition();
-}
-
 cv::Point2d FieldPF::getCenterPositionInSelf()
 {
   cv::Point2d p = getCenterPosition();
@@ -498,27 +391,6 @@ cv::Point2d FieldPF::getCenterPositionInSelf()
   cv::Point2d res;
   res.x = p.x * cos(o) + p.y * sin(o);
   res.y = -p.x * sin(o) + p.y * cos(o);
-  return res;
-}
-
-cv::Point2d FieldPF::getLeftGoalPositionInSelf()
-{
-  cv::Point2d p = getLeftGoalPosition();
-  Angle o = representativeParticle.getOrientation();
-  cv::Point2d res;
-  res.x = p.x * cos(o) + p.y * sin(o);
-  res.y = -p.x * sin(o) + p.y * cos(o);
-
-  return res;
-}
-cv::Point2d FieldPF::getRightGoalPositionInSelf()
-{
-  cv::Point2d p = getRightGoalPosition();
-  Angle o = representativeParticle.getOrientation();
-  cv::Point2d res;
-  res.x = p.x * cos(o) + p.y * sin(o);
-  res.y = -p.x * sin(o) + p.y * cos(o);
-
   return res;
 }
 
@@ -551,10 +423,6 @@ void FieldPF::importFromRhIO()
 
 void FieldPF::publishToRhIO()
 {
-  rhioNode->setFloat("goalDir", getAngleToGoal().getSignedValue());
-  rhioNode->setFloat("goalDirQ", angleToGoalQuality());
-  rhioNode->setFloat("leftGoalDir", getAngleToGoal(GoalKey(1, 1)).getSignedValue());
-  rhioNode->setFloat("rightGoalDir", getAngleToGoal(GoalKey(1, -1)).getSignedValue());
   rhioNode->setFloat("posX", representativeParticle.x());
   rhioNode->setFloat("posY", representativeParticle.y());
   rhioNode->setFloat("azimuth", representativeParticle.getOrientation().getSignedValue());
@@ -576,8 +444,8 @@ std::string FieldPF::getName(ResetType t)
 
 void FieldPF::initializeAtUniformRandom(unsigned int particlesNb)
 {
-  double mins[3] = { -Constants::field.fieldLength / 2, -Constants::field.fieldWidth / 2, 0 };
-  double maxs[3] = { Constants::field.fieldLength / 2, Constants::field.fieldWidth / 2, 360 };
+  double mins[3] = { -Constants::field.field_length / 2, -Constants::field.field_width / 2, 0 };
+  double maxs[3] = { Constants::field.field_length / 2, Constants::field.field_width / 2, 360 };
   ParticleFilter::initializeAtUniformRandom(mins, maxs, particlesNb);
 }
 

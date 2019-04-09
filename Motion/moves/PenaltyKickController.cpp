@@ -39,11 +39,11 @@ void PenaltyKickController::step(float elapsed)
   // We kick either at 1/5 of the goal on the left or the right (much noise on kick dir)
   if (left)
   {
-    target = Point(Constants::field.fieldLength / 2, Constants::field.goalWidth / 5);
+    target = Point(Constants::field.field_length / 2, Constants::field.goal_width / 5);
   }
   else
   {
-    target = Point(Constants::field.fieldLength / 2, -Constants::field.goalWidth / 5);
+    target = Point(Constants::field.field_length / 2, -Constants::field.goal_width / 5);
   }
 
   // Kicking with a powerful kick only to the target, 15° tolerance

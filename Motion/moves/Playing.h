@@ -6,7 +6,6 @@
 
 class Walk;
 class Head;
-class Approach;
 class Placer;
 class PlayingMove : public STM
 {
@@ -42,6 +41,5 @@ protected:
 
   Walk* walk;
   Head* head;
-  Approach* approach;
   Placer* placer;
 };

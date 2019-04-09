@@ -1,6 +1,5 @@
 #include "Localisation/Field/FieldObservationSet.hpp"
 
-#include "Localisation/Field/ArenaBorderObservation.hpp"
 #include "Localisation/Field/ArenaCornerObservation.hpp"
 #include "Localisation/Field/GoalObservation.hpp"
 
@@ -59,10 +58,6 @@ void FieldObservationSet::treatObservationNode(const Json::Value& v, const std::
   if (className == "GoalObservation")
   {
     obs = new GoalObservation();
-  }
-  else if (className == "ArenaBorderObservation")
-  {
-    obs = new ArenaBorderObservation();
   }
   else if (className == "ArenaCornerObservation")
   {

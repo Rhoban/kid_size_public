@@ -1,4 +1,3 @@
-#include "moves/Approach.h"
 #include "moves/Moves.h"
 
 #include "Walk.h"
@@ -14,9 +13,6 @@
 #include "Search.h"
 #include "TestHeadSinus.hpp"
 #include "TrajectoriesPlayer.hpp"
-#ifdef VISION_COMPONENT
-#include "ArucoCalibration.h"
-#endif
 #include "GoalKeeper.h"
 #include "Placer.h"
 #include "ApproachPotential.h"
@@ -62,8 +58,6 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(standup);
   add(head);
   add(new Search(walk, placer));
-  Approach* approach = new Approach(walk, head);
-  add(approach);
   add(new ApproachPotential(walk));
   add(placer);
   // add(lateralStep);
@@ -73,9 +67,6 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new PlayingMove(walk));
 
   // Dev moves
-#ifdef VISION_COMPONENT
-  add(new ArucoCalibration);
-#endif
   add(new TrajectoriesPlayer);
   add(new IMUTest);
   add(new TestHeadSinus);

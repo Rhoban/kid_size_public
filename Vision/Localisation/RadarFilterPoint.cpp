@@ -12,7 +12,7 @@ namespace Vision
 namespace Localisation
 {
 RadarFilterPoint::RadarFilterPoint(CameraState* cameraState)
-  : RadarFilter(), cameraState(cameraState), matchDistance(0.4), far(2), matchAngle(2), alignedAngle(60)
+  : RadarFilter(), cameraState(cameraState), matchDistance(0.4), matchAngle(2), alignedAngle(60), far(2)
 {
 }
 

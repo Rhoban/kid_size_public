@@ -14,6 +14,8 @@
 
 #include "RhIO.hpp"
 
+#include <Eigen/Geometry>
+
 #ifdef VISION_COMPONENT
 #include <Binding/Robocup.hpp>
 #include <Binding/LocalisationBinding.hpp>
@@ -28,7 +30,6 @@ using namespace rhoban_utils;
 using namespace robocup_referee;
 
 #ifdef VISION_COMPONENT
-using namespace Vision::Field;
 using Vision::Localisation::FieldPF;
 #endif
 
@@ -48,24 +49,14 @@ LocalisationService::LocalisationService()
   ballQ = 0;
   ballSpeed = Point(0, 0);
   ballTS = rhoban_utils::TimeStamp::now();
-  // Goal
-  goalPosX = ballPosY = 0;
-  goalCap = 0;
-  fieldQ = 0;
-  fieldConsistency = 0;
-  goalLeftCap = 0;
-  goalRightCap = 0;
-  goalLeftPosWorld = Eigen::Vector3d(4.5, 0.9, 0.0);
-  goalRightPosWorld = Eigen::Vector3d(4.5, -0.9, 0.0);
-  // Goal scanner
-  goalTargetPan = 0;
-  goalTargetTilt = 0;
   // Field
   fieldPosX = 0;
   fieldPosY = 0;
   fieldOrientation = 0;
   fieldOrientationWorld = 0;
   fieldCenterWorld = Eigen::Vector3d(0, 0, 0);
+  fieldQ = 0;
+  fieldConsistency = 0;
   // Visual compass
   visualCompassActivated = false;
 
@@ -98,10 +89,6 @@ LocalisationService::LocalisationService()
 
   bind.bindNew("worldBallX", ballPosWorld.x(), RhIO::Bind::PushOnly);
   bind.bindNew("worldBallY", ballPosWorld.y(), RhIO::Bind::PushOnly);
-  bind.bindNew("worldLeftGoalX", goalLeftPosWorld.x(), RhIO::Bind::PushOnly);
-  bind.bindNew("worldLeftGoalY", goalLeftPosWorld.y(), RhIO::Bind::PushOnly);
-  bind.bindNew("worldRightGoalX", goalRightPosWorld.x(), RhIO::Bind::PushOnly);
-  bind.bindNew("worldRightGoalY", goalRightPosWorld.y(), RhIO::Bind::PushOnly);
   bind.bindNew("worldFieldX", fieldCenterWorld.x(), RhIO::Bind::PushOnly);
   bind.bindNew("worldFieldY", fieldCenterWorld.y(), RhIO::Bind::PushOnly);
 
@@ -109,16 +96,11 @@ LocalisationService::LocalisationService()
 
   bind.bindNew("fieldQ", fieldQ, RhIO::Bind::PushOnly)->comment("Field quality");
   bind.bindNew("fieldConsistency", fieldConsistency, RhIO::Bind::PushOnly)->comment("Field consistency");
-  bind.bindNew("goalX", goalPosX, RhIO::Bind::PushOnly)->comment("Goal X");
-  bind.bindNew("goalY", goalPosY, RhIO::Bind::PushOnly)->comment("Goal Y");
-  bind.bindNew("goalCap", goalCap, RhIO::Bind::PushOnly)->comment("Goal cap");
-  bind.bindNew("goalLeftCap", goalLeftCap, RhIO::Bind::PushOnly)->comment("Goal cap");
-  bind.bindNew("goalRightCap", goalRightCap, RhIO::Bind::PushOnly)->comment("Goal cap");
 
   bind.bindNew("fieldX", fieldPosX, RhIO::Bind::PushOnly)->comment("Field X");
   bind.bindNew("fieldY", fieldPosY, RhIO::Bind::PushOnly)->comment("Field Y");
   bind.bindNew("fieldOrientationWorld", fieldOrientationWorld, RhIO::Bind::PushOnly)
-      ->comment("Field orientation")
+      ->comment("Field orientation [rad]")
       ->defaultValue(0);
   bind.bindNew("fieldOrientation", fieldOrientation, RhIO::Bind::PushOnly)
       ->comment("Robot orientation in the field referential [deg]")
@@ -127,56 +109,13 @@ LocalisationService::LocalisationService()
   bind.bindNew("block", block, RhIO::Bind::PullOnly)->comment("Block")->defaultValue(false);
 }
 
-Point LocalisationService::getLookBallPosWorld()
-{
-  mutex.lock();
-  auto p = ballLookPosWorld;
-  mutex.unlock();
-
-  return Point(p.x(), p.y());
-}
-
-double LocalisationService::getPenaltyRightGoalCap()
-{
-  mutex.lock();
-  Eigen::Vector3d p;
-  p = 0.75 * getServices()->model->correctedModel().get().frameInSelf("origin", goalLeftPosWorld) +
-      0.25 * getServices()->model->correctedModel().get().frameInSelf("origin", goalRightPosWorld);
-  mutex.unlock();
-
-  return rad2deg(atan2(p.y(), p.x()));
-}
-
-double LocalisationService::getPenaltyLeftGoalCap()
-{
-  mutex.lock();
-  Eigen::Vector3d p;
-  p = 0.25 * getServices()->model->correctedModel().get().frameInSelf("origin", goalLeftPosWorld) +
-      0.75 * getServices()->model->correctedModel().get().frameInSelf("origin", goalRightPosWorld);
-  mutex.unlock();
-
-  return rad2deg(atan2(p.y(), p.x()));
-}
-
 Point LocalisationService::getBallSpeedSelf()
 {
   mutex.lock();
-  Leph::HumanoidModel* model = NULL;
-  if (Helpers::isFakeMode())
-  {
-    model = &(getServices()->model->goalModel().get());
-  }
-  else
-  {
-    model = &(getServices()->model->correctedModel().get());
-  }
-  // Getting 'origin' and 'origin+speedWorld' in self
-  Eigen::Vector3d speedVec(ballSpeed.x, ballSpeed.y, 0);
-  Eigen::Vector3d start = model->frameInSelf("origin");
-  Eigen::Vector3d end = model->frameInSelf("origin", speedVec);
+  Eigen::Vector3d speed_world(ballSpeed.x, ballSpeed.y, 0);
   mutex.unlock();
-  Eigen::Vector3d speed = end - start;
-  return Point(speed(0), speed(1));
+  Eigen::Vector3d speed_self = self_from_world.linear() * speed_world;
+  return Point(speed_self.x(), speed_self.y());
 }
 
 Point LocalisationService::getPredictedBallSelf()
@@ -186,91 +125,39 @@ Point LocalisationService::getPredictedBallSelf()
 
 Point LocalisationService::getPredictedBallSelf(rhoban_utils::TimeStamp t)
 {
+  // Extracting consistent information
   mutex.lock();
-
   double elapsed = diffSec(ballTS, t);
-  Leph::HumanoidModel* model = NULL;
-  if (Helpers::isFakeMode())
-  {
-    model = &(getServices()->model->goalModel().get());
-  }
-  else
-  {
-    model = &(getServices()->model->correctedModel().get());
-  }
-  // Predicting position in world and then transforming into self
-  Eigen::Vector3d speedVec(ballSpeed.x, ballSpeed.y, 0);
-  Eigen::Vector3d predictedInWorld = ballPosWorld + speedVec * elapsed;
-  Eigen::Vector3d predictedInSelf = model->frameInSelf("origin", predictedInWorld);
+  Eigen::Vector3d ball_world = ballPosWorld;
+  Eigen::Vector3d ball_speed_world(ballSpeed.x, ballSpeed.y, 0);
   mutex.unlock();
-  return Point(predictedInSelf(0), predictedInSelf(1));
+  // Predicting position in world and then transforming into self
+  Eigen::Vector3d predicted_in_world = ball_world + ball_speed_world * elapsed;
+  Eigen::Vector3d predicted_in_self = self_from_world * predicted_in_world;
+  return Point(predicted_in_self.x(), predicted_in_self.y());
 }
 
 Point LocalisationService::getBallPosSelf()
 {
   mutex.lock();
-  Eigen::Vector3d left, right;
-  Angle left_yaw, right_yaw;
-
-  // Getting left and right feet position and yaw in the world frame
-  Leph::HumanoidModel* model = NULL;
-  if (Helpers::isFakeMode())
-  {
-    model = &(getServices()->model->goalModel().get());
-  }
-  else
-  {
-    model = &(getServices()->model->correctedModel().get());
-  }
-
-  left = model->position("left_foot_tip", "origin");
-  left_yaw = Angle(rad2deg(model->orientationYaw("left_foot_tip", "origin")));
-  right = model->position("right_foot_tip", "origin");
-  right_yaw = Angle(rad2deg(model->orientationYaw("right_foot_tip", "origin")));
-
-  // Averaging
-  Point pos((left.x() + right.x()) / 2, (left.y() + right.y()) / 2);
-  Angle yaw = Angle::weightedAverage(left_yaw, 1, right_yaw, 1);
-
-  Point p(ballPosWorld.x(), ballPosWorld.y());
-  p -= pos;
-  p = p.rotation(-yaw);
-
+  Eigen::Vector3d ball_pos_self = self_from_world * ballPosWorld;
   mutex.unlock();
-
-  return p;
-}
-
-Point LocalisationService::getRightGoalPosSelf()
-{
-  mutex.lock();
-  Eigen::Vector3d p;
-  if (Helpers::isFakeMode())
-  {
-    p = getServices()->model->goalModel().get().frameInSelf("origin", goalRightPosWorld);
-  }
-  else
-  {
-    p = getServices()->model->correctedModel().get().frameInSelf("origin", goalRightPosWorld);
-  }
-  mutex.unlock();
-
-  return Point(p.x(), p.y());
+  return Point(ball_pos_self.x(), ball_pos_self.y());
 }
 
 Point LocalisationService::getOurGoalPosField()
 {
-  return Point(-Constants::field.fieldLength / 2.0, 0);
+  return Point(-Constants::field.field_length / 2.0, 0);
 }
 
 Point LocalisationService::getGoalPosField()
 {
-  return Point(Constants::field.fieldLength / 2.0, 0);
+  return Point(Constants::field.field_length / 2.0, 0);
 }
 
 Angle LocalisationService::getOurBallToGoalDirSelf()
 {
-  Point goalField(-Constants::field.fieldLength / 2, 0);
+  Point goalField(-Constants::field.field_length / 2, 0);
   auto ball = getBallPosField();
   auto orientationRad = getFieldOrientation();
 
@@ -280,99 +167,15 @@ Angle LocalisationService::getOurBallToGoalDirSelf()
 
 Point LocalisationService::getFieldPos()
 {
-  Eigen::Vector3d self;
-  if (Helpers::isFakeMode())
-  {
-    self = getServices()->model->goalModel().get().selfInFrame("origin");
-  }
-  else
-  {
-    self = getServices()->model->correctedModel().get().selfInFrame("origin");
-  }
-  self -= fieldCenterWorld;
-  auto point = Point(self.x(), self.y());
-
-  float x = point.x * cos(fieldOrientationWorld) - point.y * sin(fieldOrientationWorld);
-  float y = point.x * sin(fieldOrientationWorld) + point.y * cos(fieldOrientationWorld);
-
-  return Point(x, y);
+  Eigen::Vector3d robot_pos_in_field = field_from_world * world_from_self * Eigen::Vector3d::Zero();
+  return Point(robot_pos_in_field.x(), robot_pos_in_field.y());
 }
 
 double LocalisationService::getFieldOrientation()
 {
-  double val = fieldOrientationWorld;
-  if (Helpers::isFakeMode())
-  {
-    val += getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
-  }
-  else
-  {
-    val += getServices()->model->correctedModel().get().orientationYaw("trunk", "origin");
-  }
-  return normalizeRad(val);
-}
-
-Point LocalisationService::getLeftGoalPosSelf()
-{
-  mutex.lock();
-  Eigen::Vector3d p;
-  if (Helpers::isFakeMode())
-  {
-    p = getServices()->model->goalModel().get().frameInSelf("origin", goalLeftPosWorld);
-  }
-  else
-  {
-    p = getServices()->model->correctedModel().get().frameInSelf("origin", goalLeftPosWorld);
-  }
-  mutex.unlock();
-
-  return Point(p.x(), p.y());
-}
-
-Point LocalisationService::getGoalPosSelf()
-{
-  mutex.lock();
-  Eigen::Vector3d p;
-  if (Helpers::isFakeMode())
-  {
-    p = 0.5 * getServices()->model->goalModel().get().frameInSelf("origin", goalLeftPosWorld) +
-        0.5 * getServices()->model->goalModel().get().frameInSelf("origin", goalRightPosWorld);
-  }
-  else
-  {
-    p = 0.5 * getServices()->model->correctedModel().get().frameInSelf("origin", goalLeftPosWorld) +
-        0.5 * getServices()->model->correctedModel().get().frameInSelf("origin", goalRightPosWorld);
-  }
-  mutex.unlock();
-
-  return Point(p.x(), p.y());
-}
-
-Point LocalisationService::getGoalPosWorld()
-{
-  mutex.lock();
-  auto p = 0.5 * goalLeftPosWorld + 0.5 * goalRightPosWorld;
-  mutex.unlock();
-
-  return Point(p.x(), p.y());
-}
-
-double LocalisationService::getGoalCap()
-{
-  auto p = getGoalPosSelf();
-  return rad2deg(atan2(p.y, p.x));
-}
-
-double LocalisationService::getLeftGoalCap()
-{
-  auto p = getLeftGoalPosSelf();
-  return rad2deg(atan2(p.y, p.x));
-}
-
-double LocalisationService::getRightGoalCap()
-{
-  auto p = getRightGoalPosSelf();
-  return rad2deg(atan2(p.y, p.x));
+  Eigen::Vector3d field_dir_in_world(cos(fieldOrientationWorld), sin(fieldOrientationWorld), 0);
+  Eigen::Vector3d field_dir_in_self = self_from_world.linear() * field_dir_in_world;
+  return -atan2(field_dir_in_self.y(), field_dir_in_self.x());
 }
 
 Point LocalisationService::getBallPosWorld()
@@ -389,28 +192,15 @@ Point LocalisationService::getBallPosField()
   return worldToField(ballPosWorld);
 }
 
-Point LocalisationService::worldToField(Eigen::Vector3d world)
+Point LocalisationService::worldToField(const Eigen::Vector3d& pos_in_world)
 {
-  auto result = getFieldPos();
-  auto orientation = getFieldOrientation();
+  Eigen::Vector3d pos_in_field = field_from_world * pos_in_world;
+  return Point(pos_in_field.x(), pos_in_field.y());
+}
 
-  mutex.lock();
-  Eigen::Vector3d p;
-  if (Helpers::isFakeMode())
-  {
-    p = getServices()->model->goalModel().get().frameInSelf("origin", world);
-  }
-  else
-  {
-    p = getServices()->model->correctedModel().get().frameInSelf("origin", world);
-  }
-  mutex.unlock();
-  auto pos = Point(p.x(), p.y());
-
-  result.x += pos.x * cos(orientation) - pos.y * sin(orientation);
-  result.y += pos.x * sin(orientation) + pos.y * cos(orientation);
-
-  return result;
+Eigen::Vector3d LocalisationService::fieldToWorld(const Eigen::Vector3d& pos_in_field)
+{
+  return world_from_field * pos_in_field;
 }
 
 std::vector<Point> LocalisationService::getOpponentsField()
@@ -565,15 +355,14 @@ void LocalisationService::updateSharedOpponentsPos()
   mutex.unlock();
 }
 
-void LocalisationService::setBallWorld(const Eigen::Vector3d& pos, const Eigen::Vector3d& lookPos, float quality,
-                                       const Point& speed, const rhoban_utils::TimeStamp& ts)
+void LocalisationService::setBallWorld(const Eigen::Vector3d& pos, float quality, const Point& speed,
+                                       const rhoban_utils::TimeStamp& ts)
 {
   bind.pull();
   if (block)
     return;
   mutex.lock();
   ballPosWorld = pos;
-  ballLookPosWorld = lookPos;
   ballQ = quality;
   ballSpeed = speed;
   ballTS = ts;
@@ -593,13 +382,7 @@ void LocalisationService::setNoBall()
 
 void LocalisationService::updatePosSelf()
 {
-  auto p = getGoalPosSelf();
-  goalPosX = p.x;
-  goalPosY = p.y;
-  goalCap = getGoalCap();
-  goalLeftCap = getLeftGoalCap();
-  goalRightCap = getRightGoalCap();
-
+  updateFieldWorldTransforms();
   fieldOrientation = rad2deg(normalizeRad(getFieldOrientation()));
   auto fp = getFieldPos();
   fieldPosX = fp.x;
@@ -608,41 +391,21 @@ void LocalisationService::updatePosSelf()
   bind.push();
 }
 
-void LocalisationService::setPosSelf(const Eigen::Vector3d& left, const Eigen::Vector3d& right,
-                                     const Eigen::Vector3d& center, float orientation, float quality, float consistency,
+void LocalisationService::setPosSelf(const Eigen::Vector3d& center, float orientation, float quality, float consistency,
                                      bool consistencyEnabled_)
 {
   bind.pull();
-
-  mutex.lock();
 
   fieldQ = quality;
   fieldConsistency = consistency;
   consistencyEnabled = consistencyEnabled_;
 
-  if (Helpers::isFakeMode())
-  {
-    fieldCenterWorld = getServices()->model->goalModel().get().selfInFrame("origin", center);
-    goalLeftPosWorld = getServices()->model->goalModel().get().selfInFrame("origin", left);
-    goalRightPosWorld = getServices()->model->goalModel().get().selfInFrame("origin", right);
-  }
-  else
-  {
-    fieldCenterWorld = getServices()->model->correctedModel().get().selfInFrame("origin", center);
-    goalLeftPosWorld = getServices()->model->correctedModel().get().selfInFrame("origin", left);
-    goalRightPosWorld = getServices()->model->correctedModel().get().selfInFrame("origin", right);
-  }
-  mutex.unlock();
+  fieldCenterWorld = world_from_self * center;
 
-  if (Helpers::isFakeMode())
-  {
-    fieldOrientationWorld = orientation - getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
-  }
-  else
-  {
-    fieldOrientationWorld = orientation - getServices()->model->correctedModel().get().orientationYaw("trunk", "origi"
-                                                                                                               "n");
-  }
+  Eigen::Vector3d field_dir_in_self(cos(-orientation), sin(-orientation), 0);
+  Eigen::Vector3d field_dir_in_world = world_from_self * field_dir_in_self;
+
+  fieldOrientationWorld = atan2(field_dir_in_world.y(), field_dir_in_world.x());
 
   updatePosSelf();
 }
@@ -700,7 +463,7 @@ void LocalisationService::penaltyReset(float x)
 void LocalisationService::penaltyGoalReset()
 {
 #ifdef VISION_COMPONENT
-  customFieldReset(Constants::field.fieldLength / 2, 0, 0.05, 180, 3);
+  customFieldReset(Constants::field.field_length / 2, 0, 0.05, 180, 3);
   robocup->robotsClear();
 #endif
 }
@@ -710,7 +473,7 @@ void LocalisationService::goalReset()
 #ifdef VISION_COMPONENT
   RhIO::Root.setFloat("/Localisation/Field/RobotController/angleExploration", 0.5);
   RhIO::Root.setFloat("/Localisation/Field/RobotController/posExploration", 0.5);
-  customFieldReset(-Constants::field.fieldLength / 2, 0, 0.01, 0, 1);
+  customFieldReset(-Constants::field.field_length / 2, 0, 0.01, 0, 1);
   robocup->robotsClear();
 #endif
 }
@@ -735,8 +498,8 @@ void LocalisationService::gameStartReset()
 void LocalisationService::kickOffReset()
 {
 #ifdef VISION_COMPONENT
-  robocup->ballReset(Constants::field.centerRadius, 0);
-  customFieldReset(-Constants::field.centerRadius, 0, 0.3, 0, 5);
+  robocup->ballReset(Constants::field.center_radius, 0);
+  customFieldReset(-Constants::field.center_radius, 0, 0.3, 0, 5);
   robocup->robotsClear();
 #endif
 }
@@ -815,7 +578,7 @@ void LocalisationService::resetRobotFilter()
 std::string LocalisationService::cmdFakeBall(double x, double y)
 {
   Eigen::Vector3d posInWorld(x, y, 0.0);
-  setBallWorld(posInWorld, posInWorld, 1.0, Point(0, 0), rhoban_utils::TimeStamp::now());
+  setBallWorld(posInWorld, 1.0, Point(0, 0), rhoban_utils::TimeStamp::now());
   return "Fake Ball set in world: X=" + std::to_string(x) + std::string(" Y=") + std::to_string(y);
 }
 
@@ -838,13 +601,10 @@ std::string LocalisationService::cmdFakeOpponents(std::vector<std::string> args)
   return "Faked opponents";
 }
 
-std::string LocalisationService::cmdFakeLoc(double leftX, double leftY, double rightX, double rightY, double fieldX,
-                                            double fieldY)
+std::string LocalisationService::cmdFakeLoc(double fieldX, double fieldY, double orientation)
 {
-  Eigen::Vector3d leftGoalInWorld(leftX, leftY, 0.0);
-  Eigen::Vector3d rightGoalInWorld(rightX, rightY, 0.0);
   Eigen::Vector3d fieldInWorld(fieldX, fieldY, 0.0);
-  setPosSelf(leftGoalInWorld, rightGoalInWorld, fieldInWorld, 0.0, 1.0, 1.0);
+  setPosSelf(fieldInWorld, orientation, 1.0, 1.0);
   return "Set fake localization in world";
 }
 
@@ -919,18 +679,11 @@ double LocalisationService::getLastVisionUpdate()
 #endif
 }
 
-#ifdef VISION_COMPONENT
-void LocalisationService::stealTags(std::vector<int>& indices, std::vector<Eigen::Vector3d>& positions,
-                                    std::vector<std::pair<float, float> >& centers,
-                                    std::vector<std::pair<float, float> >& centersUndistorded, double* timestamp)
-{
-  robocup->stealTags(indices, positions, centers, centersUndistorded, timestamp);
-}
-#endif
-
 bool LocalisationService::tick(double elapsed)
 {
   bind.pull();
+
+  updateSelfWorldTransforms();
 
   if (Helpers::isFakeMode())
   {
@@ -940,5 +693,39 @@ bool LocalisationService::tick(double elapsed)
     updateSharedOpponentsPos();
   }
 
+  bind.push();
+
   return true;
+}
+
+void LocalisationService::updateFieldWorldTransforms()
+{
+  Eigen::Matrix3d world_from_field_orientation;
+  world_from_field_orientation = Eigen::AngleAxisd(fieldOrientationWorld, Eigen::Vector3d::UnitZ());
+  world_from_field = Eigen::Translation3d(fieldCenterWorld) * Eigen::Affine3d(world_from_field_orientation);
+  field_from_world = world_from_field.inverse();
+}
+
+void LocalisationService::updateSelfWorldTransforms()
+{
+  if (Helpers::isFakeMode())
+  {
+    // XXX: Should have a "log mode" ?
+    #ifdef VISION_COMPONENT
+    world_from_self = getServices()->model->readModel().get().selfFrameTransform("origin");
+    #else
+    world_from_self = getServices()->model->goalModel().get().selfFrameTransform("origin");
+    #endif
+  }
+  else
+  {
+    world_from_self = getServices()->model->readModel().get().selfFrameTransform("origin");
+  }
+  self_from_world = world_from_self.inverse();
+}
+
+Angle LocalisationService::getSelfOrientationInWorld()
+{
+  Eigen::Vector3d trunk_dir = world_from_self.linear() * Eigen::Vector3d::UnitX();
+  return Angle::fromXY(trunk_dir.x(), trunk_dir.y());
 }

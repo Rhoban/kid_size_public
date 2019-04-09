@@ -4,7 +4,9 @@
 #include "camera_state.pb.h"
 
 #include "Utils/HomogeneousTransform.hpp"
+#include "services/DecisionService.h"
 #include "services/ModelService.h"
+#include "services/LocalisationService.h"
 #include "services/ViveService.h"
 
 #include <rhoban_utils/util.h>
@@ -85,6 +87,8 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, rhoban_vision_proto::P
 
 CameraState::CameraState(MoveScheduler* moveScheduler)
   : _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+  , has_camera_field_transform(false)
+  , clock_offset(0)
 {
   _moveScheduler = moveScheduler;
   _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
@@ -97,7 +101,10 @@ CameraState::CameraState(MoveScheduler* moveScheduler)
 
 CameraState::CameraState(const rhoban_vision_proto::IntrinsicParameters& camera_parameters,
                          const rhoban_vision_proto::CameraState& cs)
-  : _moveScheduler(nullptr), _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+  : _moveScheduler(nullptr)
+  , _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
+  , has_camera_field_transform(false)
+  , clock_offset(0)
 {
   importFromProtobuf(camera_parameters);
   importFromProtobuf(cs);
@@ -164,27 +171,61 @@ void CameraState::updateInternalModel(double timeStamp)
 
   if (_moveScheduler != nullptr)
   {
-    ViveService * vive = _moveScheduler->getServices()->vive;
+    // Update World, Self and Camera transforms based on model
+    _model->setAutoUpdate(true);
+    _moveScheduler->getServices()->model->pastReadModel(timeStamp, _pastReadModel);
+    _model = &(_pastReadModel.get());
+    _model->setAutoUpdate(false);
+    _model->updateDOFPosition();
+
+    selfToWorld = _model->selfFrameTransform("origin");
+    worldToCamera = _model->getTransform("camera", "origin");
+    _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
+    worldToSelf = selfToWorld.inverse();
+    cameraToWorld = worldToCamera.inverse();
+    // Update camera/field transform based on (by order of priority)
+    // 1. Vive
+    // 2. LocalisationService if field quality is good
+    // 3. If nothing is available set info to false
+    ViveService* vive = _moveScheduler->getServices()->vive;
+    DecisionService* decision = _moveScheduler->getServices()->decision;
     if (vive->isActive())
     {
-      worldToCamera = vive->getFieldToVive((int64)(timeStamp * 1000 * 1000));
-      //TODO: update worldToSelf properly (require to use head info as well)
-      worldToSelf = Eigen::Affine3d();
+      try
+      {
+        int64_t system_ts = (int64_t)(timeStamp * 1000 * 1000) + clock_offset;
+        camera_from_field = vive->getFieldToCamera(system_ts, true);
+        std::cout << "Vive based update: cameraPosInField: "
+                  << (camera_from_field.inverse() * Eigen::Vector3d::Zero()).transpose() << std::endl;
+        has_camera_field_transform = true;
+      }
+      catch (const std::out_of_range& exc)
+      {
+        has_camera_field_transform = false;
+        camera_from_field = Eigen::Affine3d::Identity();
+        logger.error("Failed to import transform from Vive: %s", exc.what());
+      }
+      catch (const std::runtime_error& exc)
+      {
+        has_camera_field_transform = false;
+        camera_from_field = Eigen::Affine3d::Identity();
+        logger.error("Failed to import transform from Vive: %s", exc.what());
+      }
+    }
+    else if (decision->isFieldQualityGood)
+    {
+      std::cout << "Localisation based update" << std::endl;
+      LocalisationService* loc = _moveScheduler->getServices()->localisation;
+      camera_from_field = worldToCamera * loc->world_from_field;
+      has_camera_field_transform = true;
     }
     else
     {
-      _model->setAutoUpdate(true);
-      _moveScheduler->getServices()->model->pastReadModel(timeStamp, _pastReadModel);
-      _model = &(_pastReadModel.get());
-      _model->setAutoUpdate(false);
-      _model->updateDOFPosition();
-    
-      worldToSelf = _model->selfFrameTransform("origin");
-      worldToCamera = _model->getTransform("camera", "origin");
+      std::cout << "Loc is bad -> no update" << std::endl;
+      has_camera_field_transform = false;
+      camera_from_field = Eigen::Affine3d::Identity();
     }
-    _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
-    selfToWorld = worldToSelf.inverse();
-    cameraToWorld = worldToCamera.inverse();
+    field_from_camera = camera_from_field.inverse();
   }
   else
   {
@@ -305,7 +346,7 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
     return -1;
   }
 
-  Plane ballPlane(Eigen::Vector3d::UnitZ(), Constants::field.ballRadius);
+  Plane ballPlane(Eigen::Vector3d::UnitZ(), Constants::field.ball_radius);
 
   if (!isIntersectionPoint(viewRay, ballPlane))
   {
@@ -322,7 +363,7 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
 
   // Getting one of the points on the side of the ball, this is not an exact
   // method, but the approximation should be good enough
-  Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ballRadius;
+  Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ball_radius;
 
   // Getting pixel for ballSide
   cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
@@ -332,7 +373,7 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
 
 Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f& pos) const
 {
-  return posInWorldFromPixel(pos, Constants::field.ballRadius);
+  return posInWorldFromPixel(pos, Constants::field.ball_radius);
 }
 
 rhoban_geometry::Ray CameraState::getRayInWorldFromPixel(const cv::Point2f& img_pos) const
@@ -368,6 +409,11 @@ Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f& pos, double 
 double CameraState::getTimeStampDouble() const
 {
   return _timeStamp * 1000;
+}
+
+void CameraState::setClockOffset(int64_t new_offset)
+{
+  clock_offset = new_offset;
 }
 
 }  // namespace Utils

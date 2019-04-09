@@ -2,7 +2,6 @@
 
 #include "CameraState/CameraState.hpp"
 
-#include <services/LocalisationService.h>
 #include <scheduler/MoveScheduler.h>
 
 #include "rhoban_utils/angle.h"
