@@ -2,6 +2,7 @@
 
 #include "services/Service.h"
 
+#include <rhoban_utils/history/history.h>
 #include <vive_provider/udp_message_manager.h>
 
 #include <Eigen/Geometry>
@@ -29,12 +30,12 @@ public:
    * time_stamp is in micro-seconds and can be specified according to local steady_clock or according to system_clock.
    * throws an out_of_range error if status does not contain information for the tracker id
    */
-  Eigen::Affine3d getFieldToVive(uint64_t time_stamp, bool system_clock = false) const;
+  Eigen::Affine3d getFieldToVive(uint64_t time_stamp, bool system_clock = false);
 
   /**
    * @see getFieldToVive
    */
-  Eigen::Affine3d getFieldToCamera(uint64_t time_stamp, bool system_clock = false) const;
+  Eigen::Affine3d getFieldToCamera(uint64_t time_stamp, bool system_clock = false);
 
   /**
    * Return the transformation from vive referential to camera referential
@@ -80,4 +81,9 @@ private:
    * Time difference in seconds between the clock of the computer recording vive_information and the NUC
    */
   double extra_time_offset;
+
+  /**
+   * History of poses
+   */
+  rhoban_utils::HistoryCollection histories;
 };
