@@ -60,6 +60,9 @@ LocalisationService::LocalisationService()
   // Visual compass
   visualCompassActivated = false;
 
+  self_from_world = Eigen::Affine3d::Identity();
+  field_from_world = Eigen::Affine3d::Identity();
+
   bind.bindFunc("fakeBall", "Set a fake ball observation in model world", &LocalisationService::cmdFakeBall, *this);
   bind.node().newCommand("fakeOpponents", "Fake opponents",
                          [this](const std::vector<std::string>& args) { return this->cmdFakeOpponents(args); });

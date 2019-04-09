@@ -161,10 +161,8 @@ public:
    * Start or stop the lowlevel logging.
    * For starting, a file path is given to dump
    * the data.
-   * If isBinary is true, the log is written
-   * in binary format
    */
-  void startLogging(const std::string& filepath, bool isBinary = true);
+  void startLogging(const std::string& filepath);
   void stopLogging();
 
   /**
@@ -176,12 +174,6 @@ public:
    * Then, write the logs, histories will be written at filePath
    */
   void stopNamedLog(const std::string& filePath);
-
-  /**
-   * Append to history container given name:value
-   * couple to be logged at current timestamp
-   */
-  void logValue(const std::string& name, double value);
 
   /**
    * Enable the replay mode and load history
@@ -234,7 +226,7 @@ private:
   /**
    * Container for all read value hitories
    */
-  std::map<std::string, rhoban_utils::History> _histories;
+  rhoban_utils::HistoryCollection _histories;
 
   /**
    * Model for target goal state
@@ -306,7 +298,6 @@ private:
    */
   bool _doWriteLog;
   std::string _logPath;
-  bool _isLogBinaryFormat;
 
   /**
    * Compute odometry displacement

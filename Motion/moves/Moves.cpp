@@ -11,8 +11,6 @@
 #include "Robocup.h"
 #include "Playing.h"
 #include "Search.h"
-#include "TestHeadSinus.hpp"
-#include "TrajectoriesPlayer.hpp"
 #include "GoalKeeper.h"
 #include "Placer.h"
 #include "ApproachPotential.h"
@@ -67,9 +65,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new PlayingMove(walk));
 
   // Dev moves
-  add(new TrajectoriesPlayer);
   add(new IMUTest);
-  add(new TestHeadSinus);
   add(new StaticLearner);
   add(new Replayer);
 
