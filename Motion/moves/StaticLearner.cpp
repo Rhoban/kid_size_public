@@ -240,7 +240,7 @@ void StaticLearner::step(float elapsed)
 
     _snapshot = false;
     _oldPointIndex = _staticPointIndex;
-    _goToIndex++;
+    _goToIndex = !_goToIndex;
   }
 
   if (_goToOn)
