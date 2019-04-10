@@ -29,8 +29,6 @@ Services::Services(MoveScheduler* scheduler) : _scheduler(scheduler)
   add("teamPlay", teamPlay);
   decision = new DecisionService;
   add("decision", decision);
-  maintenance = new MaintenanceService;
-  add("maintenance", maintenance);
   strategy = new StrategyService;
   add("strategy", strategy);
   captain = new CaptainService;
