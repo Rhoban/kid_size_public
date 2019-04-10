@@ -7,7 +7,6 @@ set (SOURCES
     LocalisationService.cpp
     TeamPlayService.cpp
     DecisionService.cpp
-    MaintenanceService.cpp
     StrategyService.cpp
     CaptainService.cpp
     ViveService.cpp

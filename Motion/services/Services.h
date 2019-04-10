@@ -13,7 +13,6 @@ class RefereeService;
 class LocalisationService;
 class TeamPlayService;
 class DecisionService;
-class MaintenanceService;
 class StrategyService;
 class CaptainService;
 class ViveService;
@@ -54,7 +53,6 @@ public:
   LocalisationService* localisation;
   TeamPlayService* teamPlay;
   DecisionService* decision;
-  MaintenanceService* maintenance;
   StrategyService* strategy;
   CaptainService* captain;
   ViveService* vive;
