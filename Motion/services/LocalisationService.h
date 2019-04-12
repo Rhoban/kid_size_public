@@ -93,7 +93,7 @@ public:
    * - center: position of center in self basis [m]
    * - orientation: orientation of the robot on the field [rad]
    */
-  void setPosSelf(const Eigen::Vector3d& center, float orientation, float quality, float consistency,
+  void setPosSelf(const Eigen::Vector3d& center_in_self, float orientation, float quality, float consistency,
                   bool consistencyEnabled = false);
 
   /**
