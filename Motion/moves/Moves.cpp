@@ -4,7 +4,6 @@
 #include "Kick.h"
 #include "StandUp.h"
 #include "IMUTest.h"
-#include "StaticLearner.hpp"
 #include "Replayer.hpp"
 #include "Penalty.h"
 #include "Head.h"
@@ -69,8 +68,6 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   // Dev moves
   add(new TrajectoriesPlayer);
   add(new IMUTest);
-  add(new TestHeadSinus);
-  add(new StaticLearner);
   add(new Replayer);
 
   add(new LogMachine(walk, head));

@@ -8,7 +8,6 @@ set (SOURCES
     Move.cpp
     Moves.cpp
     Search.cpp
-    StaticLearner.cpp
     STM.cpp
     Replayer.cpp
     Head.cpp
