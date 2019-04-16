@@ -391,7 +391,7 @@ void LocalisationService::updatePosSelf()
   bind.push();
 }
 
-void LocalisationService::setPosSelf(const Eigen::Vector3d& center, float orientation, float quality, float consistency,
+void LocalisationService::setPosSelf(const Eigen::Vector3d& center_in_self, float orientation, float quality, float consistency,
                                      bool consistencyEnabled_)
 {
   bind.pull();
@@ -400,10 +400,10 @@ void LocalisationService::setPosSelf(const Eigen::Vector3d& center, float orient
   fieldConsistency = consistency;
   consistencyEnabled = consistencyEnabled_;
 
-  fieldCenterWorld = world_from_self * center;
+  fieldCenterWorld = world_from_self * center_in_self;
 
   Eigen::Vector3d field_dir_in_self(cos(-orientation), sin(-orientation), 0);
-  Eigen::Vector3d field_dir_in_world = world_from_self * field_dir_in_self;
+  Eigen::Vector3d field_dir_in_world = world_from_self.linear() * field_dir_in_self;
 
   fieldOrientationWorld = atan2(field_dir_in_world.y(), field_dir_in_world.x());
 

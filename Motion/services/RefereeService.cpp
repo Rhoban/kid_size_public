@@ -131,9 +131,16 @@ bool RefereeService::isDroppedBall()
 bool RefereeService::isFreeKick()
 {
   const auto& gs = getGameState();
-  return gs.getSecGameState() == Constants::STATE2_DIRECT_FREE_KICK ||
-         gs.getSecGameState() == Constants::STATE2_INDIRECT_FREE_KICK ||
-         gs.getSecGameState() == Constants::STATE2_PENALTY_KICK;
+  switch(gs.getSecGameState()) {
+    case Constants::STATE2_DIRECT_FREE_KICK:
+    case Constants::STATE2_INDIRECT_FREE_KICK:
+    case Constants::STATE2_PENALTY_KICK:
+    case Constants::STATE2_CORNER_KICK:
+    case Constants::STATE2_GOAL_KICK:
+    case Constants::STATE2_THROW_IN:
+      return true;
+  }
+  return false;
 }
 
 bool RefereeService::myTeamFreeKick()
@@ -226,7 +233,7 @@ bool RefereeService::isFreezePhase()
   if (force)
     return false;
   return getGameState().getActualGameState() == Constants::STATE_SET ||
-         (isFreeKick() && getGameState().getSecondaryMode() == 1);
+         (isFreeKick() && getGameState().getSecondaryMode() != 1);
 }
 
 bool RefereeService::isFinishedPhase()
