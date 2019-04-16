@@ -141,10 +141,8 @@ public:
   void enableFieldFilter(bool enable = true);
   void isGoalKeeper(bool status = false);
 
-#ifdef VISION_COMPONENT
   void setRobocup(Vision::Robocup* robocup);
   void setLocBinding(Vision::LocalisationBinding* locBinding);
-#endif
 
 protected:
   // Mutex to access ball position
@@ -179,10 +177,8 @@ protected:
   // Used for warning the user on frequent kicks
   ::rhoban_utils::TimeStamp lastKick;
 
-#ifdef VISION_COMPONENT
   Vision::Robocup* robocup;
   Vision::LocalisationBinding* locBinding;
-#endif
 
   /**
    * Update the basis transforms between field and world based on the following internal information.
