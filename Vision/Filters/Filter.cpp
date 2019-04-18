@@ -311,6 +311,15 @@ const Filter& Filter::getDependency(const std::string& name) const
   return _pipeline->get(*it);
 }
 
+const Filter& Filter::getDependency(int index) const
+{
+  if (index > _dependencies.size() || index < 0) {
+    throw std::logic_error(DEBUG_INFO + "invalid index " + std::to_string(index));
+  }
+  return _pipeline->get(_dependencies[index]);
+}
+
+
 void Filter::initRhIO(const std::string& path)
 {
   // Lazy init

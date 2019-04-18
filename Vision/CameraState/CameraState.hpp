@@ -95,6 +95,12 @@ public:
   cv::Point imgXYFromWorldPosition(const Eigen::Vector3d& p) const;
 
   /**
+   * Returns position of the point from its field position.
+   * throws an exception if camera_field_transform is not available or if point is outside of the image.
+   */
+  cv::Point2f imgFromFieldPosition(const Eigen::Vector3d& p) const;
+
+  /**
    * Return the pan,tilt position respectively on the robot basis, from xy in
    * robot basis.
    */

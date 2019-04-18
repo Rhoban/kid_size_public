@@ -333,6 +333,16 @@ cv::Point CameraState::imgXYFromWorldPosition(const Eigen::Vector3d& posInWorld)
   return _cameraModel.getImgFromObject(eigen2CV(posInCamera));
 }
 
+cv::Point2f CameraState::imgFromFieldPosition(const Eigen::Vector3d& pos_in_field) const
+{
+  if (!has_camera_field_transform)
+  {
+    throw std::runtime_error(DEBUG_INFO + "no camera_field_transform available");
+  }
+  Eigen::Vector3d point_in_camera = camera_from_field * pos_in_field;
+  return getCameraModel().getImgFromObject(eigen2CV(point_in_camera));
+}
+
 PanTilt CameraState::panTiltFromXY(const cv::Point2f& pos, double height)
 {
   return PanTilt(Eigen::Vector3d(pos.x, pos.y, -height));

@@ -219,10 +219,14 @@ protected:
   virtual void publishToRhIO(const std::string& path);
 
   /**
-   * Return the Filter registered
-   * as dependency by its name
+   * Return the Filter registered as dependency by its name
    */
   const Filter& getDependency(const std::string& name) const;
+
+  /**
+   * Return the dependency based on its index
+   */
+  const Filter& getDependency(int index) const;
 
   /**
    * Return the first registered dependency

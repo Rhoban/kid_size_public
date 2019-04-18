@@ -28,11 +28,12 @@ public:
 
   GroundTruthProvider();
 
-  void setParameters() override;
   Json::Value toJson() const override;
   void fromJson(const Json::Value& v, const std::string& dir_name) override;
 
 protected:
+  virtual void process() override;
+  void setParameters() override;
   /**
    * Uses information from the camera state to update the map of annotations in the image
    */
@@ -41,7 +42,7 @@ protected:
   /**
    * Main specialization of this class is achieved through choice of the method used to generate the regions of interest
    */
-  virtual std::vector<cv::Rect<_float>> generateROIs() = 0;
+  virtual std::vector<cv::Rect_<float>> generateROIs() = 0;
 
   /**
    * Return the image from which patches are extracted
@@ -62,7 +63,7 @@ protected:
    * Returns a Json node containing a map of element_types toward their patch properties (i.e. center in image,
    * distance)
    */
-  Json::Value getPatchAnnotation(const cv::Rect_<float>& roi) const;
+  Json::Value getPatchAnnotation(const cv::Rect_<float>& roi);
 
   /**
    * Return a Json node containing a map of element_types toward their properties in the image (i.e. included in an roi,

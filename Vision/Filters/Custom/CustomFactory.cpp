@@ -5,6 +5,7 @@
 #include "ColorDensity.hpp"
 #include "FieldBorder.hpp"
 #include "ClippingByBorder.hpp"
+#include "ROIBasedGTP.hpp"
 #include "WhiteLines.hpp"
 #include "../FilterFactory.hpp"
 
@@ -19,6 +20,7 @@ void registerCustomFilters(FilterFactory* ff)
   ff->registerBuilder("ColorDensity", []() { return std::unique_ptr<Filter>(new ColorDensity()); });
   ff->registerBuilder("FieldBorder", []() { return std::unique_ptr<Filter>(new FieldBorder()); });
   ff->registerBuilder("ClippingByBorder", []() { return std::unique_ptr<Filter>(new ClippingByBorder()); });
+  ff->registerBuilder("ROIBasedGTP", []() { return std::unique_ptr<Filter>(new ROIBasedGTP()); });
   ff->registerBuilder("WhiteLines", []() { return std::unique_ptr<Filter>(new WhiteLines()); });
 }
 }  // namespace Filters
