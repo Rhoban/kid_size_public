@@ -149,7 +149,7 @@ protected:
   float pressureYStd;
   float pressureYStdThresholdWarmup;
   float pressureYStdThresholdCooldown;
-  rhoban_utils::History ratioHistory;
+  rhoban_utils::HistoryDouble ratioHistory;
   std::string walkKickName;
   double walkStep;
   double walkLateral;

@@ -84,9 +84,23 @@ void ViveService::loadLog(const std::string& path)
 {
   vive_manager.loadMessages(path);
   logger.log("Messages loaded from '%s'", path.c_str());
+
+  histories.clear();
+
+  for (auto &entry : vive_manager.getMessages()) {
+    const GlobalMsg &message = entry.second;
+    double timestamp = message.time_since_epoch();
+    for (const TrackerMsg& tracker : message.trackers()) {
+      if (!histories.entries().count(tracker.serial_number())) {
+        histories.pose(tracker.serial_number())->setWindowSize(-1.0);
+      }
+
+      histories.pose(tracker.serial_number())->pushValue(timestamp, vive_provider::getWorldToTracker(tracker));
+    }
+  }
 }
 
-Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clock) const
+Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clock)
 {
   if (!system_clock)
   {
@@ -109,7 +123,8 @@ Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clo
       if (tslt > 0) {
         throw std::runtime_error("Tracking has been lost for " + std::to_string(tslt/1000) + "ms");
       }
-      return vive_provider::getWorldToTracker(tracker);
+
+      return histories.pose(tracker.serial_number())->interpolate((double)(time_stamp));
     }
     available_serials.push_back(tracker.serial_number());
   }
@@ -126,7 +141,7 @@ Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clo
                           " at time " + std::to_string(time_stamp));
 }
 
-Eigen::Affine3d ViveService::getFieldToCamera(uint64_t time_stamp, bool system_clock) const
+Eigen::Affine3d ViveService::getFieldToCamera(uint64_t time_stamp, bool system_clock)
 {
   return getViveToCamera() * getFieldToVive(time_stamp, system_clock);
 }

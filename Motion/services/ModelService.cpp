@@ -34,7 +34,6 @@ ModelService::ModelService()
   , _odometry(Leph::OdometryDisplacementModel::DisplacementProportionalXYA, Leph::OdometryNoiseModel::NoiseDisable)
   , _doWriteLog(false)
   , _logPath("")
-  , _isLogBinaryFormat(true)
 {
   // Reading the correection to bring to the model
   rhoban_model_learning::CalibrationModel calibration_model;
@@ -77,27 +76,19 @@ ModelService::ModelService()
 
   // RhIO command to start/stop logging
   RhIO::Root.newCommand("/modelservice_start_log",
-                        "<filepath> <isBinaryFormat>. Start logging LowLevel in ModelService",
+                        "<filepath>. Start logging LowLevel in ModelService",
                         [this](const std::vector<std::string>& args) -> std::string {
                           if (args.size() != 2 || args[0] == "" || (args[1] != "true" && args[1] != "false"))
                           {
                             return "Usage: model_start_log <filepath> <isBinaryFormat>";
                           }
-                          bool isLogBinaryFormat;
-                          if (args[1] == "true")
-                            isLogBinaryFormat = true;
-                          if (args[1] == "false")
-                            isLogBinaryFormat = false;
-                          this->startLogging(args[0], isLogBinaryFormat);
-                          return "LowLevel Logging Start to be written to: " + args[0] + std::string(" in format ") +
-                                 (isLogBinaryFormat ? std::string("binary") : std::string("ascii"));
+                          this->startLogging(args[0]);
+                          return "LowLevel Logging Start to be written to: " + args[0];
                         });
   RhIO::Root.newCommand("/modelservice_stop_log", "Stop logging in ModelService and write to file",
                         [this](const std::vector<std::string>& args) -> std::string {
                           this->stopLogging();
-                          return "LowLevel Logging Stopped and written to: " + this->_logPath +
-                                 std::string(" in format ") +
-                                 (this->_isLogBinaryFormat ? std::string("binary") : std::string("ascii"));
+                          return "LowLevel Logging Stopped and written to: " + this->_logPath;
                         });
   // Load Replay
   RhIO::Root.newCommand("/modelservice_load_log", "<filepath> Load and play in ModelService given file",
@@ -159,42 +150,42 @@ ModelService::ModelService()
   // Initialize history
   for (const std::string& name : Leph::NamesDOF)
   {
-    _histories["read:" + name];
-    _histories["goal:" + name];
+    _histories.number("read:" + name);
+    _histories.number("goal:" + name);
   }
-  _histories["is_base_updated"];
-  _histories["read:left_pressure_weight"];
-  _histories["read:left_pressure_x"];
-  _histories["read:left_pressure_y"];
-  _histories["read:right_pressure_weight"];
-  _histories["read:right_pressure_x"];
-  _histories["read:right_pressure_y"];
-  _histories["read:imu_yaw"];
-  _histories["read:imu_pitch"];
-  _histories["read:imu_roll"];
-  _histories["read:magneto"];
-  _histories["read:base_x"];
-  _histories["read:base_y"];
-  _histories["read:base_z"];
-  _histories["read:base_yaw"];
-  _histories["read:base_pitch"];
-  _histories["read:base_roll"];
-  _histories["read:is_left_support_foot"];
-  _histories["goal:base_x"];
-  _histories["goal:base_y"];
-  _histories["goal:base_z"];
-  _histories["goal:base_yaw"];
-  _histories["goal:base_pitch"];
-  _histories["goal:base_roll"];
-  _histories["goal:is_left_support_foot"];
+  _histories.number("is_base_updated");
+  _histories.number("read:left_pressure_weight");
+  _histories.number("read:left_pressure_x");
+  _histories.number("read:left_pressure_y");
+  _histories.number("read:right_pressure_weight");
+  _histories.number("read:right_pressure_x");
+  _histories.number("read:right_pressure_y");
+  _histories.angle("read:imu_yaw");
+  _histories.angle("read:imu_pitch");
+  _histories.angle("read:imu_roll");
+  _histories.number("read:magneto");
+  _histories.number("read:base_x");
+  _histories.number("read:base_y");
+  _histories.number("read:base_z");
+  _histories.angle("read:base_yaw");
+  _histories.angle("read:base_pitch");
+  _histories.angle("read:base_roll");
+  _histories.number("read:is_left_support_foot");
+  _histories.number("goal:base_x");
+  _histories.number("goal:base_y");
+  _histories.number("goal:base_z");
+  _histories.angle("goal:base_yaw");
+  _histories.angle("goal:base_pitch");
+  _histories.angle("goal:base_roll");
+  _histories.number("goal:is_left_support_foot");
   // Corrected odometry
-  _histories["read:odometry_x"];
-  _histories["read:odometry_y"];
-  _histories["read:odometry_yaw"];
+  _histories.number("read:odometry_x");
+  _histories.number("read:odometry_y");
+  _histories.angle("read:odometry_yaw");
 
-  for (auto& it : _histories)
+  for (auto& it : _histories.entries())
   {
-    it.second.setWindowSize(60.0);
+    it.second->setWindowSize(60.0);
   }
 }
 
@@ -380,15 +371,15 @@ void ModelService::pastReadModel(double timestamp, Leph::HumanoidFixedPressureMo
   // Assign DOF position
   for (const std::string& name : Leph::NamesDOF)
   {
-    pastReadModel.get().setDOF(name, _histories["read:" + name].interpolate(timestamp));
+    pastReadModel.get().setDOF(name, _histories.number("read:" + name)->interpolate(timestamp));
   }
   // Update for pressure sensors
-  double left_weight = _histories["read:left_pressure_weight"].interpolate(timestamp);
-  double left_x = _histories["read:left_pressure_x"].interpolate(timestamp);
-  double left_y = _histories["read:left_pressure_y"].interpolate(timestamp);
-  double right_weight = _histories["read:right_pressure_weight"].interpolate(timestamp);
-  double right_x = _histories["read:right_pressure_x"].interpolate(timestamp);
-  double right_y = _histories["read:right_pressure_y"].interpolate(timestamp);
+  double left_weight = _histories.number("read:left_pressure_weight")->interpolate(timestamp);
+  double left_x = _histories.number("read:left_pressure_x")->interpolate(timestamp);
+  double left_y = _histories.number("read:left_pressure_y")->interpolate(timestamp);
+  double right_weight = _histories.number("read:right_pressure_weight")->interpolate(timestamp);
+  double right_x = _histories.number("read:right_pressure_x")->interpolate(timestamp);
+  double right_y = _histories.number("read:right_pressure_y")->interpolate(timestamp);
   if (left_weight + right_weight > 0.0001)
   {
     pastReadModel.setPressure((left_weight + right_weight), left_weight / (left_weight + right_weight),
@@ -397,9 +388,9 @@ void ModelService::pastReadModel(double timestamp, Leph::HumanoidFixedPressureMo
   // Update model support foot
   pastReadModel.updateBase();
   // Update for imu orientation extrinsic Euler angles
-  double yaw = _histories["read:odometry_yaw"].interpolate(timestamp, History::AngleRad);
-  double pitch = _histories["read:imu_pitch"].interpolate(timestamp, History::AngleRad);
-  double roll = _histories["read:imu_roll"].interpolate(timestamp, History::AngleRad);
+  double yaw = _histories.angle("read:odometry_yaw")->interpolate(timestamp);
+  double pitch = _histories.angle("read:imu_pitch")->interpolate(timestamp);
+  double roll = _histories.angle("read:imu_roll")->interpolate(timestamp);
   Eigen::Matrix3d imuMatrix = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()).toRotationMatrix() *
                               Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()).toRotationMatrix() *
                               Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()).toRotationMatrix();
@@ -412,16 +403,16 @@ void ModelService::pastReadModel(double timestamp, Leph::HumanoidFixedPressureMo
     pastReadModel.setOrientation(imuMatrix);
   }
   // Assign interpolated past corrected odometry state
-  pastReadModel.setOdometryState(Eigen::Vector2d(_histories["read:odometry_x"].interpolate(timestamp),
-                                                 _histories["read:odometry_y"].interpolate(timestamp)));
+  pastReadModel.setOdometryState(Eigen::Vector2d(_histories.number("read:odometry_x")->interpolate(timestamp),
+                                                 _histories.number("read:odometry_y")->interpolate(timestamp)));
 }
 double ModelService::pastMagneto(double timestamp)
 {
-  return _histories["read:magneto"].interpolate(timestamp);
+  throw std::logic_error("We don't use magneto anymore");
 }
 bool ModelService::pastIsBaseUpdated(double timestamp)
 {
-  return (_histories["is_base_updated"].interpolate(timestamp) >= 0.5);
+  return (_histories.number("is_base_updated")->interpolate(timestamp) >= 0.5);
 }
 
 void ModelService::setReadBaseUpdate(bool isEnable)
@@ -444,25 +435,22 @@ const RhAL::TimePoint& ModelService::readTimestamp()
 Eigen::Vector3d ModelService::odometryDiff(double timestamp1, double timestamp2)
 {
   Eigen::Vector3d state1;
-  state1.x() = _histories["read:odometry_x"].interpolate(timestamp1);
-  state1.y() = _histories["read:odometry_y"].interpolate(timestamp1);
-  state1.z() = _histories["read:odometry_yaw"].interpolate(timestamp1, History::AngleRad);
+  state1.x() = _histories.number("read:odometry_x")->interpolate(timestamp1);
+  state1.y() = _histories.number("read:odometry_y")->interpolate(timestamp1);
+  state1.z() = _histories.angle("read:odometry_yaw")->interpolate(timestamp1);
+
   Eigen::Vector3d state2;
-  state2.x() = _histories["read:odometry_x"].interpolate(timestamp2);
-  state2.y() = _histories["read:odometry_y"].interpolate(timestamp2);
-  state2.z() = _histories["read:odometry_yaw"].interpolate(timestamp2, History::AngleRad);
+  state2.x() = _histories.number("read:odometry_x")->interpolate(timestamp2);
+  state2.y() = _histories.number("read:odometry_y")->interpolate(timestamp2);
+  state2.z() = _histories.angle("read:odometry_yaw")->interpolate(timestamp2);
 
   return odometryDiff(state1, state2);
 }
 
-void ModelService::startLogging(const std::string& filepath, bool isBinary)
+void ModelService::startLogging(const std::string& filepath)
 {
-  for (auto& it : _histories)
-  {
-    it.second.startLogging();
-  }
+  _histories.startNamedLog(filepath);
   _logPath = filepath;
-  _isLogBinaryFormat = isBinary;
 }
 
 void ModelService::stopLogging()
@@ -473,112 +461,20 @@ void ModelService::stopLogging()
 
 void ModelService::startNamedLog(const std::string& filePath)
 {
-  for (auto& it : _histories)
-  {
-    it.second.startNamedLog(filePath);
-  }
+  _histories.startNamedLog(filePath);
 }
 
 void ModelService::stopNamedLog(const std::string& filePath)
 {
-  /// First, freeze all histories for the session name
-  for (auto& it : _histories)
-  {
-    it.second.freezeNamedLog(filePath);
-  }
-  // Open log file
-  std::ofstream file(filePath.c_str());
-  // Check file
-  if (!file.is_open())
-  {
-    throw std::runtime_error(DEBUG_INFO + "unable to write to file '" + filePath + "'");
-  }
-  /// Second write logs
-  for (auto& it : _histories)
-  {
-    size_t length = it.first.length();
-    file.write((const char*)(&length), sizeof(size_t));
-    file.write((const char*)(it.first.c_str()), length);
-    it.second.closeFrozenLog(filePath, file);
-  }
-}
-
-void ModelService::logValue(const std::string& name, double value)
-{
-  if (_histories.count(name) == 0)
-  {
-    _histories[name];
-  }
-  _histories[name].pushValue(RhAL::duration_float(_timestamp), value);
+  _histories.stopNamedLog(filePath);
 }
 
 void ModelService::loadReplays(const std::string& filepath)
 {
-  std::ifstream file(filepath.c_str());
-  // Check file
-  if (!file.is_open())
-  {
-    throw std::runtime_error("ModelService unable to read file: '" + filepath + "'");
-  }
-
-  // Enable replay mode
   _isReplay = true;
-
-  // Check file format
-  if (file.peek() == '#')
-  {
-    // Textual format
-    while (true)
-    {
-      while (file.peek() == ' ' || file.peek() == '\n')
-      {
-        file.ignore();
-      }
-      if (!file.good() || file.peek() == EOF)
-      {
-        break;
-      }
-      // Extract key name
-      std::string name;
-      if (file.peek() == '#')
-      {
-        file.ignore();
-        file >> name;
-      }
-      else
-      {
-        throw std::runtime_error("ModelService malformed file: '" + filepath + "'");
-      }
-      // Retrieve all data for current key
-      _histories[name].loadReplay(file);
-      std::cout << "Loading " << name << " with " << _histories[name].size() << " points" << std::endl;
-    }
-  }
-  else
-  {
-    // Binary format
-    while (true)
-    {
-      if (!file.good() || file.peek() == EOF)
-      {
-        break;
-      }
-      size_t length = 0;
-      char buffer[256];
-      file.read((char*)&length, sizeof(size_t));
-      file.read(buffer, length);
-      buffer[length] = '\0';
-      std::string name(buffer);
-      // Retrieve all data for current key
-      _histories[name].loadReplay(file, true, 0.0);
-      std::cout << "Loading " << name << " with " << _histories[name].size() << " points" << std::endl;
-    }
-  }
-  // Start replay
-  _replayTimestamp = _histories["read:head_pitch"].front().first;
-
-  // Close read file
-  file.close();
+  _histories.loadReplays(filepath);
+  _replayTimestamp = _histories.smallerTimestamp();
+  std::cout << "Replay timestamp: " << _replayTimestamp << std::endl;
 }
 
 void ModelService::setReplayTimestamp(double ts)
@@ -663,29 +559,8 @@ void ModelService::tickDumpLogs()
   if (_doWriteLog)
   {
     // Open log file
-    std::ofstream file(_logPath.c_str());
-    // Check file
-    if (!file.is_open())
-    {
-      throw std::runtime_error("ModelService unable to write to file: '" + _logPath + "'");
-    }
-    // Dump all values
-    for (auto& it : _histories)
-    {
-      if (_isLogBinaryFormat)
-      {
-        size_t length = it.first.length();
-        file.write((const char*)(&length), sizeof(size_t));
-        file.write((const char*)(it.first.c_str()), length);
-      }
-      else
-      {
-        file << "#" << it.first << std::endl;
-      }
-      it.second.stopLogging(file, _isLogBinaryFormat);
-    }
-    // Close log file
-    file.close();
+    _histories.stopNamedLog(_logPath);
+
     _doWriteLog = false;
     _logPath = "";
   }
@@ -746,9 +621,9 @@ void ModelService::tickOdometryUpdate()
   // without adding noise
   _odometry.update(_readModel, nullptr);
   // Record corrected odometry to history
-  _histories["read:odometry_x"].pushValue(RhAL::duration_float(_timestamp), _odometry.state().x());
-  _histories["read:odometry_y"].pushValue(RhAL::duration_float(_timestamp), _odometry.state().y());
-  _histories["read:odometry_yaw"].pushValue(RhAL::duration_float(_timestamp), _odometry.state().z());
+  _histories.number("read:odometry_x")->pushValue(RhAL::duration_float(_timestamp), _odometry.state().x());
+  _histories.number("read:odometry_y")->pushValue(RhAL::duration_float(_timestamp), _odometry.state().y());
+  _histories.angle("read:odometry_yaw")->pushValue(RhAL::duration_float(_timestamp), _odometry.state().z());
 }
 
 void ModelService::tickFindTimestamp()
@@ -846,29 +721,26 @@ void ModelService::tickHistoryUpdate()
   for (const std::string& name : Leph::NamesDOF)
   {
     RhAL::ReadValueFloat value = manager->dev<RhAL::DXL>(name).position().readValue();
-    _histories["read:" + name].pushValue(RhAL::duration_float(value.timestamp), RhAL::Deg2Rad(value.value));
-    _histories["goal:" + name].pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF(name));
+    _histories.number("read:" + name)->pushValue(RhAL::duration_float(value.timestamp), RhAL::Deg2Rad(value.value));
+    _histories.number("goal:" + name)->pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF(name));
     // If asked read control and power voltage
     // from lowlevel and request a new read for
     // next loop
     if (_isReadVoltages)
     {
       RhAL::ReadValueFloat volt = manager->dev<RhAL::DXL>(name).voltage().readValue();
-      _histories["volt_power:" + name].pushValue(RhAL::duration_float(volt.timestamp), volt.value);
+      _histories.number("volt_power:" + name)->pushValue(RhAL::duration_float(volt.timestamp), volt.value);
       manager->dev<RhAL::DXL>(name).voltage().askRead();
     }
   }
   // Records imu values
   RhAL::ReadValueFloat imuRead = manager->dev<RhAL::GY85>("imu").getGyroYawValue();
-  _histories["read:imu_pitch"].pushValue(RhAL::duration_float(imuRead.timestamp),
+  _histories.angle("read:imu_pitch")->pushValue(RhAL::duration_float(imuRead.timestamp),
                                          manager->dev<RhAL::GY85>("imu").getPitch());
-  _histories["read:imu_roll"].pushValue(RhAL::duration_float(imuRead.timestamp),
+  _histories.angle("read:imu_roll")->pushValue(RhAL::duration_float(imuRead.timestamp),
                                         manager->dev<RhAL::GY85>("imu").getRoll());
-  _histories["read:imu_yaw"].pushValue(RhAL::duration_float(imuRead.timestamp),
+  _histories.angle("read:imu_yaw")->pushValue(RhAL::duration_float(imuRead.timestamp),
                                        manager->dev<RhAL::GY85>("imu").getGyroYaw());
-  // Record magnetometer
-  _histories["read:magneto"].pushValue(RhAL::duration_float(_timestamp),
-                                       manager->dev<RhAL::GY85>("imu").getMagnAzimuth());
   // Records pressure values
   double left_weight = manager->dev<RhAL::PressureSensor4>("left_pressure").getWeight();
   double left_x = manager->dev<RhAL::PressureSensor4>("left_pressure").getX();
@@ -876,31 +748,31 @@ void ModelService::tickHistoryUpdate()
   double right_weight = manager->dev<RhAL::PressureSensor4>("right_pressure").getWeight();
   double right_x = manager->dev<RhAL::PressureSensor4>("right_pressure").getX();
   double right_y = manager->dev<RhAL::PressureSensor4>("right_pressure").getY();
-  _histories["read:left_pressure_weight"].pushValue(RhAL::duration_float(_timestamp), left_weight);
-  _histories["read:left_pressure_x"].pushValue(RhAL::duration_float(_timestamp), left_x);
-  _histories["read:left_pressure_y"].pushValue(RhAL::duration_float(_timestamp), left_y);
-  _histories["read:right_pressure_weight"].pushValue(RhAL::duration_float(_timestamp), right_weight);
-  _histories["read:right_pressure_x"].pushValue(RhAL::duration_float(_timestamp), right_x);
-  _histories["read:right_pressure_y"].pushValue(RhAL::duration_float(_timestamp), right_y);
+  _histories.number("read:left_pressure_weight")->pushValue(RhAL::duration_float(_timestamp), left_weight);
+  _histories.number("read:left_pressure_x")->pushValue(RhAL::duration_float(_timestamp), left_x);
+  _histories.number("read:left_pressure_y")->pushValue(RhAL::duration_float(_timestamp), left_y);
+  _histories.number("read:right_pressure_weight")->pushValue(RhAL::duration_float(_timestamp), right_weight);
+  _histories.number("read:right_pressure_x")->pushValue(RhAL::duration_float(_timestamp), right_x);
+  _histories.number("read:right_pressure_y")->pushValue(RhAL::duration_float(_timestamp), right_y);
   // Records odometry integration
-  _histories["read:base_x"].pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_x"));
-  _histories["read:base_y"].pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_y"));
-  _histories["read:base_z"].pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_z"));
-  _histories["read:base_yaw"].pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_yaw"));
-  _histories["read:base_pitch"].pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_pitch"));
-  _histories["read:base_roll"].pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_roll"));
-  _histories["read:is_left_support_foot"].pushValue(
+  _histories.number("read:base_x")->pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_x"));
+  _histories.number("read:base_y")->pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_y"));
+  _histories.number("read:base_z")->pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_z"));
+  _histories.angle("read:base_yaw")->pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_yaw"));
+  _histories.angle("read:base_pitch")->pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_pitch"));
+  _histories.angle("read:base_roll")->pushValue(RhAL::duration_float(_timestamp), _readModel.get().getDOF("base_roll"));
+  _histories.number("read:is_left_support_foot")->pushValue(
       RhAL::duration_float(_timestamp),
       (double)(_readModel.getSupportFoot() == Leph::HumanoidFixedModel::LeftSupportFoot));
-  _histories["goal:base_x"].pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_x"));
-  _histories["goal:base_y"].pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_y"));
-  _histories["goal:base_z"].pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_z"));
-  _histories["goal:base_yaw"].pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_yaw"));
-  _histories["goal:base_pitch"].pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_pitch"));
-  _histories["goal:base_roll"].pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_roll"));
-  _histories["goal:is_left_support_foot"].pushValue(
+  _histories.number("goal:base_x")->pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_x"));
+  _histories.number("goal:base_y")->pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_y"));
+  _histories.number("goal:base_z")->pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_z"));
+  _histories.angle("goal:base_yaw")->pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_yaw"));
+  _histories.angle("goal:base_pitch")->pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_pitch"));
+  _histories.angle("goal:base_roll")->pushValue(RhAL::duration_float(_timestamp), _goalModel.get().getDOF("base_roll"));
+  _histories.number("goal:is_left_support_foot")->pushValue(
       RhAL::duration_float(_timestamp),
       (double)(_goalModel.getSupportFoot() == Leph::HumanoidFixedModel::LeftSupportFoot));
   // Records walk enable boolean
-  _histories["is_base_updated"].pushValue(RhAL::duration_float(_timestamp), (double)_isUpdateReadBase);
+  _histories.number("is_base_updated")->pushValue(RhAL::duration_float(_timestamp), (double)_isUpdateReadBase);
 }

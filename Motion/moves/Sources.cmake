@@ -13,22 +13,15 @@ set (SOURCES
     Head.cpp
     Robocup.cpp
     Playing.cpp
-    TestHeadSinus.cpp
     IMUTest.cpp
-    TrajectoriesPlayer.cpp
     GoalKeeper.cpp
     Placer.cpp
     Kick.cpp
-
+    
     LogMachine.cpp
-
+    
     GoalKick.cpp
     ReactiveKicker.cpp
-
-#    LateralStep.cpp
-#    KickPhilipp.cpp
-#    OdometryCalibration.cpp
-#    ModelCalibration.cpp
 )
 
 if (csa_mdp_experiments_FOUND)
