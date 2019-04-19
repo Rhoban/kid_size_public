@@ -159,6 +159,28 @@ std::vector<Eigen::Vector3d> ViveService::getTaggedPositions(uint64_t time_stamp
   return positions;
 }
 
+std::vector<Eigen::Vector3d> ViveService::getOthersTrackersPos(uint64_t time_stamp, bool system_clock) const
+{
+  if (!system_clock)
+  {
+    time_stamp += rhoban_utils::getSteadyClockOffset();
+  }
+  time_stamp += (uint64_t)(extra_time_offset * 1000000);
+
+  GlobalMsg vive_status = vive_manager.getMessage(time_stamp, true);
+
+  std::map<std::string, Eigen::Vector3d> positions;
+  for (const TrackerMsg& tracker : vive_status.trackers())
+  {
+    const std::string serial_number = tracker.serial_number();
+    if (serial_number != tracker_serial)
+    {
+      positions[serial_number] = vive_provider::getPos(tracker.pos());
+    }
+  }
+  return positions;
+}
+
 
 void ViveService::setPosOffset(const Eigen::Vector3d& pos)
 {

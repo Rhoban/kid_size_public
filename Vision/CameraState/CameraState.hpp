@@ -192,6 +192,16 @@ public:
   Eigen::Affine3d field_from_camera;
 
   /**
+   * Positions of the ball in field referential according to Vive
+   */
+  std::vector<Eigen::Vector3d> vive_balls_in_field;
+
+  /**
+   * Positions of the trackers (robots) in field referential according to Vive
+   */
+  std::vector<Eigen::Vector3d> vive_trackers_in_field;
+
+  /**
    * Offset between steady_clock and system clock for the given camera state
    */
   int64_t clock_offset;

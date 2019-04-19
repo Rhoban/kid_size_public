@@ -45,6 +45,10 @@ public:
    * Return the tagged positions in field referential
    */
   std::vector<Eigen::Vector3d> getTaggedPositions(uint64_t time_stamp, bool system_clock = false) const;
+  /**
+   * Return the position of all the trackers
+   */
+  std::vector<Eigen::Vector3d> getOthersTrackersPos(uint64_t time_stamp, bool system_clock = false) const;
 
   void setPosOffset(const Eigen::Vector3d& pos);
   void setRoll(double roll);
