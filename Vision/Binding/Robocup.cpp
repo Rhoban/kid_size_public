@@ -1315,25 +1315,11 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
     ViveService * vive = _scheduler->getServices()->vive;
     if (vive->isActive())
     {
-      std::vector<Eigen::Vector3d> field_points = vive->getTaggedPositions(cs->getTimeStampDouble() * 1000 * 1000, false);
-      for (Eigen::Vector3d point_in_field : field_points)
-      {
-        try
-        {
-          point_in_field.z() = Constants::field.ball_radius;
-          Eigen::Vector3d point_in_camera = cs->camera_from_field * point_in_field;
-          cv::Point2f p = cs->getCameraModel().getImgFromObject(eigen2CV(point_in_camera));
-          cv::circle(img, p, 10, cv::Scalar(0, 0, 0), 3);
-        }
-        catch (const std::runtime_error& exc)
-        {
-          // Just avoid drawing the point if it is not inside the image
-        }
-      }
+      Constants::field.tagPointsOfInterest(camera_matrix, distortion_coeffs, rvec, tvec, &img);
     }
     else
     {
-      std::cout << "Vive is not active" << std::endl;
+      out.log("Vive is not active");
     }
   }
 
