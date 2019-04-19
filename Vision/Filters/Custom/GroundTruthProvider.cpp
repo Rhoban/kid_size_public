@@ -25,6 +25,7 @@ void GroundTruthProvider::process()
   img() = getSourceImg();
   std::vector<cv::Rect_<float>> rois = generateROIs();
   updateAnnotations();
+  tagImg();
   dumpImg(rois);
   imgIndex++;
 }
@@ -33,9 +34,11 @@ void GroundTruthProvider::setParameters()
 {
   writeEnabled = ParamInt(1, 0, 1);
   patchSize = ParamInt(32, 1, 512);
+  tagLevel = ParamInt(1, 0, 1);
 
   params()->define<ParamInt>("writeEnabled", &writeEnabled);
   params()->define<ParamInt>("patchSize", &patchSize);
+  params()->define<ParamInt>("tagLevel", &tagLevel);
 }
 
 Json::Value GroundTruthProvider::toJson() const
@@ -100,6 +103,24 @@ void GroundTruthProvider::updateAnnotations()
       {
       }
     }
+  }
+}
+
+void GroundTruthProvider::tagImg()
+{
+  switch (tagLevel)
+  {
+    case 0:
+      return;
+    case 1:
+      img() = getSourceImg().clone();
+      for (const auto& entry: annotations)
+      {
+        for (const Annotation& a : entry.second)
+        {
+          cv::circle(img(), a.center, 5, cv::Scalar(255,0,255), CV_FILLED);
+        }
+      }
   }
 }
 

@@ -40,6 +40,11 @@ protected:
   void updateAnnotations();
 
   /**
+   * Updates output image depending
+   */
+  void tagImg();
+
+  /**
    * Main specialization of this class is achieved through choice of the method used to generate the regions of interest
    */
   virtual std::vector<cv::Rect_<float>> generateROIs() = 0;
@@ -93,8 +98,14 @@ protected:
   ParamInt patchSize;
 
   /**
+   * Detailed of writing
+   * 0: output = input
+   * 1: annotation centers are highlighted
+   */
+  ParamInt tagLevel;
+
+  /**
    * Stores the points of interests of an image ordered by type descriptor
-   * TODO: add function to update them
    */
   std::map<std::string, std::vector<Annotation>> annotations;
 };
