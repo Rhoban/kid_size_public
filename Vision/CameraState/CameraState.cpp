@@ -190,7 +190,7 @@ void CameraState::updateInternalModel(double timeStamp)
     ViveService* vive = _moveScheduler->getServices()->vive;
     DecisionService* decision = _moveScheduler->getServices()->decision;
     vive_balls_in_field.clear();
-    vive_robots_in_field.clear();
+    vive_trackers_in_field.clear();
     if (vive->isActive())
     {
       try
@@ -204,11 +204,11 @@ void CameraState::updateInternalModel(double timeStamp)
         {
           Eigen::Vector3d ball_pos = tagged_pos;
           ball_pos.z() = Constants::field.ball_radius;
-          vive_robots_in_field.push_back(ball_pos);
+          vive_balls_in_field.push_back(ball_pos);
         }
-        for (const auto& entry : vive->getOthersTrackersPos(system_ts, true))
+        for (const Eigen::Vector3d& pos : vive->getOthersTrackersPos(system_ts, true))
         {
-          vive_trackers_in_field.push_back(entry.second);
+          vive_trackers_in_field.push_back(pos);
         }
       }
       catch (const std::out_of_range& exc)

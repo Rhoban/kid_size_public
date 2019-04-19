@@ -59,14 +59,32 @@ void GroundTruthProvider::updateAnnotations()
     logger.log("No camera field transform");
     return;
   }
-  logger.log("Nb POI types: %d", Constants::field.getPointsOfInterestByType().size());
+  std::map<std::string, std::vector<Eigen::Vector3d>> field_positions_by_type;
   for (const auto& entry : Constants::field.getPointsOfInterestByType())
   {
     std::string feature_name = Field::poiType2String(entry.first);
-    logger.log("Nb features for '%s': %d", feature_name.c_str(), entry.second.size());
     for (const cv::Point3f& p : entry.second)
     {
-      Eigen::Vector3d field_pos = cv2Eigen(p);
+      field_positions_by_type[feature_name].push_back(cv2Eigen(p));
+    }
+  }
+  for (const Eigen::Vector3d& ball_pos : getCS().vive_balls_in_field)
+  {
+    field_positions_by_type["Ball"].push_back(ball_pos);
+  }
+  for (const Eigen::Vector3d& tracker_pos : getCS().vive_trackers_in_field)
+  {
+    // Project tracker on ground
+    Eigen::Vector3d robot_pos = tracker_pos;
+    robot_pos.z() = 0;
+    field_positions_by_type["Robot"].push_back(robot_pos);
+  }
+  // Now add all features to annotation collection
+  for (const auto& entry : field_positions_by_type)
+  {
+    std::string feature_name = entry.first;
+    for (const Eigen::Vector3d& field_pos : entry.second)
+    {
       try {
         //TODO: functions allowing to retrieve the point without risking to throw exception should be available
         Annotation a;
@@ -83,7 +101,6 @@ void GroundTruthProvider::updateAnnotations()
       }
     }
   }
-  // TODO: add ball + robots
 }
 
 void GroundTruthProvider::dumpImg(const std::vector<cv::Rect_<float>>& rois)
@@ -155,7 +172,6 @@ Json::Value GroundTruthProvider::getImgAnnotation(const std::vector<cv::Rect_<fl
           break;
         }
       }
-      logger.log("Writing img_entry at '%s' : '%d'", type_name.c_str(), idx);
       v[type_name][idx]["inside_roi"] = inside_roi;
       v[type_name][idx]["distance"] = annotation.distance;
       v[type_name][idx]["center"][0] = annotation.center.x;

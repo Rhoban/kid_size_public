@@ -184,13 +184,13 @@ std::vector<Eigen::Vector3d> ViveService::getOthersTrackersPos(uint64_t time_sta
 
   GlobalMsg vive_status = vive_manager.getMessage(time_stamp, true);
 
-  std::map<std::string, Eigen::Vector3d> positions;
+  std::vector<Eigen::Vector3d> positions;
   for (const TrackerMsg& tracker : vive_status.trackers())
   {
     const std::string serial_number = tracker.serial_number();
     if (serial_number != tracker_serial)
     {
-      positions[serial_number] = vive_provider::getPos(tracker.pos());
+      positions.push_back(vive_provider::getPos(tracker.pos()));
     }
   }
   return positions;
