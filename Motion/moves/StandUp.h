@@ -27,7 +27,7 @@ protected:
   std::map<std::string, rhoban_utils::Function> splines;
   bool enable, waiting;
   bool useManualT;
-  bool layDown;
+  bool layDown; // If true we use the give up motion
   double manualT;
   double delayBefore;
 };
