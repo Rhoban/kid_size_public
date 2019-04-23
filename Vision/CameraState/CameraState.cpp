@@ -226,14 +226,12 @@ void CameraState::updateInternalModel(double timeStamp)
     }
     else if (decision->isFieldQualityGood)
     {
-      std::cout << "Localisation based update" << std::endl;
       LocalisationService* loc = _moveScheduler->getServices()->localisation;
       camera_from_field = worldToCamera * loc->world_from_field;
       has_camera_field_transform = true;
     }
     else
     {
-      std::cout << "Loc is bad -> no update" << std::endl;
       has_camera_field_transform = false;
       camera_from_field = Eigen::Affine3d::Identity();
     }
@@ -284,7 +282,7 @@ Eigen::Vector2d CameraState::getVecInSelf(const Eigen::Vector2d& vec_in_world) c
 
 cv::Point2f CameraState::getPosInSelf(const cv::Point2f& pos_in_origin) const
 {
-  Eigen::Vector3d pos_in_self = selfToWorld * Eigen::Vector3d(pos_in_origin.x, pos_in_origin.y, 0);
+  Eigen::Vector3d pos_in_self = worldToSelf * Eigen::Vector3d(pos_in_origin.x, pos_in_origin.y, 0);
   return cv::Point2f(pos_in_self(0), pos_in_self(1));
 }
 
