@@ -16,10 +16,8 @@
 
 #include <Eigen/Geometry>
 
-#ifdef VISION_COMPONENT
 #include <Binding/Robocup.hpp>
 #include <Binding/LocalisationBinding.hpp>
-#endif
 
 static bool block = false;
 
@@ -29,18 +27,11 @@ using namespace rhoban_geometry;
 using namespace rhoban_utils;
 using namespace robocup_referee;
 
-#ifdef VISION_COMPONENT
 using Vision::Localisation::FieldPF;
-#endif
 
 static rhoban_utils::Logger out("localisation_service");
 
-LocalisationService::LocalisationService()
-  : bind("localisation")
-#ifdef VISION_COMPONENT
-  , robocup(NULL)
-  , locBinding(NULL)
-#endif
+LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL), locBinding(NULL)
 {
   lastKick = rhoban_utils::TimeStamp::now();
   // Ball
@@ -415,10 +406,11 @@ void LocalisationService::setPosSelf(const Eigen::Vector3d& center_in_self, floa
 
 void LocalisationService::applyKick(float x_, float y_)
 {
-#ifdef VISION_COMPONENT
-  /// Currently has no effect on ballStackFilter
-  robocup->applyKick(x_, y_);
-#endif
+  if (NULL != robocup)
+  {
+    /// Currently has no effect on ballStackFilter
+    robocup->applyKick(x_, y_);
+  }
 
   if (Helpers::isFakeMode())
   {
@@ -438,7 +430,6 @@ void LocalisationService::applyKick(float x_, float y_)
   }
 }
 
-#ifdef VISION_COMPONENT
 void LocalisationService::setRobocup(Vision::Robocup* robocup_)
 {
   robocup = robocup_;
@@ -447,64 +438,79 @@ void LocalisationService::setLocBinding(Vision::LocalisationBinding* locBinding_
 {
   locBinding = locBinding_;
 }
-#endif
 
 void LocalisationService::resetBallFilter()
 {
-#ifdef VISION_COMPONENT
   // TODO: Do something?
-#endif
 }
 
 void LocalisationService::penaltyReset(float x)
 {
-#ifdef VISION_COMPONENT
   customFieldReset(x, 0, 0.05, 0, 3);
-#endif
 }
 
 void LocalisationService::penaltyGoalReset()
 {
-#ifdef VISION_COMPONENT
   customFieldReset(Constants::field.field_length / 2, 0, 0.05, 180, 3);
-  robocup->robotsClear();
-#endif
+
+  if (NULL != robocup)
+  {
+    robocup->robotsClear();
+  }
 }
 
 void LocalisationService::goalReset()
 {
-#ifdef VISION_COMPONENT
-  RhIO::Root.setFloat("/Localisation/Field/RobotController/angleExploration", 0.5);
-  RhIO::Root.setFloat("/Localisation/Field/RobotController/posExploration", 0.5);
+  if (NULL != locBinding)
+  {
+    RhIO::Root.setFloat("/Localisation/Field/RobotController/angleExploration", 0.5);
+    RhIO::Root.setFloat("/Localisation/Field/RobotController/posExploration", 0.5);
+  }
+
   customFieldReset(-Constants::field.field_length / 2, 0, 0.01, 0, 1);
-  robocup->robotsClear();
-#endif
+
+  if (NULL != robocup)
+  {
+    robocup->robotsClear();
+  }
 }
 
 void LocalisationService::customFieldReset(double x, double y, double noise, double theta, double thetaNoise)
 {
-#ifdef VISION_COMPONENT
-  locBinding->fieldReset(FieldPF::ResetType::Custom, x, y, noise, theta, thetaNoise);
-#endif
+  if (NULL != locBinding)
+  {
+    locBinding->fieldReset(FieldPF::ResetType::Custom, x, y, noise, theta, thetaNoise);
+  }
 }
 
 void LocalisationService::gameStartReset()
 {
-#ifdef VISION_COMPONENT
   // TODO: Do something for the ball?
 
-  locBinding->fieldReset(FieldPF::ResetType::Borders);
-  robocup->robotsClear();
-#endif
+  if (NULL != locBinding)
+  {
+    locBinding->fieldReset(FieldPF::ResetType::Borders);
+  }
+
+  if (NULL != robocup)
+  {
+    robocup->robotsClear();
+  }
 }
 
 void LocalisationService::kickOffReset()
 {
-#ifdef VISION_COMPONENT
-  robocup->ballReset(Constants::field.center_radius, 0);
+  if (NULL != robocup)
+  {
+    robocup->ballReset(Constants::field.center_radius, 0);
+  }
+
   customFieldReset(-Constants::field.center_radius, 0, 0.3, 0, 5);
-  robocup->robotsClear();
-#endif
+
+  if (NULL != robocup)
+  {
+    robocup->robotsClear();
+  }
 }
 
 void LocalisationService::dropBallReset()
@@ -514,19 +520,28 @@ void LocalisationService::dropBallReset()
 
 void LocalisationService::fallReset()
 {
-#ifdef VISION_COMPONENT
-  locBinding->fieldReset(FieldPF::ResetType::Fall);
-  robocup->ballClear();
-  robocup->robotsClear();
-#endif
+  if (NULL != locBinding)
+  {
+    locBinding->fieldReset(FieldPF::ResetType::Fall);
+  }
+
+  if (NULL != robocup)
+  {
+    robocup->ballClear();
+    robocup->robotsClear();
+  }
 }
 
 void LocalisationService::bordersReset()
 {
-#ifdef VISION_COMPONENT
-  locBinding->fieldReset(FieldPF::ResetType::Borders);
-  robocup->robotsClear();
-#endif
+  if (NULL != locBinding)
+  {
+    locBinding->fieldReset(FieldPF::ResetType::Borders);
+  }
+  if (NULL != robocup)
+  {
+    robocup->robotsClear();
+  }
 }
 
 void LocalisationService::setVisualCompassStatus(bool inUse)
@@ -541,41 +556,48 @@ bool LocalisationService::getVisualCompassStatus() const
 
 bool LocalisationService::isVisionActive() const
 {
-#ifdef VISION_COMPONENT
-  double lastFrame = diffSec(robocup->lastTS, rhoban_utils::TimeStamp::now());
-  return lastFrame < 3;
-#else
-  return true;
-#endif
+  if (NULL != robocup)
+  {
+    double lastFrame = diffSec(robocup->lastTS, rhoban_utils::TimeStamp::now());
+    return lastFrame < 3;
+  }
+  else
+  {
+    return true;
+  }
 }
 
 void LocalisationService::enableFieldFilter(bool enable)
 {
-#ifdef VISION_COMPONENT
-  locBinding->enableFieldFilter = enable;
-#endif
+  if (NULL != locBinding)
+  {
+    locBinding->enableFieldFilter = enable;
+  }
 }
 
 void LocalisationService::isGoalKeeper(bool status)
 {
-#ifdef VISION_COMPONENT
-  locBinding->isGoalKeeper = status;
-#endif
+  if (NULL != locBinding)
+  {
+    locBinding->isGoalKeeper = status;
+  }
 }
 
 void LocalisationService::resetFieldFilter()
 {
-#ifdef VISION_COMPONENT
-  std::cout << "Reseting filters with locBinding" << locBinding << std::endl;
-  locBinding->fieldReset(FieldPF::ResetType::Uniform);
-#endif
+  if (NULL != locBinding)
+  {
+    std::cout << "Reseting filters with locBinding" << locBinding << std::endl;
+    locBinding->fieldReset(FieldPF::ResetType::Uniform);
+  }
 }
 
 void LocalisationService::resetRobotFilter()
 {
-#ifdef VISION_COMPONENT
-  robocup->robotsClear();
-#endif
+  if (NULL != robocup)
+  {
+    robocup->robotsClear();
+  }
 }
 
 std::string LocalisationService::cmdFakeBall(double x, double y)
@@ -657,29 +679,38 @@ std::string LocalisationService::cmdResetPosition()
 
 int LocalisationService::getFrames()
 {
-#ifdef VISION_COMPONENT
-  return robocup->getFrames();
-#else
-  return 0;
-#endif
+  if (NULL != robocup)
+  {
+    return robocup->getFrames();
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 std::string LocalisationService::getCameraStatus()
 {
-#ifdef VISION_COMPONENT
-  return robocup->getCameraStatus();
-#else
-  return "No vision";
-#endif
+  if (NULL != robocup)
+  {
+    return robocup->getCameraStatus();
+  }
+  else
+  {
+    return "No vision";
+  }
 }
 
 double LocalisationService::getLastVisionUpdate()
 {
-#ifdef VISION_COMPONENT
-  return robocup->getLastUpdate();
-#else
-  return -1;
-#endif
+  if (NULL != robocup)
+  {
+    return robocup->getLastUpdate();
+  }
+  else
+  {
+    return -1;
+  }
 }
 
 bool LocalisationService::tick(double elapsed)
@@ -714,11 +745,14 @@ void LocalisationService::updateSelfWorldTransforms()
   if (Helpers::isFakeMode())
   {
     // XXX: Should have a "log mode" ?
-    #ifdef VISION_COMPONENT
-    world_from_self = getServices()->model->readModel().get().selfFrameTransform("origin");
-    #else
-    world_from_self = getServices()->model->goalModel().get().selfFrameTransform("origin");
-    #endif
+    if (NULL != robocup)
+    {
+      world_from_self = getServices()->model->readModel().get().selfFrameTransform("origin");
+    }
+    else
+    {
+      world_from_self = getServices()->model->goalModel().get().selfFrameTransform("origin");
+    }
   }
   else
   {
