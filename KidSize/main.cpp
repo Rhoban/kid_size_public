@@ -7,8 +7,6 @@
 #include <fenv.h>
 #include <tclap/CmdLine.h>
 
-// #undef VISION_COMPONENT
-
 #include <RhAL.hpp>
 #include <RhIO.hpp>
 #include "scheduler/MoveScheduler.h"
@@ -16,10 +14,8 @@
 
 #include <robocup_referee/constants.h>
 
-#ifdef VISION_COMPONENT
 #include <Binding/Robocup.hpp>
 #include <Binding/LocalisationBinding.hpp>
-#endif
 
 using namespace std;
 
@@ -27,10 +23,8 @@ using namespace std;
  * Global MoveScheduler pointer
  */
 MoveScheduler* moveScheduler = nullptr;
-#ifdef VISION_COMPONENT
 Vision::Robocup* visionRobocup = nullptr;
 Vision::LocalisationBinding* locBinding = nullptr;
-#endif
 
 /**
  * Quit signal handler
@@ -48,12 +42,12 @@ static void signal_handler(int sig, siginfo_t* siginfo, void* context)
   {
     moveScheduler->askQuit();
   }
-#ifdef VISION_COMPONENT
+
   if (visionRobocup != nullptr)
   {
     visionRobocup->closeCamera();
   }
-#endif
+
   return;
 }
 
@@ -78,7 +72,10 @@ int main(int argc, char** argv)
   // Parameters are not used currently
   TCLAP::CmdLine cmd("RhobanServer", ' ', "0.1");
   TCLAP::ValueArg<int> port("p", "port", "Port", false, RhIO::ServersPortBase, "port", cmd);
+  TCLAP::SwitchArg noVision("n", "no-vision", "No vision", cmd, false);
   cmd.parse(argc, argv);
+
+  bool hasVision = !noVision.getValue();
 
   if (RhIO::started())
   {
@@ -110,14 +107,14 @@ int main(int argc, char** argv)
     moveScheduler = new MoveScheduler();
     std::cout << "Move scheduler initilized." << std::endl;
     // Initialize and start Vision
-#ifdef VISION_COMPONENT
-    std::cout << "Initializing Vision" << std::endl;
-    visionRobocup = new Vision::Robocup(moveScheduler);
-    std::cout << "Vision initialized." << std::endl;
-    std::cout << "Initializing LocalisationBinding" << std::endl;
-    locBinding = new Vision::LocalisationBinding(moveScheduler, visionRobocup);
-    std::cout << "LocalisationBinding initialized." << std::endl;
-#endif
+    if (hasVision) {
+      std::cout << "Initializing Vision" << std::endl;
+      visionRobocup = new Vision::Robocup(moveScheduler);
+      std::cout << "Vision initialized." << std::endl;
+      std::cout << "Initializing LocalisationBinding" << std::endl;
+      locBinding = new Vision::LocalisationBinding(moveScheduler, visionRobocup);
+      std::cout << "LocalisationBinding initialized." << std::endl;
+    }
     // Handle quit signal
     signal_attach();
     // Start move scheduler
@@ -125,13 +122,13 @@ int main(int argc, char** argv)
     // Stop low level thrread and quit
     moveScheduler->askQuit();
     delete moveScheduler;
-#ifdef VISION_COMPONENT
-    if (visionRobocup != nullptr)
-    {
-      visionRobocup->closeCamera();
-      // delete visionRobocup;
+    if (hasVision) {
+      if (visionRobocup != nullptr)
+      {
+        visionRobocup->closeCamera();
+        // delete visionRobocup;
+      }
     }
-#endif
     std::cout << "Done." << std::endl;
     // return 0;
   }
@@ -147,12 +144,12 @@ int main(int argc, char** argv)
   {
     cout << "ERROR: Server died with string exception " << endl << exc << endl;
   }
-#ifdef VISION_COMPONENT
+
   if (visionRobocup != nullptr)
   {
     visionRobocup->closeCamera();
     // delete visionRobocup;
   }
-#endif
+
   return -1;
 }

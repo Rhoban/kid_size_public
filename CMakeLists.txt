@@ -35,22 +35,19 @@ option (BUILD_KID_SIZE_PROGRAM_VISION "Enable the build of Vision Programs" OFF)
 option (BUILD_KID_SIZE_PROGRAM_STRATEGY "Enable the build of Strategy programs" OFF)
 
 #Define Vision enable Macro + specific includes
-if (BUILD_KID_SIZE_VISION)
-  enable_language(ASM)
-  add_definitions(-DVISION_COMPONENT)
-  add_definitions(-DENABLE_OPENCV)
+enable_language(ASM)
+add_definitions(-DENABLE_OPENCV)
 
-  # Use SSE2 and AVX if provided, otherwise, show a warning
-  if ("${CMAKE_CXX_FLAGS}" MATCHES "-msse2" AND
-      "${CMAKE_CXX_FLAGS}" MATCHES "-mavx")
-    # Enable SSE2 optimizations
-    add_definitions(-DCNN_USE_SSE)
-    # Enable Advanced Vector Extensions
-    add_definitions(-DCNN_USE_AVX)
-  else()
-    message(WARNING "missing flags for SSE2 and AVX! DNN will be really slow")
-  endif()
-endif ()
+# Use SSE2 and AVX if provided, otherwise, show a warning
+if ("${CMAKE_CXX_FLAGS}" MATCHES "-msse2" AND
+    "${CMAKE_CXX_FLAGS}" MATCHES "-mavx")
+  # Enable SSE2 optimizations
+  add_definitions(-DCNN_USE_SSE)
+  # Enable Advanced Vector Extensions
+  add_definitions(-DCNN_USE_AVX)
+else()
+  message(WARNING "missing flags for SSE2 and AVX! DNN will be really slow")
+endif()
 
 if (BUILD_VISION_OPENCL)
     add_definitions(-DENABLE_OPENCL)
