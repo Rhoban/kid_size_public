@@ -151,5 +151,7 @@ int main(int argc, char** argv)
     // delete visionRobocup;
   }
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return -1;
 }
