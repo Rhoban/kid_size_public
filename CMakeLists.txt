@@ -27,7 +27,6 @@ catkin_package(
   )
 
 #Build option
-option (BUILD_KID_SIZE_VISION "Build the Vision" ON)
 option (KID_SIZE_USES_FLYCAPTURE "Use flycapture to build the vision" ON)
 option (KID_SIZE_USES_IDS "Enable support for ids imaging cameras" OFF)
 option (BUILD_VISION_OPENCL "Build vision with OpenCL support" OFF)
@@ -70,14 +69,9 @@ set(CMAKE_CXX_FLAGS
 
 #Included internal Directories
 set (INCLUDED_DIRECTORIES
-    Motion
-    ${catkin_INCLUDE_DIRS})
-
-  
-
-if (BUILD_KID_SIZE_VISION)
-  set (INCLUDED_DIRECTORIES ${INCLUDED_DIRECTORIES} Vision)
-endif()
+  Motion
+  Vision
+  ${catkin_INCLUDE_DIRS})
 
 include_directories(${INCLUDED_DIRECTORIES} ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -89,22 +83,20 @@ set (LINKED_LIBRARIES
 )
 
 #Add Vision libraries
-if (BUILD_KID_SIZE_VISION)
-    if (KID_SIZE_USES_FLYCAPTURE)
-        add_definitions(-DKID_SIZE_USES_FLYCAPTURE)
-        set (LINKED_LIBRARIES
-            ${LINKED_LIBRARIES}
-            flycapture
-        )
-    endif(KID_SIZE_USES_FLYCAPTURE)
-    if (KID_SIZE_USES_IDS)
-        add_definitions(-DKID_SIZE_USES_IDS)
-        set (LINKED_LIBRARIES
-            ${LINKED_LIBRARIES}
-            ueye_api
-        )
-    endif(KID_SIZE_USES_IDS)
-endif (BUILD_KID_SIZE_VISION)
+if (KID_SIZE_USES_FLYCAPTURE)
+  add_definitions(-DKID_SIZE_USES_FLYCAPTURE)
+  set (LINKED_LIBRARIES
+    ${LINKED_LIBRARIES}
+    flycapture
+    )
+endif(KID_SIZE_USES_FLYCAPTURE)
+if (KID_SIZE_USES_IDS)
+  add_definitions(-DKID_SIZE_USES_IDS)
+  set (LINKED_LIBRARIES
+    ${LINKED_LIBRARIES}
+    ueye_api
+    )
+endif(KID_SIZE_USES_IDS)
 
 
 #List Sources sub source directories
@@ -115,32 +107,30 @@ set(SOURCES_DIRECTORIES
     Motion/strategy
 )
 
-if (BUILD_KID_SIZE_VISION)
-  set (SOURCES_DIRECTORIES
-    ${SOURCES_DIRECTORIES}
-    Vision/Application
-    Vision/Binding
-    Vision/CameraState
-    Vision/Filters
-    Vision/Filters/Ball
-    Vision/Filters/Basics
-    Vision/Filters/Colors
-    Vision/Filters/Custom
-    Vision/Filters/Features
-    Vision/Filters/Goal
-    Vision/Filters/Obstacles
-    Vision/Filters/Patches
-    Vision/Filters/Source
-    Vision/FrameSource
-    Vision/Hough
-    Vision/Localisation
-    Vision/Localisation/Ball
-    Vision/Localisation/Robot
-    Vision/Localisation/Field
-    Vision/Tags
-    Vision/Utils
-    )
-endif(BUILD_KID_SIZE_VISION)
+set (SOURCES_DIRECTORIES
+  ${SOURCES_DIRECTORIES}
+  Vision/Application
+  Vision/Binding
+  Vision/CameraState
+  Vision/Filters
+  Vision/Filters/Ball
+  Vision/Filters/Basics
+  Vision/Filters/Colors
+  Vision/Filters/Custom
+  Vision/Filters/Features
+  Vision/Filters/Goal
+  Vision/Filters/Obstacles
+  Vision/Filters/Patches
+  Vision/Filters/Source
+  Vision/FrameSource
+  Vision/Hough
+  Vision/Localisation
+  Vision/Localisation/Ball
+  Vision/Localisation/Robot
+  Vision/Localisation/Field
+  Vision/Tags
+  Vision/Utils
+  )
 
 #TODO: use a scheme similar to the one used for sources if 
 set (PROTOBUF_MESSAGES
