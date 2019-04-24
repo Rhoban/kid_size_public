@@ -20,7 +20,6 @@ public:
   void step(float elapsed);
   void enterState(std::string state);
   void exitState(std::string state);
-  rhoban_team_play::TeamPlayState teamState();
 
 protected:
   Walk* walk;
