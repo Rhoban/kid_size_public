@@ -213,11 +213,6 @@ void GoalKeeper::onStop()
   */
 }
 
-TeamPlayState GoalKeeper::teamState()
-{
-  return getServices()->teamPlay->selfInfo().state;
-}
-
 // check that the ball is in the goalAreaLength +xd +yd
 bool GoalKeeper::ballInZone(float xd, float yd)
 {
