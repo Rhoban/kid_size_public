@@ -473,7 +473,7 @@ void ModelService::loadReplays(const std::string& filepath)
 {
   _isReplay = true;
   _histories.loadReplays(filepath);
-  _replayTimestamp = _histories.smallerTimestamp();
+  _replayTimestamp = _histories.smallestTimestamp();
   std::cout << "Replay timestamp: " << _replayTimestamp << std::endl;
 }
 
