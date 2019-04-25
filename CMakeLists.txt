@@ -32,6 +32,7 @@ option (KID_SIZE_USES_IDS "Enable support for ids imaging cameras" OFF)
 option (BUILD_VISION_OPENCL "Build vision with OpenCL support" OFF)
 option (BUILD_KID_SIZE_PROGRAM_VISION "Enable the build of Vision Programs" OFF)
 option (BUILD_KID_SIZE_PROGRAM_STRATEGY "Enable the build of Strategy programs" OFF)
+option (KID_SIZE_PYTHON_BINDING "Build python binding for kid size" OFF)
 
 #Define Vision enable Macro + specific includes
 enable_language(ASM)
@@ -211,4 +212,12 @@ if (CATKIN_ENABLE_TESTING)
     catkin_add_gtest(${id} tests/${test}.cpp)
     target_link_libraries(${id} ${LINKED_LIBRARIES} kid_size)
   endforeach(test)
+endif()
+
+if (KID_SIZE_PYTHON_BINDING)
+  set(PYBIND11_PYTHON_VERSION 3.6)
+  add_subdirectory(pybind11)
+
+  pybind11_add_module(rhoban KidSize/python.cpp)
+  target_link_libraries(rhoban kid_size ${PYTHON_LIBRARY} pybind11::module)
 endif()

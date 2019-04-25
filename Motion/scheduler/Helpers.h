@@ -70,6 +70,9 @@ public:
   float getError(const std::string& servo);
   std::vector<std::string> getServoNames();
 
+  void lockScheduler();
+  void unlockScheduler();
+
   /**
    * Accessing the IMU
    */

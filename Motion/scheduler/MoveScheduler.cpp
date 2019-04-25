@@ -154,6 +154,7 @@ void MoveScheduler::execute()
     _manager.waitNextFlush();
     TimeStamp stopFlush = TimeStamp::now();
 
+    mutex.lock();
     // Ticking services
     //(in defined orger by vector container)
     TimeStamp startTickServices = TimeStamp::now();
@@ -172,6 +173,7 @@ void MoveScheduler::execute()
       move.second->ElapseTick::tick();
     }
     TimeStamp stopTickMoves = TimeStamp::now();
+    mutex.unlock();
 
     // Update statistics
     double durationFlush = diffMs(startFlush, stopFlush);

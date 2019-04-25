@@ -87,6 +87,8 @@ public:
    */
   void askQuit();
 
+  std::mutex mutex;
+
 private:
   /**
    * Main loop execute() state

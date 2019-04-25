@@ -130,6 +130,16 @@ bool Helpers::isRX(const std::string& servo)
   return (type.substr(0, 2) == "RX");
 }
 
+void Helpers::lockScheduler()
+{
+  _scheduler->mutex.lock();
+}
+
+void Helpers::unlockScheduler()
+{
+  _scheduler->mutex.unlock();
+}
+
 float Helpers::getAngle(const std::string& servo)
 {
   if (isFakeMode())
