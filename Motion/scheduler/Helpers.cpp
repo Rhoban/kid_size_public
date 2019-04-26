@@ -13,6 +13,10 @@ using namespace rhoban_utils;
 static rhoban_utils::Logger out("helpers");
 
 bool Helpers::isPython = false;
+bool Helpers::fakeIMU = false;
+double Helpers::fakeYaw = 0.0;
+double Helpers::fakePitch = 0.0;
+double Helpers::fakeRoll = 0.0;
 
 Helpers::Helpers() : _scheduler(nullptr)
 {
@@ -190,11 +194,10 @@ std::vector<std::string> Helpers::getServoNames()
 
 void Helpers::setFakeIMU(double yaw, double pitch, double roll)
 {
-  Eigen::Matrix3d rotation;
-  rotation = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()) *
-             Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
-             Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX());
-  _scheduler->getServices()->model->goalModel().setOrientation(rotation);
+  Helpers::fakeYaw = yaw;
+  Helpers::fakePitch = pitch;
+  Helpers::fakeRoll = roll;
+  Helpers::fakeIMU = true;
 }
 
 void Helpers::setFakePosition(double x, double y, double theta)
@@ -211,6 +214,10 @@ void Helpers::setFakeBallPosition(double x, double y)
 
 float Helpers::getYaw()
 {
+  if (Helpers::fakeIMU) {
+    return Helpers::fakeYaw;
+  }
+
   if (isFakeMode())
   {
     return _scheduler->getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
@@ -225,6 +232,10 @@ float Helpers::getYaw()
 
 float Helpers::getPitch()
 {
+  if (Helpers::fakeIMU) {
+    return Helpers::fakePitch;
+  }
+
   if (isFakeMode())
   {
     return _scheduler->getServices()->model->goalModel().get().trunkSelfOrientation().y();
@@ -238,6 +249,10 @@ float Helpers::getPitch()
 
 float Helpers::getRoll()
 {
+  if (Helpers::fakeIMU) {
+    return Helpers::fakeRoll;
+  }
+
   if (isFakeMode())
   {
     return _scheduler->getServices()->model->goalModel().get().trunkSelfOrientation().x();
@@ -251,6 +266,10 @@ float Helpers::getRoll()
 
 float Helpers::getGyroYaw()
 {
+  if (Helpers::fakeIMU) {
+    return Helpers::fakeYaw;
+  }
+
   if (isFakeMode())
   {
     return _scheduler->getServices()->model->goalModel().get().orientationYaw("trunk", "origin");

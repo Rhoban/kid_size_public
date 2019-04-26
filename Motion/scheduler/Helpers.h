@@ -94,6 +94,8 @@ public:
   float getPressureWeight();
 
   static bool isPython;
+  static bool fakeIMU;
+  static double fakeYaw, fakePitch, fakeRoll;
 
 private:
   /**
