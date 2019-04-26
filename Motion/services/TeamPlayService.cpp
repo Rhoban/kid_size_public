@@ -3,6 +3,7 @@
 #include <rhoban_utils/timing/time_stamp.h>
 #include <rhoban_utils/logging/logger.h>
 
+#include "CaptainService.h"
 #include "DecisionService.h"
 #include "LocalisationService.h"
 #include "Services.h"
@@ -219,6 +220,12 @@ void TeamPlayService::messageSend()
       //      protobuf_message_manager and replace it.
       int teamId = getServices()->referee->teamId;
       exportTeamPlayToGameWrapper(_selfInfo, teamId, _isFieldInverted, &_myMessage);
+      CaptainService * captain_service = Helpers::getServices()->captain;
+      if (captain_service->amICaptain())
+      {
+        hl_communication::Captain* dst = _myMessage.mutable_robot_msg()->mutable_captain();
+        exportCaptain(captain_service->getInfo(), _isFieldInverted, dst);
+      }
       _protobuf_message_manager->sendMessage(&_myMessage);
     }
   }
