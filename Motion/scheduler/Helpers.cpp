@@ -140,6 +140,11 @@ void Helpers::unlockScheduler()
   _scheduler->mutex.unlock();
 }
 
+void Helpers::setSchedulerClock(double value)
+{
+  _scheduler->setManualClock(value);
+}
+
 float Helpers::getAngle(const std::string& servo)
 {
   if (isFakeMode())

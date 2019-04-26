@@ -72,6 +72,7 @@ public:
 
   void lockScheduler();
   void unlockScheduler();
+  void setSchedulerClock(double value);
 
   /**
    * Accessing the IMU

@@ -52,7 +52,12 @@ public:
    * Does not return until askQuit() is called.
    * Main motion application loop.
    */
-  void execute();
+  void execute(bool manualClock=false);
+
+  /**
+   * Set the manual clock value
+   */
+  void setManualClock(double value);
 
   /**
    * Access to all services
@@ -110,6 +115,7 @@ private:
   double _minTimeTickServices;
   double _avgTimeTickServices;
   double _maxTimeTickServices;
+  double _manualClock;
 
   /**
    * RhAL low level manager
