@@ -18,6 +18,10 @@ double Helpers::fakeYaw = 0.0;
 double Helpers::fakePitch = 0.0;
 double Helpers::fakeRoll = 0.0;
 
+bool Helpers::fakePressure = false;
+double Helpers::pressureLeftX, Helpers::pressureLeftY, Helpers::pressureLeftWeight;
+double Helpers::pressureRightX, Helpers::pressureRightY, Helpers::pressureRightWeight;
+
 Helpers::Helpers() : _scheduler(nullptr)
 {
 }
@@ -281,42 +285,24 @@ float Helpers::getGyroYaw()
   }
 }
 
-void Helpers::setFakePressure(double left_1, double left_2, double left_3, double left_4,
-                              double right_1, double right_2, double right_3, double right_4)
+void Helpers::updatePressure()
 {
-  auto& pressureLeft = _scheduler->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
-  auto& pressureRight = _scheduler->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
+  if (Helpers::fakePressure)
+  {
+    return;
+  }
 
-  pressureLeft.pressure(0) = (left_1);
-  pressureLeft.pressure(1) = (left_2);
-  pressureLeft.pressure(2) = (left_3);
-  pressureLeft.pressure(3) = (left_4);
-
-  pressureRight.pressure(0) = (right_1);
-  pressureRight.pressure(1) = (right_2);
-  pressureRight.pressure(2) = (right_3);
-  pressureRight.pressure(3) = (right_4);
-}
-
-float Helpers::getPressureWeight()
-{
-  auto& pressureLeft = _scheduler->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
-  auto& pressureRight = _scheduler->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
-
-  return pressureLeft.getWeight() + pressureRight.getWeight();
-}
-
-float Helpers::getPressureLeftRatio()
-{
   if (isFakeMode())
   {
     if (_scheduler->getServices()->model->goalModel().getSupportFoot() == Leph::HumanoidFixedModel::LeftSupportFoot)
     {
-      return 1.0;
+      pressureLeftWeight = 1.0;
+      pressureRightWeight = 0.0;
     }
     else
     {
-      return 0.0;
+      pressureLeftWeight = 0.0;
+      pressureRightWeight = 1.0;
     }
   }
   else
@@ -324,50 +310,90 @@ float Helpers::getPressureLeftRatio()
     auto& pressureLeft = _scheduler->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
     auto& pressureRight = _scheduler->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
 
-    float left = pressureLeft.getWeight();
-    float right = pressureRight.getWeight();
-    float total = left + right;
+    pressureLeftWeight = pressureLeft.getWeight();
+    pressureLeftX = pressureLeft.getX();
+    pressureLeftY = pressureLeft.getY();
+    pressureRightWeight = pressureRight.getWeight();
+    pressureRightX = pressureRight.getX();
+    pressureRightY = pressureRight.getY();
+  }
+}
 
-    if (total > 0)
-    {
-      return left / total;
-    }
-    else
-    {
-      return 0;
-    }
+void Helpers::setFakePressure(double left_x, double left_y, double left_weight, 
+                              double right_x, double right_y, double right_weight)
+{
+  fakePressure = true;
+  pressureLeftX = left_x;
+  pressureLeftX = left_y;
+  pressureLeftWeight = left_weight;
+  pressureRightX = right_x;
+  pressureRightX = right_y;
+  pressureRightWeight = right_weight;
+}
+
+float Helpers::getPressureWeight()
+{
+  updatePressure();
+
+  return pressureLeftWeight + pressureRightWeight;
+}
+
+float Helpers::getPressureLeftRatio()
+{
+  updatePressure();
+
+  double total = pressureLeftWeight + pressureRightWeight;
+  if (total > 0)
+  {
+    return pressureLeftWeight / total;
+  }
+  else
+  {
+    return 0;
   }
 }
 
 float Helpers::getPressureRightRatio()
 {
-  if (isFakeMode())
+  updatePressure();
+
+  double total = pressureLeftWeight + pressureRightWeight;
+  if (total > 0)
   {
-    if (_scheduler->getServices()->model->goalModel().getSupportFoot() == Leph::HumanoidFixedModel::RightSupportFoot)
-    {
-      return 1.0;
-    }
-    else
-    {
-      return 0.0;
-    }
+    return pressureRightWeight / total;
   }
   else
   {
-    auto& pressureLeft = _scheduler->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
-    auto& pressureRight = _scheduler->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
+    return 0;
+  }
+}
 
-    float left = pressureLeft.getWeight();
-    float right = pressureRight.getWeight();
-    float total = left + right;
+float Helpers::getPressureX()
+{
+  updatePressure();
 
-    if (total > 0)
-    {
-      return right / total;
-    }
-    else
-    {
-      return 0;
-    }
+  double total = pressureLeftWeight + pressureRightWeight;
+  if (total > 0)
+  {
+    return (pressureLeftX * pressureLeftWeight + pressureRightX * pressureRightWeight) / total;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+float Helpers::getPressureY()
+{
+  updatePressure();
+
+  double total = pressureLeftWeight + pressureRightWeight;
+  if (total > 0)
+  {
+    return ((pressureLeftY + 0.07) * pressureLeftWeight + (pressureRightY - 0.07) * pressureRightWeight) / total;
+  }
+  else
+  {
+    return 0;
   }
 }

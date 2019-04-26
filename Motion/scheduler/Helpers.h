@@ -92,11 +92,18 @@ public:
   float getPressureLeftRatio();
   float getPressureRightRatio();
   float getPressureWeight();
+  float getPressureX();
+  float getPressureY();
+  void updatePressure();
 
   void setFakePressure(
-    double left_1, double left_2, double left_3, double left_4,
-    double right_1, double right_2, double right_3, double right_4
+    double left_x, double left_y, double left_weight,
+    double right_x, double right_y, double right_weight
   );
+
+  static bool fakePressure;
+  static double pressureLeftX, pressureLeftY, pressureLeftWeight;
+  static double pressureRightX, pressureRightY, pressureRightWeight;
 
   static bool isPython;
   static bool fakeIMU;

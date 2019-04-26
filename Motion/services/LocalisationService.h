@@ -225,6 +225,8 @@ public:
 
   Leph::HumanoidFixedModel fakeRobot;
 
+  Leph::HumanoidFixedModel &getFakeRobot();
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

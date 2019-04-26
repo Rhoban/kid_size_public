@@ -320,7 +320,7 @@ bool DecisionService::tick(double elapsed)
     bind.push();
   }
 
-  if (!Helpers::isFakeMode())
+  if (!Helpers::isFakeMode() || Helpers::isPython)
   {
     // Detecting robot handling
     if (!isFallen && getPressureWeight() < lowPressureThreshold)

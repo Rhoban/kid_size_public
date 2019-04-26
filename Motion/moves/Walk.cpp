@@ -874,16 +874,7 @@ void Walk::step(float elapsed)
     _orders.setZero();
   }
 
-  auto& pressureLeft = getScheduler()->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
-  auto& pressureRight = getScheduler()->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
-  double total = pressureLeft.getWeight() + pressureRight.getWeight();
-  pressureY = 0;
-  if (total > 0)
-  {
-    pressureY = (pressureLeft.getWeight() * (pressureLeft.getY() + 0.07) +
-                 pressureRight.getWeight() * (pressureRight.getY() - 0.07)) /
-                total;
-  }
+  pressureY = getPressureY();
 
 #ifdef MODE_NOMINAL
   double nominalScore = 0;

@@ -415,7 +415,7 @@ void LocalisationService::applyKick(float x_, float y_)
 
   if (Helpers::isFakeMode() && !Helpers::isPython)
   {
-    double yaw = fakeRobot.get().getDOF("base_yaw");
+    double yaw = getFakeRobot().get().getDOF("base_yaw");
     std::random_device rd;
     std::default_random_engine engine(rd());
     std::uniform_real_distribution<double> unif(-0.1, 0.1);
@@ -633,16 +633,25 @@ std::string LocalisationService::cmdFakeLoc(double fieldX, double fieldY, double
   return "Set fake localization in world";
 }
 
+Leph::HumanoidFixedModel &LocalisationService::getFakeRobot()
+{
+  if (Helpers::isPython) {
+    return fakeRobot;
+  } else {
+    return getServices()->model->goalModel();
+  }
+}
+
 std::string LocalisationService::cmdMoveOnField(double x, double y, double yaw)
 {
   fieldQ = 1;
 
   if (Helpers::isFakeMode())
   {
-    fakeRobot.get().setDOF("base_yaw", 0);
-    fakeRobot.get().setDOF("base_x", x);
-    fakeRobot.get().setDOF("base_y", y);
-    fakeRobot.get().setDOF("base_yaw", yaw);
+    getFakeRobot().get().setDOF("base_yaw", 0);
+    getFakeRobot().get().setDOF("base_x", x);
+    getFakeRobot().get().setDOF("base_y", y);
+    getFakeRobot().get().setDOF("base_yaw", yaw);
   }
   else
   {
@@ -662,9 +671,9 @@ std::string LocalisationService::cmdResetPosition()
 {
   if (Helpers::isFakeMode())
   {
-    fakeRobot.get().setDOF("base_x", 0);
-    fakeRobot.get().setDOF("base_y", 0);
-    fakeRobot.get().setDOF("base_yaw", 0);
+    getFakeRobot().get().setDOF("base_x", 0);
+    getFakeRobot().get().setDOF("base_y", 0);
+    getFakeRobot().get().setDOF("base_yaw", 0);
   }
   else
   {
@@ -751,7 +760,7 @@ void LocalisationService::updateSelfWorldTransforms()
     }
     else
     {
-      world_from_self = fakeRobot.get().selfFrameTransform("origin");
+      world_from_self = getFakeRobot().get().selfFrameTransform("origin");
     }
   }
   else
