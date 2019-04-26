@@ -128,6 +128,7 @@ PYBIND11_MODULE(rhoban, m)
     .def("setFakeIMU", &Helpers::setFakeIMU)
     .def("setFakePosition", &Helpers::setFakePosition)
     .def("setFakeBallPosition", &Helpers::setFakeBallPosition)
+    .def("setFakePressure", &Helpers::setFakePressure)
   ;
 
   py::class_<PyRhio>(m, "PyRhio")

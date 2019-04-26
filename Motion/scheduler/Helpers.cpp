@@ -281,6 +281,23 @@ float Helpers::getGyroYaw()
   }
 }
 
+void Helpers::setFakePressure(double left_1, double left_2, double left_3, double left_4,
+                              double right_1, double right_2, double right_3, double right_4)
+{
+  auto& pressureLeft = _scheduler->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
+  auto& pressureRight = _scheduler->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
+
+  pressureLeft.pressure(0) = (left_1);
+  pressureLeft.pressure(1) = (left_2);
+  pressureLeft.pressure(2) = (left_3);
+  pressureLeft.pressure(3) = (left_4);
+
+  pressureRight.pressure(0) = (right_1);
+  pressureRight.pressure(1) = (right_2);
+  pressureRight.pressure(2) = (right_3);
+  pressureRight.pressure(3) = (right_4);
+}
+
 float Helpers::getPressureWeight()
 {
   auto& pressureLeft = _scheduler->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
