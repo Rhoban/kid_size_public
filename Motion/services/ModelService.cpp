@@ -207,8 +207,10 @@ bool ModelService::tick(double elapsed)
   // the robot is moving
   if (_forceUpdateReadBase || _isUpdateReadBase)
   {
-    _goalModel.updateBase();
-    _readModel.updateBase();
+    if (!Helpers::isPython) {
+      _goalModel.updateBase();
+      _readModel.updateBase();
+    }
   }
 
   if (_isUpdateReadBase)

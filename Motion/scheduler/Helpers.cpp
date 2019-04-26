@@ -4,12 +4,15 @@
 #include "services/Services.h"
 #include "scheduler/MoveScheduler.h"
 #include "services/ModelService.h"
+#include "services/LocalisationService.h"
 #include "Helpers.h"
 #include <Devices/GY85.hpp>
 
 using namespace rhoban_utils;
 
 static rhoban_utils::Logger out("helpers");
+
+bool Helpers::isPython = false;
 
 Helpers::Helpers() : _scheduler(nullptr)
 {
@@ -185,6 +188,27 @@ std::vector<std::string> Helpers::getServoNames()
   return servos;
 }
 
+void Helpers::setFakeIMU(double yaw, double pitch, double roll)
+{
+  Eigen::Matrix3d rotation;
+  rotation = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()) *
+             Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
+             Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX());
+  _scheduler->getServices()->model->goalModel().setOrientation(rotation);
+}
+
+void Helpers::setFakePosition(double x, double y, double theta)
+{
+  auto loc = _scheduler->getServices()->localisation;
+  loc->cmdMoveOnField(x, y, theta);
+}
+
+void Helpers::setFakeBallPosition(double x, double y)
+{
+  auto loc = _scheduler->getServices()->localisation;
+  loc->cmdFakeBall(x, y);
+}
+
 float Helpers::getYaw()
 {
   if (isFakeMode())
@@ -197,6 +221,7 @@ float Helpers::getYaw()
     return gy85.getYaw();
   }
 }
+
 
 float Helpers::getPitch()
 {

@@ -6,6 +6,7 @@
 #include <Eigen/Dense>
 #include <rhoban_geometry/point.h>
 #include <rhoban_utils/timing/time_stamp.h>
+#include <Model/HumanoidFixedModel.hpp>
 
 namespace Vision
 {
@@ -221,6 +222,8 @@ public:
   std::string cmdFakeLoc(double fieldX, double fieldY, double orientation);
   std::string cmdResetPosition();
   std::string cmdMoveOnField(double x, double y, double yaw);
+
+  Leph::HumanoidFixedModel fakeRobot;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

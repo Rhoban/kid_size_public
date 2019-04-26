@@ -160,9 +160,9 @@ void MoveScheduler::execute(bool manualClock)
       double tmp = _manualClock;
       manualElapsed = tmp-lastManualClock;
       lastManualClock = tmp;
-    }
-    if (manualElapsed <= 0) {
-      continue;
+      if (manualElapsed <= 0) {
+        continue;
+      }
     }
     startLoop = TimeStamp::now();
 

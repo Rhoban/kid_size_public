@@ -82,12 +82,18 @@ public:
   float getYaw();
   float getGyroYaw();
 
+  void setFakeIMU(double yaw, double pitch, double roll);
+  void setFakePosition(double x, double y, double theta);
+  void setFakeBallPosition(double x, double y);
+
   /**
    * Accessing the pressure sensor
    */
   float getPressureLeftRatio();
   float getPressureRightRatio();
   float getPressureWeight();
+
+  static bool isPython;
 
 private:
   /**

@@ -2,6 +2,7 @@
 #include <RhIO.hpp>
 #include <robocup_referee/constants.h>
 #include <pybind11/pybind11.h>
+#include <rhoban_utils/angle.h>
 #include <pybind11/stl.h>
 #include "scheduler/MoveScheduler.h"
 #include "scheduler/Helpers.h"
@@ -12,9 +13,12 @@ namespace py = pybind11;
 std::thread* moveSchedulerThread;
 Helpers* execute()
 {
+  Helpers::isPython = true;
+
   RhIO::start(RhIO::ServersPortBase);
   robocup_referee::Constants::field.loadFile("field.json");
   RhIO::Root.load("rhio");
+
   MoveScheduler* scheduler = NULL;
   Helpers* helpers = new Helpers();
 
@@ -24,6 +28,8 @@ Helpers* execute()
     {
       scheduler = new MoveScheduler();
       helpers->setScheduler(scheduler);
+      RhIO::Root.setBool("/decision/isBallQualityGood", true);
+      RhIO::Root.setBool("/decision/isFieldQualityGood", true);
       scheduler->execute(true);
     }
     catch (const std::runtime_error& exc)
@@ -82,7 +88,7 @@ public:
     hasPos = true;
     posX = x;
     posY = y;
-    posTheta = theta;
+    posTheta = rhoban_utils::deg2rad(theta);
     return "OK";
   }
   bool hasPos = false;
@@ -113,28 +119,32 @@ PYBIND11_MODULE(rhoban, m)
 
   // Binding helpers class
   py::class_<Helpers>(m, "Helpers")
-      .def(py::init<>())
-      .def("setScheduler", &Helpers::setScheduler)
-      .def("lockScheduler", &Helpers::lockScheduler)
-      .def("unlockScheduler", &Helpers::unlockScheduler)
-      .def("getAngle", &Helpers::getAngle)
-      .def("setSchedulerClock", &Helpers::setSchedulerClock);
+    .def(py::init<>())
+    .def("setScheduler", &Helpers::setScheduler)
+    .def("lockScheduler", &Helpers::lockScheduler)
+    .def("unlockScheduler", &Helpers::unlockScheduler)
+    .def("getAngle", &Helpers::getAngle)
+    .def("setSchedulerClock", &Helpers::setSchedulerClock)
+    .def("setFakeIMU", &Helpers::setFakeIMU)
+    .def("setFakePosition", &Helpers::setFakePosition)
+    .def("setFakeBallPosition", &Helpers::setFakeBallPosition)
+  ;
 
   py::class_<PyRhio>(m, "PyRhio")
-      .def(py::init<>())
+    .def(py::init<>())
 
-      .def_readwrite("hasFriction", &PyRhio::hasFriction)
-      .def_readwrite("lateralFriction", &PyRhio::lateralFriction)
-      .def_readwrite("spinningFriction", &PyRhio::spinningFriction)
-      .def_readwrite("rollingFriction", &PyRhio::rollingFriction)
+    .def_readwrite("hasFriction", &PyRhio::hasFriction)
+    .def_readwrite("lateralFriction", &PyRhio::lateralFriction)
+    .def_readwrite("spinningFriction", &PyRhio::spinningFriction)
+    .def_readwrite("rollingFriction", &PyRhio::rollingFriction)
 
-      .def_readwrite("hasPos", &PyRhio::hasPos)
-      .def_readwrite("posX", &PyRhio::posX)
-      .def_readwrite("posY", &PyRhio::posY)
-      .def_readwrite("posTheta", &PyRhio::posTheta)
+    .def_readwrite("hasPos", &PyRhio::hasPos)
+    .def_readwrite("posX", &PyRhio::posX)
+    .def_readwrite("posY", &PyRhio::posY)
+    .def_readwrite("posTheta", &PyRhio::posTheta)
 
-      .def_readwrite("hasBall", &PyRhio::hasBall)
-      .def_readwrite("ballX", &PyRhio::ballX)
-      .def_readwrite("ballY", &PyRhio::ballY)
+    .def_readwrite("hasBall", &PyRhio::hasBall)
+    .def_readwrite("ballX", &PyRhio::ballX)
+    .def_readwrite("ballY", &PyRhio::ballY)
   ;
 }
