@@ -63,7 +63,7 @@ public:
   /**
    * Is the current step a new step?
    */
-  bool isNewStep() const;
+  bool isNewStep(double elapsed) const;
 
   /**
    * Return the current raw walk goal displacement

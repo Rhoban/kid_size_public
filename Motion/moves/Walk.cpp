@@ -361,10 +361,10 @@ Walk::Walk(Kick* kickMove) : kickMove(kickMove), ratioHistory(0.5)
       ->defaultValue(10)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDLatByCycle", maxDLatByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(5)
+      ->defaultValue(10)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(3)
+      ->defaultValue(5)
       ->comment("Maximal difference between two steps [deg/step^2]");
 
   // Dont walk flag
@@ -397,9 +397,14 @@ double Walk::getLastPhase() const
   return lastPhase;
 }
 
-bool Walk::isNewStep() const
+bool Walk::isNewStep(double elapsed) const
 {
-  return phasePassed(lastPhase, phase, 0.0) || phasePassed(lastPhase, phase, 0.5);
+  double futurePhase = phase + elapsed * _params("freq");
+  if (futurePhase > 1.0) {
+    futurePhase -= int(futurePhase);
+  }
+
+  return phasePassed(phase, futurePhase, 0.0) || phasePassed(phase, futurePhase, 0.5);
 }
 
 Eigen::Vector4d Walk::getRawOrder() const
@@ -756,7 +761,8 @@ void Walk::step(float elapsed)
 
   // Smoothing
   smoothing = smoothing * smoothCommands + (walkEnableTarget ? 1 : 0) * (1.0 - smoothCommands);
-  bool newStep = isNewStep();
+  bool newStep = isNewStep(elapsed);
+
   if (!forbidOrders && newStep)
   {
     double tmpMaxDStepByCycle = maxDStepByCycle;
