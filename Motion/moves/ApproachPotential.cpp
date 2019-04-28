@@ -39,15 +39,15 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
 
   bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)->defaultValue(0.7);
 
-  bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)->defaultValue(30);
+  bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)->defaultValue(200);
 
   // Servoing
-  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(1);
-  bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(3);
+  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(8);
+  bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(16);
   bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)->defaultValue(0.0);
   bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)->defaultValue(0.0);
-  bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)->defaultValue(8);
-  bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)->defaultValue(10);
+  bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)->defaultValue(0);
+  bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)->defaultValue(0.5);
   bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)->defaultValue(0.0);
 
   // Acceptance
@@ -58,7 +58,7 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)->defaultValue(false);
 
   // Are we using a final last step
-  bind->node().newBool("useLastStep")->persisted(false)->defaultValue(true);
+  bind->node().newBool("useLastStep")->persisted(false)->defaultValue(false);
 }
 
 Angle ApproachPotential::getKickCap()
@@ -100,6 +100,11 @@ void ApproachPotential::onStop()
 void ApproachPotential::getControl(const Target& target, const Point& ball, double& x, double& y, double& yaw)
 {
   double dist = target.position.getLength();
+
+  // x = target.position.x*100;
+  // y = target.position.y*100;
+  // yaw = target.yaw.getSignedValue();
+  // return;
 
   // Going directly (to debug the target)
   // logger.log("Target: %f, %f, %f\n", target.position.x, target.position.y, target.yaw.getSignedValue());
@@ -157,15 +162,15 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   if (dist < 0.65)
   {
     // We are near the ball, let's face it
-    error = ballCap;
+    // error = ballCap;
   }
-  if (dist < 0.4)
+  if (dist < 0.6)
   {
     // We are near the goal, let's face the goal
     error = targetCap;
   }
 
-  if (dist > 0.65)
+  if (dist > 0.6)
   {
     // Avoiding walking backward when error azimuth is high
     control *= std::max<double>(0, cos(error));
@@ -173,8 +178,13 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
 
   // Response
   x = control.x;
-  y = control.y;
-  yaw = error;
+
+  if (dist > 0.6) {
+    y =  0;
+  } else {
+    y = control.y;
+  }
+  yaw = rad2deg(error);
 }
 
 void ApproachPotential::step(float elapsed)
@@ -222,8 +232,14 @@ void ApproachPotential::step(float elapsed)
       lastFootChoice = 0;
     }
 
+
     auto allowedKicks = getAllowedKicks();
 
+    // XXX: HACK to force classic right foot
+    // left = false;
+    // allowedKicks.clear();
+    // allowedKicks.push_back("classic");
+    
     if (allowedKicks.size())
     {
       for (const std::string& name : allowedKicks)
@@ -241,6 +257,10 @@ void ApproachPotential::step(float elapsed)
           double toleranceStep = 1;  // Previously 5
           double kick_tol_rad = kmc.getKickModel(name).getKickZone().getThetaTol();
           double maxAlpha = getKickTolerance() - rad2deg(kick_tol_rad);
+
+          // XXX: Hack to kick only forward
+          // maxAlpha = 0;
+
           for (double alpha = toleranceStep; alpha < maxAlpha; alpha += toleranceStep)
           {
             toleranceAngles.push_back(-alpha);
@@ -277,7 +297,9 @@ void ApproachPotential::step(float elapsed)
       {
         double cX, cY, cYaw;
         getControl(t, ball, cX, cY, cYaw);
-        double score = t.position.getLength();
+        double score = fabs(target.position.x);
+        score += 4*fabs(target.position.y);
+        
         score += fabs(rad2deg(cYaw)) / degsPerMeter;
 
         if (ballField.x < 0)
