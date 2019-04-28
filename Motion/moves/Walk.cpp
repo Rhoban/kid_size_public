@@ -770,11 +770,11 @@ void Walk::step(float elapsed)
     double tmpMaxDTurnByCycle = maxDTurnByCycle;
 
     // We accept way more deceleration than acceleration
-    if (smoothingStep > step)
+    if (fabs(smoothingStep) > fabs(step) && fabs(smoothingStep-step) <= fabs(smoothingStep))
       tmpMaxDStepByCycle *= 5;
-    if (smoothingLateral > lateral)
+    if (fabs(smoothingLateral) > fabs(lateral) && fabs(smoothingLateral-lateral) <= fabs(smoothingLateral))
       tmpMaxDLatByCycle *= 5;
-    if (smoothingTurn > turn)
+    if (fabs(smoothingTurn) > fabs(turn) && fabs(smoothingTurn-turn) <= fabs(smoothingTurn))
       tmpMaxDTurnByCycle *= 5;
 
     VariationBound::update(smoothingStep, step, tmpMaxDStepByCycle, 1);
