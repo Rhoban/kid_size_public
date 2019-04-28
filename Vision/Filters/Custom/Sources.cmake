@@ -9,4 +9,5 @@ set (SOURCES
   FieldBorderData.cpp
   ClippingByBorder.cpp
   WhiteLines.cpp
+  EverythingByDNN.cpp
 )

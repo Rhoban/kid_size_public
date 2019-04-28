@@ -4,6 +4,9 @@ project(kid_size)
 include(FindProtobuf)
 find_package(Protobuf REQUIRED)
 
+set(OpenCV_DIR "/usr/local/include/")
+find_package(OpenCV 3.2.0 REQUIRED)
+
 find_package(catkin REQUIRED COMPONENTS
   hl_communication
   RhAL
@@ -74,12 +77,13 @@ set (INCLUDED_DIRECTORIES
   ${catkin_INCLUDE_DIRS})
 
 include_directories(${INCLUDED_DIRECTORIES} ${CMAKE_CURRENT_BINARY_DIR})
-
+include_directories(${OpenCV_INCLUDE_DIRS})
 #Linked dependency external Libraries
 set (LINKED_LIBRARIES
     pthread
     ${catkin_LIBRARIES}
     ${PROTOBUF_LIBRARIES}
+    ${OpenCV_LIBS}
 )
 
 #Add Vision libraries
