@@ -42,8 +42,8 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)->defaultValue(200);
 
   // Servoing
-  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(8);
-  bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(16);
+  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(5);
+  bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(10);
   bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)->defaultValue(0.0);
   bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)->defaultValue(0.0);
   bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)->defaultValue(0);
