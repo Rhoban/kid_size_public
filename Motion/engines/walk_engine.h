@@ -73,6 +73,7 @@ public:
   double footYOffset;
   double riseGain;
   double frequency;
+  double swingGain;
   double trunkHeight;
   double footDistance;
 
