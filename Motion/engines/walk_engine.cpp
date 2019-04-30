@@ -37,7 +37,7 @@ WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0), xVel(0), yVel(0), z
 }
 
 WalkEngine::WalkEngine()
-  : trunkZOffset(0.02), footYOffset(0.025), riseGain(0.04), frequency(3), xSpeed(0), ySpeed(0), yawSpeed(0), _t(0)
+  : trunkZOffset(0.02), footYOffset(0.025), riseGain(0.04), frequency(3), swingGain(0.5), xSpeed(0), ySpeed(0), yawSpeed(0), _t(0)
 {
 }
 
@@ -107,7 +107,7 @@ void WalkEngine::newStep()
   supportFoot().poses[StepMid].xVel = -xSpeed;
   supportFoot().poses[StepMid].yaw = 0;
   supportFoot().poses[StepMid].yawVel = -yawSpeed;
-  supportFoot().poses[StepMid].y = supportFoot().trunkYOffset/2.0; // XXX: Swing to parametrize
+  supportFoot().poses[StepMid].y = supportFoot().trunkYOffset*(1-swingGain); // XXX: Swing to parametrize
   supportFoot().poses[StepMid].yVel = 0;
 
   // Flying foot will rise
@@ -121,7 +121,7 @@ void WalkEngine::newStep()
   flyingFoot().poses[StepMid].xVel = xSpeed;
   flyingFoot().poses[StepMid].yaw = 0;
   flyingFoot().poses[StepMid].yawVel = yawSpeed;
-  flyingFoot().poses[StepMid].y = flyingFoot().trunkYOffset;
+  flyingFoot().poses[StepMid].y = flyingFoot().trunkYOffset*(1+swingGain);
   flyingFoot().poses[StepMid].yVel = 0;
 
   if (fabs(yawSpeed) > 0.01) {
