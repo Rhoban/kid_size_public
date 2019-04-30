@@ -5,7 +5,14 @@
 WalkTest::WalkTest()
 {  
   Move::initializeBinding();
+
+  bind->bindNew("trunkZOffset", engine.trunkZOffset, RhIO::Bind::PullOnly)->defaultValue(engine.trunkZOffset);
+  bind->bindNew("frequency", engine.frequency, RhIO::Bind::PullOnly)->defaultValue(engine.frequency);
+  bind->bindNew("footYOffset", engine.footYOffset, RhIO::Bind::PullOnly)->defaultValue(engine.footYOffset);
+  bind->bindNew("riseGain", engine.riseGain, RhIO::Bind::PullOnly)->defaultValue(engine.riseGain);
+  
   bind->bindNew("xSpeed", engine.xSpeed, RhIO::Bind::PullOnly)->defaultValue(0.0);
+
   walkT = 0;
 }
 
@@ -28,9 +35,10 @@ void WalkTest::step(float elapsed)
 
   // Ticking
   walkT += elapsed;
-  double over = engine.update(elapsed);
+  double over = engine.update(walkT);
   if (over > 0) {
     walkT = over;
+    std::cout << "New step!" << std::endl;
     engine.newStep();
     engine.update(walkT);
   }

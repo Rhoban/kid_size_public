@@ -55,8 +55,14 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model)
   FootPose leftPose = left.getPosition(_t);
   FootPose rightPose = right.getPosition(_t);
 
-  model.get().legIkLeft("trunk", Eigen::Vector3d(0, footDistance, trunkHeight+trunkZOffset));
-  model.get().legIkRight("trunk", Eigen::Vector3d(0, -footDistance, trunkHeight+trunkZOffset));
+  bool success = true;
+  success = success && model.get().legIkLeft("trunk", 
+        Eigen::Vector3d(leftPose.x, leftPose.y+footDistance, trunkHeight+trunkZOffset+leftPose.z));
+  success = success && model.get().legIkRight("trunk",
+         Eigen::Vector3d(rightPose.x, rightPose.y-footDistance, trunkHeight+trunkZOffset+rightPose.z));
+  if (!success) {
+    std::cerr << "WalkEngine bad orders!" << std::endl;
+  }
 }
 
 double WalkEngine::update(double timeSinceLastStep)
