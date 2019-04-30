@@ -19,6 +19,8 @@
 #include <iostream>
 #include <rhoban_utils/logging/logger.h>
 
+#include <hl_monitoring/field.h>
+
 static rhoban_utils::Logger logger("EverythingByDNN");
 
 using namespace std;
@@ -29,10 +31,39 @@ namespace Vision
 {
 namespace Filters
 {
+  std::map<std::string, hl_monitoring::Field::POIType> EverythingByDNN::stringToPOIEnum = {
+    {"ArenaCorner", hl_monitoring::Field::POIType::ArenaCorner},
+    {"LineCorner", hl_monitoring::Field::POIType::LineCorner},
+    {"T", hl_monitoring::Field::POIType::T},
+    {"X", hl_monitoring::Field::POIType::X},
+    {"Center", hl_monitoring::Field::POIType::Center},
+    {"PenaltyMark", hl_monitoring::Field::POIType::PenaltyMark},
+    {"PostBase", hl_monitoring::Field::POIType::PostBase}
+  };
   
-// EverythingByDNN::EverythingByDNN()
-// {
-// }
+EverythingByDNN::EverythingByDNN() : Filter("EverythingByDNN"), model_path("model.pb")
+{
+  // TODO load classes from json config file
+  classNames.push_back("Empty");
+  classNames.push_back("Ball");
+  classNames.push_back("PostBase");
+  classNames.push_back("LineCorner");
+  classNames.push_back("PenaltyMark");
+  classNames.push_back("Center");
+  classNames.push_back("X");
+  classNames.push_back("ArenaCorner");
+  classNames.push_back("T");
+
+
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("ArenaCorner", hl_monitoring::Field::POIType::ArenaCorner));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("LineCorner", hl_monitoring::Field::POIType::LineCorner));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("T", hl_monitoring::Field::POIType::T));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("X", hl_monitoring::Field::POIType::X));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("Center", hl_monitoring::Field::POIType::Center));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("PenaltyMark", hl_monitoring::Field::POIType::PenaltyMark));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("PostBase", hl_monitoring::Field::POIType::PostBase));
+}
+
 
 void EverythingByDNN::setParameters()
 {
@@ -124,12 +155,18 @@ void EverythingByDNN::process()
       const cv::RotatedRect& roi = rois[patch_id].second;
 
       std::pair<int, double> res = getClass(patch);
-      
 
       bool isValid = res.second >= scoreThreshold;
       
-      
-      std::string s_class = std::to_string(res.first);
+      int int_class = res.first;
+      std::string s_class = classNames.at(int_class);
+
+      if(int_class != 0){// not Empty
+	if(int_class == 1)// Ball
+	  features_provider.pushBall(cv::Point2f(roi.center.x, roi.center.y));
+	else
+	  features_provider.pushPOI(stringToPOIEnum.at(s_class), cv::Point2f(roi.center.x, roi.center.y));
+      }
 
       if(res.first == 0) // Empty
       {
