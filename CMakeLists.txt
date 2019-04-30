@@ -32,6 +32,7 @@ option (KID_SIZE_USES_IDS "Enable support for ids imaging cameras" OFF)
 option (BUILD_VISION_OPENCL "Build vision with OpenCL support" OFF)
 option (BUILD_KID_SIZE_PROGRAM_VISION "Enable the build of Vision Programs" OFF)
 option (BUILD_KID_SIZE_PROGRAM_STRATEGY "Enable the build of Strategy programs" OFF)
+option (BUILD_KID_SIZE_PROGRAM_WALK_ENGINE "Walk engine test program" OFF)
 option (KID_SIZE_PYTHON_BINDING "Build python binding for kid size" OFF)
 
 #Define Vision enable Macro + specific includes
@@ -106,6 +107,7 @@ set(SOURCES_DIRECTORIES
     Motion/scheduler
     Motion/services
     Motion/strategy
+    Motion/engines
 )
 
 set (SOURCES_DIRECTORIES
@@ -190,6 +192,11 @@ add_dependencies(KidSize date)
 if (BUILD_KID_SIZE_PROGRAM_STRATEGY)
     add_executable(KickStrategy Motion/strategy/main.cpp)
     target_link_libraries(KickStrategy ${LINKED_LIBRARIES} kid_size)
+endif ()
+
+if (BUILD_KID_SIZE_PROGRAM_WALK_ENGINE)
+    add_executable(WalkEngine Motion/engines/test_walk_engine.cpp)
+    target_link_libraries(WalkEngine ${LINKED_LIBRARIES} kid_size)
 endif ()
 
 #Build Vision Programs
