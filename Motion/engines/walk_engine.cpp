@@ -107,7 +107,7 @@ void WalkEngine::newStep()
   supportFoot().poses[StepMid].xVel = -xSpeed;
   supportFoot().poses[StepMid].yaw = 0;
   supportFoot().poses[StepMid].yawVel = -yawSpeed;
-  supportFoot().poses[StepMid].y = supportFoot().trunkYOffset;
+  supportFoot().poses[StepMid].y = supportFoot().trunkYOffset/2.0; // XXX: Swing to parametrize
   supportFoot().poses[StepMid].yVel = 0;
 
   // Flying foot will rise

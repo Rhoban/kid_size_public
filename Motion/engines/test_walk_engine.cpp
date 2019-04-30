@@ -13,6 +13,7 @@ int main()
 
   // engine.assignModel(model);
   engine.xSpeed = 0.1;
+  engine.yawSpeed = 0.1;
   engine.reset();
 
   double t = 0;
