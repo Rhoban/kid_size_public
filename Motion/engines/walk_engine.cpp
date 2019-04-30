@@ -1,4 +1,5 @@
 #include "walk_engine.h"
+#include "Utils/AxisAngle.h"
 
 namespace rhoban
 {
@@ -57,9 +58,11 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model)
 
   bool success = true;
   success = success && model.get().legIkLeft("trunk", 
-        Eigen::Vector3d(leftPose.x, leftPose.y, trunkHeight+trunkZOffset+leftPose.z));
+        Eigen::Vector3d(leftPose.x, leftPose.y, trunkHeight+trunkZOffset+leftPose.z),
+        Leph::AxisToMatrix(Eigen::Vector3d(0, 0, leftPose.yaw)));
   success = success && model.get().legIkRight("trunk",
-         Eigen::Vector3d(rightPose.x, rightPose.y, trunkHeight+trunkZOffset+rightPose.z));
+         Eigen::Vector3d(rightPose.x, rightPose.y, trunkHeight+trunkZOffset+rightPose.z),
+         Leph::AxisToMatrix(Eigen::Vector3d(0, 0, rightPose.yaw)));
   if (!success) {
     std::cerr << "WalkEngine bad orders!" << std::endl;
   }
@@ -102,8 +105,10 @@ void WalkEngine::newStep()
   // Support foot at midpoint is at initial position
   supportFoot().poses[StepMid].x = 0;
   supportFoot().poses[StepMid].xVel = -xSpeed;
-  supportFoot().poses[StepEnd].x = -xSpeed/2.0;
-  supportFoot().poses[StepEnd].xVel = -xSpeed;
+  supportFoot().poses[StepMid].yaw = 0;
+  supportFoot().poses[StepMid].yawVel = -yawSpeed;
+  supportFoot().poses[StepMid].y = supportFoot().trunkYOffset;
+  supportFoot().poses[StepMid].yVel = 0;
 
   // Flying foot will rise
   flyingFoot().poses[StepMid].z = riseGain;
@@ -114,8 +119,43 @@ void WalkEngine::newStep()
   // FLying foot trajectory
   flyingFoot().poses[StepMid].x = 0;
   flyingFoot().poses[StepMid].xVel = xSpeed;
-  flyingFoot().poses[StepEnd].x = xSpeed/2.0;
-  flyingFoot().poses[StepEnd].xVel = -xSpeed;
+  flyingFoot().poses[StepMid].yaw = 0;
+  flyingFoot().poses[StepMid].yawVel = yawSpeed;
+  flyingFoot().poses[StepMid].y = flyingFoot().trunkYOffset;
+  flyingFoot().poses[StepMid].yVel = 0;
+
+  if (fabs(yawSpeed) > 0.01) {
+    double cX = xSpeed / yawSpeed;
+
+    double rSupport = cX + supportFoot().trunkYOffset;
+    double rFlying = cX + flyingFoot().trunkYOffset;
+  
+    supportFoot().poses[StepEnd].x = -sin(yawSpeed/2.0)*rSupport;
+    supportFoot().poses[StepEnd].xVel = -cos(yawSpeed/2.0)*xSpeed;
+    supportFoot().poses[StepEnd].y = cos(yawSpeed/2.0)*rSupport - cX;
+    supportFoot().poses[StepEnd].yVel = sin(yawSpeed/2.0)*xSpeed;
+
+    flyingFoot().poses[StepEnd].x = -sin(-yawSpeed/2.0)*rFlying;
+    flyingFoot().poses[StepEnd].xVel = -cos(-yawSpeed/2.0)*xSpeed;
+    flyingFoot().poses[StepEnd].y = cos(-yawSpeed/2.0)*rFlying - cX;
+    flyingFoot().poses[StepEnd].yVel = sin(-yawSpeed/2.0)*xSpeed;
+  } else {
+    supportFoot().poses[StepEnd].x = -xSpeed/2.0;
+    supportFoot().poses[StepEnd].xVel = -xSpeed;
+    supportFoot().poses[StepEnd].y = supportFoot().trunkYOffset;
+    supportFoot().poses[StepEnd].yVel = 0;
+
+    flyingFoot().poses[StepEnd].x = xSpeed/2.0;
+    flyingFoot().poses[StepEnd].xVel = -xSpeed;
+    flyingFoot().poses[StepEnd].y = flyingFoot().trunkYOffset;
+    flyingFoot().poses[StepEnd].yVel = 0;
+  }
+
+  supportFoot().poses[StepEnd].yaw = -yawSpeed/2;
+  supportFoot().poses[StepEnd].yawVel = -yawSpeed;
+
+  flyingFoot().poses[StepEnd].yaw = yawSpeed/2;
+  flyingFoot().poses[StepEnd].yawVel = yawSpeed;
 
   // std::cout << "* Update left spline" << std::endl;
   left.updateSplines();
