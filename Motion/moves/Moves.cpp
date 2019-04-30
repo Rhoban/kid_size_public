@@ -16,6 +16,7 @@
 #include "LogMachine.hpp"
 #include "GoalKick.hpp"
 #include "AutonomousPlaying.h"
+#include "WalkTest.h"
 
 #include "ReactiveKicker.h"
 
@@ -48,10 +49,12 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   kick->cmdKickGen();
 
   Walk* walk = new Walk(kick);
+  WalkTest* walkTest = new WalkTest();
   Head* head = new Head;
   Placer* placer = new Placer(walk);
   StandUp* standup = new StandUp;
   add(walk);
+  add(walkTest);
   add(standup);
   add(head);
   add(new Search(walk, placer));

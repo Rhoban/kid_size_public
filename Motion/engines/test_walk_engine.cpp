@@ -8,7 +8,8 @@ int main()
 {
   // Initializing walk engine with humanoid model
   Leph::HumanoidFixedModel model(Leph::RobotType::SigmabanModel);
-  rhoban::WalkEngine engine(model);
+  rhoban::WalkEngine engine;
+  engine.initByModel(model);
 
   // engine.assignModel(model);
   engine.xSpeed = 0.1;

@@ -14,6 +14,7 @@ set (SOURCES
     Robocup.cpp
     Playing.cpp
     IMUTest.cpp
+    WalkTest.cpp
     GoalKeeper.cpp
     Placer.cpp
     Kick.cpp

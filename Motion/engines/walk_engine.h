@@ -48,7 +48,8 @@ public:
   };
 
   // Ticks the walk engine
-  WalkEngine(Leph::HumanoidFixedModel &model);
+  WalkEngine();
+  void initByModel(Leph::HumanoidFixedModel& model);
 
   // Re-compute splines
   void reset();

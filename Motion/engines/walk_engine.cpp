@@ -35,8 +35,12 @@ WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0), xVel(0), yVel(0), z
 {
 }
 
-WalkEngine::WalkEngine(Leph::HumanoidFixedModel& model)
+WalkEngine::WalkEngine()
   : trunkZOffset(0.02), footYOffset(0.00), riseGain(0.04), frequency(1), xSpeed(0), ySpeed(0), yawSpeed(0), _t(0)
+{
+}
+
+void WalkEngine::initByModel(Leph::HumanoidFixedModel& model)
 {
   // Getting the trunk height and foot distance in zero position from URDF model
   model.get().setDOFZeros();
