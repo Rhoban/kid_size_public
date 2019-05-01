@@ -122,8 +122,6 @@ set (SOURCES_DIRECTORIES
   Vision/Filters/Colors
   Vision/Filters/Custom
   Vision/Filters/Features
-  Vision/Filters/Goal
-  Vision/Filters/Obstacles
   Vision/Filters/Patches
   Vision/Filters/Source
   Vision/FrameSource

@@ -23,7 +23,7 @@ protected:
   virtual void setParameters() override;
 
   void updateNN();
-  
+
   /// Use the neural network to get the patch class and score
   std::pair<int, double> getClass(cv::Mat patch);
 
@@ -33,10 +33,8 @@ private:
   cv::Ptr<cv::dnn::Importer> importer;
   cv::dnn::Net net;
   std::vector<std::string> classNames;
-  FeaturesProvider features_provider;
 
-  static std::map<std::string, hl_monitoring::Field::POIType> stringToPOIEnum; // TODO find better name ...
-  
+  static std::map<std::string, hl_monitoring::Field::POIType> stringToPOIEnum;  // TODO find better name ...
 };
 
 }  // namespace Filters

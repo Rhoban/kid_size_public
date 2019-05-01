@@ -1,4 +1,4 @@
-#include "GoalObservation.hpp"
+#include "FeatureObservation.hpp"
 
 #include "CameraState/CameraState.hpp"
 
@@ -11,9 +11,10 @@
 
 #include <robocup_referee/constants.h>
 
-static rhoban_utils::Logger out("GoalObservation");
+static rhoban_utils::Logger out("FeatureObservation");
 
 using Vision::Utils::CameraState;
+using namespace hl_monitoring;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 using namespace robocup_referee;
@@ -22,16 +23,16 @@ namespace Vision
 {
 namespace Localisation
 {
-double GoalObservation::pError = 0.2;
-double GoalObservation::weightRatio = 0.2;
+double FeatureObservation::pError = 0.2;
+double FeatureObservation::weightRatio = 0.2;
 // Angle tol
-double GoalObservation::maxAngleError = 10;
-double GoalObservation::tolAngleError = 2;
-double GoalObservation::similarAngleLimit = 5;
+double FeatureObservation::maxAngleError = 10;
+double FeatureObservation::tolAngleError = 2;
+double FeatureObservation::similarAngleLimit = 2;
 // Cart tol
-double GoalObservation::maxCartError = 1.0;
-double GoalObservation::tolCartError = 0.2;
-double GoalObservation::similarPosLimit = 0.5;
+double FeatureObservation::maxCartError = 1.0;
+double FeatureObservation::tolCartError = 0.2;
+double FeatureObservation::similarPosLimit = 0.5;
 
 static double getScore(double error, double maxError, double tol)
 {
@@ -42,16 +43,18 @@ static double getScore(double error, double maxError, double tol)
   return 1 - (error - tol) / (maxError - tol);
 }
 
-GoalObservation::GoalObservation() : GoalObservation(PanTilt(Angle(0), Angle(0)), 0, 1)
+FeatureObservation::FeatureObservation()
+  : FeatureObservation(Field::POIType::Unknown, PanTilt(Angle(0), Angle(0)), 0, 1)
 {
 }
 
-GoalObservation::GoalObservation(const PanTilt& panTiltToGoal, double robotHeight_, double weight_)
-  : panTilt(panTiltToGoal), robotHeight(robotHeight_), weight(weight_)
+FeatureObservation::FeatureObservation(hl_monitoring::Field::POIType poiType_, const PanTilt& panTiltToFeature,
+                                       double robotHeight_, double weight_)
+  : poiType(poiType_), panTilt(panTiltToFeature), robotHeight(robotHeight_), weight(weight_)
 {
 }
 
-cv::Point3f GoalObservation::getSeenDir() const
+cv::Point3f FeatureObservation::getSeenDir() const
 {
   Eigen::Vector3d dir = panTilt.toViewVector();
   if (dir.z() > 0)
@@ -62,12 +65,12 @@ cv::Point3f GoalObservation::getSeenDir() const
   return eigen2CV(Eigen::Vector3d(scale * dir));
 }
 
-double GoalObservation::potential(const FieldPosition& p) const
+double FeatureObservation::potential(const FieldPosition& p) const
 {
   return potential(p, false);
 }
 
-double GoalObservation::potential(const FieldPosition& p, bool debug) const
+double FeatureObservation::potential(const FieldPosition& p, bool debug) const
 {
   double bestScore = 0;
   cv::Point3f seenDir = getSeenDir();
@@ -79,12 +82,13 @@ double GoalObservation::potential(const FieldPosition& p, bool debug) const
         << ") -> seenDir: " << seenDir << std::endl;
   }
 
-  for (auto& goalPost : Constants::field.getGoalPosts())
+  for (const cv::Point3f& cvFeaturePosInField : Constants::field.getPointsOfInterestByType().at(poiType))
   {
-    Point field_postPos = cv2rg(goalPost) - p.getRobotPosition();
-    Point robot_postPos = field_postPos.rotation(-p.getOrientation());
+    Point featurePosInField(cvFeaturePosInField.x, cvFeaturePosInField.y);
+    // Getting feature pos in 
+    Point featurePosInRobot = (featurePosInField - p.getRobotPosition()).rotation(-p.getOrientation());
     // Rotation of alpha around robotPos
-    cv::Point2f expectedPos = rg2cv2f(robot_postPos);
+    cv::Point2f expectedPos = rg2cv2f(featurePosInRobot);
     cv::Point3f expectedDir(expectedPos.x, expectedPos.y, -robotHeight);
     // Computing errors
     double dx = expectedPos.x - seenDir.x;
@@ -99,7 +103,7 @@ double GoalObservation::potential(const FieldPosition& p, bool debug) const
 
     if (debug)
     {
-      oss << "\tPost: " << goalPost << " -> expDir: " << expectedDir << ", "
+      oss << "\t: " << featurePosInField << " -> expDir: " << expectedDir << ", "
           << "angle: (" << aDiff << ", " << aScore << ") "
           << "cartesian: (" << cartDiff << ", " << cartScore << ")" << std::endl;
     }
@@ -119,15 +123,16 @@ double GoalObservation::potential(const FieldPosition& p, bool debug) const
   return getWeightedScore(bestScore * (1 - pError) + pError);
 }
 
-void GoalObservation::merge(const GoalObservation& other)
+void FeatureObservation::merge(const FeatureObservation& other)
 {
   panTilt.pan = Angle::weightedAverage(panTilt.pan, weight, other.panTilt.pan, other.weight);
   panTilt.tilt = Angle::weightedAverage(panTilt.tilt, weight, other.panTilt.tilt, other.weight);
   weight = weight + other.weight;
 }
 
-bool GoalObservation::isSimilar(const GoalObservation& o1, const GoalObservation& o2)
+bool FeatureObservation::isSimilar(const FeatureObservation& o1, const FeatureObservation& o2)
 {
+  if (o1.poiType != o2.poiType) return false;
   cv::Point3f seenDir1 = o1.getSeenDir();
   cv::Point3f seenDir2 = o2.getSeenDir();
   Angle aDiff = angleBetween(seenDir1, seenDir2);
@@ -139,76 +144,83 @@ bool GoalObservation::isSimilar(const GoalObservation& o1, const GoalObservation
   return angleSimilar || posSimilar;
 }
 
-void GoalObservation::bindWithRhIO()
+void FeatureObservation::bindWithRhIO()
 {
-  RhIO::Root.newFloat("/localisation/field/GoalObservation/pError")
+  RhIO::Root.newFloat("/localisation/field/FeatureObservation/pError")
       ->defaultValue(pError)
       ->minimum(0.0)
       ->maximum(1.0)
       ->comment("The false positive probability");
-  RhIO::Root.newFloat("/localisation/field/GoalObservation/maxAngleError")
+  RhIO::Root.newFloat("/localisation/field/FeatureObservation/maxAngleError")
       ->defaultValue(maxAngleError)
       ->minimum(0.0)
       ->maximum(180)
       ->comment("The maximum difference between expectation and observation [deg]");
-  RhIO::Root.newFloat("/localisation/field/GoalObservation/tolAngleError")
+  RhIO::Root.newFloat("/localisation/field/FeatureObservation/tolAngleError")
       ->defaultValue(tolAngleError)
       ->minimum(0.0)
       ->maximum(10)
       ->comment("The tolerance between expectation and observation [deg]");
-  RhIO::Root.newFloat("/localisation/field/GoalObservation/similarAngleLimit")
+  RhIO::Root.newFloat("/localisation/field/FeatureObservation/similarAngleLimit")
       ->defaultValue(similarAngleLimit)
       ->minimum(0.0)
       ->maximum(90.0)
       ->comment("Maximal angular difference for similar observations (merge) [deg]");
-  RhIO::Root.newFloat("/localisation/field/GoalObservation/maxCartError")
+  RhIO::Root.newFloat("/localisation/field/FeatureObservation/maxCartError")
       ->defaultValue(maxCartError)
       ->minimum(0.0)
       ->maximum(180)
       ->comment("The maximum difference between expectation and observation [m]");
-  RhIO::Root.newFloat("/localisation/field/GoalObservation/tolCartError")
+  RhIO::Root.newFloat("/localisation/field/FeatureObservation/tolCartError")
       ->defaultValue(tolCartError)
       ->minimum(0.0)
       ->maximum(10)
       ->comment("The tolerance between expectation and observation [m]");
-  RhIO::Root.newFloat("/localisation/field/GoalObservation/similarCartLimit")
+  RhIO::Root.newFloat("/localisation/field/FeatureObservation/similarCartLimit")
       ->defaultValue(similarPosLimit)
       ->minimum(0.0)
       ->maximum(90.0)
       ->comment("Maximal position difference for similar observations (merge) [m]");
-  RhIO::Root.newFloat("/localisation/field/GoalObservation/weightRatio")
+  RhIO::Root.newFloat("/localisation/field/FeatureObservation/weightRatio")
       ->defaultValue(weightRatio)
       ->minimum(0.0)
       ->maximum(90.0)
       ->comment("How is score growing with several particles? pow(score,1+weight*weightRatio)");
 }
 
-void GoalObservation::importFromRhIO()
+void FeatureObservation::importFromRhIO()
 {
-  RhIO::IONode& node = RhIO::Root.child("localisation/field/GoalObservation");
+  RhIO::IONode& node = RhIO::Root.child("localisation/field/FeatureObservation");
   pError = node.getValueFloat("pError").value;
   maxAngleError = node.getValueFloat("maxAngleError").value;
   similarAngleLimit = node.getValueFloat("similarAngleLimit").value;
   similarPosLimit = node.getValueFloat("similarCartLimit").value;
 }
 
-std::string GoalObservation::getClassName() const
+std::string FeatureObservation::getClassName() const
 {
-  return "GoalObservation";
+  return "FeatureObservation";
 }
 
-Json::Value GoalObservation::toJson() const
+Json::Value FeatureObservation::toJson() const
 {
   Json::Value v;
+  v["poiType"] = getPOITypeName();
   v["robotHeight"] = robotHeight;
   v["pan"] = panTilt.pan.getSignedValue();
   v["tilt"] = panTilt.tilt.getSignedValue();
   return v;
 }
 
-void GoalObservation::fromJson(const Json::Value& v, const std::string& dir_name)
+void FeatureObservation::fromJson(const Json::Value& v, const std::string& dir_name)
 {
   (void)dir_name;
+  std::string poiTypeStr;
+  rhoban_utils::tryRead(v, "poiType", &poiTypeStr);
+  if (poiTypeStr != "")
+  {
+    poiType = Field::string2POIType(poiTypeStr);
+  }
   rhoban_utils::tryRead(v, "robotHeight", &robotHeight);
   double pan = panTilt.pan.getSignedValue();
   double tilt = panTilt.tilt.getSignedValue();
@@ -217,20 +229,25 @@ void GoalObservation::fromJson(const Json::Value& v, const std::string& dir_name
   panTilt = PanTilt(Angle(pan), Angle(tilt));
 }
 
-double GoalObservation::getMinScore() const
+double FeatureObservation::getMinScore() const
 {
   return getWeightedScore(pError);
 }
 
-double GoalObservation::getWeightedScore(double score) const
+double FeatureObservation::getWeightedScore(double score) const
 {
   return pow(score, 1 + (weight - 1) * weightRatio);
 }
 
-std::string GoalObservation::toStr() const
+std::string FeatureObservation::getPOITypeName() const
+{
+  return Field::poiType2String(poiType);
+}
+
+std::string FeatureObservation::toStr() const
 {
   std::ostringstream oss;
-  oss << "[GoalObservation: pan=" << panTilt.pan.getSignedValue() << "° tilt=" << panTilt.tilt.getSignedValue() << "°]";
+  oss << "[FeatureObservation: poiType=" << getPOITypeName() << " pan=" << panTilt.pan.getSignedValue() << "° tilt=" << panTilt.tilt.getSignedValue() << "°]";
   return oss.str();
 }
 

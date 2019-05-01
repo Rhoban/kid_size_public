@@ -31,16 +31,16 @@ namespace Vision
 {
 namespace Filters
 {
-  std::map<std::string, hl_monitoring::Field::POIType> EverythingByDNN::stringToPOIEnum = {
-    {"ArenaCorner", hl_monitoring::Field::POIType::ArenaCorner},
-    {"LineCorner", hl_monitoring::Field::POIType::LineCorner},
-    {"T", hl_monitoring::Field::POIType::T},
-    {"X", hl_monitoring::Field::POIType::X},
-    {"Center", hl_monitoring::Field::POIType::Center},
-    {"PenaltyMark", hl_monitoring::Field::POIType::PenaltyMark},
-    {"PostBase", hl_monitoring::Field::POIType::PostBase}
-  };
-  
+std::map<std::string, hl_monitoring::Field::POIType> EverythingByDNN::stringToPOIEnum = {
+  { "ArenaCorner", hl_monitoring::Field::POIType::ArenaCorner },
+  { "LineCorner", hl_monitoring::Field::POIType::LineCorner },
+  { "T", hl_monitoring::Field::POIType::T },
+  { "X", hl_monitoring::Field::POIType::X },
+  { "Center", hl_monitoring::Field::POIType::Center },
+  { "PenaltyMark", hl_monitoring::Field::POIType::PenaltyMark },
+  { "PostBase", hl_monitoring::Field::POIType::PostBase }
+};
+
 EverythingByDNN::EverythingByDNN() : Filter("EverythingByDNN"), model_path("model.pb")
 {
   // TODO load classes from json config file
@@ -54,16 +54,18 @@ EverythingByDNN::EverythingByDNN() : Filter("EverythingByDNN"), model_path("mode
   classNames.push_back("ArenaCorner");
   classNames.push_back("T");
 
-
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("ArenaCorner", hl_monitoring::Field::POIType::ArenaCorner));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("LineCorner", hl_monitoring::Field::POIType::LineCorner));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("T", hl_monitoring::Field::POIType::T));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("X", hl_monitoring::Field::POIType::X));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("Center", hl_monitoring::Field::POIType::Center));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("PenaltyMark", hl_monitoring::Field::POIType::PenaltyMark));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("PostBase", hl_monitoring::Field::POIType::PostBase));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("ArenaCorner",
+  // hl_monitoring::Field::POIType::ArenaCorner)); stringToPOIEnum.insert(std::pair<std::string,
+  // hl_monitoring::Field::POIType>("LineCorner", hl_monitoring::Field::POIType::LineCorner));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("T",
+  // hl_monitoring::Field::POIType::T)); stringToPOIEnum.insert(std::pair<std::string,
+  // hl_monitoring::Field::POIType>("X", hl_monitoring::Field::POIType::X));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("Center",
+  // hl_monitoring::Field::POIType::Center)); stringToPOIEnum.insert(std::pair<std::string,
+  // hl_monitoring::Field::POIType>("PenaltyMark", hl_monitoring::Field::POIType::PenaltyMark));
+  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("PostBase",
+  // hl_monitoring::Field::POIType::PostBase));
 }
-
 
 void EverythingByDNN::setParameters()
 {
@@ -78,7 +80,7 @@ std::string EverythingByDNN::getClassName() const
 {
   return "EverythingByDNN";
 }
-  
+
 Json::Value EverythingByDNN::toJson() const
 {
   Json::Value v = Filter::toJson();
@@ -104,29 +106,29 @@ void EverythingByDNN::updateNN()
   importer = cv::dnn::createTensorflowImporter(model_path.c_str());
   importer->populateNet(net);
 }
-  
+
 std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
 {
   cv::Size patchSize = patch.size();
 
-  if(patchSize.width != patchSize.height != 32) // TODO hardcoded sizes
+  if (patchSize.width != 32 && patchSize.height != 32)  // TODO hardcoded sizes
     cv::resize(patch, patch, cv::Size(32, 32));
-  
+
   cv::dnn::Blob in = cv::dnn::Blob::fromImages(patch);
-  
+
   net.setBlob(".img", in);
-  
+
   Benchmark::open("predict");
   net.forward();
   Benchmark::close("predict");
-  
-  cv::dnn::Blob prob = net.getBlob("tiny_model/fc2/fc2/Softmax");   //gather output of "prob" layer
+
+  cv::dnn::Blob prob = net.getBlob("tiny_model/fc2/fc2/Softmax");  // gather output of "prob" layer
   // std::cout << prob << std::endl;
   int classId;
   double classProb;
-  
-  cv::Mat probMat = prob.matRefConst().reshape(1, 1); //reshape the blob to 1x1000 matrix
-	
+
+  cv::Mat probMat = prob.matRefConst().reshape(1, 1);  // reshape the blob to 1x1000 matrix
+
   std::cout << probMat << std::endl;
   cv::Point classNumber;
   minMaxLoc(probMat, NULL, &classProb, NULL, &classNumber);
@@ -135,9 +137,10 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
 
   return std::pair<int, double>(classId, classProb);
 }
-  
+
 void EverythingByDNN::process()
 {
+  clearAllFeatures();
   cv::Mat output;
   try
   {
@@ -157,36 +160,39 @@ void EverythingByDNN::process()
       std::pair<int, double> res = getClass(patch);
 
       bool isValid = res.second >= scoreThreshold;
-      
+
       int int_class = res.first;
       std::string s_class = classNames.at(int_class);
 
-      if(int_class != 0){// not Empty
-	if(int_class == 1)// Ball
-	  features_provider.pushBall(cv::Point2f(roi.center.x, roi.center.y));
-	else
-	  features_provider.pushPOI(stringToPOIEnum.at(s_class), cv::Point2f(roi.center.x, roi.center.y));
+      if (int_class != 0)
+      {                      // not Empty
+        if (int_class == 1)  // Ball
+          pushBall(cv::Point2f(roi.center.x, roi.center.y));
+        else
+          pushPOI(stringToPOIEnum.at(s_class), cv::Point2f(roi.center.x, roi.center.y));
       }
 
-      if(res.first == 0) // Empty
+      if (res.first == 0)  // Empty
       {
-	drawRotatedRectangle(output, roi, cv::Scalar(0, 0, 255), 2);
-	// cv::putText(output, s_class, cv::Point(roi.center.x, roi.center.y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.8, cv::Scalar(0, 0, 255), 1.5, CV_AA);
+        drawRotatedRectangle(output, roi, cv::Scalar(0, 0, 255), 2);
+        // cv::putText(output, s_class, cv::Point(roi.center.x, roi.center.y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.8,
+        // cv::Scalar(0, 0, 255), 1.5, CV_AA);
       }
       else
-      {      
-	if (isValid)
-	{
-	  drawRotatedRectangle(output, roi, cv::Scalar(0, 255, 0), 2);
-	  cv::putText(output, classNames.at(res.first), cv::Point(roi.center.x, roi.center.y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.8, cv::Scalar(0, 255, 0), 1.5, CV_AA);	
-	}
-	else
-	{
-	  drawRotatedRectangle(output, roi, cv::Scalar(0, 0, 255), 2);
-	  cv::putText(output, classNames.at(res.first), cv::Point(roi.center.x, roi.center.y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.8, cv::Scalar(0, 0, 255), 1.5, CV_AA);
-	}
+      {
+        if (isValid)
+        {
+          drawRotatedRectangle(output, roi, cv::Scalar(0, 255, 0), 2);
+          cv::putText(output, classNames.at(res.first), cv::Point(roi.center.x, roi.center.y),
+                      cv::FONT_HERSHEY_COMPLEX_SMALL, 1.8, cv::Scalar(0, 255, 0), 1.5, CV_AA);
+        }
+        else
+        {
+          drawRotatedRectangle(output, roi, cv::Scalar(0, 0, 255), 2);
+          cv::putText(output, classNames.at(res.first), cv::Point(roi.center.x, roi.center.y),
+                      cv::FONT_HERSHEY_COMPLEX_SMALL, 1.8, cv::Scalar(0, 0, 255), 1.5, CV_AA);
+        }
       }
-
     }
   }
   catch (const std::bad_alloc& exc)
@@ -197,7 +203,6 @@ void EverythingByDNN::process()
     throw std::runtime_error(oss.str());
   }
   img() = output;
-  
 }
 }  // namespace Filters
 }  // namespace Vision
