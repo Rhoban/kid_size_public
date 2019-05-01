@@ -31,6 +31,7 @@ namespace Vision
 {
 namespace Filters
 {
+  
   std::map<std::string, hl_monitoring::Field::POIType> EverythingByDNN::stringToPOIEnum = {
     {"ArenaCorner", hl_monitoring::Field::POIType::ArenaCorner},
     {"LineCorner", hl_monitoring::Field::POIType::LineCorner},
