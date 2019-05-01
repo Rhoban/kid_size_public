@@ -20,13 +20,6 @@ public:
     double yaw;
   };
 
-  enum StepState
-  {
-    StepBegin,
-    StepMid,
-    StepEnd
-  };
-
   struct Foot
   {
     // Get the foot position, t is from 0 to 1, playing the footstep
