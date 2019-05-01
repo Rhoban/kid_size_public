@@ -3,11 +3,13 @@
 #include <rhoban_utils/timing/time_stamp.h>
 #include <rhoban_utils/logging/logger.h>
 
+#include "CaptainService.h"
 #include "DecisionService.h"
 #include "LocalisationService.h"
 #include "Services.h"
 #include "RefereeService.h"
 #include "TeamPlayService.h"
+#include "moves/Move.h"
 
 #include <hl_communication/utils.h>
 
@@ -17,61 +19,6 @@ using namespace hl_communication;
 using namespace rhoban_utils;
 using namespace rhoban_geometry;
 using namespace rhoban_team_play;
-
-void exportTeamPlayToGameWrapper(const rhoban_team_play::TeamPlayInfo& myInfo, int team_id, bool invert_field,
-                                 GameMsg* dst)
-{
-  dst->Clear();
-  RobotMsg* msg = dst->mutable_robot_msg();
-  // Set identifier
-  msg->mutable_robot_id()->set_team_id(team_id);
-  msg->mutable_robot_id()->set_robot_id(myInfo.id);
-  // Set Message
-  TeamPlay* team_play = msg->mutable_team_play();
-  team_play->set_status(UNSPECIFIED_STATUS);  // TODO: improve
-  Perception* perception = msg->mutable_perception();
-  perception->mutable_ball_in_self()->set_x(myInfo.ballX);
-  perception->mutable_ball_in_self()->set_y(myInfo.ballY);
-  WeightedPose* self_in_field = perception->add_self_in_field();
-  self_in_field->set_probability(1.0);  // Currently, only one element is specified
-  self_in_field->mutable_pose()->mutable_position()->set_x(myInfo.fieldX);
-  self_in_field->mutable_pose()->mutable_position()->set_y(myInfo.fieldY);
-  self_in_field->mutable_pose()->mutable_dir()->set_mean(myInfo.fieldYaw);
-  // Hack values to provide date to students
-  double uncertainty_pos = 0.5 + (1 - myInfo.fieldQ) * 2.0;
-  double uncertainty_dir = 5 * M_PI / 180 + (1 - myInfo.fieldConsistency) * 30 * M_PI / 180;
-  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(uncertainty_pos);
-  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(uncertainty_pos);
-  self_in_field->mutable_pose()->mutable_dir()->set_std_dev(uncertainty_dir);
-
-  Intention* intention = msg->mutable_intention();
-  if (myInfo.placing)
-  {
-    PoseDistribution* target_pose = intention->mutable_target_pose_in_field();
-    target_pose->mutable_position()->set_x(myInfo.targetX);
-    target_pose->mutable_position()->set_y(myInfo.targetY);
-    PoseDistribution* local_target = intention->add_waypoints_in_field();
-    local_target->mutable_position()->set_x(myInfo.localTargetX);
-    local_target->mutable_position()->set_y(myInfo.localTargetY);
-  }
-  PositionDistribution* kick_target = intention->mutable_kick_target_in_field();
-  kick_target->set_x(myInfo.ballTargetX);
-  kick_target->set_y(myInfo.ballTargetY);
-  // If field is inverted, apply other strategy
-  if (invert_field)
-  {
-    invertPose(self_in_field->mutable_pose());
-    invertPosition(kick_target);
-    if (myInfo.placing)
-    {
-      invertPose(intention->mutable_target_pose_in_field());
-      for (int idx = 0; idx < intention->waypoints_in_field_size(); idx++)
-      {
-        invertPose(intention->mutable_waypoints_in_field(idx));
-      }
-    }
-  }
-}
 
 TeamPlayService::TeamPlayService()
   : _bind(nullptr)
@@ -237,9 +184,30 @@ void TeamPlayService::messageSend()
     _selfInfo.fieldOk = decision->isFieldQualityGood;
     // Playing state
     strncpy(_selfInfo.stateReferee, RhIO::Root.getStr("referee/state").c_str(), sizeof(_selfInfo.stateReferee));
-    strncpy(_selfInfo.stateRobocup, RhIO::Root.getStr("moves/robocup/state").c_str(), sizeof(_selfInfo.stateRobocup));
-    strncpy(_selfInfo.statePlaying, RhIO::Root.getStr("moves/playing/state").c_str(), sizeof(_selfInfo.statePlaying));
-    strncpy(_selfInfo.stateSearch, RhIO::Root.getStr("moves/search/state").c_str(), sizeof(_selfInfo.stateSearch));
+    if (getMoves()->getMove("robocup")->isRunning())
+    {
+      strncpy(_selfInfo.stateRobocup, RhIO::Root.getStr("moves/robocup/state").c_str(), sizeof(_selfInfo.stateRobocup));
+    }
+    else
+    {
+      strcpy(_selfInfo.stateRobocup, "OFF");
+    }
+    if (getMoves()->getMove("playing")->isRunning())
+    {
+      strncpy(_selfInfo.statePlaying, RhIO::Root.getStr("moves/playing/state").c_str(), sizeof(_selfInfo.statePlaying));
+    }
+    else
+    {
+      strcpy(_selfInfo.statePlaying, "OFF");
+    }
+    if (getMoves()->getMove("search")->isRunning())
+    {
+      strncpy(_selfInfo.stateSearch, RhIO::Root.getStr("moves/search/state").c_str(), sizeof(_selfInfo.stateSearch));
+    }
+    else
+    {
+      strcpy(_selfInfo.stateSearch, "OFF");
+    }
     strncpy(_selfInfo.hardwareWarnings, RhIO::Root.getStr("model/lowlevel_state").c_str(),
             sizeof(_selfInfo.hardwareWarnings));
     // Safe terminating string
@@ -274,6 +242,12 @@ void TeamPlayService::messageSend()
       //      protobuf_message_manager and replace it.
       int teamId = getServices()->referee->teamId;
       exportTeamPlayToGameWrapper(_selfInfo, teamId, _isFieldInverted, &_myMessage);
+      CaptainService * captain_service = Helpers::getServices()->captain;
+      if (captain_service->amICaptain())
+      {
+        hl_communication::Captain* dst = _myMessage.mutable_robot_msg()->mutable_captain();
+        exportCaptain(captain_service->getInfo(), _isFieldInverted, dst);
+      }
       _protobuf_message_manager->sendMessage(&_myMessage);
     }
   }
