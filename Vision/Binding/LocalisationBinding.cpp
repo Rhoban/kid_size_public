@@ -500,13 +500,11 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
 {
   // Declaration of the vectors used
   ObservationVector fieldObservations;
-  std::vector<FeatureObservation*> featureObservations;
-  std::vector<TagsObservation*> tagsObservations;
 
   int obsId = 0;
   for (FeatureObservation* obs : extractFeatureObservations())
   {
-    featureObservations.push_back(obs);
+    fieldObservations.push_back(obs);
     if (debugLevel > 0)
     {
       cv::Point3f pos = obs->getSeenDir();
