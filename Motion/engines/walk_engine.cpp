@@ -3,22 +3,12 @@
 
 namespace rhoban
 {
-void WalkEngine::Foot::updateSplines()
+void WalkEngine::Foot::clearSplines()
 {
   xSpline = Leph::CubicSpline();
   ySpline = Leph::CubicSpline();
   zSpline = Leph::CubicSpline();
   yawSpline = Leph::CubicSpline();
-
-  double t = 0;
-  for (StepState state : {StepBegin, StepMid, StepEnd}) {
-    xSpline.addPoint(t, poses[state].x, poses[state].xVel);
-    ySpline.addPoint(t, poses[state].y, poses[state].yVel);
-    zSpline.addPoint(t, poses[state].z, poses[state].zVel);
-    yawSpline.addPoint(t, poses[state].yaw, poses[state].yawVel);
-    // std::cout << "Spline t: " << t << ", x: " << poses[state].x << std::endl;
-    t += 0.5;
-  }
 }
 
 WalkEngine::FootPose WalkEngine::Foot::getPosition(double t)
@@ -32,12 +22,22 @@ WalkEngine::FootPose WalkEngine::Foot::getPosition(double t)
   return pose;
 }
 
-WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0), xVel(0), yVel(0), zVel(0), yawVel(0)
+WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0)
 {
 }
 
 WalkEngine::WalkEngine()
-  : trunkXOffset(0.0), trunkZOffset(0.02), footYOffset(0.025), riseGain(0.04), frequency(1.5), swingGain(0.5), xSpeed(0), ySpeed(0), yawSpeed(0), _t(0)
+  : trunkXOffset(0.0)
+  , trunkZOffset(0.02)
+  , footYOffset(0.025)
+  , riseGain(0.04)
+  , riseDuration(0)
+  , frequency(1.5)
+  , swingGain(0.5)
+  , xSpeed(0)
+  , ySpeed(0)
+  , yawSpeed(0)
+  , _t(0)
 {
 }
 
@@ -57,116 +57,113 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model)
   FootPose rightPose = right.getPosition(_t);
 
   bool success = true;
-  success = success && model.get().legIkLeft("trunk", 
-        Eigen::Vector3d(leftPose.x, leftPose.y, trunkHeight+trunkZOffset+leftPose.z),
-        Leph::AxisToMatrix(Eigen::Vector3d(0, 0, leftPose.yaw)));
-  success = success && model.get().legIkRight("trunk",
-         Eigen::Vector3d(rightPose.x, rightPose.y, trunkHeight+trunkZOffset+rightPose.z),
-         Leph::AxisToMatrix(Eigen::Vector3d(0, 0, rightPose.yaw)));
-  if (!success) {
+  success = success && model.get().legIkLeft(
+                           "trunk", Eigen::Vector3d(leftPose.x, leftPose.y, trunkHeight + trunkZOffset + leftPose.z),
+                           Leph::AxisToMatrix(Eigen::Vector3d(0, 0, leftPose.yaw)));
+  success = success && model.get().legIkRight(
+                           "trunk", Eigen::Vector3d(rightPose.x, rightPose.y, trunkHeight + trunkZOffset + rightPose.z),
+                           Leph::AxisToMatrix(Eigen::Vector3d(0, 0, rightPose.yaw)));
+  if (!success)
+  {
     std::cerr << "WalkEngine bad orders!" << std::endl;
   }
 }
 
 double WalkEngine::update(double timeSinceLastStep)
 {
-  double period = 1.0/(2*frequency);
+  double halfPeriod = 1.0 / (2 * frequency);
   _t = 0;
 
   // Normalizing t between 0 and 1
-  if (timeSinceLastStep > 0) {
-    _t = timeSinceLastStep / period;
+  if (timeSinceLastStep > 0)
+  {
+    _t = timeSinceLastStep;
   }
-  if (_t > 1) {
-    _t = 1;
+  if (_t > halfPeriod)
+  {
+    _t = halfPeriod;
   }
 
-  return timeSinceLastStep - period;
+  return timeSinceLastStep - halfPeriod;
 }
 
 void WalkEngine::newStep()
 {
+  double halfPeriod = 1.0 / (2 * frequency);
+  Foot oldLeft = left;
+  Foot oldRight = right;
+  left.clearSplines();
+  right.clearSplines();
+  left.halfPeriod = halfPeriod;
+  right.halfPeriod = halfPeriod;
+
   left.trunkYOffset = footDistance + footYOffset;
   right.trunkYOffset = -(footDistance + footYOffset);
 
-  // Pose of the feet at the begining of new step are the ones from the end of last step
-  left.poses[StepBegin] = left.poses[StepEnd];
-  right.poses[StepBegin] = right.poses[StepEnd];
+  // Defining begining of splines according to previous feet position
+  left.xSpline.addPoint(0, oldLeft.xSpline.pos(oldLeft.halfPeriod), oldLeft.xSpline.vel(oldLeft.halfPeriod));
+  left.ySpline.addPoint(0, oldLeft.ySpline.pos(oldLeft.halfPeriod), oldLeft.ySpline.vel(oldLeft.halfPeriod));
+  left.yawSpline.addPoint(0, oldLeft.yawSpline.pos(oldLeft.halfPeriod), oldLeft.yawSpline.vel(oldLeft.halfPeriod));
 
+  right.xSpline.addPoint(0, oldRight.xSpline.pos(oldRight.halfPeriod), oldRight.xSpline.vel(oldRight.halfPeriod));
+  right.ySpline.addPoint(0, oldRight.ySpline.pos(oldRight.halfPeriod), oldRight.ySpline.vel(oldRight.halfPeriod));
+  right.yawSpline.addPoint(0, oldRight.yawSpline.pos(oldRight.halfPeriod), oldRight.yawSpline.vel(oldRight.halfPeriod));
+  
   // Changing support foot
   isLeftSupport = !isLeftSupport;
 
   // Support foot is on the ground
-  supportFoot().poses[StepMid].z = 0;
-  supportFoot().poses[StepMid].zVel = 0;
-  supportFoot().poses[StepEnd].z = 0;
-  supportFoot().poses[StepEnd].zVel = 0;
-
-  // Support foot at midpoint is at initial position
-  supportFoot().poses[StepMid].x = trunkXOffset;
-  supportFoot().poses[StepMid].xVel = -xSpeed;
-  supportFoot().poses[StepMid].yaw = 0;
-  supportFoot().poses[StepMid].yawVel = -yawSpeed;
-  supportFoot().poses[StepMid].y = supportFoot().trunkYOffset*(1-swingGain); // XXX: Swing to parametrize
-  supportFoot().poses[StepMid].yVel = 0;
+  supportFoot().zSpline.addPoint(0, 0, 0);
+  supportFoot().zSpline.addPoint(halfPeriod, 0, 0);
 
   // Flying foot will rise
-  flyingFoot().poses[StepMid].z = riseGain;
-  flyingFoot().poses[StepMid].zVel = 0;
-  flyingFoot().poses[StepEnd].z = 0;
-  flyingFoot().poses[StepEnd].zVel = 0;
+  flyingFoot().zSpline.addPoint(0, 0, 0);
+  if (riseDuration > 0)
+  {
+    flyingFoot().zSpline.addPoint(halfPeriod * (0.5 - riseDuration / 2.0), riseGain, 0);
+    flyingFoot().zSpline.addPoint(halfPeriod * (0.5 + riseDuration / 2.0), riseGain, 0);
+  }
+  else
+  {
+    flyingFoot().zSpline.addPoint(halfPeriod * 0.5, riseGain, 0);
+  }
+  // flyingFoot().zSpline.addPoint(halfPeriod*0.5, riseGain, 0);
+  // flyingFoot().zSpline.addPoint(halfPeriod*(0.5-xxx), riseGain, 0);
+  // flyingFoot().zSpline.addPoint(halfPeriod*(0.5+xxx), riseGain, 0);
+  flyingFoot().zSpline.addPoint(halfPeriod, 0, 0);
 
-  // FLying foot trajectory
-  flyingFoot().poses[StepMid].x = trunkXOffset;
-  flyingFoot().poses[StepMid].xVel = xSpeed;
-  flyingFoot().poses[StepMid].yaw = 0;
-  flyingFoot().poses[StepMid].yawVel = yawSpeed;
-  flyingFoot().poses[StepMid].y = flyingFoot().trunkYOffset*(1+swingGain);
-  flyingFoot().poses[StepMid].yVel = 0;
+  Eigen::Vector2d supportTrunkXOffset(cos(-yawSpeed/2)*trunkXOffset, sin(-yawSpeed/2)*trunkXOffset);
+  Eigen::Vector2d flyingTrunkXOffset(cos(yawSpeed/2)*trunkXOffset, sin(yawSpeed/2)*trunkXOffset);
 
-  if (fabs(yawSpeed) > 0.01) {
+  if (fabs(yawSpeed) > 0.01)
+  {
     double cX = xSpeed / yawSpeed;
 
     double rSupport = cX + supportFoot().trunkYOffset;
     double rFlying = cX + flyingFoot().trunkYOffset;
-  
-    supportFoot().poses[StepEnd].x = -sin(yawSpeed/2.0)*rSupport;
-    supportFoot().poses[StepEnd].xVel = -cos(yawSpeed/2.0)*xSpeed;
-    supportFoot().poses[StepEnd].y = cos(yawSpeed/2.0)*rSupport - cX;
-    supportFoot().poses[StepEnd].yVel = sin(yawSpeed/2.0)*xSpeed;
 
-    flyingFoot().poses[StepEnd].x = -sin(-yawSpeed/2.0)*rFlying;
-    flyingFoot().poses[StepEnd].xVel = -cos(-yawSpeed/2.0)*xSpeed;
-    flyingFoot().poses[StepEnd].y = cos(-yawSpeed/2.0)*rFlying - cX;
-    flyingFoot().poses[StepEnd].yVel = sin(-yawSpeed/2.0)*xSpeed;
-  } else {
-    supportFoot().poses[StepEnd].x = -xSpeed/2.0;
-    supportFoot().poses[StepEnd].xVel = -xSpeed;
-    supportFoot().poses[StepEnd].y = supportFoot().trunkYOffset -ySpeed/2.0;
-    supportFoot().poses[StepEnd].yVel = -ySpeed;
+    supportFoot().xSpline.addPoint(halfPeriod, supportTrunkXOffset.x() - sin(yawSpeed / 2.0) * rSupport,
+                                   -cos(yawSpeed / 2.0) * xSpeed);
+    supportFoot().ySpline.addPoint(halfPeriod, supportTrunkXOffset.y() + cos(yawSpeed / 2.0) * rSupport - cX,
+                                   sin(yawSpeed / 2.0) * xSpeed);
 
-    flyingFoot().poses[StepEnd].x = xSpeed/2.0;
-    flyingFoot().poses[StepEnd].xVel = -xSpeed;
-    flyingFoot().poses[StepEnd].y = flyingFoot().trunkYOffset + ySpeed/2.0;
-    flyingFoot().poses[StepEnd].yVel = -ySpeed;
+    flyingFoot().xSpline.addPoint(halfPeriod, flyingTrunkXOffset.x() - sin(-yawSpeed / 2.0) * rFlying,
+                                  -cos(-yawSpeed / 2.0) * xSpeed);
+    flyingFoot().ySpline.addPoint(halfPeriod, flyingTrunkXOffset.y() + cos(-yawSpeed / 2.0) * rFlying - cX,
+                                  sin(-yawSpeed / 2.0) * xSpeed);
+  }
+  else
+  {
+    supportFoot().xSpline.addPoint(halfPeriod, supportTrunkXOffset.x()-xSpeed / 2.0, -xSpeed);
+    supportFoot().ySpline.addPoint(halfPeriod, supportTrunkXOffset.y()+supportFoot().trunkYOffset - ySpeed / 2.0, -ySpeed);
+
+    flyingFoot().xSpline.addPoint(halfPeriod, flyingTrunkXOffset.x() + xSpeed / 2.0, -xSpeed);
+    flyingFoot().ySpline.addPoint(halfPeriod, flyingTrunkXOffset.y() + flyingFoot().trunkYOffset + ySpeed / 2.0, -ySpeed);
   }
 
-  supportFoot().poses[StepEnd].x += cos(-yawSpeed/2)*trunkXOffset;
-  supportFoot().poses[StepEnd].y += sin(-yawSpeed/2)*trunkXOffset;
-
-  supportFoot().poses[StepEnd].yaw = -yawSpeed/2;
-  supportFoot().poses[StepEnd].yawVel = -yawSpeed;
-
-  flyingFoot().poses[StepEnd].x += cos(yawSpeed/2)*trunkXOffset;
-  flyingFoot().poses[StepEnd].y += sin(yawSpeed/2)*trunkXOffset;
-
-  flyingFoot().poses[StepEnd].yaw = yawSpeed/2;
-  flyingFoot().poses[StepEnd].yawVel = yawSpeed;
-
-  // std::cout << "* Update left spline" << std::endl;
-  left.updateSplines();
-  // std::cout << "* Update right spline" << std::endl;
-  right.updateSplines();
+  // Yaw spline
+  supportFoot().yawSpline.addPoint(halfPeriod, -yawSpeed / 2, -yawSpeed);
+  supportFoot().yawSpline.addPoint(halfPeriod, yawSpeed / 2, yawSpeed);
 }
 
 void WalkEngine::reset()
@@ -174,22 +171,21 @@ void WalkEngine::reset()
   left.trunkYOffset = footDistance + footYOffset;
   right.trunkYOffset = -(footDistance + footYOffset);
 
-  // Left is support foot
   isLeftSupport = false;
-
-  left.poses.clear();
-  right.poses.clear();
 
   FootPose leftInit, rightInit;
   leftInit.y = left.trunkYOffset;
   rightInit.y = right.trunkYOffset;
 
-  left.poses[StepBegin] = leftInit;
-  left.poses[StepMid] = leftInit;
-  left.poses[StepEnd] = leftInit;
-  right.poses[StepBegin] = rightInit;
-  right.poses[StepMid] = rightInit;
-  right.poses[StepEnd] = rightInit;
+  double halfPeriod = 1.0 / (2 * frequency);
+  left.halfPeriod = halfPeriod;
+  right.halfPeriod = halfPeriod;
+  left.xSpline.addPoint(halfPeriod, 0);
+  left.ySpline.addPoint(halfPeriod, left.trunkYOffset);
+  left.yawSpline.addPoint(halfPeriod, 0);
+  right.xSpline.addPoint(halfPeriod, 0);
+  right.ySpline.addPoint(halfPeriod, right.trunkYOffset);
+  right.yawSpline.addPoint(halfPeriod, 0);
 
   newStep();
 }

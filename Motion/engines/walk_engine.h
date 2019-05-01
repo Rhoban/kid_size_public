@@ -18,9 +18,6 @@ public:
 
     double x, y, z;
     double yaw;
-
-    double xVel, yVel, zVel;
-    double yawVel;
   };
 
   enum StepState
@@ -32,17 +29,15 @@ public:
 
   struct Foot
   {
-    // Subsequent poses for the step depending on given time
-    std::map<StepState, FootPose> poses;
-
     // Get the foot position, t is from 0 to 1, playing the footstep
     struct FootPose getPosition(double t);
 
     // Update splines for the foot step
-    void updateSplines();
+    void clearSplines();
     
     // Splines
     Leph::CubicSpline xSpline, ySpline, zSpline, yawSpline;
+    double halfPeriod;
 
     double trunkYOffset;
   };
@@ -73,6 +68,7 @@ public:
   double trunkZOffset;
   double footYOffset;
   double riseGain;
+  double riseDuration;
   double frequency;
   double swingGain;
   double trunkHeight;
