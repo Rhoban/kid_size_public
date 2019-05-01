@@ -71,6 +71,7 @@ public:
   double riseDuration;
   double frequency;
   double swingGain;
+  double swingPhase;
   double trunkHeight;
   double footDistance;
   double footYOffsetPerYSpeed;
@@ -79,5 +80,7 @@ public:
   double xSpeed, ySpeed, yawSpeed;
 
   double _t;
+  double halfPeriod;
+  double _swingGain;
 };
 }  // namespace rhoban
