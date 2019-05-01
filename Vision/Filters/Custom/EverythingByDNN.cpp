@@ -121,7 +121,7 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
 {
   cv::Size patchSize = patch.size();
 
-  if (patchSize.width != 32 && patchSize.height != 32)  // TODO hardcoded sizes
+  if (patchSize.width != 32 || patchSize.height != 32)  // TODO hardcoded sizes
     cv::resize(patch, patch, cv::Size(32, 32));
 
   cv::dnn::Blob in = cv::dnn::Blob::fromImages(patch);
