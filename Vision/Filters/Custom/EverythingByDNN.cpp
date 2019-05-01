@@ -55,7 +55,6 @@ EverythingByDNN::EverythingByDNN() : Filter("EverythingByDNN"), model_path("mode
   classNames.push_back("PenaltyMark");
   classNames.push_back("PostBase");
   classNames.push_back("T");
-
   classNames.push_back("X");
 
 }
