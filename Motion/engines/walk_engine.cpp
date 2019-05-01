@@ -37,7 +37,7 @@ WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0), xVel(0), yVel(0), z
 }
 
 WalkEngine::WalkEngine()
-  : trunkZOffset(0.02), footYOffset(0.025), riseGain(0.04), frequency(3), swingGain(0.5), xSpeed(0), ySpeed(0), yawSpeed(0), _t(0)
+  : trunkXOffset(0.0), trunkZOffset(0.02), footYOffset(0.025), riseGain(0.04), frequency(3), swingGain(0.5), xSpeed(0), ySpeed(0), yawSpeed(0), _t(0)
 {
 }
 
@@ -103,7 +103,7 @@ void WalkEngine::newStep()
   supportFoot().poses[StepEnd].zVel = 0;
 
   // Support foot at midpoint is at initial position
-  supportFoot().poses[StepMid].x = 0;
+  supportFoot().poses[StepMid].x = trunkXOffset;
   supportFoot().poses[StepMid].xVel = -xSpeed;
   supportFoot().poses[StepMid].yaw = 0;
   supportFoot().poses[StepMid].yawVel = -yawSpeed;
@@ -117,7 +117,7 @@ void WalkEngine::newStep()
   flyingFoot().poses[StepEnd].zVel = 0;
 
   // FLying foot trajectory
-  flyingFoot().poses[StepMid].x = 0;
+  flyingFoot().poses[StepMid].x = trunkXOffset;
   flyingFoot().poses[StepMid].xVel = xSpeed;
   flyingFoot().poses[StepMid].yaw = 0;
   flyingFoot().poses[StepMid].yawVel = yawSpeed;
@@ -142,17 +142,23 @@ void WalkEngine::newStep()
   } else {
     supportFoot().poses[StepEnd].x = -xSpeed/2.0;
     supportFoot().poses[StepEnd].xVel = -xSpeed;
-    supportFoot().poses[StepEnd].y = supportFoot().trunkYOffset;
-    supportFoot().poses[StepEnd].yVel = 0;
+    supportFoot().poses[StepEnd].y = supportFoot().trunkYOffset -ySpeed/2.0;
+    supportFoot().poses[StepEnd].yVel = -ySpeed;
 
     flyingFoot().poses[StepEnd].x = xSpeed/2.0;
     flyingFoot().poses[StepEnd].xVel = -xSpeed;
-    flyingFoot().poses[StepEnd].y = flyingFoot().trunkYOffset;
-    flyingFoot().poses[StepEnd].yVel = 0;
+    flyingFoot().poses[StepEnd].y = flyingFoot().trunkYOffset + ySpeed/2.0;
+    flyingFoot().poses[StepEnd].yVel = -ySpeed;
   }
+
+  supportFoot().poses[StepEnd].x += cos(-yawSpeed/2)*trunkXOffset;
+  supportFoot().poses[StepEnd].y += sin(-yawSpeed/2)*trunkXOffset;
 
   supportFoot().poses[StepEnd].yaw = -yawSpeed/2;
   supportFoot().poses[StepEnd].yawVel = -yawSpeed;
+
+  flyingFoot().poses[StepEnd].x += cos(yawSpeed/2)*trunkXOffset;
+  flyingFoot().poses[StepEnd].y += sin(yawSpeed/2)*trunkXOffset;
 
   flyingFoot().poses[StepEnd].yaw = yawSpeed/2;
   flyingFoot().poses[StepEnd].yawVel = yawSpeed;

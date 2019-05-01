@@ -69,6 +69,7 @@ public:
   struct Foot& flyingFoot();
 
   // Walk engine parameters
+  double trunkXOffset;
   double trunkZOffset;
   double footYOffset;
   double riseGain;

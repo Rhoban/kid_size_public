@@ -14,5 +14,8 @@ public:
 
 protected:
   double walkT;
+
+  bool walkEnable;
+  double trunkPitch;
   rhoban::WalkEngine engine;
 };
