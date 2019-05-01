@@ -34,11 +34,11 @@ WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0)
 WalkEngine::WalkEngine()
   : trunkXOffset(0.0)
   , trunkZOffset(0.02)
-  , footYOffset(0.025)
-  , riseGain(0.04)
-  , riseDuration(0.5)
+  , footYOffset(0.035)
+  , riseGain(0.035)
+  , riseDuration(0.2)
   , frequency(1.5)
-  , swingGain(0.5)
+  , swingGain(0.1)
   , footYOffsetPerYSpeed(0.1)
   , xSpeed(0)
   , ySpeed(0)
@@ -145,13 +145,13 @@ void WalkEngine::newStep()
     Point center = speed.perpendicular() / yawSpeed;
 
     // For both feet, computing the new position in the
-    Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
+    Point sFoot(trunkXOffset, supportFoot().trunkYOffset*(1-swingGain));
     sFoot = (sFoot - center).rotation(rad2deg(-yawSpeed / 2.0)) + center;
     Point sFootSpeed = speed.rotation(rad2deg(-yawSpeed / 2.0));
     supportFoot().xSpline.addPoint(halfPeriod, sFoot.x, sFootSpeed.x);
     supportFoot().ySpline.addPoint(halfPeriod, sFoot.y, sFootSpeed.y);
 
-    Point fFoot(trunkXOffset, flyingFoot().trunkYOffset);
+    Point fFoot(trunkXOffset, flyingFoot().trunkYOffset*(1+swingGain));
     fFoot = (fFoot - center).rotation(rad2deg(yawSpeed / 2.0)) + center;
     Point fFootSpeed = -speed.rotation(rad2deg(yawSpeed / 2.0));
     flyingFoot().xSpline.addPoint(halfPeriod, fFoot.x, fFootSpeed.x);
@@ -160,11 +160,11 @@ void WalkEngine::newStep()
   else
   {
     supportFoot().xSpline.addPoint(halfPeriod, trunkXOffset - xSpeed / 2.0, -xSpeed);
-    supportFoot().ySpline.addPoint(halfPeriod, supportFoot().trunkYOffset - ySpeed / 2.0,
+    supportFoot().ySpline.addPoint(halfPeriod, supportFoot().trunkYOffset*(1-swingGain) - ySpeed / 2.0,
                                    -ySpeed);
 
     flyingFoot().xSpline.addPoint(halfPeriod, trunkXOffset + xSpeed / 2.0, -xSpeed);
-    flyingFoot().ySpline.addPoint(halfPeriod, flyingFoot().trunkYOffset + ySpeed / 2.0,
+    flyingFoot().ySpline.addPoint(halfPeriod, flyingFoot().trunkYOffset*(1+swingGain) + ySpeed / 2.0,
                                   -ySpeed);
   }
 
