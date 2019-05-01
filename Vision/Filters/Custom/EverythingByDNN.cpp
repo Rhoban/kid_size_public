@@ -44,7 +44,7 @@ std::map<std::string, hl_monitoring::Field::POIType> EverythingByDNN::stringToPO
 EverythingByDNN::EverythingByDNN() : Filter("EverythingByDNN"), model_path("model.pb")
 {
   // TODO load classes from json config file
-  
+
   // WARNING order is important (alphabetical order)
   //   if classes are removed, just comment the corresponding line, make sure to keep alphabetical order
   classNames.push_back("ArenaCorner");
@@ -56,16 +56,34 @@ EverythingByDNN::EverythingByDNN() : Filter("EverythingByDNN"), model_path("mode
   classNames.push_back("PostBase");
   classNames.push_back("T");
   classNames.push_back("X");
-
 }
 
 void EverythingByDNN::setParameters()
 {
-  // debugLevel = ParamInt(0, 0, 1);
+  debugLevel = ParamInt(0, 0, 1);
   scoreThreshold = ParamFloat(0.5, 0.0, 1.0);
 
-  // params()->define<ParamInt>("debugLevel", &debugLevel);
+  params()->define<ParamInt>("debugLevel", &debugLevel);
   params()->define<ParamFloat>("scoreThreshold", &scoreThreshold);
+
+  for (const std::string& className : classNames)
+  {
+    isUsingFeature[className] = ParamInt(0,0,1);
+    params()->define<ParamInt>("uses" + className, &(isUsingFeature[className]));
+  }
+}
+
+void EverythingByDNN::updateUsedClasses()
+{
+  usedClassNames.clear();
+  for (size_t idx = 0; idx < classNames.size(); idx++)
+  {
+    const std::string& className = classNames[idx];
+    if (className == "Empty" || isUsingFeature[className] != 0)
+    {
+      usedClassNames.push_back(className);
+    }
+  }
 }
 
 std::string EverythingByDNN::getClassName() const
@@ -119,9 +137,19 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
   int classId;
   double classProb;
 
-  cv::Mat probMat = prob.matRefConst().reshape(1, 1);  // reshape the blob to 1x1000 matrix
+  cv::Mat probMat = prob.matRefConst().reshape(1, 1);  // reshape the blob to 1xNbClass matrix
 
-  std::cout << probMat << std::endl;
+  size_t nbClassesDNN = probMat.cols;
+  size_t usedClasses = usedClassNames.size();
+  if (nbClassesDNN != usedClasses)
+  {
+    throw std::runtime_error("#classes in DNN(" + std::to_string(nbClassesDNN) + ") does not match #usedClasses (" +
+                             std::to_string(usedClasses) + ")");
+  }
+  if (debugLevel > 0)
+  {
+    std::cout << probMat << std::endl;
+  }
   cv::Point classNumber;
   minMaxLoc(probMat, NULL, &classProb, NULL, &classNumber);
   classId = classNumber.x;
@@ -133,13 +161,14 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
 void EverythingByDNN::process()
 {
   clearAllFeatures();
+  updateUsedClasses();
   cv::Mat output;
   try
   {
     const PatchProvider& dep = dynamic_cast<const PatchProvider&>(getDependency());
     output = dep.getImg()->clone();
     const std::vector<cv::Mat>& patches = dep.getPatches();
-    const std::vector<std::pair<float, cv::RotatedRect>> rois = dep.getRois();
+    const std::vector<std::pair<float, cv::RotatedRect>>& rois = dep.getRois();
 
     if (rois.size() != patches.size())
       throw std::runtime_error("EverythingByDNN:: number of rois does not match number of patches");
@@ -153,35 +182,34 @@ void EverythingByDNN::process()
 
       bool isValid = res.second >= scoreThreshold;
 
-      
-      std::string s_class = classNames.at(res.first);
+      std::string s_class = usedClassNames.at(res.first);
 
-      if(s_class != "Empty"){// not Empty
-	if(s_class == "Ball")// Ball
-	  pushBall(cv::Point2f(roi.center.x, roi.center.y));
-	else
-	  pushPOI(stringToPOIEnum.at(s_class), cv::Point2f(roi.center.x, roi.center.y));
+      if (s_class != "Empty")
+      {                         // not Empty
+        if (s_class == "Ball")  // Ball
+          pushBall(cv::Point2f(roi.center.x, roi.center.y));
+        else
+          pushPOI(stringToPOIEnum.at(s_class), cv::Point2f(roi.center.x, roi.center.y));
       }
 
-      if (res.first == 0)  // Empty
+      if (s_class == "Empty")  // Empty
       {
         drawRotatedRectangle(output, roi, cv::Scalar(0, 0, 255), 2);
-        // cv::putText(output, s_class, cv::Point(roi.center.x, roi.center.y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.8,
-        // cv::Scalar(0, 0, 255), 1.5, CV_AA);
       }
       else
       {
+        double font_scale = 1.2;
         if (isValid)
         {
           drawRotatedRectangle(output, roi, cv::Scalar(0, 255, 0), 2);
-          cv::putText(output, classNames.at(res.first), cv::Point(roi.center.x, roi.center.y),
-                      cv::FONT_HERSHEY_COMPLEX_SMALL, 1.8, cv::Scalar(0, 255, 0), 1.5, CV_AA);
+          cv::putText(output, s_class, cv::Point(roi.center.x, roi.center.y), cv::FONT_HERSHEY_COMPLEX_SMALL,
+                      font_scale, cv::Scalar(0, 255, 0), 1.5, CV_AA);
         }
         else
         {
           drawRotatedRectangle(output, roi, cv::Scalar(0, 0, 255), 2);
-          cv::putText(output, classNames.at(res.first), cv::Point(roi.center.x, roi.center.y),
-                      cv::FONT_HERSHEY_COMPLEX_SMALL, 1.8, cv::Scalar(0, 0, 255), 1.5, CV_AA);
+          cv::putText(output, s_class, cv::Point(roi.center.x, roi.center.y), cv::FONT_HERSHEY_COMPLEX_SMALL,
+                      font_scale, cv::Scalar(0, 0, 255), 1.5, CV_AA);
         }
       }
     }

@@ -21,6 +21,7 @@ public:
 protected:
   virtual void process() override;
   virtual void setParameters() override;
+  void updateUsedClasses();
 
   void updateNN();
 
@@ -28,11 +29,22 @@ protected:
   std::pair<int, double> getClass(cv::Mat patch);
 
 private:
+  ParamInt debugLevel;
+  std::map<std::string,ParamInt> isUsingFeature;
+//  ParamInt hasArenaCorner;
+//  ParamInt hasBall;
+//  ParamInt hasCenter;
+//  ParamInt hasLineCorner;
+//  ParamInt hasPenaltyMark;
+//  ParamInt hasPostBase;
+//  ParamInt hasT;
+//  ParamInt hasX;
   ParamFloat scoreThreshold;
   std::string model_path;
   cv::Ptr<cv::dnn::Importer> importer;
   cv::dnn::Net net;
   std::vector<std::string> classNames;
+  std::vector<std::string> usedClassNames;
 
   static std::map<std::string, hl_monitoring::Field::POIType> stringToPOIEnum;  // TODO find better name ...
 };
