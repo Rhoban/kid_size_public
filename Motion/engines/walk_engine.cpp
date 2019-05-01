@@ -1,5 +1,10 @@
 #include "walk_engine.h"
 #include "Utils/AxisAngle.h"
+#include "rhoban_geometry/point.h"
+#include "rhoban_utils/angle.h"
+
+using rhoban_utils::rad2deg;
+using rhoban_geometry::Point;
 
 namespace rhoban
 {
@@ -137,20 +142,23 @@ void WalkEngine::newStep()
 
   if (fabs(yawSpeed) > 0.01)
   {
-    double cX = xSpeed / yawSpeed;
+    // Speed vector
+    Point speed(xSpeed, ySpeed);
+    // Center of rotation
+    Point center = speed.perpendicular() / yawSpeed;
 
-    double rSupport = cX + supportFoot().trunkYOffset;
-    double rFlying = cX + flyingFoot().trunkYOffset;
+    // For both feet, computing the new position in the 
+    Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
+    sFoot = (sFoot + center).rotation(rad2deg(yawSpeed / 2.0)) - center;
+    Point sFootSpeed = speed.rotation(rad2deg(yawSpeed / 2.0));
+    supportFoot().xSpline.addPoint(halfPeriod, sFoot.x, sFootSpeed.x);
+    supportFoot().ySpline.addPoint(halfPeriod, sFoot.y, sFootSpeed.y);
 
-    supportFoot().xSpline.addPoint(halfPeriod, supportTrunkXOffset.x() - sin(yawSpeed / 2.0) * rSupport,
-                                   -cos(yawSpeed / 2.0) * xSpeed);
-    supportFoot().ySpline.addPoint(halfPeriod, supportTrunkXOffset.y() + cos(yawSpeed / 2.0) * rSupport - cX,
-                                   sin(yawSpeed / 2.0) * xSpeed);
-
-    flyingFoot().xSpline.addPoint(halfPeriod, flyingTrunkXOffset.x() - sin(-yawSpeed / 2.0) * rFlying,
-                                  -cos(-yawSpeed / 2.0) * xSpeed);
-    flyingFoot().ySpline.addPoint(halfPeriod, flyingTrunkXOffset.y() + cos(-yawSpeed / 2.0) * rFlying - cX,
-                                  sin(-yawSpeed / 2.0) * xSpeed);
+    Point fFoot(trunkXOffset, flyingFoot().trunkYOffset);
+    fFoot = (fFoot + center).rotation(rad2deg(-yawSpeed / 2.0)) - center;
+    Point fFootSpeed = -speed.rotation(rad2deg(-yawSpeed / 2.0));
+    flyingFoot().xSpline.addPoint(halfPeriod, fFoot.x, fFootSpeed.x);
+    flyingFoot().ySpline.addPoint(halfPeriod, fFoot.y, fFootSpeed.y);
   }
   else
   {
@@ -172,10 +180,6 @@ void WalkEngine::reset()
   right.trunkYOffset = -(footDistance + footYOffset);
 
   isLeftSupport = false;
-
-  FootPose leftInit, rightInit;
-  leftInit.y = left.trunkYOffset;
-  rightInit.y = right.trunkYOffset;
 
   double halfPeriod = 1.0 / (2 * frequency);
   left.halfPeriod = halfPeriod;
