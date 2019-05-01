@@ -25,4 +25,5 @@ protected:
   double oneStepX, oneStepY, oneStepTheta;
 
   double armsRoll, elbowOffset;
+  int stepCount = 0;
 };

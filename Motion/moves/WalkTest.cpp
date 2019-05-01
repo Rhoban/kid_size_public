@@ -74,6 +74,7 @@ void WalkTest::onStart()
   engine.xSpeed = 0;
   engine.ySpeed = 0;
   engine.yawSpeed = 0;
+  stepCount = 0;
   engine.reset();
 }
 
@@ -94,6 +95,13 @@ void WalkTest::step(float elapsed)
       engine.xSpeed = 0;
       engine.ySpeed = 0;
       engine.yawSpeed = 0;
+      stepCount = 0;
+    } else {
+      stepCount += 1;
+
+      if (stepCount <= 2) {
+        engine.swingGain = 0.04;
+      }
     }
 
     if (askOneStep) {
