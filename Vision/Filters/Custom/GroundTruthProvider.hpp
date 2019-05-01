@@ -2,6 +2,7 @@
 
 #include "Filters/Filter.hpp"
 
+#include <opencv2/videoio.hpp>
 namespace Vision
 {
 namespace Filters
@@ -27,6 +28,7 @@ public:
   };
 
   GroundTruthProvider();
+  ~GroundTruthProvider();
 
   Json::Value toJson() const override;
   void fromJson(const Json::Value& v, const std::string& dir_name) override;
@@ -108,6 +110,10 @@ protected:
    * Stores the points of interests of an image ordered by type descriptor
    */
   std::map<std::string, std::vector<Annotation>> annotations;
+
+  cv::VideoWriter videoWriter;
+
+  bool isFirstFrame;
 };
 }  // namespace Filters
 }  // namespace Vision
