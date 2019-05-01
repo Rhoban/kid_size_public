@@ -8,6 +8,7 @@ using namespace rhoban_utils;
 WalkTest::WalkTest()
 {
   Move::initializeBinding();
+  swingGainStart = 0.04;
 
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
   bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(-15);
@@ -19,6 +20,7 @@ WalkTest::WalkTest()
   bind->bindNew("riseGain", engine.riseGain, RhIO::Bind::PullOnly)->defaultValue(engine.riseGain);
   bind->bindNew("riseDuration", engine.riseDuration, RhIO::Bind::PullOnly)->defaultValue(engine.riseDuration);
   bind->bindNew("swingGain", engine.swingGain, RhIO::Bind::PullOnly)->defaultValue(engine.swingGain);
+  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(swingGainStart);
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
   bind->bindNew("footYOffsetPerYSpeed", engine.footYOffsetPerYSpeed, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerYSpeed);
@@ -38,7 +40,7 @@ WalkTest::WalkTest()
       ->maximum(30.0)
       ->persisted(true);
 
-  walkT = 0;
+  timeSinceLastStep = 0;
 }
 
 std::string WalkTest::getName()
@@ -70,13 +72,12 @@ void WalkTest::step(float elapsed)
 {
   bind->pull();
 
-  // Ticking
-  walkT += elapsed;
-  double over = engine.update(walkT);
+  // Ticking 
+  timeSinceLastStep += elapsed;
+  double over = engine.update(timeSinceLastStep);
   if (over > 0)
   {
-    walkT = over;
-    std::cout << "New step!" << std::endl;
+    timeSinceLastStep = over;
 
     if (!walkEnable)
     {
@@ -93,17 +94,21 @@ void WalkTest::step(float elapsed)
 
       if (stepCount <= 2)
       {
-        engine.swingGain = 0.04;
+        engine.swingGain = swingGainStart;
       }
     }
 
+    // Creating a new footstep
     engine.newStep();
-    engine.update(walkT);
+
+    // Updating the engine again with the time elapsed since it began
+    engine.update(timeSinceLastStep);
   }
 
   // Assigning to robot
   engine.assignModel(getServices()->model->goalModel());
 
+  // Flushing engine leg orders to robot
   ModelService* model = getServices()->model;
   model->flushLegs(_smoothing);
 
@@ -111,10 +116,10 @@ void WalkTest::step(float elapsed)
   setAngle("left_hip_pitch", trunkPitch);
   setAngle("right_hip_pitch", trunkPitch);
 
-  // Pitch to arms
-  float dPitch = rad2deg(getPitch());
-  setAngle("left_shoulder_pitch", dPitch);
-  setAngle("right_shoulder_pitch", dPitch);
+  // IMU Pitch to arms
+  float imuPitch = rad2deg(getPitch());
+  setAngle("left_shoulder_pitch", imuPitch);
+  setAngle("right_shoulder_pitch", imuPitch);
   // Rolls to arms
   setAngle("left_shoulder_roll", armsRoll);
   setAngle("right_shoulder_roll", -armsRoll);

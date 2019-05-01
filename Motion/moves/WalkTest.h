@@ -13,7 +13,7 @@ public:
   void step(float elapsed);
 
 protected:
-  double walkT;
+  double timeSinceLastStep;
 
   bool walkEnable;
   double trunkPitch;
@@ -21,4 +21,6 @@ protected:
 
   double armsRoll, elbowOffset;
   int stepCount = 0;
+
+  double swingGainStart;
 };
