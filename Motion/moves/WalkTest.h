@@ -12,17 +12,12 @@ public:
   void onStart();
   void step(float elapsed);
 
-  std::string cmdOneStep(double dx, double dy, double dtheta);
-
 protected:
   double walkT;
 
   bool walkEnable;
   double trunkPitch;
   rhoban::WalkEngine engine;
-
-  bool askOneStep;
-  double oneStepX, oneStepY, oneStepTheta;
 
   double armsRoll, elbowOffset;
   int stepCount = 0;

@@ -30,7 +30,6 @@ public:
     
     // Splines
     Leph::CubicSpline xSpline, ySpline, zSpline, yawSpline;
-    double halfPeriod;
 
     double trunkYOffset;
   };
@@ -74,6 +73,8 @@ public:
 
   double _t;
   double halfPeriod;
+
+  // This is stored for the current step to avoid having it changing during the step itself
   double _swingGain;
 };
 }  // namespace rhoban

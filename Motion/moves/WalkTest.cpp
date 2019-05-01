@@ -6,7 +6,7 @@
 using namespace rhoban_utils;
 
 WalkTest::WalkTest()
-{  
+{
   Move::initializeBinding();
 
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
@@ -27,8 +27,6 @@ WalkTest::WalkTest()
   bind->bindNew("ySpeed", engine.ySpeed, RhIO::Bind::PullOnly)->defaultValue(0.0);
   bind->bindNew("yawSpeed", engine.yawSpeed, RhIO::Bind::PullOnly)->defaultValue(0.0);
 
-  bind->bindFunc("oneStep", "Do one step in walk", &WalkTest::cmdOneStep, *this);
-  
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)
       ->defaultValue(-5.0)
       ->minimum(-20.0)
@@ -41,16 +39,6 @@ WalkTest::WalkTest()
       ->persisted(true);
 
   walkT = 0;
-  askOneStep = false;
-}
-
-std::string WalkTest::cmdOneStep(double dx, double dy, double dtheta)
-{
-  askOneStep = true;
-  oneStepX = dx;
-  oneStepY = dy;
-  oneStepTheta = dtheta;
-  return "Go.";
 }
 
 std::string WalkTest::getName()
@@ -85,30 +73,28 @@ void WalkTest::step(float elapsed)
   // Ticking
   walkT += elapsed;
   double over = engine.update(walkT);
-  if (over > 0) {
+  if (over > 0)
+  {
     walkT = over;
     std::cout << "New step!" << std::endl;
 
-    if (!walkEnable && !askOneStep) {
+    if (!walkEnable)
+    {
       engine.swingGain = 0;
       engine.riseGain = 0;
       engine.xSpeed = 0;
       engine.ySpeed = 0;
       engine.yawSpeed = 0;
       stepCount = 0;
-    } else {
+    }
+    else
+    {
       stepCount += 1;
 
-      if (stepCount <= 2) {
+      if (stepCount <= 2)
+      {
         engine.swingGain = 0.04;
       }
-    }
-
-    if (askOneStep) {
-      askOneStep = false;
-      engine.xSpeed = oneStepX;
-      engine.ySpeed = oneStepY;
-      engine.yawSpeed = oneStepTheta;
     }
 
     engine.newStep();
@@ -124,7 +110,6 @@ void WalkTest::step(float elapsed)
   // Applying extra trunk pitch
   setAngle("left_hip_pitch", trunkPitch);
   setAngle("right_hip_pitch", trunkPitch);
-
 
   // Pitch to arms
   float dPitch = rad2deg(getPitch());
