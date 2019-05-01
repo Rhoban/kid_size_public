@@ -9,6 +9,7 @@
 #include "Services.h"
 #include "RefereeService.h"
 #include "TeamPlayService.h"
+#include "moves/Move.h"
 
 #include <hl_communication/utils.h>
 
@@ -183,9 +184,30 @@ void TeamPlayService::messageSend()
     _selfInfo.fieldOk = decision->isFieldQualityGood;
     // Playing state
     strncpy(_selfInfo.stateReferee, RhIO::Root.getStr("referee/state").c_str(), sizeof(_selfInfo.stateReferee));
-    strncpy(_selfInfo.stateRobocup, RhIO::Root.getStr("moves/robocup/state").c_str(), sizeof(_selfInfo.stateRobocup));
-    strncpy(_selfInfo.statePlaying, RhIO::Root.getStr("moves/playing/state").c_str(), sizeof(_selfInfo.statePlaying));
-    strncpy(_selfInfo.stateSearch, RhIO::Root.getStr("moves/search/state").c_str(), sizeof(_selfInfo.stateSearch));
+    if (getMoves()->getMove("robocup")->isRunning())
+    {
+      strncpy(_selfInfo.stateRobocup, RhIO::Root.getStr("moves/robocup/state").c_str(), sizeof(_selfInfo.stateRobocup));
+    }
+    else
+    {
+      strcpy(_selfInfo.stateRobocup, "OFF");
+    }
+    if (getMoves()->getMove("playing")->isRunning())
+    {
+      strncpy(_selfInfo.statePlaying, RhIO::Root.getStr("moves/playing/state").c_str(), sizeof(_selfInfo.statePlaying));
+    }
+    else
+    {
+      strcpy(_selfInfo.statePlaying, "OFF");
+    }
+    if (getMoves()->getMove("search")->isRunning())
+    {
+      strncpy(_selfInfo.stateSearch, RhIO::Root.getStr("moves/search/state").c_str(), sizeof(_selfInfo.stateSearch));
+    }
+    else
+    {
+      strcpy(_selfInfo.stateSearch, "OFF");
+    }
     strncpy(_selfInfo.hardwareWarnings, RhIO::Root.getStr("model/lowlevel_state").c_str(),
             sizeof(_selfInfo.hardwareWarnings));
     // Safe terminating string
