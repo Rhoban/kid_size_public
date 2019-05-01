@@ -624,6 +624,9 @@ std::string Robocup::getCameraStatus() const
 void Robocup::readPipeline()
 {  
   featuresMutex.lock();
+  // Ball and robots are cleared after every step (used internally)
+  detectedBalls->clear();
+  detectedRobots->clear();
   for (const auto& provider_name : featureProviders)
   {
     try
