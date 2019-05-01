@@ -1154,7 +1154,6 @@ cv::Mat Robocup::getRadarImg(int width, int height)
   std::vector<int> delete_me;
   // scale_factor -> conversion [m] -> [px]
   float scale_factor = width / (2 * Constants::field.field_length);
-  int ball_radius = 5;  // px
   cv::Scalar ball_color = cv::Scalar(0, 0, 200);
   float discount = 0.05;
 
@@ -1258,13 +1257,16 @@ cv::Mat Robocup::getRadarImg(int width, int height)
       // TODO: question, why do we use the max here???
       cv::Point2f obs_in_self = cs->getPosInSelf(storedObservations[i].first);
       cv::Point2f obs_in_img(width/2 - obs_in_self.y * scale_factor, height / 2 - obs_in_self.x * scale_factor);
+      double default_radius = 3;// [px]
+      double marker_size = 8;
+      double marker_thickness = 2;
       if (obsType == "robot")
       {
         cv::circle(img, obs_in_img, 15, cv::Scalar(200, 0, 200), -1);
       }
       else if (obsType == "ball")
       {
-        cv::circle(img, obs_in_img, ball_radius, ball_color, -1);
+        cv::circle(img, obs_in_img, default_radius, ball_color, -1);
       }
       else if (obsType == "tag")
       {
@@ -1276,7 +1278,15 @@ cv::Mat Robocup::getRadarImg(int width, int height)
         switch(poiType)
         {
           case Field::POIType::PostBase:
-            cv::circle(img, obs_in_img, 5, cv::Scalar(255, 255, 255), -1);
+            cv::circle(img, obs_in_img, default_radius, cv::Scalar(255, 255, 255), -1);
+            break;
+          case Field::POIType::X:
+            cv::drawMarker(img, obs_in_img, cv::Scalar(255, 255, 255), cv::MarkerTypes::MARKER_TILTED_CROSS,
+                           marker_size, marker_thickness);
+            break;
+          case Field::POIType::T:
+            cv::drawMarker(img, obs_in_img, cv::Scalar(255, 255, 255), cv::MarkerTypes::MARKER_TRIANGLE_UP,
+                           marker_size, marker_thickness);
             break;
           default:
             out.warning("Draw of POI of type '%s' is not implemented", obsType.c_str());
