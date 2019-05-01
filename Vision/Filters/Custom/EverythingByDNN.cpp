@@ -45,24 +45,18 @@ namespace Filters
 EverythingByDNN::EverythingByDNN() : Filter("EverythingByDNN"), model_path("model.pb")
 {
   // TODO load classes from json config file
-  classNames.push_back("Empty");
+  
+  // WARNING order is important (alphabetical order)
+  //   if classes are removed, just comment the corresponding line, make sure to keep alphabetical order
+  classNames.push_back("ArenaCorner");
   classNames.push_back("Ball");
-  classNames.push_back("PostBase");
+  classNames.push_back("Center");
+  classNames.push_back("Empty");
   classNames.push_back("LineCorner");
   classNames.push_back("PenaltyMark");
-  classNames.push_back("Center");
-  classNames.push_back("X");
-  classNames.push_back("ArenaCorner");
+  classNames.push_back("PostBase");
   classNames.push_back("T");
-
-
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("ArenaCorner", hl_monitoring::Field::POIType::ArenaCorner));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("LineCorner", hl_monitoring::Field::POIType::LineCorner));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("T", hl_monitoring::Field::POIType::T));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("X", hl_monitoring::Field::POIType::X));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("Center", hl_monitoring::Field::POIType::Center));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("PenaltyMark", hl_monitoring::Field::POIType::PenaltyMark));
-  // stringToPOIEnum.insert(std::pair<std::string, hl_monitoring::Field::POIType>("PostBase", hl_monitoring::Field::POIType::PostBase));
+  classNames.push_back("X");
 }
 
 
@@ -159,11 +153,10 @@ void EverythingByDNN::process()
 
       bool isValid = res.second >= scoreThreshold;
       
-      int int_class = res.first;
-      std::string s_class = classNames.at(int_class);
+      std::string s_class = classNames.at(res.first);
 
-      if(int_class != 0){// not Empty
-	if(int_class == 1)// Ball
+      if(s_class != "Empty"){// not Empty
+	if(s_class == "Ball")// Ball
 	  features_provider.pushBall(cv::Point2f(roi.center.x, roi.center.y));
 	else
 	  features_provider.pushPOI(stringToPOIEnum.at(s_class), cv::Point2f(roi.center.x, roi.center.y));
