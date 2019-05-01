@@ -37,7 +37,7 @@ WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0), xVel(0), yVel(0), z
 }
 
 WalkEngine::WalkEngine()
-  : trunkXOffset(0.0), trunkZOffset(0.02), footYOffset(0.025), riseGain(0.04), frequency(3), swingGain(0.5), xSpeed(0), ySpeed(0), yawSpeed(0), _t(0)
+  : trunkXOffset(0.0), trunkZOffset(0.02), footYOffset(0.025), riseGain(0.04), frequency(1.5), swingGain(0.5), xSpeed(0), ySpeed(0), yawSpeed(0), _t(0)
 {
 }
 
@@ -70,7 +70,7 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model)
 
 double WalkEngine::update(double timeSinceLastStep)
 {
-  double period = 1.0/frequency;
+  double period = 1.0/(2*frequency);
   _t = 0;
 
   // Normalizing t between 0 and 1
