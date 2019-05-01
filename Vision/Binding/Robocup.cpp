@@ -1166,13 +1166,13 @@ cv::Mat Robocup::getRadarImg(int width, int height)
   // Drawing vision cone
   rhoban_utils::Angle yaw = cs->getYaw();
   rhoban_utils::Angle half_aperture = cs->getCameraModel().getFOVY();
-  cv::Point2i p1(width / 2 + height * cos(yaw + half_aperture), height / 2 - height * sin(yaw + half_aperture));
-  cv::Point2i p2(width / 2 + height * cos(yaw - half_aperture), height / 2 - height * sin(yaw - half_aperture));
+  cv::Point2i p1(width / 2 - height * sin(yaw + half_aperture), height / 2 - height * cos(yaw + half_aperture));
+  cv::Point2i p2(width / 2 - height * sin(yaw - half_aperture), height / 2 - height * cos(yaw - half_aperture));
 
   cv::line(img, cv::Point2i(width / 2, height / 2), p1, cv::Scalar(0, 100, 100), 2);
   cv::line(img, cv::Point2i(width / 2, height / 2), p2, cv::Scalar(0, 100, 100), 2);
   // 0° orientation (front)
-  cv::line(img, cv::Point2i(width / 2, height / 2), cv::Point2f(width, height / 2), cv::Scalar(255, 0, 0), 1);
+  cv::line(img, cv::Point2i(width / 2, height / 2), cv::Point2f(width / 2, 0), cv::Scalar(255, 0, 0), 1);
 
   for (std::string obsType : observationTypes)
   {
@@ -1257,19 +1257,18 @@ cv::Mat Robocup::getRadarImg(int width, int height)
       // Going from meters to pixels, and from the origin frame to the robot one
       // TODO: question, why do we use the max here???
       cv::Point2f obs_in_self = cs->getPosInSelf(storedObservations[i].first);
-      obs_in_self.x = max(0, (int)(obs_in_self.x * scale_factor + width / 2));
-      obs_in_self.y = max(0, (int)(-obs_in_self.y * scale_factor + height / 2));
+      cv::Point2f obs_in_img(width/2 - obs_in_self.y * scale_factor, height / 2 - obs_in_self.x * scale_factor);
       if (obsType == "robot")
       {
-        cv::circle(img, obs_in_self, 15, cv::Scalar(200, 0, 200), -1);
+        cv::circle(img, obs_in_img, 15, cv::Scalar(200, 0, 200), -1);
       }
       else if (obsType == "ball")
       {
-        cv::circle(img, obs_in_self, ball_radius, ball_color, -1);
+        cv::circle(img, obs_in_img, ball_radius, ball_color, -1);
       }
       else if (obsType == "tag")
       {
-        cv::circle(img, obs_in_self, 5, cv::Scalar(0, 0, 0), -1);
+        cv::circle(img, obs_in_img, 5, cv::Scalar(0, 0, 0), -1);
       }
       else
       {
@@ -1277,7 +1276,7 @@ cv::Mat Robocup::getRadarImg(int width, int height)
         switch(poiType)
         {
           case Field::POIType::PostBase:
-            cv::circle(img, obs_in_self, 5, cv::Scalar(255, 255, 255), -1);
+            cv::circle(img, obs_in_img, 5, cv::Scalar(255, 255, 255), -1);
             break;
           default:
             out.warning("Draw of POI of type '%s' is not implemented", obsType);
