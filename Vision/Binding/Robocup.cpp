@@ -1164,10 +1164,10 @@ cv::Mat Robocup::getRadarImg(int width, int height)
     cv::circle(img, cv::Point2i(width / 2, height / 2), (i / 2.0) * scale_factor, cv::Scalar(0, 150, 0), 2 - (i % 2));
   }
   // Drawing vision cone
-  rhoban_utils::Angle yaw = -cs->getYaw();
+  rhoban_utils::Angle yaw = cs->getYaw();
   rhoban_utils::Angle half_aperture = cs->getCameraModel().getFOVY();
-  cv::Point2i p1(width / 2 + height * cos(yaw + half_aperture), height / 2 + height * sin(yaw + half_aperture));
-  cv::Point2i p2(width / 2 + height * cos(yaw - half_aperture), height / 2 + height * sin(yaw - half_aperture));
+  cv::Point2i p1(width / 2 + height * cos(yaw + half_aperture), height / 2 - height * sin(yaw + half_aperture));
+  cv::Point2i p2(width / 2 + height * cos(yaw - half_aperture), height / 2 - height * sin(yaw - half_aperture));
 
   cv::line(img, cv::Point2i(width / 2, height / 2), p1, cv::Scalar(0, 100, 100), 2);
   cv::line(img, cv::Point2i(width / 2, height / 2), p2, cv::Scalar(0, 100, 100), 2);
