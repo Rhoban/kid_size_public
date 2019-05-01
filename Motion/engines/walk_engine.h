@@ -73,6 +73,7 @@ public:
   double swingGain;
   double trunkHeight;
   double footDistance;
+  double footYOffsetPerYSpeed;
 
   // Dynamics orders
   double xSpeed, ySpeed, yawSpeed;

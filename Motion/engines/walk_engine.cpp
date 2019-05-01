@@ -3,8 +3,8 @@
 #include "rhoban_geometry/point.h"
 #include "rhoban_utils/angle.h"
 
-using rhoban_utils::rad2deg;
 using rhoban_geometry::Point;
+using rhoban_utils::rad2deg;
 
 namespace rhoban
 {
@@ -36,9 +36,10 @@ WalkEngine::WalkEngine()
   , trunkZOffset(0.02)
   , footYOffset(0.025)
   , riseGain(0.04)
-  , riseDuration(0)
+  , riseDuration(0.5)
   , frequency(1.5)
   , swingGain(0.5)
+  , footYOffsetPerYSpeed(0.1)
   , xSpeed(0)
   , ySpeed(0)
   , yawSpeed(0)
@@ -62,12 +63,14 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model)
   FootPose rightPose = right.getPosition(_t);
 
   bool success = true;
+  
+  // XXX: Yaw in the trunk frame appear to behave in the wrong orientation here
   success = success && model.get().legIkLeft(
                            "trunk", Eigen::Vector3d(leftPose.x, leftPose.y, trunkHeight + trunkZOffset + leftPose.z),
-                           Leph::AxisToMatrix(Eigen::Vector3d(0, 0, leftPose.yaw)));
+                           Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -leftPose.yaw)));
   success = success && model.get().legIkRight(
                            "trunk", Eigen::Vector3d(rightPose.x, rightPose.y, trunkHeight + trunkZOffset + rightPose.z),
-                           Leph::AxisToMatrix(Eigen::Vector3d(0, 0, rightPose.yaw)));
+                           Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -rightPose.yaw)));
   if (!success)
   {
     std::cerr << "WalkEngine bad orders!" << std::endl;
@@ -102,8 +105,8 @@ void WalkEngine::newStep()
   left.halfPeriod = halfPeriod;
   right.halfPeriod = halfPeriod;
 
-  left.trunkYOffset = footDistance + footYOffset;
-  right.trunkYOffset = -(footDistance + footYOffset);
+  left.trunkYOffset = footDistance + footYOffset + footYOffsetPerYSpeed*fabs(ySpeed);
+  right.trunkYOffset = -(footDistance + footYOffset + footYOffsetPerYSpeed*fabs(ySpeed));
 
   // Defining begining of splines according to previous feet position
   left.xSpline.addPoint(0, oldLeft.xSpline.pos(oldLeft.halfPeriod), oldLeft.xSpline.vel(oldLeft.halfPeriod));
@@ -113,7 +116,7 @@ void WalkEngine::newStep()
   right.xSpline.addPoint(0, oldRight.xSpline.pos(oldRight.halfPeriod), oldRight.xSpline.vel(oldRight.halfPeriod));
   right.ySpline.addPoint(0, oldRight.ySpline.pos(oldRight.halfPeriod), oldRight.ySpline.vel(oldRight.halfPeriod));
   right.yawSpline.addPoint(0, oldRight.yawSpline.pos(oldRight.halfPeriod), oldRight.yawSpline.vel(oldRight.halfPeriod));
-  
+
   // Changing support foot
   isLeftSupport = !isLeftSupport;
 
@@ -132,13 +135,7 @@ void WalkEngine::newStep()
   {
     flyingFoot().zSpline.addPoint(halfPeriod * 0.5, riseGain, 0);
   }
-  // flyingFoot().zSpline.addPoint(halfPeriod*0.5, riseGain, 0);
-  // flyingFoot().zSpline.addPoint(halfPeriod*(0.5-xxx), riseGain, 0);
-  // flyingFoot().zSpline.addPoint(halfPeriod*(0.5+xxx), riseGain, 0);
   flyingFoot().zSpline.addPoint(halfPeriod, 0, 0);
-
-  Eigen::Vector2d supportTrunkXOffset(cos(-yawSpeed/2)*trunkXOffset, sin(-yawSpeed/2)*trunkXOffset);
-  Eigen::Vector2d flyingTrunkXOffset(cos(yawSpeed/2)*trunkXOffset, sin(yawSpeed/2)*trunkXOffset);
 
   if (fabs(yawSpeed) > 0.01)
   {
@@ -147,31 +144,33 @@ void WalkEngine::newStep()
     // Center of rotation
     Point center = speed.perpendicular() / yawSpeed;
 
-    // For both feet, computing the new position in the 
+    // For both feet, computing the new position in the
     Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
-    sFoot = (sFoot + center).rotation(rad2deg(yawSpeed / 2.0)) - center;
-    Point sFootSpeed = speed.rotation(rad2deg(yawSpeed / 2.0));
+    sFoot = (sFoot - center).rotation(rad2deg(-yawSpeed / 2.0)) + center;
+    Point sFootSpeed = speed.rotation(rad2deg(-yawSpeed / 2.0));
     supportFoot().xSpline.addPoint(halfPeriod, sFoot.x, sFootSpeed.x);
     supportFoot().ySpline.addPoint(halfPeriod, sFoot.y, sFootSpeed.y);
 
     Point fFoot(trunkXOffset, flyingFoot().trunkYOffset);
-    fFoot = (fFoot + center).rotation(rad2deg(-yawSpeed / 2.0)) - center;
-    Point fFootSpeed = -speed.rotation(rad2deg(-yawSpeed / 2.0));
+    fFoot = (fFoot - center).rotation(rad2deg(yawSpeed / 2.0)) + center;
+    Point fFootSpeed = -speed.rotation(rad2deg(yawSpeed / 2.0));
     flyingFoot().xSpline.addPoint(halfPeriod, fFoot.x, fFootSpeed.x);
     flyingFoot().ySpline.addPoint(halfPeriod, fFoot.y, fFootSpeed.y);
   }
   else
   {
-    supportFoot().xSpline.addPoint(halfPeriod, supportTrunkXOffset.x()-xSpeed / 2.0, -xSpeed);
-    supportFoot().ySpline.addPoint(halfPeriod, supportTrunkXOffset.y()+supportFoot().trunkYOffset - ySpeed / 2.0, -ySpeed);
+    supportFoot().xSpline.addPoint(halfPeriod, trunkXOffset - xSpeed / 2.0, -xSpeed);
+    supportFoot().ySpline.addPoint(halfPeriod, supportFoot().trunkYOffset - ySpeed / 2.0,
+                                   -ySpeed);
 
-    flyingFoot().xSpline.addPoint(halfPeriod, flyingTrunkXOffset.x() + xSpeed / 2.0, -xSpeed);
-    flyingFoot().ySpline.addPoint(halfPeriod, flyingTrunkXOffset.y() + flyingFoot().trunkYOffset + ySpeed / 2.0, -ySpeed);
+    flyingFoot().xSpline.addPoint(halfPeriod, trunkXOffset + xSpeed / 2.0, -xSpeed);
+    flyingFoot().ySpline.addPoint(halfPeriod, flyingFoot().trunkYOffset + ySpeed / 2.0,
+                                  -ySpeed);
   }
 
   // Yaw spline
   supportFoot().yawSpline.addPoint(halfPeriod, -yawSpeed / 2, -yawSpeed);
-  supportFoot().yawSpline.addPoint(halfPeriod, yawSpeed / 2, yawSpeed);
+  flyingFoot().yawSpline.addPoint(halfPeriod, yawSpeed / 2, -yawSpeed);
 }
 
 void WalkEngine::reset()
