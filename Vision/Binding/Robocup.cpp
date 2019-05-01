@@ -1279,7 +1279,7 @@ cv::Mat Robocup::getRadarImg(int width, int height)
             cv::circle(img, obs_in_img, 5, cv::Scalar(255, 255, 255), -1);
             break;
           default:
-            out.warning("Draw of POI of type '%s' is not implemented", obsType);
+            out.warning("Draw of POI of type '%s' is not implemented", obsType.c_str());
         }
       }
     }
