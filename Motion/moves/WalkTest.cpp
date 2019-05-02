@@ -54,6 +54,7 @@ void WalkTest::onStart()
   engine.initByModel(model);
 
   bind->node().setBool("walkEnable", false);
+  state = WalkNotWalking;
 
   bind->node().setFloat("xSpeed", 0.0);
   bind->node().setFloat("ySpeed", 0.0);
@@ -72,37 +73,67 @@ void WalkTest::step(float elapsed)
 {
   bind->pull();
 
-  // Ticking 
-  timeSinceLastStep += elapsed;
-  double over = engine.update(timeSinceLastStep);
-  if (over > 0)
-  {
-    timeSinceLastStep = over;
+  if (state == WalkNotWalking) {
+    // Walk is not enabled, just freezing the engine
+    engine.riseGain = 0;
+    engine.swingGain = 0;
+    engine.xSpeed = 0;
+    engine.ySpeed = 0;
+    engine.yawSpeed = 0;
+    engine.update(0);
+    timeSinceLastStep = 0;
+    stepCount = 0;
 
-    if (!walkEnable)
-    {
-      engine.swingGain = 0;
-      engine.riseGain = 0;
-      engine.xSpeed = 0;
-      engine.ySpeed = 0;
-      engine.yawSpeed = 0;
-      stepCount = 0;
+    if (walkEnable) {
+      state = WalkStarting;
     }
-    else
+  } else {
+    // Ticking 
+    timeSinceLastStep += elapsed;
+    double over = engine.update(timeSinceLastStep);
+
+    // New step condition
+    if (over > 0 || state == WalkStarting)
     {
+      timeSinceLastStep = over;
       stepCount += 1;
 
       if (stepCount <= 2)
       {
         engine.swingGain = swingGainStart;
       }
+
+      if (state != WalkStarting) {
+        if (walkEnable) {
+          state = Walking;
+        } else {
+          if (state == Walking && stepCount > 2) {
+            state = WalkStopping;
+          } else {
+            state = WalkNotWalking;
+          }
+        }
+      }
+
+      if (state != Walking) {
+          engine.xSpeed = 0;
+          engine.ySpeed = 0;
+          engine.yawSpeed = 0;
+      }
+
+      if (state == WalkStarting) {
+          std::cout << "Going to WALKING" << std::endl;
+          state = Walking;
+      }
+
+      // Creating a new footstep
+      engine.newStep();
+
+      // Updating the engine again with the time elapsed since it began
+      engine.update(timeSinceLastStep);
     }
 
-    // Creating a new footstep
-    engine.newStep();
-
-    // Updating the engine again with the time elapsed since it began
-    engine.update(timeSinceLastStep);
+    walkWasEnabled = true;
   }
 
   // Assigning to robot
@@ -116,6 +147,14 @@ void WalkTest::step(float elapsed)
   setAngle("left_hip_pitch", trunkPitch);
   setAngle("right_hip_pitch", trunkPitch);
 
+  // Update arms
+  stepArms();
+
+  bind->push();
+}
+
+void WalkTest::stepArms()
+{
   // IMU Pitch to arms
   float imuPitch = rad2deg(getPitch());
   setAngle("left_shoulder_pitch", imuPitch);
@@ -126,6 +165,4 @@ void WalkTest::step(float elapsed)
   // Elbows
   setAngle("left_elbow", elbowOffset);
   setAngle("right_elbow", elbowOffset);
-
-  bind->push();
 }
