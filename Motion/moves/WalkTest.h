@@ -46,9 +46,6 @@ protected:
   // Is the walk actually enabled now ?
   bool walkEnabled;
 
-  // Was the walk enabled on last tick ?
-  bool walkWasEnabled;
-
   // Extra trunk pitch
   double trunkPitch;
 
@@ -57,4 +54,8 @@ protected:
 
   // Arms parameters
   double armsRoll, elbowOffset;
+
+  // Security parameters
+  double securityThreshold;
+  double securityPhase;
 };

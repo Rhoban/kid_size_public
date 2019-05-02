@@ -44,6 +44,10 @@ WalkTest::WalkTest()
       ->defaultValue(10)
       ->comment("Maximal difference between two steps [deg/step^2]");
 
+  // Security parameters
+  bind->bindNew("securityThreshold", securityThreshold)->defaultValue(0.065)->minimum(0)->maximum(1.0);
+  bind->bindNew("securityPhase", securityPhase)->defaultValue(0.1);
+
   // Arms
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)
       ->defaultValue(-5.0)
@@ -70,20 +74,13 @@ void WalkTest::onStart()
   engine.initByModel(model);
 
   bind->node().setBool("walkEnable", false);
-  state = WalkNotWalking;
 
   // Zeroing the orders
   bind->node().setFloat("walkStep", 0.0);
   bind->node().setFloat("walkLateral", 0.0);
   bind->node().setFloat("walkTurn", 0.0);
 
-  engine.swingGain = 0;
-  engine.riseGain = 0;
-  engine.xSpeed = 0;
-  engine.ySpeed = 0;
-  engine.yawSpeed = 0;
-  stepCount = 0;
-  engine.reset();
+  state = WalkNotWalking;
 }
 
 void WalkTest::step(float elapsed)
@@ -98,6 +95,7 @@ void WalkTest::step(float elapsed)
     engine.xSpeed = 0;
     engine.ySpeed = 0;
     engine.yawSpeed = 0;
+    engine.reset();
     engine.update(0);
     timeSinceLastStep = 0;
     stepCount = 0;
@@ -110,74 +108,93 @@ void WalkTest::step(float elapsed)
   else
   {
     // Ticking
-    timeSinceLastStep += elapsed;
-    double over = engine.update(timeSinceLastStep);
+    double prevPhase = engine.getStepPhase();
+    double over = engine.update(timeSinceLastStep + elapsed);
+    bool securityBlock = false;
 
-    // New step condition
-    if (over > 0 || state == WalkStarting)
+    // Doing security check
+    if (prevPhase < securityPhase && engine.getStepPhase() > securityPhase)
     {
-      timeSinceLastStep = over;
-      stepCount += 1;
+      double pressureY = getPressureY();
 
-      if (stepCount <= 2)
-      {
-        // We apply an extra swing to start safely to walk
-        engine.swingGain = swingGainStart;
-      }
-
-      if (state != WalkStarting)
-      {
-        if (walkEnable)
+      if (state == Walking) {
+        if (engine.isLeftSupport && (pressureY < -securityThreshold) ||
+            !engine.isLeftSupport && (pressureY > securityThreshold))
         {
-          // We should just walk normally
-          state = Walking;
+          securityBlock = true;
+          engine.update(timeSinceLastStep);
         }
-        else
+      }
+    }
+
+    if (!securityBlock)
+    {
+      timeSinceLastStep += elapsed;
+
+      // New step condition
+      if (over > 0 || state == WalkStarting)
+      {
+        timeSinceLastStep = over;
+        stepCount += 1;
+
+        if (stepCount <= 2)
         {
-          bool walkingTooMuch =
-              fabs(engine.xSpeed) > 0.01 || fabs(engine.ySpeed) > 0.01 || rad2deg(fabs(engine.yawSpeed)) > 3;
-          if (state == Walking && walkingTooMuch)
+          // We apply an extra swing to start safely to walk
+          engine.swingGain = swingGainStart;
+        }
+
+        if (state != WalkStarting)
+        {
+          if (walkEnable)
           {
-            // We will apply an extra step with null orders to be sure the walk stops properly
-            state = WalkStopping;
+            // We should just walk normally
+            state = Walking;
           }
           else
           {
-            // We stop walking now
-            state = WalkNotWalking;
+            bool walkingTooMuch =
+                fabs(engine.xSpeed) > 0.01 || fabs(engine.ySpeed) > 0.01 || rad2deg(fabs(engine.yawSpeed)) > 3;
+            if (state == Walking && walkingTooMuch)
+            {
+              // We will apply an extra step with null orders to be sure the walk stops properly
+              state = WalkStopping;
+            }
+            else
+            {
+              // We stop walking now
+              state = WalkNotWalking;
+            }
           }
         }
-      }
 
-      if (state != Walking)
-      {
-        // We are not walking, starting or starting, we have no orders
-        engine.xSpeed = 0;
-        engine.ySpeed = 0;
-        engine.yawSpeed = 0;
-      }
-      else
-      {
-        // Updating engine speed according to acc. limits
-        VariationBound::update(engine.xSpeed, walkStep / 1000.0, maxDStepByCycle / 1000.0, 1);
-        VariationBound::update(engine.ySpeed, walkLateral / 1000.0, maxDLatByCycle / 1000.0, 1);
-        VariationBound::update(engine.yawSpeed, deg2rad(walkTurn), deg2rad(maxDTurnByCycle), 1);
-      }
+        if (state != Walking)
+        {
+          // We are not walking, starting or starting, we have no orders
+          engine.xSpeed = 0;
+          engine.ySpeed = 0;
+          engine.yawSpeed = 0;
+        }
+        else
+        {
+          // Updating engine speed according to acc. limits
+          VariationBound::update(engine.xSpeed, walkStep / 1000.0, maxDStepByCycle / 1000.0, 1);
+          VariationBound::update(engine.ySpeed, walkLateral / 1000.0, maxDLatByCycle / 1000.0, 1);
+          VariationBound::update(engine.yawSpeed, deg2rad(walkTurn), deg2rad(maxDTurnByCycle), 1);
+        }
 
-      if (state == WalkStarting)
-      {
-        std::cout << "Going to WALKING" << std::endl;
-        state = Walking;
+        if (state == WalkStarting)
+        {
+          std::cout << "Going to WALKING" << std::endl;
+          state = Walking;
+        }
+
+        // Creating a new footstep
+        engine.newStep();
+
+        // Updating the engine again with the time elapsed since it began
+        engine.update(timeSinceLastStep);
       }
-
-      // Creating a new footstep
-      engine.newStep();
-
-      // Updating the engine again with the time elapsed since it began
-      engine.update(timeSinceLastStep);
     }
-
-    walkWasEnabled = true;
   }
 
   // Assigning to robot

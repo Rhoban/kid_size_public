@@ -74,6 +74,9 @@ public:
   double _t;
   double halfPeriod;
 
+  // Returns the phase of current step (0: begin to 1: end)
+  double getStepPhase();
+
   // This is stored for the current step to avoid having it changing during the step itself
   double _swingGain;
 };

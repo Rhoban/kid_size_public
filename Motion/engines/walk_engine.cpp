@@ -65,10 +65,11 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model)
 
   bool success = true;
 
-  // Adding swing
+  // XXX: This could be done with a spline with more possible adjustements
+  // Adding swing with a sine
   double swingP = isLeftSupport ? M_PI : 0;
   swingP += M_PI * 2 * swingPhase;
-  double swing = _swingGain * sin(_t * M_PI / halfPeriod + swingP);
+  double swing = _swingGain * sin(M_PI * getStepPhase() + swingP);
 
   // XXX: Yaw in the trunk frame appear to behave in the wrong orientation here
   success =
@@ -206,5 +207,10 @@ WalkEngine::Foot& WalkEngine::supportFoot()
 WalkEngine::Foot& WalkEngine::flyingFoot()
 {
   return isLeftSupport ? right : left;
+}
+
+double WalkEngine::getStepPhase()
+{
+  return _t / halfPeriod;
 }
 }  // namespace rhoban
