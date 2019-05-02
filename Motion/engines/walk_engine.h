@@ -41,11 +41,10 @@ public:
   // Re-compute splines
   void reset();
   void updateSplines();
-  double update(double timeSinceLastStep);
   void newStep();
 
   // Updating feet position
-  void assignModel(Leph::HumanoidFixedModel& model);
+  void assignModel(Leph::HumanoidFixedModel& model, double timeSinceLastStep);
 
   // Walk engine left and right feet position
   struct Foot left, right;
@@ -67,15 +66,13 @@ public:
   double trunkHeight;
   double footDistance;
   double footYOffsetPerYSpeed;
+  double trunkPitch;
 
   // Dynamics orders
   double xSpeed, ySpeed, yawSpeed;
 
-  double _t;
-  double halfPeriod;
-
-  // Returns the phase of current step (0: begin to 1: end)
-  double getStepPhase();
+  // Duration of the current step
+  double stepDuration;
 
   // This is stored for the current step to avoid having it changing during the step itself
   double _swingGain;

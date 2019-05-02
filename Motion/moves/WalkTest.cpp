@@ -11,6 +11,7 @@ WalkTest::WalkTest(Kick* _kickMove) : kickMove(_kickMove)
 {
   Move::initializeBinding();
   swingGainStart = 0.04;
+  trunkPitch = 15;
 
   // Enables or disables the walk
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
@@ -32,14 +33,14 @@ WalkTest::WalkTest(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
   bind->bindNew("footYOffsetPerYSpeed", engine.footYOffsetPerYSpeed, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerYSpeed);
-  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(-15);
+  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch);
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(30)
+      ->defaultValue(40)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDLatByCycle", maxDLatByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(20)
+      ->defaultValue(30)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
       ->defaultValue(10)
@@ -50,7 +51,7 @@ WalkTest::WalkTest(Kick* _kickMove) : kickMove(_kickMove)
       ->defaultValue(0.065)
       ->minimum(0)
       ->maximum(1.0);
-  bind->bindNew("securityPhase", securityPhase, RhIO::Bind::PullOnly)->defaultValue(0.1);
+  bind->bindNew("securityPhase", securityPhase, RhIO::Bind::PullOnly)->defaultValue(0.05);
 
   // Kick parameters
   bind->bindNew("kickPending", kickPending, RhIO::Bind::PullOnly)->defaultValue(false);
@@ -103,6 +104,7 @@ void WalkTest::onStart()
 void WalkTest::step(float elapsed)
 {
   bind->pull();
+  engine.trunkPitch = deg2rad(trunkPitch);
 
   stepKick(elapsed);
 
@@ -115,7 +117,6 @@ void WalkTest::step(float elapsed)
     engine.ySpeed = 0;
     engine.yawSpeed = 0;
     engine.reset();
-    engine.update(0);
     timeSinceLastStep = 0;
     stepCount = 0;
 
@@ -127,12 +128,12 @@ void WalkTest::step(float elapsed)
   else
   {
     // Ticking
-    double prevPhase = engine.getStepPhase();
-    double over = engine.update(timeSinceLastStep + elapsed);
+    double prevPhase = timeSinceLastStep / engine.stepDuration;
+    double phase = (timeSinceLastStep + elapsed) / engine.stepDuration;
     bool securityBlock = false;
 
     // Doing security check
-    if (prevPhase < securityPhase && engine.getStepPhase() > securityPhase)
+    if (prevPhase < securityPhase && phase > securityPhase)
     {
       double pressureY = getPressureY();
 
@@ -143,7 +144,6 @@ void WalkTest::step(float elapsed)
             !engine.isLeftSupport && (pressureY > securityThreshold))
         {
           securityBlock = true;
-          engine.update(timeSinceLastStep);
         }
       }
     }
@@ -153,9 +153,9 @@ void WalkTest::step(float elapsed)
       timeSinceLastStep += elapsed;
 
       // New step condition
-      if (over > 0 || state == WalkStarting)
+      if (timeSinceLastStep > engine.stepDuration || state == WalkStarting)
       {
-        timeSinceLastStep = over;
+        timeSinceLastStep -= engine.stepDuration;
         stepCount += 1;
 
         if (stepCount <= 2)
@@ -211,23 +211,16 @@ void WalkTest::step(float elapsed)
 
         // Creating a new footstep
         engine.newStep();
-
-        // Updating the engine again with the time elapsed since it began
-        engine.update(timeSinceLastStep);
       }
     }
   }
 
   // Assigning to robot
-  engine.assignModel(getServices()->model->goalModel());
+  engine.assignModel(getServices()->model->goalModel(), timeSinceLastStep);
 
   // Flushing engine leg orders to robot
   ModelService* model = getServices()->model;
   model->flushLegs(_smoothing);
-
-  // Applying extra trunk pitch
-  setAngle("left_hip_pitch", trunkPitch);
-  setAngle("right_hip_pitch", trunkPitch);
 
   // Update arms
   stepArms();

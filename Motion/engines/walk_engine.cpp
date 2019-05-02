@@ -34,17 +34,17 @@ WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0)
 WalkEngine::WalkEngine()
   : trunkXOffset(0.0)
   , trunkZOffset(0.02)
-  , footYOffset(0.035)
+  , footYOffset(0.03)
   , riseGain(0.035)
   , riseDuration(0.2)
   , frequency(1.5)
   , swingGain(0.02)
   , swingPhase(0.0)
   , footYOffsetPerYSpeed(0.1)
+  , trunkPitch(0)
   , xSpeed(0)
   , ySpeed(0)
   , yawSpeed(0)
-  , _t(0)
 {
 }
 
@@ -58,10 +58,19 @@ void WalkEngine::initByModel(Leph::HumanoidFixedModel& model)
   reset();
 }
 
-void WalkEngine::assignModel(Leph::HumanoidFixedModel& model)
+void WalkEngine::assignModel(Leph::HumanoidFixedModel& model, double timeSinceLastStep)
 {
-  FootPose leftPose = left.getPosition(_t);
-  FootPose rightPose = right.getPosition(_t);
+  if (timeSinceLastStep < 0)
+  {
+    timeSinceLastStep = 0;
+  }
+  if (timeSinceLastStep > stepDuration)
+  {
+    timeSinceLastStep = stepDuration;
+  }
+
+  FootPose leftPose = left.getPosition(timeSinceLastStep);
+  FootPose rightPose = right.getPosition(timeSinceLastStep);
 
   bool success = true;
 
@@ -69,17 +78,19 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model)
   // Adding swing with a sine
   double swingP = isLeftSupport ? M_PI : 0;
   swingP += M_PI * 2 * swingPhase;
-  double swing = _swingGain * sin(M_PI * getStepPhase() + swingP);
+  double swing = _swingGain * sin(M_PI * timeSinceLastStep / stepDuration + swingP);
+
+  Eigen::Affine3d trunkPitchRot(Eigen::AngleAxisd(-trunkPitch, Eigen::Vector3d::UnitY()));
 
   // XXX: Yaw in the trunk frame appear to behave in the wrong orientation here
   success =
       success && model.get().legIkLeft(
-                     "trunk", Eigen::Vector3d(leftPose.x, leftPose.y + swing, trunkHeight + trunkZOffset + leftPose.z),
-                     Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -leftPose.yaw)));
+                     "trunk", trunkPitchRot*Eigen::Vector3d(leftPose.x, leftPose.y + swing, trunkHeight + trunkZOffset + leftPose.z),
+                     trunkPitchRot.linear().inverse()*Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -leftPose.yaw)));
   success = success &&
             model.get().legIkRight(
-                "trunk", Eigen::Vector3d(rightPose.x, rightPose.y + swing, trunkHeight + trunkZOffset + rightPose.z),
-                Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -rightPose.yaw)));
+                "trunk", trunkPitchRot*Eigen::Vector3d(rightPose.x, rightPose.y + swing, trunkHeight + trunkZOffset + rightPose.z),
+                trunkPitchRot.linear().inverse()*Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -rightPose.yaw)));
 
   if (!success)
   {
@@ -87,28 +98,11 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model)
   }
 }
 
-double WalkEngine::update(double timeSinceLastStep)
-{
-  _t = 0;
-
-  // Normalizing t between 0 and 1
-  if (timeSinceLastStep > 0)
-  {
-    _t = timeSinceLastStep;
-  }
-  if (_t > halfPeriod)
-  {
-    _t = halfPeriod;
-  }
-
-  return timeSinceLastStep - halfPeriod;
-}
-
 void WalkEngine::newStep()
 {
   _swingGain = swingGain;
-  double previousHalfPeriod = halfPeriod;
-  halfPeriod = 1.0 / (2 * frequency);
+  double previousStepDuration = stepDuration;
+  stepDuration = 1.0 / (2 * frequency);
 
   Foot oldLeft = left;
   Foot oldRight = right;
@@ -119,33 +113,33 @@ void WalkEngine::newStep()
   right.trunkYOffset = -(footDistance + footYOffset + footYOffsetPerYSpeed * fabs(ySpeed));
 
   // Defining begining of splines according to previous feet position
-  left.xSpline.addPoint(0, oldLeft.xSpline.pos(previousHalfPeriod), oldLeft.xSpline.vel(previousHalfPeriod));
-  left.ySpline.addPoint(0, oldLeft.ySpline.pos(previousHalfPeriod), oldLeft.ySpline.vel(previousHalfPeriod));
-  left.yawSpline.addPoint(0, oldLeft.yawSpline.pos(previousHalfPeriod), oldLeft.yawSpline.vel(previousHalfPeriod));
+  left.xSpline.addPoint(0, oldLeft.xSpline.pos(previousStepDuration), oldLeft.xSpline.vel(previousStepDuration));
+  left.ySpline.addPoint(0, oldLeft.ySpline.pos(previousStepDuration), oldLeft.ySpline.vel(previousStepDuration));
+  left.yawSpline.addPoint(0, oldLeft.yawSpline.pos(previousStepDuration), oldLeft.yawSpline.vel(previousStepDuration));
 
-  right.xSpline.addPoint(0, oldRight.xSpline.pos(previousHalfPeriod), oldRight.xSpline.vel(previousHalfPeriod));
-  right.ySpline.addPoint(0, oldRight.ySpline.pos(previousHalfPeriod), oldRight.ySpline.vel(previousHalfPeriod));
-  right.yawSpline.addPoint(0, oldRight.yawSpline.pos(previousHalfPeriod), oldRight.yawSpline.vel(previousHalfPeriod));
+  right.xSpline.addPoint(0, oldRight.xSpline.pos(previousStepDuration), oldRight.xSpline.vel(previousStepDuration));
+  right.ySpline.addPoint(0, oldRight.ySpline.pos(previousStepDuration), oldRight.ySpline.vel(previousStepDuration));
+  right.yawSpline.addPoint(0, oldRight.yawSpline.pos(previousStepDuration), oldRight.yawSpline.vel(previousStepDuration));
 
   // Changing support foot
   isLeftSupport = !isLeftSupport;
 
   // Support foot is on the ground
   supportFoot().zSpline.addPoint(0, 0, 0);
-  supportFoot().zSpline.addPoint(halfPeriod, 0, 0);
+  supportFoot().zSpline.addPoint(stepDuration, 0, 0);
 
   // Flying foot will rise
   flyingFoot().zSpline.addPoint(0, 0, 0);
   if (riseDuration > 0)
   {
-    flyingFoot().zSpline.addPoint(halfPeriod * (0.5 - riseDuration / 2.0), riseGain, 0);
-    flyingFoot().zSpline.addPoint(halfPeriod * (0.5 + riseDuration / 2.0), riseGain, 0);
+    flyingFoot().zSpline.addPoint(stepDuration * (0.5 - riseDuration / 2.0), riseGain, 0);
+    flyingFoot().zSpline.addPoint(stepDuration * (0.5 + riseDuration / 2.0), riseGain, 0);
   }
   else
   {
-    flyingFoot().zSpline.addPoint(halfPeriod * 0.5, riseGain, 0);
+    flyingFoot().zSpline.addPoint(stepDuration * 0.5, riseGain, 0);
   }
-  flyingFoot().zSpline.addPoint(halfPeriod, 0, 0);
+  flyingFoot().zSpline.addPoint(stepDuration, 0, 0);
 
   if (fabs(yawSpeed) > 0.01)
   {
@@ -158,27 +152,27 @@ void WalkEngine::newStep()
     Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
     sFoot = (sFoot - center).rotation(rad2deg(-yawSpeed / 2.0)) + center;
     Point sFootSpeed = speed.rotation(rad2deg(-yawSpeed / 2.0));
-    supportFoot().xSpline.addPoint(halfPeriod, sFoot.x, sFootSpeed.x);
-    supportFoot().ySpline.addPoint(halfPeriod, sFoot.y, sFootSpeed.y);
+    supportFoot().xSpline.addPoint(stepDuration, sFoot.x, sFootSpeed.x);
+    supportFoot().ySpline.addPoint(stepDuration, sFoot.y, sFootSpeed.y);
 
     Point fFoot(trunkXOffset, flyingFoot().trunkYOffset);
     fFoot = (fFoot - center).rotation(rad2deg(yawSpeed / 2.0)) + center;
     Point fFootSpeed = -speed.rotation(rad2deg(yawSpeed / 2.0));
-    flyingFoot().xSpline.addPoint(halfPeriod, fFoot.x, fFootSpeed.x);
-    flyingFoot().ySpline.addPoint(halfPeriod, fFoot.y, fFootSpeed.y);
+    flyingFoot().xSpline.addPoint(stepDuration, fFoot.x, fFootSpeed.x);
+    flyingFoot().ySpline.addPoint(stepDuration, fFoot.y, fFootSpeed.y);
   }
   else
   {
-    supportFoot().xSpline.addPoint(halfPeriod, trunkXOffset - xSpeed / 2.0, -xSpeed);
-    supportFoot().ySpline.addPoint(halfPeriod, supportFoot().trunkYOffset - ySpeed / 2.0, -ySpeed);
+    supportFoot().xSpline.addPoint(stepDuration, trunkXOffset - xSpeed / 2.0, -xSpeed);
+    supportFoot().ySpline.addPoint(stepDuration, supportFoot().trunkYOffset - ySpeed / 2.0, -ySpeed);
 
-    flyingFoot().xSpline.addPoint(halfPeriod, trunkXOffset + xSpeed / 2.0, -xSpeed);
-    flyingFoot().ySpline.addPoint(halfPeriod, flyingFoot().trunkYOffset + ySpeed / 2.0, -ySpeed);
+    flyingFoot().xSpline.addPoint(stepDuration, trunkXOffset + xSpeed / 2.0, -xSpeed);
+    flyingFoot().ySpline.addPoint(stepDuration, flyingFoot().trunkYOffset + ySpeed / 2.0, -ySpeed);
   }
 
   // Yaw spline
-  supportFoot().yawSpline.addPoint(halfPeriod, -yawSpeed / 2, -yawSpeed);
-  flyingFoot().yawSpline.addPoint(halfPeriod, yawSpeed / 2, -yawSpeed);
+  supportFoot().yawSpline.addPoint(stepDuration, -yawSpeed / 2, -yawSpeed);
+  flyingFoot().yawSpline.addPoint(stepDuration, yawSpeed / 2, -yawSpeed);
 }
 
 void WalkEngine::reset()
@@ -188,13 +182,13 @@ void WalkEngine::reset()
 
   isLeftSupport = false;
 
-  halfPeriod = 1.0 / (2 * frequency);
-  left.xSpline.addPoint(halfPeriod, 0);
-  left.ySpline.addPoint(halfPeriod, left.trunkYOffset);
-  left.yawSpline.addPoint(halfPeriod, 0);
-  right.xSpline.addPoint(halfPeriod, 0);
-  right.ySpline.addPoint(halfPeriod, right.trunkYOffset);
-  right.yawSpline.addPoint(halfPeriod, 0);
+  stepDuration = 1.0 / (2 * frequency);
+  left.xSpline.addPoint(stepDuration, 0);
+  left.ySpline.addPoint(stepDuration, left.trunkYOffset);
+  left.yawSpline.addPoint(stepDuration, 0);
+  right.xSpline.addPoint(stepDuration, 0);
+  right.ySpline.addPoint(stepDuration, right.trunkYOffset);
+  right.yawSpline.addPoint(stepDuration, 0);
 
   newStep();
 }
@@ -207,10 +201,5 @@ WalkEngine::Foot& WalkEngine::supportFoot()
 WalkEngine::Foot& WalkEngine::flyingFoot()
 {
   return isLeftSupport ? right : left;
-}
-
-double WalkEngine::getStepPhase()
-{
-  return _t / halfPeriod;
 }
 }  // namespace rhoban
