@@ -32,9 +32,9 @@ Placer::Placer(Walk* walk) : walk(walk)
   bind->bindNew("targetAzimuth", targetAzimuth, RhIO::Bind::PullOnly);
   bind->bindNew("errorAzimuth", errorAzimuth, RhIO::Bind::PushOnly);
 
-  bind->bindNew("stepP", stepper.k_p, RhIO::Bind::PullOnly)->defaultValue(2.0);
-  bind->bindNew("lateralP", lateraler.k_p, RhIO::Bind::PullOnly)->defaultValue(2.0);
-  bind->bindNew("turnP", turner.k_p, RhIO::Bind::PullOnly)->defaultValue(0.5);
+  bind->bindNew("stepP", stepper.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
+  bind->bindNew("lateralP", lateraler.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
+  bind->bindNew("turnP", turner.k_p, RhIO::Bind::PullOnly)->defaultValue(0.25);
 
   bind->bindNew("marginX", marginX, RhIO::Bind::PullOnly)->defaultValue(0.5)->comment("[m]");
   bind->bindNew("marginY", marginY, RhIO::Bind::PullOnly)->defaultValue(0.5)->comment("[m]");
@@ -391,6 +391,10 @@ void Placer::step(float elapsed)
   }
   else
   {
+    if (fabs(turner.output) > 4) {
+      lateraler.output = 0;
+    }
+
     // Using mm to control walk
     walk->control(true, 1000 * stepper.output, 1000 * lateraler.output, turner.output);
   }
