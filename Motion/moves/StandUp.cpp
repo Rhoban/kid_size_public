@@ -11,6 +11,7 @@ StandUp::StandUp()
 {
   Move::initializeBinding();
   time = 0.0;
+  trying = 0;
   bind->bindNew("speed", speed)
       ->defaultValue(1.5)
       ->minimum(0.0)
@@ -45,7 +46,6 @@ void StandUp::onStart()
   time = 0.0;
   over = false;
   waiting = true;
-  trying = 0;
 
   // get the arms back
   setTorqueLimit("left_shoulder_pitch", 1.0);
