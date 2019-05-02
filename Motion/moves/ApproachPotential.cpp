@@ -42,7 +42,7 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
 
   bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)->defaultValue(0.6);
 
-  bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)->defaultValue(200);
+  bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)->defaultValue(800);
 
   // Servoing
   bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(6);
@@ -296,9 +296,10 @@ void ApproachPotential::step(float elapsed)
       {
         double cX, cY, cYaw;
         getControl(t, ball, cX, cY, cYaw);
-        double score = target.position.getLength();
+        double score = t.position.getLength();
 
-        score += fabs(rad2deg(cYaw)) / degsPerMeter;
+        score += fabs(cYaw) / degsPerMeter;
+        score += fabs(t.yaw.getSignedValue()) / degsPerMeter;
 
         if (ballField.x < 0)
         {
@@ -308,7 +309,7 @@ void ApproachPotential::step(float elapsed)
             score *= 30 * defendError;
           }
         }
-        std::cout << "Score for " << t.kickName << " / " << t.yaw.getSignedValue() <<
+        std::cout << "Score for [n: " << t.position.getLength() << ", x: " << t.position.x << ",y: " << t.position.y << ",t: " << cYaw << "] " << t.kickName << " / " << t.yaw.getSignedValue() <<
            " : " << score << std::endl;
 
         if (bestScore < 0 || score < bestScore)
@@ -319,7 +320,7 @@ void ApproachPotential::step(float elapsed)
       }
 
       std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " <<
-      target.yaw.getSignedValue() << std::endl;
+      target.yaw.getSignedValue() << " (kick: " << target.kickName << ")" << std::endl;
 
       // Setting expectedKick
       expectedKick = target.kickName;
