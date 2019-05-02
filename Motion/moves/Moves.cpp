@@ -49,7 +49,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   kick->cmdKickGen();
 
   Walk* walk = new Walk(kick);
-  WalkTest* walkTest = new WalkTest();
+  WalkTest* walkTest = new WalkTest(kick);
   Head* head = new Head;
   Placer* placer = new Placer(walk);
   StandUp* standup = new StandUp;

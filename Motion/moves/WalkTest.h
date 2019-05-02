@@ -3,10 +3,11 @@
 #include "Move.h"
 #include "engines/walk_engine.h"
 
+class Kick;
 class WalkTest : public Move
 {
 public:
-  WalkTest();
+  WalkTest(Kick *);
   std::string getName();
 
   void onStart();
@@ -55,4 +56,24 @@ protected:
   // Security parameters
   double securityThreshold;
   double securityPhase;
+
+  // Kicking
+  Kick *kickMove;
+  bool kickPending;
+  bool kickLeftFoot;
+  double kickWarmup;
+  double kickCooldown;
+  double kickT;
+  std::string kickName;
+  
+  enum KickState {
+    KickNotKicking = 0,
+    KickWaitingWalkToStop,
+    KickWarmup,
+    KickKicking,
+    KickCooldown
+  };
+
+  KickState kickState;
+  void stepKick(float elapsed);
 };

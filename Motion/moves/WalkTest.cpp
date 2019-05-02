@@ -3,10 +3,11 @@
 #include "services/ModelService.h"
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/control/variation_bound.h>
+#include "Kick.h"
 
 using namespace rhoban_utils;
 
-WalkTest::WalkTest()
+WalkTest::WalkTest(Kick* _kickMove) : kickMove(_kickMove)
 {
   Move::initializeBinding();
   swingGainStart = 0.04;
@@ -45,8 +46,20 @@ WalkTest::WalkTest()
       ->comment("Maximal difference between two steps [deg/step^2]");
 
   // Security parameters
-  bind->bindNew("securityThreshold", securityThreshold)->defaultValue(0.065)->minimum(0)->maximum(1.0);
-  bind->bindNew("securityPhase", securityPhase)->defaultValue(0.1);
+  bind->bindNew("securityThreshold", securityThreshold, RhIO::Bind::PullOnly)
+      ->defaultValue(0.065)
+      ->minimum(0)
+      ->maximum(1.0);
+  bind->bindNew("securityPhase", securityPhase, RhIO::Bind::PullOnly)->defaultValue(0.1);
+
+  // Kick parameters
+  bind->bindNew("kickPending", kickPending, RhIO::Bind::PullOnly)->defaultValue(false);
+  bind->bindNew("kickLeftFoot", kickLeftFoot, RhIO::Bind::PullOnly)->defaultValue(false);
+  bind->bindNew("kickName", kickName, RhIO::Bind::PullOnly)->defaultValue("classic");
+  bind->bindNew("kickCooldown", kickCooldown, RhIO::Bind::PullOnly)
+      ->defaultValue(1.0)
+      ->comment("Cooldown duration [s]");
+  bind->bindNew("kickWarmup", kickWarmup, RhIO::Bind::PullOnly)->defaultValue(0.75)->comment("Warmup [s]");
 
   // Arms
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)
@@ -80,12 +93,18 @@ void WalkTest::onStart()
   bind->node().setFloat("walkLateral", 0.0);
   bind->node().setFloat("walkTurn", 0.0);
 
+  // Cancelling eventual previous pending kicks
+  bind->node().setBool("kickPending", false);
+
   state = WalkNotWalking;
+  kickState = KickNotKicking;
 }
 
 void WalkTest::step(float elapsed)
 {
   bind->pull();
+
+  stepKick(elapsed);
 
   if (state == WalkNotWalking)
   {
@@ -117,7 +136,9 @@ void WalkTest::step(float elapsed)
     {
       double pressureY = getPressureY();
 
-      if (state == Walking) {
+      if (state == Walking)
+      {
+        // Checking that the center of pressure is not on the opposite foot
         if (engine.isLeftSupport && (pressureY < -securityThreshold) ||
             !engine.isLeftSupport && (pressureY > securityThreshold))
         {
@@ -212,6 +233,49 @@ void WalkTest::step(float elapsed)
   stepArms();
 
   bind->push();
+}
+
+void WalkTest::stepKick(float elapsed)
+{
+  if (kickPending)
+  {
+    // Enter the kick STM
+    bind->node().setBool("kickPending", false);
+    kickState = KickWaitingWalkToStop;
+  }
+
+  if (kickState != KickNotKicking)
+  {
+    // While kicking, walk is forced isabled
+    walkEnable = false;
+    kickT += elapsed;
+
+    if (kickState == KickWaitingWalkToStop && state == WalkNotWalking)
+    {
+      // Walk is over, go to warmup state
+      kickState = KickWarmup;
+      kickT = 0;
+    }
+
+    if (kickState == KickWarmup && kickT >= kickWarmup)
+    {
+      // Warmup over, start the kick move
+      kickState = KickKicking;
+      kickMove->set(kickLeftFoot, kickName);
+      startMove("kick", 0.0);
+    }
+    if (kickState == KickKicking && kickMove->over)
+    {
+      // Kick is over, enter the coolDown sequence
+      kickState = KickCooldown;
+      kickT = 0;
+    }
+    if (kickState == KickCooldown && kickT >= kickCooldown)
+    {
+      // Cooldown is over, quitting kicking state
+      kickState = KickNotKicking;
+    }
+  }
 }
 
 void WalkTest::stepArms()
