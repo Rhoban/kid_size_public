@@ -39,8 +39,7 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
 
   // State
   bind->bindNew("state", STM::state, RhIO::Bind::PushOnly)->comment("Approach STM state");
-
-  bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)->defaultValue(0.6);
+  bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)->defaultValue(0.5);
 
   // Servoing
   bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(6);
