@@ -56,7 +56,7 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.45);
 
   // Acceptance
-  bind->bindNew("distanceThreshold", distanceThreshold, RhIO::Bind::PullOnly)->defaultValue(0.065)->persisted(true);
+  bind->bindNew("distanceThreshold", distanceThreshold, RhIO::Bind::PullOnly)->defaultValue(0.65)->persisted(true);
   bind->bindNew("angleThreshold", angleThreshold, RhIO::Bind::PullOnly)->defaultValue(9)->persisted(true);
 
   // Don't walk
@@ -169,13 +169,13 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   //   // We are near the ball, let's face it
   //   // error = ballCap;
   // }
-  if (dist < distanceThreshold)
+  if (dist < placementDistance)
   {
     // We are near the goal, let's face the goal
     error = targetCap;
   }
 
-  if (dist > distanceThreshold)
+  if (dist > placementDistance)
   {
     // Avoiding walking backward when error azimuth is high
     control *= std::max<double>(0, cos(error));
@@ -184,7 +184,7 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   // Response
   x = control.x;
 
-  if (dist > distanceThreshold)
+  if (dist > placementDistance)
   {
     y = 0;
   }
@@ -293,15 +293,14 @@ void ApproachPotential::step(float elapsed)
       double bestScore = -1;
       auto ballField = loc->getBallPosField();
       Angle defendTargetDir = Angle(180) - loc->getOurBallToGoalDirSelf();
-      // std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+      std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
       // std::cout << "OUR GOAL: " << defendTargetDir << std::endl;
 
       for (auto t : targets)
       {
         double cX, cY, cYaw;
         getControl(t, ball, cX, cY, cYaw);
-        double score = fabs(target.position.x);
-        score += 4 * fabs(target.position.y);
+        double score = target.position.getLength();
 
         score += fabs(rad2deg(cYaw)) / degsPerMeter;
 
@@ -313,8 +312,8 @@ void ApproachPotential::step(float elapsed)
             score *= 30 * defendError;
           }
         }
-        // std::cout << "Score for " << t.kickName << " / " << t.yaw.getSignedValue() <<
-        //    " : " << score << std::endl;
+        std::cout << "Score for " << t.kickName << " / " << t.yaw.getSignedValue() <<
+           " : " << score << std::endl;
 
         if (bestScore < 0 || score < bestScore)
         {
@@ -323,8 +322,8 @@ void ApproachPotential::step(float elapsed)
         }
       }
 
-      // std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " <<
-      // target.yaw.getSignedValue() << std::endl;
+      std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " <<
+      target.yaw.getSignedValue() << std::endl;
 
       // Setting expectedKick
       expectedKick = target.kickName;

@@ -38,7 +38,7 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(15.0);
   bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(65.0);
   bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(35.0);
-  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(40.0);
+  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(30.0);
 
   // Walk engine parameters
   bind->bindNew("trunkXOffset", engine.trunkXOffset, RhIO::Bind::PullOnly)->defaultValue(engine.trunkXOffset);
@@ -77,9 +77,9 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("kickLeftFoot", kickLeftFoot, RhIO::Bind::PullOnly)->defaultValue(false);
   bind->bindNew("kickName", kickName, RhIO::Bind::PullOnly)->defaultValue("classic");
   bind->bindNew("kickCooldown", kickCooldown, RhIO::Bind::PullOnly)
-      ->defaultValue(0.0)
+      ->defaultValue(0.5)
       ->comment("Cooldown duration [s]");
-  bind->bindNew("kickWarmup", kickWarmup, RhIO::Bind::PullOnly)->defaultValue(0.00)->comment("Warmup [s]");
+  bind->bindNew("kickWarmup", kickWarmup, RhIO::Bind::PullOnly)->defaultValue(0.75)->comment("Warmup [s]");
 
   // Arms
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)
