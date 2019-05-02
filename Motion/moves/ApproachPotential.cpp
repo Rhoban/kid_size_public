@@ -296,10 +296,19 @@ void ApproachPotential::step(float elapsed)
       {
         double cX, cY, cYaw;
         getControl(t, ball, cX, cY, cYaw);
-        double score = t.position.getLength();
 
-        score += fabs(cYaw) / degsPerMeter;
-        score += fabs(t.yaw.getSignedValue()) / degsPerMeter;
+        // Score is a rough time estimation, we suppose that we will walk at
+        // max speed
+        double score = (t.position.getLength() * 1000.0) / walk->maxStep;
+
+        // That we have to align with current yaw (that can be potential field provided)
+        double degsToTravel = fabs(cYaw);
+
+        // And then have to align with target yaw
+        degsToTravel += fabs((t.yaw - cYaw).getSignedValue());
+
+        // Again, we suppose that we rotate at max speed
+        score += degsToTravel / walk->maxRotation;
 
         if (ballField.x < 0)
         {
@@ -309,8 +318,9 @@ void ApproachPotential::step(float elapsed)
             score *= 30 * defendError;
           }
         }
-        // std::cout << "Score for [n: " << t.position.getLength() << ", x: " << t.position.x << ",y: " << t.position.y << ",t: " << cYaw << "] " << t.kickName << " / " << t.yaw.getSignedValue() <<
-        //    " : " << score << std::endl;
+        std::cout << "Score for [n: " << t.position.getLength() << ", x: " << t.position.x << ",y: " << t.position.y
+                  << ",t: " << cYaw << " (travel°: " << degsToTravel << ")] " << t.kickName << " / "
+                  << t.yaw.getSignedValue() << " : " << score << std::endl;
 
         if (bestScore < 0 || score < bestScore)
         {
@@ -319,8 +329,8 @@ void ApproachPotential::step(float elapsed)
         }
       }
 
-      // std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " <<
-      // target.yaw.getSignedValue() << " (kick: " << target.kickName << ")" << std::endl;
+      std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " << target.yaw.getSignedValue()
+                << " (kick: " << target.kickName << ")" << std::endl;
 
       // Setting expectedKick
       expectedKick = target.kickName;

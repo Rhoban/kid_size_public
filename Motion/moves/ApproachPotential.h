@@ -50,9 +50,6 @@ protected:
   // Potential repulsion
   double repulsion;
 
-  // °/m
-  double degsPerMeter;
-
   // Don't walk
   bool dontWalk;
 
