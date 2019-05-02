@@ -24,7 +24,7 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 {
   Move::initializeBinding();
   swingGainStart = 0.04;
-  trunkPitch = 15;
+  trunkPitch = 12;
 
   // Enables or disables the walk
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
@@ -124,6 +124,7 @@ void Walk::onStart()
 
 void Walk::onStop()
 {
+  Helpers::getServices()->model->setReadBaseUpdate(false);
   state = WalkNotWalking;
   kickState = KickNotKicking;
 }
@@ -159,6 +160,8 @@ void Walk::step(float elapsed)
   engine.trunkPitch = deg2rad(trunkPitch);
 
   stepKick(elapsed);
+
+  getServices()->model->setReadBaseUpdate(state != WalkNotWalking);
 
   if (state == WalkNotWalking)
   {

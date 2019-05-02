@@ -40,7 +40,7 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   // State
   bind->bindNew("state", STM::state, RhIO::Bind::PushOnly)->comment("Approach STM state");
 
-  bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)->defaultValue(0.6);
+  bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)->defaultValue(0.7);
 
   bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)->defaultValue(200);
 
@@ -50,7 +50,7 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)->defaultValue(0.0);
   bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)->defaultValue(0.0);
   bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)->defaultValue(0);
-  bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)->defaultValue(0.5);
+  bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)->defaultValue(1.2);
   bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)->defaultValue(0.0);
 
   bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.45);
