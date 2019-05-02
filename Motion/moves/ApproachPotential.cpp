@@ -289,7 +289,7 @@ void ApproachPotential::step(float elapsed)
       double bestScore = -1;
       auto ballField = loc->getBallPosField();
       Angle defendTargetDir = Angle(180) - loc->getOurBallToGoalDirSelf();
-      std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+      // std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
       // std::cout << "OUR GOAL: " << defendTargetDir << std::endl;
 
       for (auto t : targets)
@@ -309,8 +309,8 @@ void ApproachPotential::step(float elapsed)
             score *= 30 * defendError;
           }
         }
-        std::cout << "Score for [n: " << t.position.getLength() << ", x: " << t.position.x << ",y: " << t.position.y << ",t: " << cYaw << "] " << t.kickName << " / " << t.yaw.getSignedValue() <<
-           " : " << score << std::endl;
+        // std::cout << "Score for [n: " << t.position.getLength() << ", x: " << t.position.x << ",y: " << t.position.y << ",t: " << cYaw << "] " << t.kickName << " / " << t.yaw.getSignedValue() <<
+        //    " : " << score << std::endl;
 
         if (bestScore < 0 || score < bestScore)
         {
@@ -319,8 +319,8 @@ void ApproachPotential::step(float elapsed)
         }
       }
 
-      std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " <<
-      target.yaw.getSignedValue() << " (kick: " << target.kickName << ")" << std::endl;
+      // std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " <<
+      // target.yaw.getSignedValue() << " (kick: " << target.kickName << ")" << std::endl;
 
       // Setting expectedKick
       expectedKick = target.kickName;
