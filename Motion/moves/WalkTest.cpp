@@ -134,7 +134,9 @@ void WalkTest::step(float elapsed)
         }
         else
         {
-          if (state == Walking && stepCount > 2)
+          bool walkingTooMuch =
+              fabs(engine.xSpeed) > 0.01 || fabs(engine.ySpeed) > 0.01 || rad2deg(fabs(engine.yawSpeed)) > 3;
+          if (state == Walking && walkingTooMuch)
           {
             // We will apply an extra step with null orders to be sure the walk stops properly
             state = WalkStopping;
