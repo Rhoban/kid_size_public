@@ -2,6 +2,7 @@
 #include "WalkTest.h"
 #include "services/ModelService.h"
 #include "rhoban_utils/angle.h"
+#include <rhoban_utils/control/variation_bound.h>
 
 using namespace rhoban_utils;
 
@@ -10,9 +11,15 @@ WalkTest::WalkTest()
   Move::initializeBinding();
   swingGainStart = 0.04;
 
+  // Enables or disables the walk
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
-  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(-15);
+  bind->bindNew("walkStep", walkStep, RhIO::Bind::PullOnly)->comment("Walk control Step [mm/step]")->defaultValue(0.0);
+  bind->bindNew("walkLateral", walkLateral, RhIO::Bind::PullOnly)
+      ->comment("Walk control Lateral [mm/step]")
+      ->defaultValue(0.0);
+  bind->bindNew("walkTurn", walkTurn, RhIO::Bind::PullOnly)->comment("Walk control Turn [deg/step]")->defaultValue(0.0);
 
+  // Walk engine parameters
   bind->bindNew("trunkXOffset", engine.trunkXOffset, RhIO::Bind::PullOnly)->defaultValue(engine.trunkXOffset);
   bind->bindNew("trunkZOffset", engine.trunkZOffset, RhIO::Bind::PullOnly)->defaultValue(engine.trunkZOffset);
   bind->bindNew("frequency", engine.frequency, RhIO::Bind::PullOnly)->defaultValue(engine.frequency);
@@ -24,11 +31,20 @@ WalkTest::WalkTest()
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
   bind->bindNew("footYOffsetPerYSpeed", engine.footYOffsetPerYSpeed, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerYSpeed);
+  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(-15);
 
-  bind->bindNew("xSpeed", engine.xSpeed, RhIO::Bind::PullOnly)->defaultValue(0.0);
-  bind->bindNew("ySpeed", engine.ySpeed, RhIO::Bind::PullOnly)->defaultValue(0.0);
-  bind->bindNew("yawSpeed", engine.yawSpeed, RhIO::Bind::PullOnly)->defaultValue(0.0);
+  // Acceleration limits
+  bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
+      ->defaultValue(30)
+      ->comment("Maximal difference between two steps [mm/step^2]");
+  bind->bindNew("maxDLatByCycle", maxDLatByCycle, RhIO::Bind::PullOnly)
+      ->defaultValue(20)
+      ->comment("Maximal difference between two steps [mm/step^2]");
+  bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
+      ->defaultValue(10)
+      ->comment("Maximal difference between two steps [deg/step^2]");
 
+  // Arms
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)
       ->defaultValue(-5.0)
       ->minimum(-20.0)
@@ -56,9 +72,10 @@ void WalkTest::onStart()
   bind->node().setBool("walkEnable", false);
   state = WalkNotWalking;
 
-  bind->node().setFloat("xSpeed", 0.0);
-  bind->node().setFloat("ySpeed", 0.0);
-  bind->node().setFloat("yawSpeed", 0.0);
+  // Zeroing the orders
+  bind->node().setFloat("walkStep", 0.0);
+  bind->node().setFloat("walkLateral", 0.0);
+  bind->node().setFloat("walkTurn", 0.0);
 
   engine.swingGain = 0;
   engine.riseGain = 0;
@@ -73,7 +90,8 @@ void WalkTest::step(float elapsed)
 {
   bind->pull();
 
-  if (state == WalkNotWalking) {
+  if (state == WalkNotWalking)
+  {
     // Walk is not enabled, just freezing the engine
     engine.riseGain = 0;
     engine.swingGain = 0;
@@ -84,11 +102,14 @@ void WalkTest::step(float elapsed)
     timeSinceLastStep = 0;
     stepCount = 0;
 
-    if (walkEnable) {
+    if (walkEnable)
+    {
       state = WalkStarting;
     }
-  } else {
-    // Ticking 
+  }
+  else
+  {
+    // Ticking
     timeSinceLastStep += elapsed;
     double over = engine.update(timeSinceLastStep);
 
@@ -100,30 +121,51 @@ void WalkTest::step(float elapsed)
 
       if (stepCount <= 2)
       {
+        // We apply an extra swing to start safely to walk
         engine.swingGain = swingGainStart;
       }
 
-      if (state != WalkStarting) {
-        if (walkEnable) {
+      if (state != WalkStarting)
+      {
+        if (walkEnable)
+        {
+          // We should just walk normally
           state = Walking;
-        } else {
-          if (state == Walking && stepCount > 2) {
+        }
+        else
+        {
+          if (state == Walking && stepCount > 2)
+          {
+            // We will apply an extra step with null orders to be sure the walk stops properly
             state = WalkStopping;
-          } else {
+          }
+          else
+          {
+            // We stop walking now
             state = WalkNotWalking;
           }
         }
       }
 
-      if (state != Walking) {
-          engine.xSpeed = 0;
-          engine.ySpeed = 0;
-          engine.yawSpeed = 0;
+      if (state != Walking)
+      {
+        // We are not walking, starting or starting, we have no orders
+        engine.xSpeed = 0;
+        engine.ySpeed = 0;
+        engine.yawSpeed = 0;
+      }
+      else
+      {
+        // Updating engine speed according to acc. limits
+        VariationBound::update(engine.xSpeed, walkStep / 1000.0, maxDStepByCycle / 1000.0, 1);
+        VariationBound::update(engine.ySpeed, walkLateral / 1000.0, maxDLatByCycle / 1000.0, 1);
+        VariationBound::update(engine.yawSpeed, deg2rad(walkTurn), deg2rad(maxDTurnByCycle), 1);
       }
 
-      if (state == WalkStarting) {
-          std::cout << "Going to WALKING" << std::endl;
-          state = Walking;
+      if (state == WalkStarting)
+      {
+        std::cout << "Going to WALKING" << std::endl;
+        state = Walking;
       }
 
       // Creating a new footstep

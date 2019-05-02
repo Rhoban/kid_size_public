@@ -18,6 +18,12 @@ protected:
   // Walk engine
   rhoban::WalkEngine engine;
 
+  // Walking parameters
+  double walkStep, walkLateral, walkTurn;
+
+  // Walking acc. limits
+  double maxDStepByCycle, maxDLatByCycle, maxDTurnByCycle;
+
   // Walk state
   enum WalkState {
     WalkNotWalking = 0,
