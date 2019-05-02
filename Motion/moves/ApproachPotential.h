@@ -65,6 +65,4 @@ protected:
 
   void enterState(std::string state);
   void exitState(std::string state);
-
-  Eigen::Vector3d computeLastStepDelta(const std::string& kickName, bool isRightFoot);
 };

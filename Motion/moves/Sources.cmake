@@ -3,7 +3,7 @@ set (SOURCES
     ApproachMove.cpp
     AutonomousPlaying.cpp
     Penalty.cpp
-    Walk.cpp
+    OldWalk.cpp
     StandUp.cpp
     Move.cpp
     Moves.cpp
@@ -14,7 +14,7 @@ set (SOURCES
     Robocup.cpp
     Playing.cpp
     IMUTest.cpp
-    WalkTest.cpp
+    Walk.cpp
     GoalKeeper.cpp
     Placer.cpp
     Kick.cpp

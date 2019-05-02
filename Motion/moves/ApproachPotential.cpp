@@ -56,9 +56,6 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
 
   // Don't walk
   bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)->defaultValue(false);
-
-  // Are we using a final last step
-  bind->node().newBool("useLastStep")->persisted(false)->defaultValue(false);
 }
 
 Angle ApproachPotential::getKickCap()
@@ -207,15 +204,6 @@ void ApproachPotential::step(float elapsed)
     }
   }
 
-  if (state == STATE_STEPPING)
-  {
-    if (!walk->isLastStep())
-    {
-      requestKick();
-      setState(STATE_SHOOT);
-    }
-  }
-
   if (state == STATE_PLACE)
   {
     // Target yaw
@@ -333,81 +321,8 @@ void ApproachPotential::step(float elapsed)
       if (kick_score >= 1.0)
       {
         walk->control(false, 0, 0, 0);
-        if (bind->node().getBool("useLastStep"))
-        {
-          // Compute last step displacement
-          Eigen::Vector3d dpose;
-          if (expectedKick != "lateral")
-          {
-            // In case of classic or small forward kick
-            // rechoose the kick foot for last step
-            Eigen::Vector3d dposeLeft = computeLastStepDelta(expectedKick, false);
-            Eigen::Vector3d dposeRight = computeLastStepDelta(expectedKick, true);
-            // Check which pose is reachable at next step
-            double phase = walk->getPhase();
-            bool isReachableLeft = (dposeLeft.y() >= 0.0 && phase < 0.5) || (dposeLeft.y() <= 0.0 && phase > 0.5);
-            bool isReachableRight = (dposeRight.y() >= 0.0 && phase < 0.5) || (dposeRight.y() <= 0.0 && phase > 0.5);
-            // Compute command effort
-            double effortLeft = Eigen::Vector2d(dposeLeft.x(), dposeLeft.y()).norm();
-            double effortRight = Eigen::Vector2d(dposeRight.x(), dposeRight.y()).norm();
-            // Select the minimal step delta which is possible or
-            // the minimal step if none are currently possible
-            bool isSelectedRight = false;
-            if ((!isReachableLeft && !isReachableRight) || (isReachableLeft && isReachableRight))
-            {
-              // None or all are possible, choose the minimal effort one
-              isSelectedRight = (effortLeft > effortRight);
-            }
-            else if (isReachableLeft && !isReachableRight && fabs(dposeLeft.y()) < 0.06)
-            {
-              isSelectedRight = false;
-            }
-            else if (!isReachableLeft && isReachableRight && fabs(dposeRight.y()) < 0.06)
-            {
-              isSelectedRight = true;
-            }
-            else
-            {
-              isSelectedRight = kickRight;
-            }
-            dpose = isSelectedRight ? dposeRight : dposeLeft;
-            kickRight = isSelectedRight;
-            std::cout << "LEPH: name=" << expectedKick << " foot=" << kickRight << std::endl;
-            std::cout << "LEPH: phase:" << phase << std::endl;
-            std::cout << "LEPH: dposeLeft: " << dposeLeft.transpose() << std::endl;
-            std::cout << "LEPH: dposeRight: " << dposeRight.transpose() << std::endl;
-            std::cout << "LEPH: isReachLeft: " << isReachableLeft << std::endl;
-            std::cout << "LEPH: isReachRight: " << isReachableRight << std::endl;
-            std::cout << "LEPH: effortLeft: " << effortLeft << std::endl;
-            std::cout << "LEPH: effortRight: " << effortRight << std::endl;
-            std::cout << "LEPH: selected: " << isSelectedRight << std::endl;
-            std::cout << "LEPH: selectPose: " << dpose.transpose() << std::endl;
-          }
-          else
-          {
-            dpose = computeLastStepDelta(expectedKick, kickRight);
-          }
-          // Security bounds
-          if (dpose.x() > 0.1)
-            dpose.x() = 0.1;
-          if (dpose.x() < -0.05)
-            dpose.x() = -0.05;
-          if (dpose.y() > 0.1)
-            dpose.y() = 0.1;
-          if (dpose.y() < -0.1)
-            dpose.y() = -0.1;
-          if (dpose.z() > 0.8)
-            dpose.z() = 0.8;
-          if (dpose.z() < -0.8)
-            dpose.z() = -0.8;
-          walk->askLastStep(dpose);
-          setState(STATE_STEPPING);
-        }
-        else
-        {
-          requestKick();
-          setState(STATE_SHOOT);
-        }
+        requestKick();
+        setState(STATE_SHOOT);
       }
       else
       {
@@ -440,62 +355,4 @@ void ApproachPotential::enterState(std::string state)
 
 void ApproachPotential::exitState(std::string state)
 {
-}
-
-Eigen::Vector3d ApproachPotential::computeLastStepDelta(const std::string& kickName, bool isRightFoot)
-{
-  auto cap = ApproachMove::getKickCap();
-  auto loc = getServices()->localisation;
-  auto ball = loc->getBallPosSelf();
-  Eigen::Vector3d currentEgoToBall(ball.x, ball.y, cap.getSignedValue() * M_PI / 180.0);
-  double phase = walk->getPhase();
-  Eigen::Vector4d order = walk->getRawOrder();
-
-  // Predict egocentric ball pose
-  // at the end of current step.
-  // Compute the remaining delta pose
-  // to travel to the end of
-  // current step (half cycle).
-  double ratio;
-  if (phase < 0.5)
-  {
-    ratio = 2.0 * phase;
-  }
-  else
-  {
-    ratio = 2.0 * (phase - 0.5);
-  }
-  const double odometryTransCoef = 1.1;
-  const double odometryRotCoef = 1.0;
-  Eigen::Vector3d egoAtNext(odometryTransCoef * (1.0 - ratio) * order.x(),
-                            odometryTransCoef * (1.0 - ratio) * order.y(), odometryRotCoef * (1.0 - ratio) * order.z());
-  double vectX = currentEgoToBall.x() - egoAtNext.x();
-  double vectY = currentEgoToBall.y() - egoAtNext.y();
-  double angle = currentEgoToBall.z() - egoAtNext.z();
-  double aa = egoAtNext.z();
-  double vectInSrcX = vectX * cos(-aa) - vectY * sin(-aa);
-  double vectInSrcY = vectX * sin(-aa) + vectY * cos(-aa);
-  Eigen::Vector3d nextEgoToBall(vectInSrcX, vectInSrcY, angle);
-
-  // Compute last step displacement
-  Eigen::Vector3d targetEgoToBall = kmc.getKickModel(kickName).getKickZone().getWishedPos(isRightFoot);
-  targetEgoToBall.z() *= -1.0;
-  Eigen::Vector3d targetBallToEgo;
-  double tmpA = -targetEgoToBall.z();
-  targetBallToEgo.x() = -targetEgoToBall.x() * std::cos(tmpA) + targetEgoToBall.y() * sin(tmpA);
-  targetBallToEgo.y() = -targetEgoToBall.x() * std::sin(tmpA) - targetEgoToBall.y() * cos(tmpA);
-  targetBallToEgo.z() = tmpA;
-  Eigen::Vector3d dpose(nextEgoToBall.x(), nextEgoToBall.y(), nextEgoToBall.z() + targetBallToEgo.z());
-  dpose.x() += targetBallToEgo.x() * std::cos(nextEgoToBall.z()) - targetBallToEgo.y() * std::sin(nextEgoToBall.z());
-  dpose.y() += targetBallToEgo.x() * std::sin(nextEgoToBall.z()) + targetBallToEgo.y() * std::cos(nextEgoToBall.z());
-
-  std::cout << "LEPH|: phase: " << phase << std::endl;
-  std::cout << "LEPH|: order:     " << order.transpose() << std::endl;
-  std::cout << "LEPH|: ratio: " << ratio << std::endl;
-  std::cout << "LEPH|: egoAtNext: " << egoAtNext.transpose() << std::endl;
-  std::cout << "LEPH|: currentToBall: " << currentEgoToBall.transpose() << std::endl;
-  std::cout << "LEPH|: nextToBall   : " << nextEgoToBall.transpose() << std::endl;
-  std::cout << "LEPH|: dpose: " << dpose.transpose() << std::endl;
-
-  return dpose;
 }

@@ -16,7 +16,7 @@
 #include "LogMachine.hpp"
 #include "GoalKick.hpp"
 #include "AutonomousPlaying.h"
-#include "WalkTest.h"
+#include "OldWalk.h"
 
 #include "ReactiveKicker.h"
 
@@ -49,12 +49,11 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   kick->cmdKickGen();
 
   Walk* walk = new Walk(kick);
-  WalkTest* walkTest = new WalkTest(kick);
+  OldWalk* oldWalk = new OldWalk(kick);
   Head* head = new Head;
   Placer* placer = new Placer(walk);
   StandUp* standup = new StandUp;
-  add(walk);
-  add(walkTest);
+  add(oldWalk);
   add(standup);
   add(head);
   add(new Search(walk, placer));
@@ -85,6 +84,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
 
   add(new ReactiveKicker(walk));
   add(new AutonomousPlaying(walk, standup));
+  add(walk);
 
   //    csa_mdp::PolicyFactory::registerExtraBuilder("ExpertApproach", []() {return std::unique_ptr<csa_mdp::Policy>(new
   //    csa_mdp::ExpertApproach);}); add(new MDPKickController()); LateralStep *lateralStep = new LateralStep(); add(new
