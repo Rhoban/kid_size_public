@@ -50,7 +50,7 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)->defaultValue(1.2);
   bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)->defaultValue(0.0);
 
-  bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.45);
+  bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.35);
 
   // Don't walk
   bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)->defaultValue(false);
