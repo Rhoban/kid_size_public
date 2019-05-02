@@ -56,9 +56,6 @@ protected:
   // Don't walk
   bool dontWalk;
 
-  // Acceptation threshold
-  double distanceThreshold, angleThreshold;
-
   // Gains
   double stepP, lateralI, stepI, stepPunch, lateralP;
 

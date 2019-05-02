@@ -45,8 +45,8 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)->defaultValue(200);
 
   // Servoing
-  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(10);
-  bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(10);
+  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(6);
+  bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(6);
   bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)->defaultValue(0.0);
   bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)->defaultValue(0.0);
   bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)->defaultValue(0);
@@ -54,10 +54,6 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)->defaultValue(0.0);
 
   bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.45);
-
-  // Acceptance
-  bind->bindNew("distanceThreshold", distanceThreshold, RhIO::Bind::PullOnly)->defaultValue(0.65)->persisted(true);
-  bind->bindNew("angleThreshold", angleThreshold, RhIO::Bind::PullOnly)->defaultValue(9)->persisted(true);
 
   // Don't walk
   bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)->defaultValue(false);
