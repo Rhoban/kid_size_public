@@ -2,6 +2,7 @@
 
 #include "Move.h"
 #include "engines/walk_engine.h"
+#include "rhoban_geometry/point.h"
 
 class Kick;
 class Walk : public Move
@@ -36,6 +37,10 @@ public:
    * Return last command applied to walk (before trim)
    */
   Eigen::Vector4d getOrder() const;
+
+  rhoban_geometry::Point trunkToFlyingFoot(rhoban_geometry::Point point);
+
+  // rhoban_geometry::Point 
 
   /**
    * Set raw (meters, radian) current walk

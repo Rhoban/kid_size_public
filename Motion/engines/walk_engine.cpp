@@ -27,6 +27,14 @@ WalkEngine::FootPose WalkEngine::Foot::getPosition(double t)
   return pose;
 }
 
+void WalkEngine::FootPose::operator=(const FootPose &other)
+{
+  x = other.x;
+  y = other.y;
+  z = other.z;
+  yaw = other.yaw;
+}
+
 WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0)
 {
 }

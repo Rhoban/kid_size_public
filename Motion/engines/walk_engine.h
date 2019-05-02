@@ -15,6 +15,7 @@ public:
   struct FootPose
   {
     FootPose();
+    void operator=(const FootPose &other);
 
     double x, y, z;
     double yaw;

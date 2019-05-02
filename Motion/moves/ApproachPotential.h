@@ -45,6 +45,8 @@ protected:
   bool left;
   double lastFootChoice;
 
+  double ballX, ballY;
+
   // Potential repulsion
   double repulsion;
 
@@ -62,6 +64,8 @@ protected:
 
   // Current tolerance used
   double currentTolerance;
+
+  double placementDistance;
 
   void enterState(std::string state);
   void exitState(std::string state);

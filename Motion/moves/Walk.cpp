@@ -408,3 +408,27 @@ void Walk::setRawOrder(const Eigen::Vector3d& params, bool enable)
 {
   setRawOrder(params(0), params(1), params(2), enable);
 }
+
+rhoban_geometry::Point Walk::trunkToFlyingFoot(rhoban_geometry::Point point)
+{
+  rhoban::WalkEngine::FootPose flyingPose;
+  double deltaY;
+
+  if (engine.isLeftSupport) {
+    flyingPose = engine.right.getPosition(timeSinceLastStep);
+    deltaY = engine.right.trunkYOffset;
+  } else {
+    flyingPose = engine.left.getPosition(timeSinceLastStep);
+    deltaY = engine.left.trunkYOffset;
+  }
+  
+  rhoban_geometry::Point delta(0, -deltaY);
+  delta.rotation(flyingPose.yaw);
+  rhoban_geometry::Point trunkAfterStep(flyingPose.x + delta.x, flyingPose.y + delta.y);
+
+  point.x -= trunkAfterStep.x;
+  point.y -= trunkAfterStep.y;
+  point = point.rotation(-flyingPose.yaw);
+
+  return point;
+}

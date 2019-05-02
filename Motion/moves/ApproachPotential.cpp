@@ -10,6 +10,9 @@
 #include "moves/ApproachPotential.h"
 #include "moves/Walk.h"
 
+// Uncomment this to force using right foot with classic kick (for debugging purpose)
+// #define DEBUG_FORCE_KICK_RIGHT_CLASSIC
+
 static rhoban_utils::Logger logger("ApproachPotential" /*, LoggerDebug*/);
 
 using namespace rhoban_geometry;
@@ -37,12 +40,12 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   // State
   bind->bindNew("state", STM::state, RhIO::Bind::PushOnly)->comment("Approach STM state");
 
-  bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)->defaultValue(0.7);
+  bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)->defaultValue(0.6);
 
   bind->bindNew("degsPerMeter", degsPerMeter, RhIO::Bind::PullOnly)->defaultValue(200);
 
   // Servoing
-  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(5);
+  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(10);
   bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(10);
   bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)->defaultValue(0.0);
   bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)->defaultValue(0.0);
@@ -50,12 +53,17 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)->defaultValue(0.5);
   bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)->defaultValue(0.0);
 
+  bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.45);
+
   // Acceptance
   bind->bindNew("distanceThreshold", distanceThreshold, RhIO::Bind::PullOnly)->defaultValue(0.065)->persisted(true);
   bind->bindNew("angleThreshold", angleThreshold, RhIO::Bind::PullOnly)->defaultValue(9)->persisted(true);
 
   // Don't walk
   bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)->defaultValue(false);
+
+  bind->bindNew("ballX", ballX, RhIO::Bind::PushOnly);
+  bind->bindNew("ballY", ballY, RhIO::Bind::PushOnly);
 }
 
 Angle ApproachPotential::getKickCap()
@@ -156,18 +164,18 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   double targetCap = deg2rad(target.yaw.getSignedValue());
 
   double error = goalCap;
-  if (dist < 0.65)
-  {
-    // We are near the ball, let's face it
-    // error = ballCap;
-  }
-  if (dist < 0.6)
+  // if (dist < 0.65)
+  // {
+  //   // We are near the ball, let's face it
+  //   // error = ballCap;
+  // }
+  if (dist < distanceThreshold)
   {
     // We are near the goal, let's face the goal
     error = targetCap;
   }
 
-  if (dist > 0.6)
+  if (dist > distanceThreshold)
   {
     // Avoiding walking backward when error azimuth is high
     control *= std::max<double>(0, cos(error));
@@ -176,9 +184,12 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   // Response
   x = control.x;
 
-  if (dist > 0.6) {
-    y =  0;
-  } else {
+  if (dist > distanceThreshold)
+  {
+    y = 0;
+  }
+  else
+  {
     y = control.y;
   }
   yaw = rad2deg(error);
@@ -211,6 +222,9 @@ void ApproachPotential::step(float elapsed)
 
     // Ball position
     auto ball = loc->getBallPosSelf();
+    ball = walk->trunkToFlyingFoot(ball);
+    ballX = ball.x;  // XXX: To debug
+    ballY = ball.y;
 
     std::vector<Target> targets;
     lastFootChoice += elapsed;
@@ -220,14 +234,14 @@ void ApproachPotential::step(float elapsed)
       lastFootChoice = 0;
     }
 
-
     auto allowedKicks = getAllowedKicks();
 
-    // XXX: HACK to force classic right foot
-    // left = false;
-    // allowedKicks.clear();
-    // allowedKicks.push_back("classic");
-    
+#ifdef DEBUG_FORCE_KICK_RIGHT_CLASSIC
+    left = false;
+    allowedKicks.clear();
+    allowedKicks.push_back("classic");
+#endif
+
     if (allowedKicks.size())
     {
       for (const std::string& name : allowedKicks)
@@ -246,8 +260,9 @@ void ApproachPotential::step(float elapsed)
           double kick_tol_rad = kmc.getKickModel(name).getKickZone().getThetaTol();
           double maxAlpha = getKickTolerance() - rad2deg(kick_tol_rad);
 
-          // XXX: Hack to kick only forward
-          // maxAlpha = 0;
+#ifdef DEBUG_FORCE_KICK_RIGHT_CLASSIC
+          maxAlpha = 0;
+#endif
 
           for (double alpha = toleranceStep; alpha < maxAlpha; alpha += toleranceStep)
           {
@@ -286,8 +301,8 @@ void ApproachPotential::step(float elapsed)
         double cX, cY, cYaw;
         getControl(t, ball, cX, cY, cYaw);
         double score = fabs(target.position.x);
-        score += 4*fabs(target.position.y);
-        
+        score += 4 * fabs(target.position.y);
+
         score += fabs(rad2deg(cYaw)) / degsPerMeter;
 
         if (ballField.x < 0)
