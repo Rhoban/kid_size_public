@@ -43,9 +43,6 @@ protected:
   // Control flag to enable or disable the walk
   bool walkEnable;
 
-  // Is the walk actually enabled now ?
-  bool walkEnabled;
-
   // Extra trunk pitch
   double trunkPitch;
 
