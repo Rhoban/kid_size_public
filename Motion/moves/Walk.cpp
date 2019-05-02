@@ -266,6 +266,12 @@ void Walk::step(float elapsed)
 
         // Creating a new footstep
         engine.newStep();
+
+        if (engine.isLeftSupport) {
+          getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::LeftSupportFoot);
+        } else {
+          getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::RightSupportFoot);
+        }
       }
     }
   }
