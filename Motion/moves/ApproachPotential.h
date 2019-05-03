@@ -45,17 +45,13 @@ protected:
   bool left;
   double lastFootChoice;
 
+  double ballX, ballY;
+
   // Potential repulsion
   double repulsion;
 
-  // °/m
-  double degsPerMeter;
-
   // Don't walk
   bool dontWalk;
-
-  // Acceptation threshold
-  double distanceThreshold, angleThreshold;
 
   // Gains
   double stepP, lateralI, stepI, stepPunch, lateralP;
@@ -63,8 +59,8 @@ protected:
   // Current tolerance used
   double currentTolerance;
 
+  double placementDistance;
+
   void enterState(std::string state);
   void exitState(std::string state);
-
-  Eigen::Vector3d computeLastStepDelta(const std::string& kickName, bool isRightFoot);
 };

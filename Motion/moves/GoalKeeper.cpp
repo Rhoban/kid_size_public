@@ -197,9 +197,9 @@ void GoalKeeper::onStop()
   stopMove("clearing_kick_controler", 0.0);
   logger.log("GK: ***** ON STOP ***** ");
   // loc->enableFieldFilter(true);
-  if (state == STATE_STOP)
-    RhIO::Root.setBool("/moves/walk/gkMustRaise", true);
-  RhIO::Root.setBool("/moves/walk/gkMustBlock", false);
+  // if (state == STATE_STOP)
+  //   RhIO::Root.setBool("/moves/walk/gkMustRaise", true);
+  // RhIO::Root.setBool("/moves/walk/gkMustBlock", false);
   setState(STATE_STANDING);
   /*
   float z=RhIO::Root.getFloat("/moves/walk/trunkZOffset");
@@ -588,7 +588,7 @@ void GoalKeeper::enterState(std::string state)
   {
     if ((state == STATE_DIVING_RIGHT) || (state == STATE_DIVING_LEFT))
     {
-      RhIO::Root.setBool("/moves/walk/gkMustBlock", true);
+      // RhIO::Root.setBool("/moves/walk/gkMustBlock", true);
     }
   }
 
@@ -637,7 +637,7 @@ void GoalKeeper::enterState(std::string state)
     {
       // RhIO::Root.setFloat("/moves/walk/armsRoll", 20);
       // RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
-      RhIO::Root.setBool("/moves/walk/gkMustRaise", false);
+      // RhIO::Root.setBool("/moves/walk/gkMustRaise", false);
     }
     neverWalked = false;
   }
@@ -651,7 +651,7 @@ void GoalKeeper::exitState(std::string state)
   {
     if ((state == STATE_DIVING_RIGHT) || (state == STATE_DIVING_LEFT))
     {
-      RhIO::Root.setBool("/moves/walk/gkMustBlock", false);
+      // RhIO::Root.setBool("/moves/walk/gkMustBlock", false);
       RhIO::Root.setBool("/lowlevel/right_shoulder_roll/torqueEnable", false);
       RhIO::Root.setFloat("/lowlevel/right_shoulder_roll/torqueLimit", 0.2);
       RhIO::Root.setBool("/lowlevel/left_shoulder_roll/torqueEnable", false);
@@ -690,7 +690,7 @@ void GoalKeeper::exitState(std::string state)
   {
     if (stopPosture)
     {
-      RhIO::Root.setBool("/moves/walk/gkMustRaise", true);
+      // RhIO::Root.setBool("/moves/walk/gkMustRaise", true);
       // startMove("walk");
       // RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);
       // RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);

@@ -34,7 +34,7 @@ void ApproachMove::initBindings()
       ->defaultValue(0.0)
       ->comment("When score reaches 1, robot is allowed to shoot");
   bind->bindNew("kickGain", kick_gain, RhIO::Bind::PullOnly)
-      ->defaultValue(2.0)
+      ->defaultValue(1000.0)
       ->comment("IncreaseRate when ball is kickable (score increases by elapsed * kick_gain)")
       ->persisted(true);
   bind->bindNew("noKickGain", no_kick_gain, RhIO::Bind::PullOnly)

@@ -70,6 +70,10 @@ public:
   float getError(const std::string& servo);
   std::vector<std::string> getServoNames();
 
+  void lockScheduler();
+  void unlockScheduler();
+  void setSchedulerClock(double value);
+
   /**
    * Accessing the IMU
    */
@@ -78,12 +82,32 @@ public:
   float getYaw();
   float getGyroYaw();
 
+  void setFakeIMU(double yaw, double pitch, double roll);
+  void setFakePosition(double x, double y, double theta);
+  void setFakeBallPosition(double x, double y);
+
   /**
    * Accessing the pressure sensor
    */
   float getPressureLeftRatio();
   float getPressureRightRatio();
   float getPressureWeight();
+  float getPressureX();
+  float getPressureY();
+  void updatePressure();
+
+  void setFakePressure(
+    double left_x, double left_y, double left_weight,
+    double right_x, double right_y, double right_weight
+  );
+
+  static bool fakePressure;
+  static double pressureLeftX, pressureLeftY, pressureLeftWeight;
+  static double pressureRightX, pressureRightY, pressureRightWeight;
+
+  static bool isPython;
+  static bool fakeIMU;
+  static double fakeYaw, fakePitch, fakeRoll;
 
 private:
   /**

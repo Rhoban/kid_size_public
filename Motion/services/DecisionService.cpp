@@ -269,7 +269,10 @@ bool DecisionService::tick(double elapsed)
     {
       isFieldQualityGood = false;
     }
+  }
 
+  if (!Helpers::isFakeMode() || Helpers::isPython)
+  {
     // Is the robot fallen?
     double pitch_angle = rad2deg(getPitch());
     double roll_angle = rad2deg(getRoll());
@@ -315,7 +318,10 @@ bool DecisionService::tick(double elapsed)
     }
 
     bind.push();
+  }
 
+  if (!Helpers::isFakeMode() || Helpers::isPython)
+  {
     // Detecting robot handling
     if (!isFallen && getPressureWeight() < lowPressureThreshold)
     {

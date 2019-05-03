@@ -77,7 +77,7 @@ Head::Head()
   // WARNING: persisted, because 'Tom' has a different camera requiring a higher shutter
   bind->bindNew("maxSpeed", max_speed, RhIO::Bind::PullOnly)
       ->comment("Maximal angular speed [deg/s]")
-      ->defaultValue(360)
+      ->defaultValue(240)
       ->persisted(true);
   bind->bindNew("maxAcc", max_acc, RhIO::Bind::PullOnly)->comment("Maximal acceleration [deg/s^2]")->defaultValue(3600);
   bind->bindNew("vcMaxSpeed", vc_max_speed, RhIO::Bind::PullOnly)
@@ -112,10 +112,10 @@ Head::Head()
   bind->bindNew("trackingTime", tracking_time, RhIO::Bind::PushOnly)->comment("Time spent since start of tracking [s]");
   bind->bindNew("nearTrackDist", near_track_dist, RhIO::Bind::PullOnly)
       ->comment("Distance at which tracking becomes longer")
-      ->defaultValue(0.7);
+      ->defaultValue(1.0);
   bind->bindNew("forceTrackDist", force_track_dist, RhIO::Bind::PullOnly)
       ->comment("Distance to force watching the ball")
-      ->defaultValue(0.35);
+      ->defaultValue(0.6);
   bind->bindNew("forceTrack", force_track, RhIO::Bind::PullOnly)->comment("Is tracking forced ?")->defaultValue(false);
 
   // Targets monitored

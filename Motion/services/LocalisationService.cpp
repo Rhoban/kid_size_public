@@ -31,7 +31,8 @@ using Vision::Localisation::FieldPF;
 
 static rhoban_utils::Logger out("localisation_service");
 
-LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL), locBinding(NULL)
+LocalisationService::LocalisationService()
+  : bind("localisation"), robocup(NULL), locBinding(NULL), fakeRobot(InitHumanoidModel<Leph::HumanoidFixedModel>())
 {
   lastKick = rhoban_utils::TimeStamp::now();
   // Ball
@@ -412,10 +413,9 @@ void LocalisationService::applyKick(float x_, float y_)
     robocup->applyKick(x_, y_);
   }
 
-  if (Helpers::isFakeMode())
+  if (Helpers::isFakeMode() && !Helpers::isPython)
   {
-    auto& goalModel = getServices()->model->goalModel().get();
-    double yaw = goalModel.getDOF("base_yaw");
+    double yaw = getFakeRobot().get().getDOF("base_yaw");
     std::random_device rd;
     std::default_random_engine engine(rd());
     std::uniform_real_distribution<double> unif(-0.1, 0.1);
@@ -633,17 +633,25 @@ std::string LocalisationService::cmdFakeLoc(double fieldX, double fieldY, double
   return "Set fake localization in world";
 }
 
+Leph::HumanoidFixedModel &LocalisationService::getFakeRobot()
+{
+  if (Helpers::isPython) {
+    return fakeRobot;
+  } else {
+    return getServices()->model->goalModel();
+  }
+}
+
 std::string LocalisationService::cmdMoveOnField(double x, double y, double yaw)
 {
   fieldQ = 1;
 
   if (Helpers::isFakeMode())
   {
-    auto& goalModel = getServices()->model->goalModel().get();
-    goalModel.setDOF("base_yaw", 0);
-    goalModel.setDOF("base_x", x);
-    goalModel.setDOF("base_y", y);
-    goalModel.setDOF("base_yaw", yaw);
+    getFakeRobot().get().setDOF("base_yaw", 0);
+    getFakeRobot().get().setDOF("base_x", x);
+    getFakeRobot().get().setDOF("base_y", y);
+    getFakeRobot().get().setDOF("base_yaw", yaw);
   }
   else
   {
@@ -663,10 +671,9 @@ std::string LocalisationService::cmdResetPosition()
 {
   if (Helpers::isFakeMode())
   {
-    auto& goalModel = getServices()->model->goalModel().get();
-    goalModel.setDOF("base_x", 0);
-    goalModel.setDOF("base_y", 0);
-    goalModel.setDOF("base_yaw", 0);
+    getFakeRobot().get().setDOF("base_x", 0);
+    getFakeRobot().get().setDOF("base_y", 0);
+    getFakeRobot().get().setDOF("base_yaw", 0);
   }
   else
   {
@@ -721,8 +728,10 @@ bool LocalisationService::tick(double elapsed)
 
   if (Helpers::isFakeMode())
   {
-    updatePosSelf();
-    updateBallPos();
+    if (!Helpers::isPython) {
+      updatePosSelf();
+      updateBallPos();
+    }
     updateOpponentsPos();
     updateSharedOpponentsPos();
   }
@@ -751,7 +760,7 @@ void LocalisationService::updateSelfWorldTransforms()
     }
     else
     {
-      world_from_self = getServices()->model->goalModel().get().selfFrameTransform("origin");
+      world_from_self = getFakeRobot().get().selfFrameTransform("origin");
     }
   }
   else
