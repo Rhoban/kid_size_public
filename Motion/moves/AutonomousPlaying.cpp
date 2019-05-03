@@ -115,13 +115,13 @@ void AutonomousPlaying::enterState(std::string state)
   if (state == STATE_STANDUP)
   {
     standup->setLayDown(false);
-    stopMove("walk", 0.3);
+    walk->enableArms(false);
     startMove("standup", 0.0);
     standup->trying = standup_try;
   }
   else
   {
-    startMove("walk", 1.0);
+    walk->enableArms(true);
     walk->control(false);
   }
 
