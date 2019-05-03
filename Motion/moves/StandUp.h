@@ -30,4 +30,7 @@ protected:
   bool layDown; // If true we use the give up motion
   double manualT;
   double delayBefore;
+  
+  std::string currentSpline;
+  std::string cmdReloadStandupSpline();
 };

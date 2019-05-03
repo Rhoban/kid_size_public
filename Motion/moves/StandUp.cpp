@@ -30,6 +30,14 @@ StandUp::StandUp()
   bind->bindNew("manualT", manualT, RhIO::Bind::PullOnly)->defaultValue(0)->comment("Manual T");
 
   bind->bindNew("layDown", layDown, RhIO::Bind::PullOnly)->defaultValue(false);
+
+  bind->bindFunc("reloadStandupSpline", "Reload standup spline", &StandUp::cmdReloadStandupSpline, *this);
+}
+
+std::string StandUp::cmdReloadStandupSpline()
+{
+  splines = Function::fromFile(currentSpline);
+  return "OK";
 }
 
 StandUp::~StandUp()
@@ -87,10 +95,12 @@ void StandUp::step(float elapsed)
         {
           if (getPitch() < 0)
           {
+            currentSpline = "standup_back.json";
             splines = Function::fromFile("standup_back.json");
           }
           else
           {
+            currentSpline = "standup_front.json";
             splines = Function::fromFile("standup_front.json");
           }
         }
