@@ -32,5 +32,5 @@ protected:
   double delayBefore;
   
   std::string currentSpline;
-  std::string cmdReloadStandupSpline();
+  bool reloadSpline;
 };

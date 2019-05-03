@@ -20,6 +20,9 @@ public:
   // Control the robot using [mm] and [deg]
   void control(bool enable, double step = 0, double lateral = 0, double turn = 0);
 
+  // Enabling/disabling arms
+  void enableArms(bool enabled);
+
   /**
    * Boundaries for orders and deltaOrders (step, lateral, turn)
    * units are: [m/step], [rad/step], [m/step^2] and [rad/step^2]
@@ -118,7 +121,9 @@ protected:
 
   // Arms parameters
   double armsRoll, elbowOffset;
-  void stepArms();
+  double smoothingArms;
+  bool armsEnabled;
+  void stepArms(double elapsed);
 
   // Security parameters
   double securityThreshold;

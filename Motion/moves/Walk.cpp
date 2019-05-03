@@ -124,6 +124,8 @@ void Walk::onStart()
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
+  armsEnabled = true;
+  smoothingArms = 0;
 }
 
 void Walk::onStop()
@@ -308,7 +310,7 @@ void Walk::step(float elapsed)
   model->flushLegs(_smoothing);
 
   // Update arms
-  stepArms();
+  stepArms(elapsed);
 
   bind->push();
 }
@@ -356,20 +358,27 @@ void Walk::stepKick(float elapsed)
   }
 }
 
-void Walk::stepArms()
+void Walk::enableArms(bool enabled)
 {
+  armsEnabled = enabled;
+}
+
+void Walk::stepArms(double elapsed)
+{
+  smoothingArms = bound(smoothingArms + elapsed * (armsEnabled ? 3 : -3), 0, 1);
+
   // IMU Pitch to arms
   float imuPitch = rad2deg(getPitch());
-  setAngle("left_shoulder_pitch", imuPitch);
-  setAngle("right_shoulder_pitch", imuPitch);
+  setAngle("left_shoulder_pitch", imuPitch * smoothingArms);
+  setAngle("right_shoulder_pitch", imuPitch * smoothingArms);
 
   // Rolls to arms
-  setAngle("left_shoulder_roll", armsRoll);
-  setAngle("right_shoulder_roll", -armsRoll);
+  setAngle("left_shoulder_roll", armsRoll * smoothingArms);
+  setAngle("right_shoulder_roll", -armsRoll * smoothingArms);
 
   // Elbows
-  setAngle("left_elbow", elbowOffset);
-  setAngle("right_elbow", elbowOffset);
+  setAngle("left_elbow", elbowOffset * smoothingArms);
+  setAngle("right_elbow", elbowOffset * smoothingArms);
 }
 
 bool Walk::isNewStep(double elapsed)
