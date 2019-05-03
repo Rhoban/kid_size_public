@@ -144,7 +144,7 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     control.normalize(walk->maxLateral);
 
   double goalCap = atan2(control.y, control.x);
-  double ballCap = atan2(ball.y, ball.x);
+  // double ballCap = atan2(ball.y, ball.x);
   double targetCap = deg2rad(target.yaw.getSignedValue());
 
   double error = goalCap;
@@ -161,7 +161,7 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     y = 0;
   }
 
-  if (directPlace && fabs(error) > 30)
+  if (directPlace && fabs(error) > 20)
   {
     x = 0;
     y = 0;
@@ -197,7 +197,7 @@ void ApproachPotential::step(float elapsed)
 
     // Ball position
     auto ball = loc->getBallPosSelf();
-    ball = walk->trunkToFlyingFoot(ball);
+    // ball = walk->trunkToFlyingFoot(ball);
     ballX = ball.x;  // XXX: To debug
     ballY = ball.y;
 
