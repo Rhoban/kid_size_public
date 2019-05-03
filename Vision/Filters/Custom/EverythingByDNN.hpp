@@ -31,14 +31,7 @@ protected:
 private:
   ParamInt debugLevel;
   std::map<std::string,ParamInt> isUsingFeature;
-//  ParamInt hasArenaCorner;
-//  ParamInt hasBall;
-//  ParamInt hasCenter;
-//  ParamInt hasLineCorner;
-//  ParamInt hasPenaltyMark;
-//  ParamInt hasPostBase;
-//  ParamInt hasT;
-//  ParamInt hasX;
+  ParamInt imSize;
   ParamFloat scoreThreshold;
   std::string model_path;
   cv::Ptr<cv::dnn::Importer> importer;

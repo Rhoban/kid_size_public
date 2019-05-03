@@ -110,10 +110,6 @@ protected:
    * Stores the points of interests of an image ordered by type descriptor
    */
   std::map<std::string, std::vector<Annotation>> annotations;
-
-  cv::VideoWriter videoWriter;
-
-  bool isFirstFrame;
 };
 }  // namespace Filters
 }  // namespace Vision
