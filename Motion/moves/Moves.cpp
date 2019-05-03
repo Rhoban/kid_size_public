@@ -17,6 +17,8 @@
 #include "GoalKick.hpp"
 #include "AutonomousPlaying.h"
 
+#include "ThrowIn.h"
+
 #include "ReactiveKicker.h"
 
 #include "QKickController.h"
@@ -71,6 +73,10 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
 
   // add(new KickCalibration(approach));
   add(new GoalKick());
+
+  //ThrowIN
+  add(new ThrowIn());
+  
 
   // Requires additionnal dependencies
 
