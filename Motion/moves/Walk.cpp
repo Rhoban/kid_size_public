@@ -25,6 +25,8 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   Move::initializeBinding();
   swingGainStart = 0.04;
   trunkPitch = 13;
+  bootstrapSteps = 3;
+  shouldBootstrap = false;
 
   // Enables or disables the walk
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
@@ -53,6 +55,8 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("footYOffsetPerYSpeed", engine.footYOffsetPerYSpeed, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerYSpeed);
   bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch);
+  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps);
+  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(shouldBootstrap);
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
@@ -154,6 +158,11 @@ bool Walk::isKicking()
   return kickState != KickNotKicking;
 }
 
+void Walk::setShouldBootstrap(bool bootstrap)
+{
+  bind->node().setBool("shouldBootstrap", bootstrap);
+}
+
 void Walk::step(float elapsed)
 {
   bind->pull();
@@ -219,7 +228,7 @@ void Walk::step(float elapsed)
           engine.swingGain = swingGainStart;
         }
 
-        if (state != WalkStarting)
+        if (state != WalkStarting && state != WalkBootstrapingSteps)
         {
           if (walkEnable)
           {
@@ -260,16 +269,31 @@ void Walk::step(float elapsed)
 
         if (state == WalkStarting)
         {
-          std::cout << "Going to WALKING" << std::endl;
+          if (shouldBootstrap)
+          {
+            state = WalkBootstrapingSteps;
+          }
+          else
+          {
+            state = Walking;
+          }
+        }
+
+        if (state == WalkBootstrapingSteps && stepCount > bootstrapSteps)
+        {
+          setShouldBootstrap(false);
           state = Walking;
         }
 
         // Creating a new footstep
         engine.newStep();
 
-        if (engine.isLeftSupport) {
+        if (engine.isLeftSupport)
+        {
           getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::LeftSupportFoot);
-        } else {
+        }
+        else
+        {
           getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::RightSupportFoot);
         }
       }
@@ -423,14 +447,17 @@ rhoban_geometry::Point Walk::trunkToFlyingFoot(rhoban_geometry::Point point)
   rhoban::WalkEngine::FootPose flyingPose;
   double deltaY;
 
-  if (engine.isLeftSupport) {
+  if (engine.isLeftSupport)
+  {
     flyingPose = engine.right.getPosition(timeSinceLastStep);
     deltaY = engine.right.trunkYOffset;
-  } else {
+  }
+  else
+  {
     flyingPose = engine.left.getPosition(timeSinceLastStep);
     deltaY = engine.left.trunkYOffset;
   }
-  
+
   rhoban_geometry::Point delta(0, -deltaY);
   delta.rotation(flyingPose.yaw);
   rhoban_geometry::Point trunkAfterStep(flyingPose.x + delta.x, flyingPose.y + delta.y);

@@ -14,6 +14,8 @@ public:
   void onStart();
   void onStop();
   void step(float elapsed);
+  
+  void setShouldBootstrap(bool bootstrap);
 
   // Control the robot using [mm] and [deg]
   void control(bool enable, double step = 0, double lateral = 0, double turn = 0);
@@ -88,9 +90,14 @@ protected:
   {
     WalkNotWalking = 0,
     WalkStarting,
+    WalkBootstrapingSteps,
     Walking,
     WalkStopping
   };
+
+  // Should the move be bootstraped ?
+  bool shouldBootstrap;
+  int bootstrapSteps;
 
   WalkState state;
 

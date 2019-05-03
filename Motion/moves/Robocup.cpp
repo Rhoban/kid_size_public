@@ -86,6 +86,7 @@ void Robocup::onStart()
   wasHandled = true;
   isHandled = true;
   walk->control(false);
+  walk->setShouldBootstrap(false);
 
   timeSinceNoConsistency = 0;
   timeSinceVisionInactive = 0;
@@ -284,9 +285,10 @@ void Robocup::step(float elapsed)
   {
     applyGameState();
   }
-  // If robot was standing up standup has finished, jump to Waiting state
+  // If robot was standing up, standup has finished, jump to Waiting state
   if (state == STATE_STANDUP && standup->over)
   {
+    walk->setShouldBootstrap(true);
     setState(STATE_WAITING);
   }
   // When the robot falls, go through waiting state (TODO, check if its necessary)
