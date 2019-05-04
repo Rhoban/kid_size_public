@@ -42,11 +42,18 @@ TeamPlayService::TeamPlayService()
       ->defaultValue(false);
   _bind->bindFunc("team", "Display information about teamplay", &TeamPlayService::cmdTeam, *this);
 
-  _bind->bindNew("refereeRadius", refereeRadius, RhIO::Bind::PushOnly)
+  kickOffClearanceDist = 1.05;
+  _bind->bindNew("kickOffClearanceDist", kickOffClearanceDist, RhIO::Bind::PullOnly)
       ->minimum(0.0)
       ->maximum(2.0)
-      ->comment("Additionnal radius to the teamRadius when referee asks to let play");
-  refereeRadius = 1.05;
+      ->defaultValue(kickOffClearanceDist)
+      ->comment("Distance to ball when kick off is given to opponent team");
+  gameInterruptionClearanceDist = 0.7;
+  _bind->bindNew("gameInterruptionClearanceDist", gameInterruptionClearanceDist, RhIO::Bind::PullOnly)
+      ->minimum(0.0)
+      ->maximum(2.0)
+      ->defaultValue(gameInterruptionClearanceDist)
+      ->comment("Distance to ball when a game interruption is awarded to opponent team");
 
   _bind->bindNew("timeSinceLastKick", _selfInfo.timeSinceLastKick, RhIO::Bind::PushOnly)
       ->comment("Time since I performed the last kick [s]")
@@ -242,7 +249,7 @@ void TeamPlayService::messageSend()
       //      protobuf_message_manager and replace it.
       int teamId = getServices()->referee->teamId;
       exportTeamPlayToGameWrapper(_selfInfo, teamId, _isFieldInverted, &_myMessage);
-      CaptainService * captain_service = Helpers::getServices()->captain;
+      CaptainService* captain_service = Helpers::getServices()->captain;
       if (captain_service->amICaptain())
       {
         hl_communication::Captain* dst = _myMessage.mutable_robot_msg()->mutable_captain();

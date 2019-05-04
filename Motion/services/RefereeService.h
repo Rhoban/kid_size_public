@@ -45,9 +45,9 @@ public:
   bool isFinishedPhase();
 
   /**
-   * Is it the begining of the game?
+   * Is the robot playing since a short time.
    */
-  bool isBegining();
+  bool hasStartedPlayingRecently();
 
   /**
    * Time since playing (reseted if penalized)
@@ -55,10 +55,9 @@ public:
   double getTimeSincePlaying();
 
   /**
-   * Should we avoid touching the ball, regarding the rules annd the
-   * current referee state?
+   * True if opponent team has kickOff recently and rules forbid to touch the ball
    */
-  bool shouldLetPlay();
+  bool isOpponentKickOffStart();
 
   /**
    * Am I penalized?
@@ -95,8 +94,6 @@ public:
    */
   int getSecondaryTime();
 
-  void resetTimer();
-
   int gameTime();
 
   bool tick(double elapsed) override;
@@ -106,7 +103,13 @@ public:
 
   int id, teamId;
   int alive;
-  bool force, playing, gamePlaying;
+  bool force;
+  /**
+   * Determines if the robot should play, based on game controller state. False if robot is penalized.
+   * Can be forced through the 'force' flag.
+   */
+  bool playing;
+  bool gamePlaying;
 
   bool wasPenalized;
 
@@ -114,7 +117,7 @@ public:
 
 protected:
   RhIO::Bind* bind;
-  float beginDuration;
+  float startPlayingDuration;
 
   /**
    * Textual referee state
