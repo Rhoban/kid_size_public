@@ -142,12 +142,9 @@ bool DecisionService::tick(double elapsed)
   letPlayRadius = 0;
 
   shouldLetPlay = false;
-  if (referee->shouldLetPlay())
+  if (referee->isOpponentKickOffStart())
   {
-    if (letPlayRadius < teamPlay->refereeRadius)
-    {
-      letPlayRadius = teamPlay->refereeRadius;
-    }
+    std::max(letPlayRadius, teamPlay->kickOffClearanceDist);
     shouldLetPlay = true;
   }
 
@@ -160,13 +157,9 @@ bool DecisionService::tick(double elapsed)
     }
     else
     {
+      std::max(letPlayRadius, teamPlay->gameInterruptionClearanceDist);
       shouldLetPlay = true;
       freeKickT = 0;
-      double clearRadius = 0.65;  //[m]
-      if (letPlayRadius < clearRadius)
-      {
-        letPlayRadius = clearRadius;
-      }
     }
   }
   else if (freeKickT < 10)
@@ -176,10 +169,7 @@ bool DecisionService::tick(double elapsed)
     // https://github.com/RoboCup-Humanoid-TC/GameController/issues/19
     freeKickT += elapsed;
     shouldLetPlay = true;
-    if (letPlayRadius < 0.75)
-    {
-      letPlayRadius = 0.75;
-    }
+    std::max(letPlayRadius, teamPlay->gameInterruptionClearanceDist);
   }
 
   bind.pull();

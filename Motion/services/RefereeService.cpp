@@ -19,8 +19,8 @@ RefereeService::RefereeService() : teamId(-1)
   bind->bindNew("id", id, RhIO::Bind::PullOnly)->comment("The robot ID")->defaultValue(0)->persisted(true);
   bind->bindNew("teamId", teamId, RhIO::Bind::PullOnly)->comment("The team ID")->defaultValue(0)->persisted(true);
   bind->bindNew("force", force, RhIO::Bind::PullOnly)->comment("Force the playing to true")->defaultValue(false);
-  bind->bindNew("beginDuration", beginDuration, RhIO::Bind::PullOnly)
-      ->comment("Duration of the begining phase")
+  bind->bindNew("startPlayingDuration", startPlayingDuration, RhIO::Bind::PullOnly)
+      ->comment("Duration of the start playing phase")
       ->defaultValue(15.0);
   bind->bindNew("timeSincePlaying", timeSincePlaying, RhIO::Bind::PushOnly)
       ->comment("Time elapsed since playing")
@@ -181,7 +181,7 @@ bool RefereeService::isPenalized(int id)
   return false;
 }
 
-bool RefereeService::shouldLetPlay()
+bool RefereeService::isOpponentKickOffStart()
 {
   auto gameState = getGameState();
 
@@ -191,7 +191,7 @@ bool RefereeService::shouldLetPlay()
     // The game is running for less than 10s
     if (timeSinceGamePlaying < 10)
     {
-      // XXX: It is possible that NO team have the kick off in case of dropped  .keevi .ball
+      // XXX: It is possible that NO team have the kick off in case of dropped ball
       int team = gameState.getKickOffTeam();
       // We are not the kick off team
       if (team >= 0 && team != teamId)
@@ -311,9 +311,9 @@ double RefereeService::getTimeSincePlaying()
   }
 }
 
-bool RefereeService::isBegining()
+bool RefereeService::hasStartedPlayingRecently()
 {
-  return isPlaying() && (timeSincePlaying < beginDuration);
+  return isPlaying() && (timeSincePlaying < startPlayingDuration);
 }
 
 std::string RefereeService::cmdPlaying()
@@ -326,9 +326,9 @@ std::string RefereeService::cmdPlaying()
     ss << "Referee time: " << remaining << "." << std::endl;
     ss << "Referee last update: " << (getGameState().getLastUpdate() / 100.0) << "." << std::endl;
 
-    if (shouldLetPlay())
+    if (hasStartedPlayingRecently())
     {
-      ss << "We should not touch the ball.";
+      ss << "Opponent kick off, ball should not be touched.";
     }
 
     return ss.str();
@@ -355,11 +355,6 @@ std::string RefereeService::cmdPlaying()
   }
 }
 
-void RefereeService::resetTimer()
-{
-  timeSincePlaying = 0;
-}
-
 int RefereeService::getSecondaryTime()
 {
   const auto& gs = getGameState();
@@ -370,7 +365,7 @@ void RefereeService::setTextualState()
 {
   if (isPlaying())
   {
-    if (shouldLetPlay())
+    if (hasStartedPlayingRecently())
     {
       _state = "Let play ";
     }
