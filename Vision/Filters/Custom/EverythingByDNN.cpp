@@ -134,7 +134,7 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
   net.forward();
   Benchmark::close("predict");
 
-  cv::dnn::Blob prob = net.getBlob("tiny_model/fc2/fc2/Softmax");  // gather output of "prob" layer
+  cv::dnn::Blob prob = net.getBlob("tiny_model/output/output/Softmax");  // gather output of "prob" layer
   // std::cout << prob << std::endl;
   int classId;
   double classProb;
