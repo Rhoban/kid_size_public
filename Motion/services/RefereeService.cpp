@@ -7,7 +7,7 @@
 static rhoban_utils::Logger out("referee");
 using namespace robocup_referee;
 
-RefereeService::RefereeService() : teamId(-1)
+RefereeService::RefereeService() : teamId(-1), timeSinceGameInterruption(-1), lastGameInterruptionType(0)
 {
   _state = "";
   force = false;
@@ -27,6 +27,12 @@ RefereeService::RefereeService() : teamId(-1)
       ->defaultValue(0.0);
   bind->bindNew("timeSinceGamePlaying", timeSinceGamePlaying, RhIO::Bind::PushOnly)
       ->comment("Time elapsed since game playing")
+      ->defaultValue(0.0);
+  bind->bindNew("timeSinceGameInterruption", timeSinceGameInterruption, RhIO::Bind::PushOnly)
+      ->comment("Time elapsed since game interruption [s], 0 if there has not been any game interruption since start")
+      ->defaultValue(0.0);
+  bind->bindNew("lastGameInterruptionType", lastGameInterruptionType, RhIO::Bind::PushOnly)
+      ->comment("Last game interruption type, 0 if there has not been any game interruption")
       ->defaultValue(0.0);
   bind->bindNew("dumpGameState", dumpGameState, RhIO::Bind::PullOnly)
       ->comment("Activate dump of game status")
@@ -67,8 +73,18 @@ bool RefereeService::tick(double elapsed)
     timeSinceGamePlaying = 0;
   }
 
-  // Removing penalized robots from shared localization
   const GameState& gs = getGameState();
+  // Treat game interruptions
+  if (isGameInterruption())
+  {
+    timeSinceGameInterruption = 0;
+    lastGameInterruptionType = gs.getSecGameState();
+  }
+  else if (lastGameInterruptionType != 0)
+  {
+    timeSinceGameInterruption += elapsed;
+  }
+  // Removing penalized robots from shared localization
   auto loc = getServices()->localisation;
   for (int k = 0; k < gs.getNbTeam(); k++)
   {
@@ -128,7 +144,7 @@ bool RefereeService::isDroppedBall()
   return kickingTeamId < 0;
 }
 
-bool RefereeService::isFreeKick()
+bool RefereeService::isGameInterruption()
 {
   const auto& gs = getGameState();
   switch(gs.getSecGameState()) {
@@ -143,7 +159,15 @@ bool RefereeService::isFreeKick()
   return false;
 }
 
-bool RefereeService::myTeamFreeKick()
+bool RefereeService::isRecentGameInterruption()
+{
+  // We are basing the answers on time from the last free kick, but this
+  // may be available directly in the referee in the future, see
+  // https://github.com/RoboCup-Humanoid-TC/GameController/issues/19
+  return lastGameInterruptionType != 0 && timeSinceGameInterruption < 10;
+}
+
+bool RefereeService::myTeamGameInterruption()
 {
   const auto& gs = getGameState();
   return gs.getSecondaryTeam() == teamId;
@@ -233,7 +257,7 @@ bool RefereeService::isFreezePhase()
   if (force)
     return false;
   return getGameState().getActualGameState() == Constants::STATE_SET ||
-         (isFreeKick() && getGameState().getSecondaryMode() != 1);
+         (isGameInterruption() && getGameState().getSecondaryMode() != 1);
 }
 
 bool RefereeService::isFinishedPhase()

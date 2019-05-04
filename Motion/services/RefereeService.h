@@ -80,14 +80,24 @@ public:
   bool isDroppedBall();
 
   /**
-   * Is there a free kick right now?
+   * Is there a game interruption right now?
    */
-  bool isFreeKick();
+  bool isGameInterruption();
 
   /**
-   * Is the free kick for our team?
+   * Are we in the phase after a game interruption?
    */
-  bool myTeamFreeKick();
+  bool isRecentGameInterruption();
+
+  /**
+   * Is the current or last game_interruption for our team?
+   */
+  bool myTeamGameInterruption();
+
+  /**
+   * Is the current or last game interruption a throw-in?
+   */
+  bool isThrowIn();
 
   /**
    * Secondary time
@@ -127,4 +137,14 @@ protected:
   std::string cmdPlaying();
 
   void setTextualState();
+
+  /**
+   * The time in seconds since a game interruption was finished.
+   */
+  float timeSinceGameInterruption;
+
+  /**
+   * If there has been no game interruption since the start, then the value is 0
+   */
+  int lastGameInterruptionType;
 };
