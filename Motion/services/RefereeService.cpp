@@ -7,7 +7,7 @@
 static rhoban_utils::Logger out("referee");
 using namespace robocup_referee;
 
-RefereeService::RefereeService() : teamId(-1)
+RefereeService::RefereeService() : teamId(-1), timeSinceGameInterruption(-1), lastGameInterruptionType(0)
 {
   _state = "";
   force = false;
@@ -19,14 +19,20 @@ RefereeService::RefereeService() : teamId(-1)
   bind->bindNew("id", id, RhIO::Bind::PullOnly)->comment("The robot ID")->defaultValue(0)->persisted(true);
   bind->bindNew("teamId", teamId, RhIO::Bind::PullOnly)->comment("The team ID")->defaultValue(0)->persisted(true);
   bind->bindNew("force", force, RhIO::Bind::PullOnly)->comment("Force the playing to true")->defaultValue(false);
-  bind->bindNew("beginDuration", beginDuration, RhIO::Bind::PullOnly)
-      ->comment("Duration of the begining phase")
+  bind->bindNew("startPlayingDuration", startPlayingDuration, RhIO::Bind::PullOnly)
+      ->comment("Duration of the start playing phase")
       ->defaultValue(15.0);
   bind->bindNew("timeSincePlaying", timeSincePlaying, RhIO::Bind::PushOnly)
       ->comment("Time elapsed since playing")
       ->defaultValue(0.0);
   bind->bindNew("timeSinceGamePlaying", timeSinceGamePlaying, RhIO::Bind::PushOnly)
       ->comment("Time elapsed since game playing")
+      ->defaultValue(0.0);
+  bind->bindNew("timeSinceGameInterruption", timeSinceGameInterruption, RhIO::Bind::PushOnly)
+      ->comment("Time elapsed since game interruption [s], 0 if there has not been any game interruption since start")
+      ->defaultValue(0.0);
+  bind->bindNew("lastGameInterruptionType", lastGameInterruptionType, RhIO::Bind::PushOnly)
+      ->comment("Last game interruption type, 0 if there has not been any game interruption")
       ->defaultValue(0.0);
   bind->bindNew("dumpGameState", dumpGameState, RhIO::Bind::PullOnly)
       ->comment("Activate dump of game status")
@@ -67,8 +73,18 @@ bool RefereeService::tick(double elapsed)
     timeSinceGamePlaying = 0;
   }
 
-  // Removing penalized robots from shared localization
   const GameState& gs = getGameState();
+  // Treat game interruptions
+  if (isGameInterruption())
+  {
+    timeSinceGameInterruption = 0;
+    lastGameInterruptionType = gs.getSecGameState();
+  }
+  else if (lastGameInterruptionType != 0)
+  {
+    timeSinceGameInterruption += elapsed;
+  }
+  // Removing penalized robots from shared localization
   auto loc = getServices()->localisation;
   for (int k = 0; k < gs.getNbTeam(); k++)
   {
@@ -128,7 +144,7 @@ bool RefereeService::isDroppedBall()
   return kickingTeamId < 0;
 }
 
-bool RefereeService::isFreeKick()
+bool RefereeService::isGameInterruption()
 {
   const auto& gs = getGameState();
   switch(gs.getSecGameState()) {
@@ -143,7 +159,15 @@ bool RefereeService::isFreeKick()
   return false;
 }
 
-bool RefereeService::myTeamFreeKick()
+bool RefereeService::isRecentGameInterruption()
+{
+  // We are basing the answers on time from the last free kick, but this
+  // may be available directly in the referee in the future, see
+  // https://github.com/RoboCup-Humanoid-TC/GameController/issues/19
+  return lastGameInterruptionType != 0 && timeSinceGameInterruption < 10;
+}
+
+bool RefereeService::myTeamGameInterruption()
 {
   const auto& gs = getGameState();
   return gs.getSecondaryTeam() == teamId;
@@ -181,7 +205,7 @@ bool RefereeService::isPenalized(int id)
   return false;
 }
 
-bool RefereeService::shouldLetPlay()
+bool RefereeService::isOpponentKickOffStart()
 {
   auto gameState = getGameState();
 
@@ -191,7 +215,7 @@ bool RefereeService::shouldLetPlay()
     // The game is running for less than 10s
     if (timeSinceGamePlaying < 10)
     {
-      // XXX: It is possible that NO team have the kick off in case of dropped  .keevi .ball
+      // XXX: It is possible that NO team have the kick off in case of dropped ball
       int team = gameState.getKickOffTeam();
       // We are not the kick off team
       if (team >= 0 && team != teamId)
@@ -233,7 +257,7 @@ bool RefereeService::isFreezePhase()
   if (force)
     return false;
   return getGameState().getActualGameState() == Constants::STATE_SET ||
-         (isFreeKick() && getGameState().getSecondaryMode() != 1);
+         (isGameInterruption() && getGameState().getSecondaryMode() != 1);
 }
 
 bool RefereeService::isFinishedPhase()
@@ -311,9 +335,9 @@ double RefereeService::getTimeSincePlaying()
   }
 }
 
-bool RefereeService::isBegining()
+bool RefereeService::hasStartedPlayingRecently()
 {
-  return isPlaying() && (timeSincePlaying < beginDuration);
+  return isPlaying() && (timeSincePlaying < startPlayingDuration);
 }
 
 std::string RefereeService::cmdPlaying()
@@ -326,9 +350,9 @@ std::string RefereeService::cmdPlaying()
     ss << "Referee time: " << remaining << "." << std::endl;
     ss << "Referee last update: " << (getGameState().getLastUpdate() / 100.0) << "." << std::endl;
 
-    if (shouldLetPlay())
+    if (hasStartedPlayingRecently())
     {
-      ss << "We should not touch the ball.";
+      ss << "Opponent kick off, ball should not be touched.";
     }
 
     return ss.str();
@@ -355,11 +379,6 @@ std::string RefereeService::cmdPlaying()
   }
 }
 
-void RefereeService::resetTimer()
-{
-  timeSincePlaying = 0;
-}
-
 int RefereeService::getSecondaryTime()
 {
   const auto& gs = getGameState();
@@ -370,7 +389,7 @@ void RefereeService::setTextualState()
 {
   if (isPlaying())
   {
-    if (shouldLetPlay())
+    if (hasStartedPlayingRecently())
     {
       _state = "Let play ";
     }

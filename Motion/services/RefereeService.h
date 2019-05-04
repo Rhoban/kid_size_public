@@ -45,9 +45,9 @@ public:
   bool isFinishedPhase();
 
   /**
-   * Is it the begining of the game?
+   * Is the robot playing since a short time.
    */
-  bool isBegining();
+  bool hasStartedPlayingRecently();
 
   /**
    * Time since playing (reseted if penalized)
@@ -55,10 +55,9 @@ public:
   double getTimeSincePlaying();
 
   /**
-   * Should we avoid touching the ball, regarding the rules annd the
-   * current referee state?
+   * True if opponent team has kickOff recently and rules forbid to touch the ball
    */
-  bool shouldLetPlay();
+  bool isOpponentKickOffStart();
 
   /**
    * Am I penalized?
@@ -81,21 +80,29 @@ public:
   bool isDroppedBall();
 
   /**
-   * Is there a free kick right now?
+   * Is there a game interruption right now?
    */
-  bool isFreeKick();
+  bool isGameInterruption();
 
   /**
-   * Is the free kick for our team?
+   * Are we in the phase after a game interruption?
    */
-  bool myTeamFreeKick();
+  bool isRecentGameInterruption();
+
+  /**
+   * Is the current or last game_interruption for our team?
+   */
+  bool myTeamGameInterruption();
+
+  /**
+   * Is the current or last game interruption a throw-in?
+   */
+  bool isThrowIn();
 
   /**
    * Secondary time
    */
   int getSecondaryTime();
-
-  void resetTimer();
 
   int gameTime();
 
@@ -106,7 +113,13 @@ public:
 
   int id, teamId;
   int alive;
-  bool force, playing, gamePlaying;
+  bool force;
+  /**
+   * Determines if the robot should play, based on game controller state. False if robot is penalized.
+   * Can be forced through the 'force' flag.
+   */
+  bool playing;
+  bool gamePlaying;
 
   bool wasPenalized;
 
@@ -114,7 +127,7 @@ public:
 
 protected:
   RhIO::Bind* bind;
-  float beginDuration;
+  float startPlayingDuration;
 
   /**
    * Textual referee state
@@ -124,4 +137,14 @@ protected:
   std::string cmdPlaying();
 
   void setTextualState();
+
+  /**
+   * The time in seconds since a game interruption was finished.
+   */
+  float timeSinceGameInterruption;
+
+  /**
+   * If there has been no game interruption since the start, then the value is 0
+   */
+  int lastGameInterruptionType;
 };

@@ -83,16 +83,9 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("kickWarmup", kickWarmup, RhIO::Bind::PullOnly)->defaultValue(0.75)->comment("Warmup [s]");
 
   // Arms
-  bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)
-      ->defaultValue(-5.0)
-      ->minimum(-20.0)
-      ->maximum(150.0)
-      ->persisted(true);
-  bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)
-      ->defaultValue(-168.0)
-      ->minimum(-200.0)
-      ->maximum(30.0)
-      ->persisted(true);
+  bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)->defaultValue(-5.0)->minimum(-20.0)->maximum(150.0);
+  bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-165.0)->minimum(-200.0)->maximum(30.0);
+  bind->bindNew("armsEnabled", armsEnabled, RhIO::Bind::PullOnly)->defaultValue(armsEnabled = true);
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
@@ -121,7 +114,7 @@ void Walk::onStart()
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
-  armsEnabled = true;
+  bind->node().setBool("armsEnabled", true);
   smoothingArms = 0;
 }
 
@@ -358,7 +351,7 @@ void Walk::stepKick(float elapsed)
 
 void Walk::enableArms(bool enabled)
 {
-  armsEnabled = enabled;
+  bind->node().setBool("armsEnabled", enabled);
 }
 
 void Walk::stepArms(double elapsed)

@@ -157,7 +157,7 @@ void Robocup::applyGameState()
       logger.log("Is now playing");
 
       // There is a free kick pending, just continuing to play normally
-      if (referee->isFreeKick())
+      if (referee->isGameInterruption())
       {
         logger.log("End of free kick freeze phase, going back to play");
       }

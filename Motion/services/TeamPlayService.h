@@ -63,9 +63,14 @@ public:
   double teamRadius;
 
   /**
-   * Extra radius for the referee
+   * Minimal distance to ball at kick off
    */
-  double refereeRadius;
+  double kickOffClearanceDist;
+
+  /**
+   * Minimal distance to ball for game interruptions (free-kick, corners, etc...)
+   */
+  double gameInterruptionClearanceDist;
 
 private:
   /**
