@@ -1,5 +1,6 @@
 #include <math.h>
 #include "Walk.h"
+#include "services/DecisionService.h"
 #include "services/ModelService.h"
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
@@ -310,8 +311,9 @@ void Walk::stepKick(float elapsed)
       kickState = KickWarmup;
       kickT = 0;
     }
+    DecisionService* decision = getServices()->decision;
 
-    if (kickState == KickWarmup && kickT >= kickWarmup)
+    if (kickState == KickWarmup && kickT >= kickWarmup && !decision->freezeKick)
     {
       // Warmup over, start the kick move
       kickState = KickKicking;
