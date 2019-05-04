@@ -6,6 +6,7 @@
 #include <services/RefereeService.h>
 #include <services/DecisionService.h>
 #include "rhoban_geometry/point.h"
+#include "rhoban_geometry/circle.h"
 #include "rhoban_utils/logging/logger.h"
 #include "moves/ApproachPotential.h"
 #include "moves/Walk.h"
@@ -99,10 +100,9 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
 {
   double dist = target.position.getLength();
 
-  // x = target.position.x*100;
-  // y = target.position.y*100;
-  // yaw = target.yaw.getSignedValue();
-  // return;
+  rhoban_geometry::Point ballToTarget = target.position - ball;
+  rhoban_geometry::Circle directPlacementCircle(ball + ballToTarget.normalize(placementDistance), placementDistance);
+  bool directPlace = directPlacementCircle.contains(Point(0, 0));
 
   // Going directly (to debug the target)
   // logger.log("Target: %f, %f, %f\n", target.position.x, target.position.y, target.yaw.getSignedValue());
@@ -127,22 +127,13 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   // XXX: Some below variable should be rhiorized
   Point control(-X, -Y);
 
+  if (directPlace) {
+    control = target.position;
+  }
+
   // XXX: dist here may be replaced with the distance following the potential fields
   double P = dist * 100;
   control.normalize(P);
-
-  // Applying punch
-  if (dist < 0.65)
-  {
-    if (control.x > 2)
-      control.x += stepPunch;
-    if (control.x < -2)
-      control.x -= stepPunch;
-    if (control.y > 2)
-      control.y += stepPunch;
-    if (control.y < -2)
-      control.y -= stepPunch;
-  }
 
   // Normalizing using walk max speeds
   if (control.x > walk->maxStep)
@@ -153,38 +144,29 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     control.normalize(walk->maxLateral);
 
   double goalCap = atan2(control.y, control.x);
-  double ballCap = atan2(ball.y, ball.x);
+  // double ballCap = atan2(ball.y, ball.x);
   double targetCap = deg2rad(target.yaw.getSignedValue());
 
   double error = goalCap;
-  // if (dist < 0.65)
-  // {
-  //   // We are near the ball, let's face it
-  //   // error = ballCap;
-  // }
-  if (dist < placementDistance)
+  x = control.x;
+  y = control.y;
+
+  if (directPlace)
   {
     // We are near the goal, let's face the goal
     error = targetCap;
-  }
-
-  if (dist > placementDistance)
-  {
+  } else {
     // Avoiding walking backward when error azimuth is high
     control *= std::max<double>(0, cos(error));
-  }
-
-  // Response
-  x = control.x;
-
-  if (dist > placementDistance)
-  {
     y = 0;
   }
-  else
+
+  if (directPlace && fabs(error) > 20)
   {
-    y = control.y;
+    x = 0;
+    y = 0;
   }
+
   yaw = rad2deg(error);
 }
 
@@ -215,7 +197,7 @@ void ApproachPotential::step(float elapsed)
 
     // Ball position
     auto ball = loc->getBallPosSelf();
-    ball = walk->trunkToFlyingFoot(ball);
+    // ball = walk->trunkToFlyingFoot(ball);
     ballX = ball.x;  // XXX: To debug
     ballY = ball.y;
 

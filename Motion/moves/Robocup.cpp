@@ -284,7 +284,7 @@ void Robocup::step(float elapsed)
   {
     applyGameState();
   }
-  // If robot was standing up standup has finished, jump to Waiting state
+  // If robot was standing up, standup has finished, jump to Waiting state
   if (state == STATE_STANDUP && standup->over)
   {
     setState(STATE_WAITING);
@@ -406,13 +406,13 @@ void Robocup::enterState(std::string state)
   if (state == STATE_STANDUP)
   {
     standup->setLayDown(false);
-    stopMove("walk", 0.3);
+    walk->enableArms(false);
     startMove("standup", 0.0);
     standup->trying = standup_try;
   }
   else
   {
-    startMove("walk", 1.0);
+    walk->enableArms(true);
     walk->control(false);
   }
 
