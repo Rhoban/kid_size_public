@@ -11,6 +11,7 @@ StandUp::StandUp()
 {
   Move::initializeBinding();
   time = 0.0;
+  manualT = 0.0;
   trying = 0;
   reloadSpline = false;
 
@@ -50,6 +51,7 @@ std::string StandUp::getName()
 void StandUp::onStart()
 {
   time = 0.0;
+  manualT = 0.0;
   over = false;
   waiting = true;
 
@@ -78,7 +80,8 @@ void StandUp::step(float elapsed)
 {
   bind->pull();
 
-  if (reloadSpline) {
+  if (reloadSpline)
+  {
     splines = Function::fromFile(currentSpline);
     reloadSpline = false;
   }
@@ -121,7 +124,7 @@ void StandUp::step(float elapsed)
   {
     if (enable)
     {
-      float finalSpeed = speed * (1 / (1 + trying / 2.0));
+      float finalSpeed = speed / (1 + trying / 2.0);
 
       if (finalSpeed < 0.5)
         finalSpeed = 0.5;
@@ -129,6 +132,10 @@ void StandUp::step(float elapsed)
       if (useManualT)
       {
         time = manualT;
+      }
+      else
+      {
+        manualT = time;
       }
 
       setAngle("left_shoulder_roll", armsRoll);
