@@ -11,6 +11,10 @@ StandUp::StandUp()
 {
   Move::initializeBinding();
   time = 0.0;
+  manualT = 0.0;
+  trying = 0;
+  reloadSpline = false;
+
   bind->bindNew("speed", speed)
       ->defaultValue(1.5)
       ->minimum(0.0)
@@ -20,7 +24,9 @@ StandUp::StandUp()
   bind->bindNew("over", over, RhIO::Bind::PushOnly)->comment("Is the move over?")->defaultValue(true);
   bind->bindNew("trying", trying, RhIO::Bind::PushOnly)->comment("Number of try")->defaultValue(0);
 
-  bind->bindNew("delayBefore", delayBefore, RhIO::Bind::PullOnly)->comment("Delay before standing up")->defaultValue(2);
+  bind->bindNew("delayBefore", delayBefore, RhIO::Bind::PullOnly)
+      ->comment("Delay before standing up")
+      ->defaultValue(0.5);
 
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)->defaultValue(10)->persisted(true)->comment("Arms roll");
 
@@ -29,6 +35,8 @@ StandUp::StandUp()
   bind->bindNew("manualT", manualT, RhIO::Bind::PullOnly)->defaultValue(0)->comment("Manual T");
 
   bind->bindNew("layDown", layDown, RhIO::Bind::PullOnly)->defaultValue(false);
+
+  bind->bindNew("reloadSpline", reloadSpline, RhIO::Bind::PushAndPull)->defaultValue(false);
 }
 
 StandUp::~StandUp()
@@ -43,9 +51,9 @@ std::string StandUp::getName()
 void StandUp::onStart()
 {
   time = 0.0;
+  manualT = 0.0;
   over = false;
   waiting = true;
-  trying = 0;
 
   // get the arms back
   setTorqueLimit("left_shoulder_pitch", 1.0);
@@ -72,6 +80,12 @@ void StandUp::step(float elapsed)
 {
   bind->pull();
 
+  if (reloadSpline)
+  {
+    splines = Function::fromFile(currentSpline);
+    reloadSpline = false;
+  }
+
   if (waiting)
   {
     time += elapsed;
@@ -87,10 +101,12 @@ void StandUp::step(float elapsed)
         {
           if (getPitch() < 0)
           {
+            currentSpline = "standup_back.json";
             splines = Function::fromFile("standup_back.json");
           }
           else
           {
+            currentSpline = "standup_front.json";
             splines = Function::fromFile("standup_front.json");
           }
         }
@@ -108,7 +124,7 @@ void StandUp::step(float elapsed)
   {
     if (enable)
     {
-      float finalSpeed = speed * (1 / (1 + trying / 2.0));
+      float finalSpeed = speed / (1 + trying / 2.0);
 
       if (finalSpeed < 0.5)
         finalSpeed = 0.5;
@@ -116,6 +132,10 @@ void StandUp::step(float elapsed)
       if (useManualT)
       {
         time = manualT;
+      }
+      else
+      {
+        manualT = time;
       }
 
       setAngle("left_shoulder_roll", armsRoll);

@@ -200,7 +200,7 @@ void LogMachine::step(float elapsed)
       sequencesMutex.unlock();
     }
     // Detect new steps in autoMode
-    if (autoMode && walk->isNewStep())
+    if (autoMode && walk->isNewStep(elapsed))
     {
       // Drive the walk at every step if we are not in fixed or custom modes
       if (!fixedSpeed && !customOrders)

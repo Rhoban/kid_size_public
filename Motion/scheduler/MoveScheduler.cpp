@@ -34,6 +34,7 @@ MoveScheduler::MoveScheduler()
   , _moves(nullptr)
   , _binding(nullptr)
   , _bind(nullptr)
+  , _manualClock(0.0)
 {
   std::cout << "Initializing MoveScheduler" << std::endl;
 
@@ -138,15 +139,31 @@ void MoveScheduler::releaseServos()
   _manager.emergencyStop();
 }
 
-void MoveScheduler::execute()
+void MoveScheduler::setManualClock(double value)
+{
+  _manualClock = value;
+}
+
+void MoveScheduler::execute(bool manualClock)
 {
   std::cout << "Starting main scheduler loop" << std::endl;
   bool initStats = true;
   TimeStamp startLoop = TimeStamp::now();
   TimeStamp stopLoop = TimeStamp::now();
   double durationLoop = 0.0;
+  double lastManualClock = 0.0;
+  double manualElapsed = 0.0;
+
   while (!_isOver)
   {
+    if (manualClock) {
+      double tmp = _manualClock;
+      manualElapsed = tmp-lastManualClock;
+      lastManualClock = tmp;
+      if (manualElapsed <= 0) {
+        continue;
+      }
+    }
     startLoop = TimeStamp::now();
 
     // Wait next low level flush synchronisation
@@ -154,12 +171,17 @@ void MoveScheduler::execute()
     _manager.waitNextFlush();
     TimeStamp stopFlush = TimeStamp::now();
 
+    mutex.lock();
     // Ticking services
     //(in defined orger by vector container)
     TimeStamp startTickServices = TimeStamp::now();
     for (const auto& service : _services->getAllServices())
     {
-      service.second->ElapseTick::tick();
+      if (manualClock) {
+        service.second->ElapseTick::tickElapsed(manualElapsed);
+      } else {
+        service.second->ElapseTick::tick();
+      }
     }
     TimeStamp stopTickServices = TimeStamp::now();
 
@@ -169,9 +191,14 @@ void MoveScheduler::execute()
     for (const auto& move : _moves->getAllMoves())
     {
       // Ticking the move
-      move.second->ElapseTick::tick();
+      if (manualClock) {
+        move.second->ElapseTick::tickElapsed(manualElapsed);
+      } else {
+        move.second->ElapseTick::tick();
+      }
     }
     TimeStamp stopTickMoves = TimeStamp::now();
+    mutex.unlock();
 
     // Update statistics
     double durationFlush = diffMs(startFlush, stopFlush);

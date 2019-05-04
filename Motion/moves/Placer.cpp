@@ -391,6 +391,10 @@ void Placer::step(float elapsed)
   }
   else
   {
+    if (fabs(turner.output) > 4) {
+      lateraler.output = 0;
+    }
+
     // Using mm to control walk
     walk->control(true, 1000 * stepper.output, 1000 * lateraler.output, turner.output);
   }

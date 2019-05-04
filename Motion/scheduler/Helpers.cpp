@@ -4,12 +4,23 @@
 #include "services/Services.h"
 #include "scheduler/MoveScheduler.h"
 #include "services/ModelService.h"
+#include "services/LocalisationService.h"
 #include "Helpers.h"
 #include <Devices/GY85.hpp>
 
 using namespace rhoban_utils;
 
 static rhoban_utils::Logger out("helpers");
+
+bool Helpers::isPython = false;
+bool Helpers::fakeIMU = false;
+double Helpers::fakeYaw = 0.0;
+double Helpers::fakePitch = 0.0;
+double Helpers::fakeRoll = 0.0;
+
+bool Helpers::fakePressure = false;
+double Helpers::pressureLeftX, Helpers::pressureLeftY, Helpers::pressureLeftWeight;
+double Helpers::pressureRightX, Helpers::pressureRightY, Helpers::pressureRightWeight;
 
 Helpers::Helpers() : _scheduler(nullptr)
 {
@@ -130,6 +141,21 @@ bool Helpers::isRX(const std::string& servo)
   return (type.substr(0, 2) == "RX");
 }
 
+void Helpers::lockScheduler()
+{
+  _scheduler->mutex.lock();
+}
+
+void Helpers::unlockScheduler()
+{
+  _scheduler->mutex.unlock();
+}
+
+void Helpers::setSchedulerClock(double value)
+{
+  _scheduler->setManualClock(value);
+}
+
 float Helpers::getAngle(const std::string& servo)
 {
   if (isFakeMode())
@@ -170,8 +196,32 @@ std::vector<std::string> Helpers::getServoNames()
   return servos;
 }
 
+void Helpers::setFakeIMU(double yaw, double pitch, double roll)
+{
+  Helpers::fakeYaw = yaw;
+  Helpers::fakePitch = pitch;
+  Helpers::fakeRoll = roll;
+  Helpers::fakeIMU = true;
+}
+
+void Helpers::setFakePosition(double x, double y, double theta)
+{
+  auto loc = _scheduler->getServices()->localisation;
+  loc->cmdMoveOnField(x, y, theta);
+}
+
+void Helpers::setFakeBallPosition(double x, double y)
+{
+  auto loc = _scheduler->getServices()->localisation;
+  loc->cmdFakeBall(x, y);
+}
+
 float Helpers::getYaw()
 {
+  if (Helpers::fakeIMU) {
+    return Helpers::fakeYaw;
+  }
+
   if (isFakeMode())
   {
     return _scheduler->getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
@@ -183,8 +233,13 @@ float Helpers::getYaw()
   }
 }
 
+
 float Helpers::getPitch()
 {
+  if (Helpers::fakeIMU) {
+    return Helpers::fakePitch;
+  }
+
   if (isFakeMode())
   {
     return _scheduler->getServices()->model->goalModel().get().trunkSelfOrientation().y();
@@ -198,6 +253,10 @@ float Helpers::getPitch()
 
 float Helpers::getRoll()
 {
+  if (Helpers::fakeIMU) {
+    return Helpers::fakeRoll;
+  }
+
   if (isFakeMode())
   {
     return _scheduler->getServices()->model->goalModel().get().trunkSelfOrientation().x();
@@ -211,6 +270,10 @@ float Helpers::getRoll()
 
 float Helpers::getGyroYaw()
 {
+  if (Helpers::fakeIMU) {
+    return Helpers::fakeYaw;
+  }
+
   if (isFakeMode())
   {
     return _scheduler->getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
@@ -222,25 +285,24 @@ float Helpers::getGyroYaw()
   }
 }
 
-float Helpers::getPressureWeight()
+void Helpers::updatePressure()
 {
-  auto& pressureLeft = _scheduler->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
-  auto& pressureRight = _scheduler->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
+  if (Helpers::fakePressure)
+  {
+    return;
+  }
 
-  return pressureLeft.getWeight() + pressureRight.getWeight();
-}
-
-float Helpers::getPressureLeftRatio()
-{
   if (isFakeMode())
   {
     if (_scheduler->getServices()->model->goalModel().getSupportFoot() == Leph::HumanoidFixedModel::LeftSupportFoot)
     {
-      return 1.0;
+      pressureLeftWeight = 1.0;
+      pressureRightWeight = 0.0;
     }
     else
     {
-      return 0.0;
+      pressureLeftWeight = 0.0;
+      pressureRightWeight = 1.0;
     }
   }
   else
@@ -248,50 +310,90 @@ float Helpers::getPressureLeftRatio()
     auto& pressureLeft = _scheduler->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
     auto& pressureRight = _scheduler->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
 
-    float left = pressureLeft.getWeight();
-    float right = pressureRight.getWeight();
-    float total = left + right;
+    pressureLeftWeight = pressureLeft.getWeight();
+    pressureLeftX = pressureLeft.getX();
+    pressureLeftY = pressureLeft.getY();
+    pressureRightWeight = pressureRight.getWeight();
+    pressureRightX = pressureRight.getX();
+    pressureRightY = pressureRight.getY();
+  }
+}
 
-    if (total > 0)
-    {
-      return left / total;
-    }
-    else
-    {
-      return 0;
-    }
+void Helpers::setFakePressure(double left_x, double left_y, double left_weight, 
+                              double right_x, double right_y, double right_weight)
+{
+  fakePressure = true;
+  pressureLeftX = left_x;
+  pressureLeftX = left_y;
+  pressureLeftWeight = left_weight;
+  pressureRightX = right_x;
+  pressureRightX = right_y;
+  pressureRightWeight = right_weight;
+}
+
+float Helpers::getPressureWeight()
+{
+  updatePressure();
+
+  return pressureLeftWeight + pressureRightWeight;
+}
+
+float Helpers::getPressureLeftRatio()
+{
+  updatePressure();
+
+  double total = pressureLeftWeight + pressureRightWeight;
+  if (total > 0)
+  {
+    return pressureLeftWeight / total;
+  }
+  else
+  {
+    return 0;
   }
 }
 
 float Helpers::getPressureRightRatio()
 {
-  if (isFakeMode())
+  updatePressure();
+
+  double total = pressureLeftWeight + pressureRightWeight;
+  if (total > 0)
   {
-    if (_scheduler->getServices()->model->goalModel().getSupportFoot() == Leph::HumanoidFixedModel::RightSupportFoot)
-    {
-      return 1.0;
-    }
-    else
-    {
-      return 0.0;
-    }
+    return pressureRightWeight / total;
   }
   else
   {
-    auto& pressureLeft = _scheduler->getManager()->dev<RhAL::PressureSensor4>("left_pressure");
-    auto& pressureRight = _scheduler->getManager()->dev<RhAL::PressureSensor4>("right_pressure");
+    return 0;
+  }
+}
 
-    float left = pressureLeft.getWeight();
-    float right = pressureRight.getWeight();
-    float total = left + right;
+float Helpers::getPressureX()
+{
+  updatePressure();
 
-    if (total > 0)
-    {
-      return right / total;
-    }
-    else
-    {
-      return 0;
-    }
+  double total = pressureLeftWeight + pressureRightWeight;
+  if (total > 0)
+  {
+    return (pressureLeftX * pressureLeftWeight + pressureRightX * pressureRightWeight) / total;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+float Helpers::getPressureY()
+{
+  updatePressure();
+
+  double total = pressureLeftWeight + pressureRightWeight;
+  if (total > 0)
+  {
+    return ((pressureLeftY + 0.07) * pressureLeftWeight + (pressureRightY - 0.07) * pressureRightWeight) / total;
+  }
+  else
+  {
+    return 0;
   }
 }
