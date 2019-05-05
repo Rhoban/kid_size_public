@@ -66,6 +66,13 @@ public:
     bind.bindFunc("pyPos", "", &PyRhio::cmdPos, *this);
     bind.bindFunc("pyBall", "", &PyRhio::cmdBall, *this);
     bind.bindFunc("pyReset", "", &PyRhio::cmdReset, *this);
+
+    posX = 0;
+    posY = 0;
+    posTheta = 0;
+
+    ballX = 0.25;
+    ballY = -0.25;
   }
   RhIO::Bind bind;
 
@@ -106,8 +113,8 @@ public:
 
   std::string cmdReset()
   {
-    cmdPos(0, 0, 0);
-    cmdBall(0.25, -0.05);
+    hasBall = true;
+    hasPos = true;
     return "OK";
   }
 };
