@@ -143,7 +143,7 @@ bool DecisionService::tick(double elapsed)
   shouldLetPlay = false;
   if (referee->isOpponentKickOffStart())
   {
-    std::max(letPlayRadius, teamPlay->kickOffClearanceDist);
+    letPlayRadius = std::max(letPlayRadius, teamPlay->kickOffClearanceDist);
     shouldLetPlay = true;
   }
 
@@ -156,14 +156,14 @@ bool DecisionService::tick(double elapsed)
     }
     else
     {
-      std::max(letPlayRadius, teamPlay->gameInterruptionClearanceDist);
+      letPlayRadius = std::max(letPlayRadius, teamPlay->gameInterruptionClearanceDist);
       shouldLetPlay = true;
     }
   }
-  else if (referee->isRecentGameInterruption() && referee->myTeamGameInterruption())
+  else if (referee->isRecentGameInterruption() && !referee->myTeamGameInterruption())
   {
     shouldLetPlay = true;
-    std::max(letPlayRadius, teamPlay->gameInterruptionClearanceDist);
+    letPlayRadius = std::max(letPlayRadius, teamPlay->gameInterruptionClearanceDist);
   }
 
   bind.pull();
