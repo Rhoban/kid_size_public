@@ -146,7 +146,7 @@ void Search::step(float elapsed)
   }
   if (state == STATE_BEGIN)
   {
-    if (referee->isOpponentKickOffStart())
+    if (referee->hasStartedPlayingRecently())
     {
       placer->goTo(beginX / 100, beginY / 100, beginAzimuth);
     }
