@@ -91,6 +91,7 @@ public:
 
   double borderNoise;       // [m]
   double borderNoiseTheta;  // [deg]
+  double borderExtraDist;   // [m]
 
   double customX;           // [m]
   double customY;           // [m]
