@@ -136,7 +136,8 @@ void StandUp::step(float elapsed)
 
       if (finalSpeed < 0.5)
         finalSpeed = 0.5;
-      time += elapsed * finalSpeed;
+      double remap = splines["remap"].get(time);
+      time += elapsed * remap * finalSpeed;
       if (useManualT)
       {
         time = manualT;
