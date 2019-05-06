@@ -23,14 +23,16 @@ public:
 protected:
   float armsRoll;
   float time;
+  float speed_front;
+  float speed_back;
   float speed;
   std::map<std::string, rhoban_utils::Function> splines;
   bool enable, waiting;
   bool useManualT;
-  bool layDown; // If true we use the give up motion
+  bool layDown;  // If true we use the give up motion
   double manualT;
   double delayBefore;
-  
+
   std::string currentSpline;
   bool reloadSpline;
 };

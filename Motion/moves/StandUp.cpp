@@ -14,12 +14,18 @@ StandUp::StandUp()
   manualT = 0.0;
   trying = 0;
   reloadSpline = false;
+  speed = 0.0;
 
-  bind->bindNew("speed", speed)
-      ->defaultValue(1.5)
+  bind->bindNew("speed_front", speed_front, RhIO::Bind::PullOnly)
+      ->defaultValue(speed_front = 1.5)
       ->minimum(0.0)
       ->maximum(20.0)
-      ->comment("Speed factor for standing up");
+      ->comment("Speed factor for standing up if the robot is laying on the front.");
+  bind->bindNew("speed_back", speed_back, RhIO::Bind::PullOnly)
+      ->defaultValue(speed_back = 1.5)
+      ->minimum(0.0)
+      ->maximum(20.0)
+      ->comment("Speed factor for standing up if the robot is laying on the back.");
   bind->bindNew("enable", enable)->defaultValue(true)->persisted(true);
   bind->bindNew("over", over, RhIO::Bind::PushOnly)->comment("Is the move over?")->defaultValue(true);
   bind->bindNew("trying", trying, RhIO::Bind::PushOnly)->comment("Number of try")->defaultValue(0);
@@ -103,11 +109,13 @@ void StandUp::step(float elapsed)
           {
             currentSpline = "standup_back.json";
             splines = Function::fromFile("standup_back.json");
+            speed = speed_back;
           }
           else
           {
             currentSpline = "standup_front.json";
             splines = Function::fromFile("standup_front.json");
+            speed = speed_front;
           }
         }
       }
