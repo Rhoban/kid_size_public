@@ -454,7 +454,7 @@ void GoalKeeper::step(float elapsed)
       if (t < stopMoveTime)
       {
         float z = RhIO::Root.getFloat("/moves/walk/trunkZOffset");
-        RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t + elapsed, t, z, stopMoveTime, 0.17));
+        // RhIO::Root.setFloat("/moves/walk/trunkZOffset", getLinear(t + elapsed, t, z, stopMoveTime, 0.17));
       }
       else
       {
@@ -486,8 +486,8 @@ void GoalKeeper::step(float elapsed)
       }
       if ((t > 0.8) && (t < stopMoveTime))
       {  // wait for 0.8s before opening arms
-        RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
-        RhIO::Root.setFloat("/moves/walk/armsRoll", 20);
+        // RhIO::Root.setFloat("/moves/walk/elbowOffset", 0);
+        // RhIO::Root.setFloat("/moves/walk/armsRoll", 20);
       }
     }
   }
