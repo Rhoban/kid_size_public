@@ -130,6 +130,8 @@ Robocup::Robocup(MoveScheduler* scheduler)
   {
     setViveLog(viveLogPath);
   }
+  kmc.loadFile();
+  taggedKickName = "classic";
   scheduler->getServices()->localisation->setRobocup(this);
   _runThread = new std::thread(std::bind(&Robocup::run, this));
 }
@@ -184,6 +186,8 @@ Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
   {
     setViveLog(viveLogPath);
   }
+  kmc.loadFile();
+  taggedKickName = "classic";
   scheduler->getServices()->localisation->setRobocup(this);
 }
 
@@ -419,6 +423,7 @@ void Robocup::initRhIO()
     RhIO::Root.newFloat(prefix + "_scale")->defaultValue(1.0)->comment("");
     RhIO::Root.newFrame(prefix, "", RhIO::FrameFormat::BGR);
   }
+  RhIO::Root.newStr("/Vision/taggedKickName")->defaultValue("classic");
 
   ballStackFilter->bindToRhIO("ballStack", "ballStack");
 
@@ -622,6 +627,7 @@ void Robocup::importFromRhIO()
     std::string prefix = "Vision/" + sih.name;
     sih.scale = RhIO::Root.getValueFloat(prefix + "_scale").value;
   }
+  taggedKickName = RhIO::Root.getValueStr("/Vision/taggedKickName").value;
 }
 
 void Robocup::publishToRhIO()
@@ -1182,6 +1188,39 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
 
   cv::cvtColor(tmp_small, img, CV_YCrCb2BGR);
 
+  // Drawing kick areas
+  if (taggedKickName != "")
+  {
+    const csa_mdp::KickZone& kick_zone = kmc.getKickModel(taggedKickName).getKickZone();
+    double alpha = 0.6;// Transparency of the kick zones
+    for (bool is_right_foot : {false, true})
+    {
+      std::vector<Eigen::Vector2d> corners_in_self = kick_zone.getKickAreaCorners(is_right_foot);
+      std::vector<cv::Point> corners_in_img;
+      for (const Eigen::Vector2d& corner_in_self : corners_in_self)
+      {
+        Eigen::Vector3d corner_in_world = cs->getWorldFromSelf(Eigen::Vector3d(corner_in_self.x(), corner_in_self.y(), 0));
+        try
+        {
+          corners_in_img.push_back(cs->imgXYFromWorldPosition(corner_in_world));
+        }
+        catch (const std::runtime_error& exc)
+        {
+          // If point is not in image -> ignore kick_zone
+          break;
+        }
+      }
+      if (corners_in_img.size() == 4)
+      {
+        // TODO: add different color if ball is inside the area
+        cv::Mat copy = img.clone();
+        cv::Scalar color = is_right_foot ? cv::Scalar(255,0,0) : cv::Scalar(0,0,255);
+        cv::fillConvexPoly(copy, corners_in_img, color);
+        cv::addWeighted(img, alpha, copy, 1 - alpha, 0, img);
+      }
+    }
+  }
+
   {
     // Drawing candidates of balls
     auto candidates = ballStackFilter->getCandidates();
@@ -1296,6 +1335,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
   {
     cv::line(img, horizonKeypoints[idx - 1], horizonKeypoints[idx], cv::Scalar(255, 0, 0), 2);
   }
+
 
   // TODO remove it and do something cleaner lates
   if (cs->has_camera_field_transform)

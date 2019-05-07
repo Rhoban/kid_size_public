@@ -89,14 +89,14 @@ public:
 
   /*
    * Returns the xy position expected on the screen of the point p [m]
-   * throws exception if point is behind the camera
+   * throws a std::runtime_error if point is behind the camera
    */
   cv::Point imgXYFromWorldPosition(const cv::Point2f& p) const;
   cv::Point imgXYFromWorldPosition(const Eigen::Vector3d& p) const;
 
   /**
    * Returns position of the point from its field position.
-   * throws an exception if camera_field_transform is not available or if point is outside of the image.
+   * throws a std::runtime_error if camera_field_transform is not available or if point is outside of the image.
    */
   cv::Point2f imgFromFieldPosition(const Eigen::Vector3d& p) const;
 
