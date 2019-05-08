@@ -91,8 +91,8 @@ public:
    * Returns the xy position expected on the screen of the point p [m]
    * throws exception if point is behind the camera
    */
-  cv::Point imgXYFromWorldPosition(const cv::Point2f& p) const;
-  cv::Point imgXYFromWorldPosition(const Eigen::Vector3d& p) const;
+  cv::Point2f imgXYFromWorldPosition(const cv::Point2f& p) const;
+  cv::Point2f imgXYFromWorldPosition(const Eigen::Vector3d& p) const;
 
   /**
    * Returns position of the point from its field position.
