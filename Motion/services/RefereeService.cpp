@@ -7,36 +7,49 @@
 static rhoban_utils::Logger out("referee");
 using namespace robocup_referee;
 
-RefereeService::RefereeService() : teamId(-1), timeSinceGameInterruption(-1), lastGameInterruptionType(0)
+RefereeService::RefereeService()
+  : timeSincePlaying(0)
+  , timeSinceGamePlaying(0)
+  , remaining(0)
+  , id(0)
+  , teamId(0)
+  , alive(0)
+  , force(false)
+  , playing(false)
+  , gamePlaying(false)
+  , wasPenalized(false)
+  , dumpGameState(false)
+  , startPlayingDuration(15.0)
+  , timeSinceGameInterruption(-1)
+  , lastGameInterruptionType(0)
 {
   _state = "";
-  force = false;
 
   bind = new RhIO::Bind("referee");
 
   bind->bindNew("state", _state, RhIO::Bind::PushOnly)->comment("State of the Referee services");
 
-  bind->bindNew("id", id, RhIO::Bind::PullOnly)->comment("The robot ID")->defaultValue(0)->persisted(true);
-  bind->bindNew("teamId", teamId, RhIO::Bind::PullOnly)->comment("The team ID")->defaultValue(0)->persisted(true);
-  bind->bindNew("force", force, RhIO::Bind::PullOnly)->comment("Force the playing to true")->defaultValue(false);
+  bind->bindNew("id", id, RhIO::Bind::PullOnly)->comment("The robot ID")->defaultValue(id)->persisted(true);
+  bind->bindNew("teamId", teamId, RhIO::Bind::PullOnly)->comment("The team ID")->defaultValue(teamId)->persisted(true);
+  bind->bindNew("force", force, RhIO::Bind::PullOnly)->comment("Force the playing to true")->defaultValue(force);
   bind->bindNew("startPlayingDuration", startPlayingDuration, RhIO::Bind::PullOnly)
       ->comment("Duration of the start playing phase")
-      ->defaultValue(15.0);
+      ->defaultValue(startPlayingDuration);
   bind->bindNew("timeSincePlaying", timeSincePlaying, RhIO::Bind::PushOnly)
       ->comment("Time elapsed since playing")
-      ->defaultValue(0.0);
+      ->defaultValue(timeSincePlaying);
   bind->bindNew("timeSinceGamePlaying", timeSinceGamePlaying, RhIO::Bind::PushOnly)
       ->comment("Time elapsed since game playing")
-      ->defaultValue(0.0);
+      ->defaultValue(timeSinceGamePlaying);
   bind->bindNew("timeSinceGameInterruption", timeSinceGameInterruption, RhIO::Bind::PushOnly)
       ->comment("Time elapsed since game interruption [s], 0 if there has not been any game interruption since start")
-      ->defaultValue(0.0);
+      ->defaultValue(timeSinceGameInterruption);
   bind->bindNew("lastGameInterruptionType", lastGameInterruptionType, RhIO::Bind::PushOnly)
       ->comment("Last game interruption type, 0 if there has not been any game interruption")
-      ->defaultValue(0.0);
+      ->defaultValue(lastGameInterruptionType);
   bind->bindNew("dumpGameState", dumpGameState, RhIO::Bind::PullOnly)
       ->comment("Activate dump of game status")
-      ->defaultValue(false);
+      ->defaultValue(dumpGameState);
 
   bind->bindNew("alive", alive, RhIO::Bind::PullOnly)->comment("Referee alive status")->defaultValue(2);
 
