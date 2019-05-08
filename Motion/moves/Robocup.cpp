@@ -403,6 +403,16 @@ void Robocup::enterState(std::string state)
     head->setDisabled(false);
   }
 
+  // Starts or stops the safe arms roll used for accessing the hotswap
+  if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
+  {
+    walk->enableSafeArmsRoll(true);
+  }
+  else
+  {
+    walk->enableSafeArmsRoll(false);
+  }
+
   if (state == STATE_STANDUP)
   {
     standup->setLayDown(false);

@@ -84,8 +84,14 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 
   // Arms
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)->defaultValue(-5.0)->minimum(-20.0)->maximum(150.0);
+  bind->bindNew("safeArmsRoll", safeArmsRoll, RhIO::Bind::PullOnly)
+      ->defaultValue(safeArmsRoll = 40)
+      ->minimum(-20.0)
+      ->maximum(150.0);
   bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-165.0)->minimum(-200.0)->maximum(30.0);
   bind->bindNew("armsEnabled", armsEnabled, RhIO::Bind::PullOnly)->defaultValue(armsEnabled = true);
+  bind->bindNew("safeArmsRollEnabled", safeArmsRollEnabled, RhIO::Bind::PullOnly)
+      ->defaultValue(safeArmsRollEnabled = false);
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
@@ -354,6 +360,11 @@ void Walk::enableArms(bool enabled)
   bind->node().setBool("armsEnabled", enabled);
 }
 
+void Walk::enableSafeArmsRoll(bool enabled)
+{
+  bind->node().setBool("safeArmsRollEnabled", enabled);
+}
+
 void Walk::stepArms(double elapsed)
 {
   smoothingArms = bound(smoothingArms + elapsed * (armsEnabled ? 3 : -3), 0, 1);
@@ -364,8 +375,17 @@ void Walk::stepArms(double elapsed)
   setAngle("right_shoulder_pitch", imuPitch * smoothingArms);
 
   // Rolls to arms
-  setAngle("left_shoulder_roll", armsRoll * smoothingArms);
-  setAngle("right_shoulder_roll", -armsRoll * smoothingArms);
+  double roll;
+  if (safeArmsRollEnabled)
+  {
+    roll = safeArmsRoll;
+  }
+  else
+  {
+    roll = armsRoll;
+  }
+  setAngle("left_shoulder_roll", roll * smoothingArms);
+  setAngle("right_shoulder_roll", -roll * smoothingArms);
 
   // Elbows
   setAngle("left_elbow", elbowOffset * smoothingArms);
