@@ -102,7 +102,7 @@ void StandUp::step(float elapsed)
         if (layDown)
         {
           splines = Function::fromFile("lay_down.json");
-          speed = 1.0;
+          speed = 1.5
         }
         else
         {
