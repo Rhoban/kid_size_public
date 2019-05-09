@@ -48,11 +48,11 @@ WalkEngine::WalkEngine()
   , frequency(1.5)
   , swingGain(0.02)
   , swingPhase(0.0)
-  , footYOffsetPerYSpeed(0.1)
+  , footYOffsetPerStepSizeY(0.1)
   , trunkPitch(0)
-  , xSpeed(0)
-  , ySpeed(0)
-  , yawSpeed(0)
+  , stepSizeX(0)
+  , stepSizeY(0)
+  , stepSizeYaw(0)
 {
 }
 
@@ -119,8 +119,8 @@ void WalkEngine::newStep()
   left.clearSplines();
   right.clearSplines();
 
-  left.trunkYOffset = footDistance + footYOffset + footYOffsetPerYSpeed * fabs(ySpeed);
-  right.trunkYOffset = -(footDistance + footYOffset + footYOffsetPerYSpeed * fabs(ySpeed));
+  left.trunkYOffset = footDistance + footYOffset + footYOffsetPerStepSizeY * fabs(stepSizeY);
+  right.trunkYOffset = -(footDistance + footYOffset + footYOffsetPerStepSizeY * fabs(stepSizeY));
 
   // Defining begining of splines according to previous feet position
   left.xSpline.addPoint(0, oldLeft.xSpline.pos(previousStepDuration), oldLeft.xSpline.vel(previousStepDuration));
@@ -152,38 +152,39 @@ void WalkEngine::newStep()
   }
   flyingFoot().zSpline.addPoint(stepDuration, 0, 0);
 
-  if (fabs(yawSpeed) > 0.01)
+  if (fabs(stepSizeYaw) > 0.01)
   {
     // Speed vector
-    Point speed(xSpeed, ySpeed);
+    Point speed(stepSizeX, stepSizeY);
     // Center of rotation
-    Point center = speed.perpendicular() / yawSpeed;
+    Point center = speed.perpendicular() / stepSizeYaw;
 
     // For both feet, computing the new position in the
     Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
-    sFoot = (sFoot - center).rotation(rad2deg(-yawSpeed / 2.0)) + center;
-    Point sFootSpeed = speed.rotation(rad2deg(-yawSpeed / 2.0));
+    sFoot = (sFoot - center).rotation(rad2deg(-stepSizeYaw / 2.0)) + center;
+    Point sFootSpeed = speed.rotation(rad2deg(-stepSizeYaw / 2.0));
     supportFoot().xSpline.addPoint(stepDuration, sFoot.x, sFootSpeed.x / stepDuration);
     supportFoot().ySpline.addPoint(stepDuration, sFoot.y, sFootSpeed.y / stepDuration);
 
     Point fFoot(trunkXOffset, flyingFoot().trunkYOffset);
-    fFoot = (fFoot - center).rotation(rad2deg(yawSpeed / 2.0)) + center;
-    Point fFootSpeed = -speed.rotation(rad2deg(yawSpeed / 2.0));
+    fFoot = (fFoot - center).rotation(rad2deg(stepSizeYaw / 2.0)) + center;
+    Point fFootSpeed = -speed.rotation(rad2deg(stepSizeYaw / 2.0));
     flyingFoot().xSpline.addPoint(stepDuration, fFoot.x, fFootSpeed.x / stepDuration);
     flyingFoot().ySpline.addPoint(stepDuration, fFoot.y, fFootSpeed.y / stepDuration);
   }
   else
   {
-    supportFoot().xSpline.addPoint(stepDuration, trunkXOffset - xSpeed / 2.0, -xSpeed / stepDuration);
-    supportFoot().ySpline.addPoint(stepDuration, supportFoot().trunkYOffset - ySpeed / 2.0, -ySpeed / stepDuration);
+    supportFoot().xSpline.addPoint(stepDuration, trunkXOffset - stepSizeX / 2.0, -stepSizeX / stepDuration);
+    supportFoot().ySpline.addPoint(stepDuration, supportFoot().trunkYOffset - stepSizeY / 2.0,
+                                   -stepSizeY / stepDuration);
 
-    flyingFoot().xSpline.addPoint(stepDuration, trunkXOffset + xSpeed / 2.0, -xSpeed / stepDuration);
-    flyingFoot().ySpline.addPoint(stepDuration, flyingFoot().trunkYOffset + ySpeed / 2.0, -ySpeed / stepDuration);
+    flyingFoot().xSpline.addPoint(stepDuration, trunkXOffset + stepSizeX / 2.0, -stepSizeX / stepDuration);
+    flyingFoot().ySpline.addPoint(stepDuration, flyingFoot().trunkYOffset + stepSizeY / 2.0, -stepSizeY / stepDuration);
   }
 
   // Yaw spline
-  supportFoot().yawSpline.addPoint(stepDuration, -yawSpeed / 2, -yawSpeed / stepDuration);
-  flyingFoot().yawSpline.addPoint(stepDuration, yawSpeed / 2, -yawSpeed / stepDuration);
+  supportFoot().yawSpline.addPoint(stepDuration, -stepSizeYaw / 2, -stepSizeYaw / stepDuration);
+  flyingFoot().yawSpline.addPoint(stepDuration, stepSizeYaw / 2, -stepSizeYaw / stepDuration);
 }
 
 void WalkEngine::reset()

@@ -15,7 +15,7 @@ int main()
   rhoban::WalkEngine engine;
   engine.initByModel(model);
 
-  engine.xSpeed = 0.1;
+  engine.stepSizeX = 0.1;
   engine.newStep();
 
   for (int step = 0; step < 2; step++)

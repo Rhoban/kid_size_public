@@ -34,10 +34,10 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("walkTurn", walkTurn, RhIO::Bind::PullOnly)->comment("Walk control Turn [deg/step]")->defaultValue(0.0);
 
   // Walk limits (to inform other moves about limits)
-  bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(15.0);
-  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(65.0);
-  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(35.0);
-  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(30.0);
+  bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(15);
+  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.065);
+  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(0.035);
+  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(0.030);
 
   // Walk engine parameters
   bind->bindNew("trunkXOffset", engine.trunkXOffset, RhIO::Bind::PullOnly)->defaultValue(engine.trunkXOffset);
@@ -49,18 +49,18 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("swingGain", engine.swingGain, RhIO::Bind::PullOnly)->defaultValue(engine.swingGain);
   bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(swingGainStart = 0.04);
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
-  bind->bindNew("footYOffsetPerYSpeed", engine.footYOffsetPerYSpeed, RhIO::Bind::PullOnly)
-      ->defaultValue(engine.footYOffsetPerYSpeed);
+  bind->bindNew("footYOffsetPerStepSizeY", engine.footYOffsetPerStepSizeY, RhIO::Bind::PullOnly)
+      ->defaultValue(engine.footYOffsetPerStepSizeY);
   bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch = 13);
   bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps = 3);
   bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(shouldBootstrap = false);
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(20)
+      ->defaultValue(0.02)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDLatByCycle", maxDLatByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(20)
+      ->defaultValue(0.02)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
       ->defaultValue(10)
@@ -175,9 +175,9 @@ void Walk::step(float elapsed)
     // Walk is not enabled, just freezing the engine
     engine.riseGain = 0;
     engine.swingGain = 0;
-    engine.xSpeed = 0;
-    engine.ySpeed = 0;
-    engine.yawSpeed = 0;
+    engine.stepSizeX = 0;
+    engine.stepSizeY = 0;
+    engine.stepSizeYaw = 0;
     engine.reset();
     timeSinceLastStep = 0;
     stepCount = 0;
@@ -236,7 +236,7 @@ void Walk::step(float elapsed)
           else
           {
             bool walkingTooMuch =
-                fabs(engine.xSpeed) > 0.01 || fabs(engine.ySpeed) > 0.01 || rad2deg(fabs(engine.yawSpeed)) > 3;
+                fabs(engine.stepSizeX) > 0.01 || fabs(engine.stepSizeY) > 0.01 || rad2deg(fabs(engine.stepSizeYaw)) > 3;
             if (state == Walking && walkingTooMuch)
             {
               // We will apply an extra step with null orders to be sure the walk stops properly
@@ -253,16 +253,16 @@ void Walk::step(float elapsed)
         if (state != Walking)
         {
           // We are not walking, starting or starting, we have no orders
-          engine.xSpeed = 0;
-          engine.ySpeed = 0;
-          engine.yawSpeed = 0;
+          engine.stepSizeX = 0;
+          engine.stepSizeY = 0;
+          engine.stepSizeYaw = 0;
         }
         else
         {
           // Updating engine speed according to acc. limits
-          VariationBound::update(engine.xSpeed, walkStep / 1000.0, maxDStepByCycle / 1000.0, 1);
-          VariationBound::update(engine.ySpeed, walkLateral / 1000.0, maxDLatByCycle / 1000.0, 1);
-          VariationBound::update(engine.yawSpeed, deg2rad(walkTurn), deg2rad(maxDTurnByCycle), 1);
+          VariationBound::update(engine.stepSizeX, walkStep, maxDStepByCycle, 1);
+          VariationBound::update(engine.stepSizeY, walkLateral, maxDLatByCycle, 1);
+          VariationBound::update(engine.stepSizeYaw, deg2rad(walkTurn), deg2rad(maxDTurnByCycle), 1);
         }
 
         if (state == WalkStarting)
@@ -414,47 +414,47 @@ double Walk::getPhase()
 Eigen::Vector3d Walk::getMinOrders() const
 {
   Eigen::Vector3d bound;
-  bound << -maxStepBackward / 1000, -maxLateral / 1000, deg2rad(-maxRotation);
+  bound << -maxStepBackward, -maxLateral, deg2rad(-maxRotation);
   return bound;
 }
 
 Eigen::Vector3d Walk::getMaxOrders() const
 {
   Eigen::Vector3d bound;
-  bound << maxStep / 1000, maxLateral / 1000, deg2rad(maxRotation);
+  bound << maxStep, maxLateral, deg2rad(maxRotation);
   return bound;
 }
 
 Eigen::Vector3d Walk::getMinDeltaOrders() const
 {
   Eigen::Vector3d bound;
-  bound << -maxDStepByCycle / 1000, -maxDLatByCycle / 1000, deg2rad(-maxDTurnByCycle);
+  bound << -maxDStepByCycle, -maxDLatByCycle, deg2rad(-maxDTurnByCycle);
   return bound;
 }
 
 Eigen::Vector3d Walk::getMaxDeltaOrders() const
 {
   Eigen::Vector3d bound;
-  bound << maxDStepByCycle / 1000, maxDLatByCycle / 1000, deg2rad(maxDTurnByCycle);
+  bound << maxDStepByCycle, maxDLatByCycle, deg2rad(maxDTurnByCycle);
   return bound;
 }
 
 Eigen::Vector4d Walk::getRawOrder() const
 {
-  return Eigen::Vector4d(engine.xSpeed, engine.ySpeed, engine.yawSpeed, state == Walking ? 1 : 0);
+  return Eigen::Vector4d(engine.stepSizeX, engine.stepSizeY, engine.stepSizeYaw, state == Walking ? 1 : 0);
 }
 
 Eigen::Vector4d Walk::getOrder() const
 {
   // XXX: To update with new walk, what is the goal here?
-  return Eigen::Vector4d(engine.xSpeed, engine.ySpeed, engine.yawSpeed, state == Walking ? 1 : 0);
+  return Eigen::Vector4d(engine.stepSizeX, engine.stepSizeY, engine.stepSizeYaw, state == Walking ? 1 : 0);
 }
 
 void Walk::setRawOrder(double step, double lateral, double turn, bool enable)
 {
   bind->node().setBool("walkEnable", enable);
-  bind->node().setFloat("walkStep", step * 1000.0);
-  bind->node().setFloat("walkLateral", lateral * 1000.0);
+  bind->node().setFloat("walkStep", step);
+  bind->node().setFloat("walkLateral", lateral);
   bind->node().setFloat("walkTurn", rad2deg(turn));
 }
 void Walk::setRawOrder(const Eigen::Vector3d& params, bool enable)
@@ -464,6 +464,10 @@ void Walk::setRawOrder(const Eigen::Vector3d& params, bool enable)
 
 rhoban_geometry::Point Walk::trunkToFlyingFoot(rhoban_geometry::Point point)
 {
+  if (!isRunning()) {
+    return point;
+  }
+
   rhoban::WalkEngine::FootPose flyingPose;
   double deltaY;
 
