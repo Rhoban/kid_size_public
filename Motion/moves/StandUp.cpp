@@ -102,7 +102,7 @@ void StandUp::step(float elapsed)
         if (layDown)
         {
           splines = Function::fromFile("lay_down.json");
-          speed = 1.5
+          speed = 1.5;
         }
         else
         {
@@ -138,6 +138,7 @@ void StandUp::step(float elapsed)
       if (finalSpeed < 0.5)
         finalSpeed = 0.5;
       double remap = splines["remap"].get(time);
+      std::cout << "Remap=" << remap << ", speed=" << finalSpeed << ", elapsed: " << elapsed << std::endl;
       time += elapsed * remap * finalSpeed;
       if (useManualT)
       {
