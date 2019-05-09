@@ -27,7 +27,7 @@ WalkEngine::FootPose WalkEngine::Foot::getPosition(double t)
   return pose;
 }
 
-void WalkEngine::FootPose::operator=(const FootPose &other)
+void WalkEngine::FootPose::operator=(const FootPose& other)
 {
   x = other.x;
   y = other.y;
@@ -91,14 +91,16 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model, double timeSinceLa
   Eigen::Affine3d trunkPitchRot(Eigen::AngleAxisd(-trunkPitch, Eigen::Vector3d::UnitY()));
 
   // XXX: Yaw in the trunk frame appear to behave in the wrong orientation here
-  success =
-      success && model.get().legIkLeft(
-                     "trunk", trunkPitchRot*Eigen::Vector3d(leftPose.x, leftPose.y + swing, trunkHeight + trunkZOffset + leftPose.z),
-                     trunkPitchRot.linear().inverse()*Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -leftPose.yaw)));
-  success = success &&
-            model.get().legIkRight(
-                "trunk", trunkPitchRot*Eigen::Vector3d(rightPose.x, rightPose.y + swing, trunkHeight + trunkZOffset + rightPose.z),
-                trunkPitchRot.linear().inverse()*Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -rightPose.yaw)));
+  success = success && model.get().legIkLeft(
+                           "trunk",
+                           trunkPitchRot *
+                               Eigen::Vector3d(leftPose.x, leftPose.y + swing, trunkHeight + trunkZOffset + leftPose.z),
+                           trunkPitchRot.linear().inverse() * Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -leftPose.yaw)));
+  success = success && model.get().legIkRight("trunk",
+                                              trunkPitchRot * Eigen::Vector3d(rightPose.x, rightPose.y + swing,
+                                                                              trunkHeight + trunkZOffset + rightPose.z),
+                                              trunkPitchRot.linear().inverse() *
+                                                  Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -rightPose.yaw)));
 
   if (!success)
   {
@@ -127,7 +129,8 @@ void WalkEngine::newStep()
 
   right.xSpline.addPoint(0, oldRight.xSpline.pos(previousStepDuration), oldRight.xSpline.vel(previousStepDuration));
   right.ySpline.addPoint(0, oldRight.ySpline.pos(previousStepDuration), oldRight.ySpline.vel(previousStepDuration));
-  right.yawSpline.addPoint(0, oldRight.yawSpline.pos(previousStepDuration), oldRight.yawSpline.vel(previousStepDuration));
+  right.yawSpline.addPoint(0, oldRight.yawSpline.pos(previousStepDuration),
+                           oldRight.yawSpline.vel(previousStepDuration));
 
   // Changing support foot
   isLeftSupport = !isLeftSupport;
@@ -160,27 +163,27 @@ void WalkEngine::newStep()
     Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
     sFoot = (sFoot - center).rotation(rad2deg(-yawSpeed / 2.0)) + center;
     Point sFootSpeed = speed.rotation(rad2deg(-yawSpeed / 2.0));
-    supportFoot().xSpline.addPoint(stepDuration, sFoot.x, sFootSpeed.x);
-    supportFoot().ySpline.addPoint(stepDuration, sFoot.y, sFootSpeed.y);
+    supportFoot().xSpline.addPoint(stepDuration, sFoot.x, sFootSpeed.x / stepDuration);
+    supportFoot().ySpline.addPoint(stepDuration, sFoot.y, sFootSpeed.y / stepDuration);
 
     Point fFoot(trunkXOffset, flyingFoot().trunkYOffset);
     fFoot = (fFoot - center).rotation(rad2deg(yawSpeed / 2.0)) + center;
     Point fFootSpeed = -speed.rotation(rad2deg(yawSpeed / 2.0));
-    flyingFoot().xSpline.addPoint(stepDuration, fFoot.x, fFootSpeed.x);
-    flyingFoot().ySpline.addPoint(stepDuration, fFoot.y, fFootSpeed.y);
+    flyingFoot().xSpline.addPoint(stepDuration, fFoot.x, fFootSpeed.x / stepDuration);
+    flyingFoot().ySpline.addPoint(stepDuration, fFoot.y, fFootSpeed.y / stepDuration);
   }
   else
   {
-    supportFoot().xSpline.addPoint(stepDuration, trunkXOffset - xSpeed / 2.0, -xSpeed);
-    supportFoot().ySpline.addPoint(stepDuration, supportFoot().trunkYOffset - ySpeed / 2.0, -ySpeed);
+    supportFoot().xSpline.addPoint(stepDuration, trunkXOffset - xSpeed / 2.0, -xSpeed / stepDuration);
+    supportFoot().ySpline.addPoint(stepDuration, supportFoot().trunkYOffset - ySpeed / 2.0, -ySpeed / stepDuration);
 
-    flyingFoot().xSpline.addPoint(stepDuration, trunkXOffset + xSpeed / 2.0, -xSpeed);
-    flyingFoot().ySpline.addPoint(stepDuration, flyingFoot().trunkYOffset + ySpeed / 2.0, -ySpeed);
+    flyingFoot().xSpline.addPoint(stepDuration, trunkXOffset + xSpeed / 2.0, -xSpeed / stepDuration);
+    flyingFoot().ySpline.addPoint(stepDuration, flyingFoot().trunkYOffset + ySpeed / 2.0, -ySpeed / stepDuration);
   }
 
   // Yaw spline
-  supportFoot().yawSpline.addPoint(stepDuration, -yawSpeed / 2, -yawSpeed);
-  flyingFoot().yawSpline.addPoint(stepDuration, yawSpeed / 2, -yawSpeed);
+  supportFoot().yawSpline.addPoint(stepDuration, -yawSpeed / 2, -yawSpeed / stepDuration);
+  flyingFoot().yawSpline.addPoint(stepDuration, yawSpeed / 2, -yawSpeed / stepDuration);
 }
 
 void WalkEngine::reset()
