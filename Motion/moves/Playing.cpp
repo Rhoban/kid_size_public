@@ -23,6 +23,7 @@
 
 static rhoban_utils::Logger logger("PlayingSTM");
 
+using namespace hl_communication;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 using namespace rhoban_team_play;
@@ -69,7 +70,6 @@ void PlayingMove::onStart()
   head = (Head*)getMoves()->getMove("head");
   placer = (Placer*)getMoves()->getMove("placer");
   head->setDisabled(false);
-  setTeamPlayState(Playing);
   setState(STATE_SEARCH);
 
   // Ensuring fieldQThreshold is reasonable
@@ -84,7 +84,6 @@ void PlayingMove::onStart()
 void PlayingMove::onStop()
 {
   setState(STATE_STOPPING);
-  setTeamPlayState(Inactive);
 }
 
 void PlayingMove::step(float elapsed)
@@ -230,6 +229,9 @@ void PlayingMove::step(float elapsed)
     {
       if (!teamConfidence || instruction.order != CaptainOrder::Place)
       {
+        // Letting play: case 1, robot is not placing or there is no trust in team (typically, during the 10 seconds
+        // buffer after game interruptions)
+
         // Getting ball distance
         float letPlayRadius = decision->letPlayRadius;
         auto ball = loc->getBallPosField();
@@ -275,6 +277,7 @@ void PlayingMove::step(float elapsed)
       }
       else
       {
+        // Letting play: case 2, robot is placing and trusts its team
         // XXX: Some values should be Rhiozed here
         Point ball, ballTarget;
         ball = Point(decision->shareX, decision->shareY);
@@ -282,16 +285,18 @@ void PlayingMove::step(float elapsed)
 
         // Ball handler
         // XXX: The captain ball handler could be used instead
-        bool handlerFound = false;
-        TeamPlayInfo handler;
-        handler.fieldX = 0;
-        handler.fieldY = 0;
-        for (auto& entry : teamPlay->allInfo())
+        std::unique_ptr<RobotMsg> handler_msg;
+        for (const auto& entry : teamPlay->allInfo())
         {
-          if (entry.second.state == BallHandling)
+          const RobotMsg& msg = entry.second;
+          if (msg.has_intention() && msg.intention().has_action_planned())
           {
-            handlerFound = true;
-            handler = entry.second;
+            Action action = msg.intention().action_planned();
+            if (action == Action::GOING_TO_KICK || action == Action::KICKING)
+            {
+              handler_msg.reset(new RobotMsg(msg));
+              break;
+            }
           }
         }
 
@@ -317,9 +322,13 @@ void PlayingMove::step(float elapsed)
         //     obstacles.push_back(Circle(pos.x, pos.y, 0.5));
         // }
 
-        if (handlerFound)
+        if (handler_msg)
         {
-          obstacles.push_back(Circle(handler.fieldX, handler.fieldY, avoidRadius));
+          if (handler_msg->has_perception())
+          {
+            const PositionDistribution& handler_pos = handler_msg->perception().self_in_field(0).pose().position();
+            obstacles.push_back(Circle(handler_pos.x(), handler_pos.y(), avoidRadius));
+          }
         }
         placer->goTo(target.x, target.y, orientation, obstacles);
       }
@@ -429,11 +438,6 @@ void PlayingMove::enterState(std::string state)
     }
   }
 
-  if (state == STATE_APPROACH || state == STATE_WALKBALL)
-  {
-    setTeamPlayState(BallHandling);
-  }
-
   if (state == STATE_SEARCH)
   {
     startMove("search", 0.0);
@@ -467,11 +471,6 @@ void PlayingMove::exitState(std::string state)
     walk->control(false);
   }
 
-  if (state == STATE_APPROACH || state == STATE_WALKBALL || state == STATE_LET_PLAY)
-  {
-    setTeamPlayState(Playing);
-  }
-
   if (state == STATE_LET_PLAY || state == STATE_WALKBALL)
   {
     stopMove("placer", 0.0);
@@ -488,9 +487,4 @@ void PlayingMove::exitState(std::string state)
   {
     walk->control(true);
   }
-}
-
-void PlayingMove::setTeamPlayState(TeamPlayState state)
-{
-  getServices()->teamPlay->selfInfo().state = state;
 }

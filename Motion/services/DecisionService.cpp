@@ -2,9 +2,13 @@
 #include "LocalisationService.h"
 #include "TeamPlayService.h"
 #include "RefereeService.h"
+#include "StrategyService.h"
 #include "rhoban_utils/logging/logger.h"
 #include "robocup_referee/constants.h"
 
+#include <hl_communication/wrapper.pb.h>
+
+using namespace hl_communication;
 using namespace rhoban_utils;
 using namespace rhoban_team_play;
 using namespace robocup_referee;
@@ -128,6 +132,7 @@ bool DecisionService::tick(double elapsed)
   auto loc = getServices()->localisation;
   auto teamPlay = getServices()->teamPlay;
   auto referee = getServices()->referee;
+  auto strategy = getServices()->strategy;
 
   // Should we let the other players play?
   auto ballPos = loc->getBallPosSelf();
@@ -191,27 +196,36 @@ bool DecisionService::tick(double elapsed)
     for (auto& entry : infos)
     {
       auto info = entry.second;
+      int info_id = info.robot_id().robot_id();
+      PerceptionExtra extra = extractPerceptionExtra(info.perception());
       // This is another player
-      if (info.id != teamPlay->myId() && !info.isOutdated() && !referee->isPenalized(info.id))
+      if (info_id != teamPlay->myId() && !isOutdated(info) && !referee->isPenalized(info_id))
       {
         // Its ball quality is good and our its quality is good
-        if (info.fieldOk && info.ballOk && info.state != Inactive)
+        if (extra.field().valid() && extra.ball().valid() && info.intention().action_planned() != Action::INACTIVE)
         {
+          const PoseDistribution& pose = info.perception().self_in_field(0).pose();
+          const PositionDistribution ball_in_self = info.perception().ball_in_self();
           // This player sees the ball and is well localized
-          float dist = sqrt(pow(info.ballX, 2) + pow(info.ballY, 2));
+          float dist = sqrt(pow(ball_in_self.x(), 2) + pow(ball_in_self.y(), 2));
 
           if (dist < 3 && (bestDist < 0 || dist < bestDist))
           {
             // We use the shared ball that is known to be nearest from
             // the broadcaster robot
             bestDist = dist;
-            shareId = info.id;
-            float a = info.fieldYaw;
-            float X = info.fieldX + cos(a) * info.ballX - sin(a) * info.ballY;
-            float Y = info.fieldY + sin(a) * info.ballX + cos(a) * info.ballY;
+            shareId = info_id;
+            float a = pose.dir().mean();
+            double ballX = ball_in_self.x();
+            double ballY = ball_in_self.y();
+            double fieldX = pose.position().x();
+            double fieldY = pose.position().y();
+            float X = fieldX + cos(a) * ballX - sin(a) * ballY;
+            float Y = fieldY + sin(a) * ballX + cos(a) * ballY;
 
-            ballTargetX = info.ballTargetX;
-            ballTargetY = info.ballTargetY;
+            const PositionDistribution&  kickTarget = info.intention().kick().target();
+            ballTargetX = kickTarget.x();
+            ballTargetY = kickTarget.y();
 
             if (ballWasShared)
             {
@@ -338,11 +352,12 @@ bool DecisionService::tick(double elapsed)
   bool tmpIsMateKicking = false;
   for (const auto& pair : teamplayInfos)
   {
-    const rhoban_team_play::TeamPlayInfo& robotInfo = pair.second;
-    float vx = robotInfo.ballVelX;
-    float vy = robotInfo.ballVelY;
+    const RobotMsg& robotInfo = pair.second;
+    const PositionDistribution& ball_velocity = robotInfo.perception().ball_velocity_in_self();
+    float vx = ball_velocity.x();
+    float vy = ball_velocity.y();
     float ballSpeed = std::sqrt(vx * vx + vy * vy);
-    if (robotInfo.timeSinceLastKick < postKickTrackingTime)
+    if (strategy->getTimeSinceLastKick() < postKickTrackingTime)
     {
       tmpIsMateKicking = true;
     }

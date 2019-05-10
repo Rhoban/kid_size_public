@@ -38,8 +38,6 @@ protected:
   rhoban_geometry::Point shootLineCenter();
   void bufferedSetState(const std::string&);
 
-  void setTeamPlayState(rhoban_team_play::TeamPlayState state);
-
   bool stopPosture;
   float t;
   float targetX, targetY;

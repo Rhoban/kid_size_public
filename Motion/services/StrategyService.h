@@ -27,6 +27,16 @@ public:
   /// Inform the strategy service that a kick has been performed,
   void announceKick();
 
+  /**
+   * Get time elapsed since the robot performed a kick the last time [s]
+   */
+  double getTimeSinceLastKick() const;
+
+  /**
+   * Return the target of next kick in field referential
+   */
+  Eigen::Vector2d getKickTarget() const;
+
 protected:
   RhIO::Bind bind;
 

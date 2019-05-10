@@ -7,14 +7,18 @@
 #include "CaptainService.h"
 
 #include <rhoban_geometry/point_cluster.h>
+#include <rhoban_team_play/team_play.h>
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/util.h>
 
+#include <hl_communication/robot_msg_utils.h>
+#include <hl_communication/perception.pb.h>
+
+using namespace hl_communication;
 using namespace rhoban_utils;
 using namespace robocup_referee;
 using namespace rhoban_geometry;
-
-using rhoban_team_play::CommonOpponent;
+using namespace rhoban_team_play;
 
 static Logger logger("CaptainService");
 
@@ -180,14 +184,18 @@ int CaptainService::findCaptainId()
   auto& info = teamPlay->allInfo();
   share = true;
 
-  for (auto& entry : info)
+  for (const auto& entry : info)
   {
-    auto& robotInfo = entry.second;
-    if (!robotInfo.isOutdated() &&                       // The robot info are not outdated
-        robotInfo.state != rhoban_team_play::Unknown &&  // The robot is in a known state
-        !referee->isPenalized(robotInfo.id))
+    const RobotMsg& robotInfo = entry.second;
+    Action action = robotInfo.intention().action_planned();
+    int robot_id = robotInfo.robot_id().robot_id();
+    bool outdated = isOutdated(robotInfo);
+    bool undefined_action = action == Action::UNDEFINED;
+    bool penalized = referee->isPenalized(robot_id);
+    logger.log("RobotInfo: outdated:%d action:%d penalized:%d", outdated, undefined_action, penalized);
+    if (!outdated && !undefined_action && !penalized)
     {
-      return robotInfo.id;
+      return robot_id;
     }
   }
 
@@ -256,13 +264,18 @@ void CaptainService::updateCommonBall()
   bool tmpKicked = false;
   for (const auto& robot_entry : robots)
   {
-    const rhoban_team_play::TeamPlayInfo& info = robot_entry.second;
+    const RobotMsg& info = robot_entry.second;
+    PerceptionExtra perception_extra = extractPerceptionExtra(info.perception());
+    MiscExtra misc_extra = extractMiscExtra(info);
 
-    if (info.ballOk && info.timeSinceLastKick > kickMemoryDuration)
+    bool robot_kicked = misc_extra.time_since_last_kick() > kickMemoryDuration;
+    if (perception_extra.ball().valid() && perception_extra.field().valid() && !robot_kicked)
     {
-      balls.push_back(Point(info.getBallInField()));
+      PositionDistribution ball_in_field =
+          fieldFromSelf(info.perception().self_in_field(0).pose(), info.perception().ball_in_self());
+      balls.push_back(Point(ball_in_field.x(), ball_in_field.y()));
     }
-    if (info.timeSinceLastKick < kickMemoryDuration)
+    if (robot_kicked)
     {
       if (!recentlyKicked)
       {
@@ -334,11 +347,14 @@ void CaptainService::updateCommonOpponents()
   // Gathering all published obstacles and mates positions
   for (const auto& robot_entry : robots)
   {
-    const rhoban_team_play::TeamPlayInfo& info = robot_entry.second;
-    mates.push_back(Point(info.fieldX, info.fieldY));
-    for (int k = 0; k < info.nbObstacles; k++)
+    const RobotMsg& info = robot_entry.second;
+    const PoseDistribution mate_pose = info.perception().self_in_field(0).pose();
+    const PositionDistribution& mate_pos = mate_pose.position();
+    mates.push_back(Point(mate_pos.x(), mate_pos.y()));
+    for (const Perception::WeightedRobotPose& robot : info.perception().robots())
     {
-      obstacles.push_back(Point(info.obstacles[k][0], info.obstacles[k][1]));
+      const PositionDistribution& pos = fieldFromSelf(mate_pose, robot.robot().robot_in_self().position());
+      obstacles.push_back(Point(pos.x(), pos.y()));
     }
   }
   // Creating clusters
@@ -361,16 +377,16 @@ void CaptainService::updateCommonOpponents()
     addToClusters(obs, opponent_clusters, oppMergeTol);
   }
   // List of opponents ordered by number of elements
-  std::vector<CommonOpponent> ordered_opponents;
+  std::vector<rhoban_team_play::CommonOpponent> ordered_opponents;
   for (const PointCluster& c : opponent_clusters)
   {
-    CommonOpponent opp;
+    rhoban_team_play::CommonOpponent opp;
     opp.consensusStrength = c.size();
     opp.x = c.getAverage().x;
     opp.y = c.getAverage().y;
     ordered_opponents.push_back(opp);
   }
-  std::sort(ordered_opponents.begin(), ordered_opponents.end(), [](const CommonOpponent& o1, const CommonOpponent& o2) {
+  std::sort(ordered_opponents.begin(), ordered_opponents.end(), [](const rhoban_team_play::CommonOpponent& o1, const rhoban_team_play::CommonOpponent& o2) {
     return o1.consensusStrength > o2.consensusStrength;
   });
   // Ensuring we publish a limited number of opponents
@@ -412,14 +428,14 @@ void CaptainService::computeBasePositions()
   int goalId = 0;
   for (auto& id : robotIds)
   {
-    auto& robot = robots[id];
-    if (!robot.goalKeeper)
+    const RobotMsg& robot = robots[id];
+    if (robot.team_play().role() == Role::GOALIE)
     {
-      noGoalIds.push_back(id);
+      goalId = id;
     }
     else
     {
-      goalId = id;
+      noGoalIds.push_back(id);
     }
   }
 
@@ -430,7 +446,8 @@ void CaptainService::computeBasePositions()
         for (auto& robotTarget : solution.robotTarget)
         {
           auto robot = robots[robotTarget.first];
-          float walkLength = (Point(robot.fieldX, robot.fieldY) - robotTarget.second.position).getLength();
+          const PositionDistribution& robot_pos = robot.perception().self_in_field(0).pose().position();
+          float walkLength = (Point(robot_pos.x(), robot_pos.y()) - robotTarget.second.position).getLength();
           if (robotTarget.second.mandatory)
           {
             walkLength *= 100;
@@ -555,8 +572,9 @@ void CaptainService::computePlayingPositions()
     // No one is seeing the ball, ordering all to search
     for (auto& entry : robots)
     {
-      auto& robot = entry.second;
-      info.order[robot.id - 1] = rhoban_team_play::CaptainOrder::SearchBall;
+      const RobotMsg& robot = entry.second;
+      int robot_id = robot.robot_id().robot_id();
+      info.order[robot_id - 1] = rhoban_team_play::CaptainOrder::SearchBall;
     }
     handler = -1;
     return;
@@ -570,22 +588,27 @@ void CaptainService::computePlayingPositions()
   // be 2 simultaneous attackers)
   for (auto& entry : robots)
   {
-    auto& robot = entry.second;
+    const RobotMsg& robot_msg = entry.second;
+    const PerceptionExtra& perception_extra = extractPerceptionExtra(robot_msg.perception());
+    const PoseDistribution& self_in_field = robot_msg.perception().self_in_field(0).pose();
     double robotSpeed = 0.2;  // [m/s], should be extracted elsewhere
+    int robot_id = robot_msg.robot_id().robot_id();
     // Computing cost
     double cost = 0;
     double dist = 0;
-    if (handler != robot.id)
+    if (handler != robot_id)
     {
       cost += handlerChangeCost;
     }
     // If robot is able to see ball, use his own ball for time estimation
     // Otherwise, use common ball and add a penalty
-    if (robot.ballOk)
+    if (perception_extra.ball().valid())
     {
-      dist = sqrt(pow(robot.ballX, 2) + pow(robot.ballY, 2));
+      const PositionDistribution& ball_in_self = robot_msg.perception().ball_in_self();
+      dist = sqrt(pow(ball_in_self.x(), 2) + pow(ball_in_self.y(), 2));
 
-      Point robot_ball = robot.getBallInField();
+      const PositionDistribution& robot_ball_dist = getBallInField(robot_msg);
+      Point robot_ball(robot_ball_dist.x(), robot_ball_dist.y());
       Point common_ball(info.common_ball.x, info.common_ball.y);
       if (robot_ball.getDist(common_ball) > commonBallTol)
       {
@@ -594,8 +617,9 @@ void CaptainService::computePlayingPositions()
     }
     else
     {
-      double dx = info.common_ball.x - robot.fieldX;
-      double dy = info.common_ball.y - robot.fieldY;
+      const PositionDistribution& robot_pos = self_in_field.position();
+      double dx = info.common_ball.x - robot_pos.x();
+      double dy = info.common_ball.y - robot_pos.y();
       dist = sqrt(pow(dx, 2) + pow(dy, 2));
       cost += noViewCost;
     }
@@ -603,41 +627,43 @@ void CaptainService::computePlayingPositions()
 
     if (cost < smallestTime)
     {
-      newHandler = robot.id;
+      newHandler = robot_id;
       smallestTime = cost;
     }
 
-    logger.log("Cost for %d: %f (current handler %d)", robot.id, cost, handler);
+    logger.log("Cost for %d: %f (current handler %d)", robot_id, cost, handler);
   }
   // Grabing robots that should be placed (all excepted newHandler and goal)
   std::vector<int> otherIds;
   for (auto& entry : robots)
   {
-    auto& robot = entry.second;
+    const RobotMsg& robot = entry.second;
+    int robot_id = robot.robot_id().robot_id();
 
-    if (robot.id == newHandler)
+    if (robot_id == newHandler)
     {
       // std::cout << "NewHandler is " << newHandler << std::endl;
-      info.order[robot.id - 1] = rhoban_team_play::CaptainOrder::HandleBall;
+      info.order[robot_id - 1] = rhoban_team_play::CaptainOrder::HandleBall;
     }
     else
     {
-      if (robot.state != rhoban_team_play::TeamPlayState::GoalKeeping)
+      if (robot.team_play().role() != Role::GOALIE)
       {
-        info.order[robot.id - 1] = rhoban_team_play::CaptainOrder::Place;
+        info.order[robot_id - 1] = rhoban_team_play::CaptainOrder::Place;
         for (int n = 0; n < 3; n++)
         {
-          info.robotTarget[robot.id - 1][n] = 0;
+          info.robotTarget[robot_id - 1][n] = 0;
         }
-        otherIds.push_back(robot.id);
+        otherIds.push_back(robot_id);
       }
     }
   }
 
   // Building targets
-  const auto& kicker = robots[newHandler];
+  const RobotMsg& kicker = robots[newHandler];
   Point ball(info.common_ball.x, info.common_ball.y);
-  Point ballTarget = Point(kicker.ballTargetX, kicker.ballTargetY);
+  const PositionDistribution& kickTarget = kicker.intention().kick().target();
+  Point ballTarget = Point(kickTarget.x(), kickTarget.y());
   auto targets = getTargetPositions(ball, ballTarget);
 
   // Optimizing the placing
@@ -653,8 +679,9 @@ void CaptainService::computePlayingPositions()
         float ratio = 0;
         for (auto& robotTarget : solution.robotTarget)
         {
-          auto robot = robots[robotTarget.first];
-          float walkLength = (Point(robot.fieldX, robot.fieldY) - robotTarget.second.position).getLength();
+          const RobotMsg& robot = robots[robotTarget.first];
+          const PositionDistribution& robot_pos = robot.perception().self_in_field(0).pose().position();
+          float walkLength = (Point(robot_pos.x(), robot_pos.y()) - robotTarget.second.position).getLength();
           ratio += robotTarget.second.data;
           score += walkLength;
         }
@@ -677,18 +704,20 @@ void CaptainService::compute()
   robots.clear();
   robotIds.clear();
 
-  for (auto& entry : teamPlay->allInfo())
+  for (const auto& entry : teamPlay->allInfo())
   {
-    auto info = entry.second;
-    if (!info.isOutdated() &&                                        // Info should not be updated
-        !referee->isPenalized(info.id) &&                            // Robot should not be penalized
-        info.state != rhoban_team_play::Unknown &&                   // It should be playing
-        info.state != rhoban_team_play::Inactive && info.fieldOk &&  // It knows where it is
-        info.fieldX == info.fieldX &&                                // The values are not NaNs
-        info.fieldY == info.fieldY && info.fieldYaw == info.fieldYaw)
+    const RobotMsg& info = entry.second;
+    Action action = info.intention().action_planned();
+    int robot_id = info.robot_id().robot_id();
+    PerceptionExtra extra = extractPerceptionExtra(info.perception());
+    if (!isOutdated(info) &&                                          // Info should not be updated
+        !referee->isPenalized(robot_id) &&                            // Robot should not be penalized
+        action != Action::UNDEFINED && action != Action::INACTIVE &&  // It should be playing
+        extra.field().valid()                                         // It knows where it is
+    )
     {
-      robots[info.id] = info;
-      robotIds.push_back(info.id);
+      robots[robot_id] = info;
+      robotIds.push_back(robot_id);
     }
   }
 

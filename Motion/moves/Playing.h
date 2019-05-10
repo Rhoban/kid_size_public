@@ -26,7 +26,6 @@ public:
 
   virtual void enterState(std::string state);
   virtual void exitState(std::string state);
-  void setTeamPlayState(rhoban_team_play::TeamPlayState state);
 
 protected:
   double t;

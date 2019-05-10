@@ -94,7 +94,7 @@ protected:
   rhoban_team_play::CaptainInfo info;
 
   // Available robots
-  std::map<int, rhoban_team_play::TeamPlayInfo> robots;
+  std::map<int, hl_communication::RobotMsg> robots;
   std::vector<int> robotIds;
 
   // Geometric parameters

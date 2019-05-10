@@ -1,4 +1,5 @@
 #include <mutex>
+#include <rhoban_team_play/extra_team_play.pb.h>
 #include <rhoban_utils/angle.h>
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/timing/time_stamp.h>
@@ -23,7 +24,9 @@ static bool block = false;
 
 using ::rhoban_utils::Benchmark;
 using ::rhoban_utils::TimeStamp;
+using namespace hl_communication;
 using namespace rhoban_geometry;
+using namespace rhoban_team_play;
 using namespace rhoban_utils;
 using namespace robocup_referee;
 
@@ -199,6 +202,20 @@ Eigen::Vector3d LocalisationService::fieldToWorld(const Eigen::Vector3d& pos_in_
   return world_from_field * pos_in_field;
 }
 
+std::vector<Eigen::Vector3d> LocalisationService::getOpponentsSelf()
+{
+  std::vector<Eigen::Vector3d> result;
+  mutex.lock();
+  std::vector<Eigen::Vector3d> tmp = opponentsWorld;
+  mutex.unlock();
+
+  for (const Eigen::Vector3d& opponent : tmp)
+  {
+    result.push_back(self_from_world * opponent);
+  }
+  return result;
+}
+
 std::vector<Point> LocalisationService::getOpponentsField()
 {
   std::vector<Point> result;
@@ -228,12 +245,14 @@ std::map<int, Eigen::Vector3d> LocalisationService::getTeamMatesField()
   auto referee = getServices()->referee;
   for (auto& entry : teamPlay->allInfo())
   {
-    auto& info = entry.second;
-    if (info.id != teamPlay->myId() && !info.isOutdated() && !referee->isPenalized(info.id) && info.fieldOk &&
-        info.fieldX == info.fieldX &&  // Avoiding NaNs
-        info.fieldY == info.fieldY && info.fieldYaw == info.fieldYaw)
+    const RobotMsg& info = entry.second;
+    const PerceptionExtra perception_extra = extractPerceptionExtra(info.perception());
+    int info_id = info.robot_id().robot_id();
+    if (info_id != teamPlay->myId() && !isOutdated(info) && !referee->isPenalized(info_id) &&
+        perception_extra.field().valid())
     {
-      mates[info.id] = Eigen::Vector3d(info.fieldX, info.fieldY, info.fieldYaw);
+      const PoseDistribution pose = info.perception().self_in_field(0).pose();
+      mates[info_id] = Eigen::Vector3d(pose.position().x(), pose.position().y(), pose.dir().mean());
     }
   }
   return mates;
@@ -576,7 +595,7 @@ void LocalisationService::enableFieldFilter(bool enable)
   }
 }
 
-void LocalisationService::isGoalKeeper(bool status)
+void LocalisationService::setGoalKeeper(bool status)
 {
   if (NULL != locBinding)
   {

@@ -4,11 +4,9 @@
 #include "Placer.h"
 #include "Walk.h"
 #include <services/LocalisationService.h>
-#include <services/TeamPlayService.h>
 #include <services/StrategyService.h>
 #include <services/DecisionService.h>
 #include <robocup_referee/constants.h>
-#include <services/TeamPlayService.h>
 #include "Playing.h"
 #include "Head.h"
 #include "rhoban_utils/logging/logger.h"
@@ -144,7 +142,6 @@ void GoalKeeper::onStart()
   initArmsRollValue = RhIO::Root.getFloat("/moves/walk/armsRoll");
   initTrunkZOffsetValue = RhIO::Root.getFloat("/moves/walk/trunkZOffset");
   logger.log("GK: initial values %f %f %f\n", initElbowOffsetValue, initArmsRollValue, initTrunkZOffsetValue);
-  setTeamPlayState(Playing);
   Head* head = (Head*)getMoves()->getMove("head");
   head->setDisabled(false);
   setState(STATE_STARTWAIT);
@@ -153,7 +150,7 @@ void GoalKeeper::onStart()
   // RhIO::Root.setBool("/lowlevel/left_knee/torqueEnable", true);
   // RhIO::Root.setBool("/lowlevel/right_knee/torqueEnable", true);
   auto loc = getServices()->localisation;
-  loc->isGoalKeeper(true);
+  loc->setGoalKeeper(true);
   // set the margin to increase placement accuracy
   RhIO::Root.setFloat("/moves/placer/marginX", 0.2);
   RhIO::Root.setFloat("/moves/placer/marginY", 0.2);
@@ -189,8 +186,6 @@ void GoalKeeper::bufferedSetState(const std::string& s)
 
 void GoalKeeper::onStop()
 {
-  // TODO stop the placer too
-  setTeamPlayState(Inactive);
   auto& strategy = getServices()->strategy;
   stopMove("placer", 0.0);
   stopMove(strategy->getDefaultApproach(), 0.0);
@@ -705,9 +700,4 @@ void GoalKeeper::exitState(std::string state)
     stopMove(strategy->getDefaultApproach(), 0.0);
     stopMove("clearing_kick_controler", 0.0);
   }
-}
-
-void GoalKeeper::setTeamPlayState(TeamPlayState state)
-{
-  getServices()->teamPlay->selfInfo().state = state;
 }

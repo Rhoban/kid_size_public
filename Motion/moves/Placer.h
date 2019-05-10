@@ -27,6 +27,10 @@ public:
 
   bool arrived;
 
+  
+  Eigen::Vector2d getLocalTarget() const;
+  Eigen::Vector2d getTarget() const;
+
   // Temporary target
   float tmpX, tmpY;
 

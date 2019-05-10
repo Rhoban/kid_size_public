@@ -143,6 +143,11 @@ int RefereeService::gameTime()
   }
 }
 
+const std::string& RefereeService::getState() const
+{
+  return _state;
+}
+
 bool RefereeService::myTeamKickOff()
 {
   const auto& gs = getGameState();
