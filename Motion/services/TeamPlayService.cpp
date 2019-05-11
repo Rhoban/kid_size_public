@@ -34,7 +34,6 @@ TeamPlayService::TeamPlayService()
   , _isEnabled(true)
   , _broadcastPeriod(1.0 / TEAM_PLAY_FREQUENCY)
   , _isFieldInverted(false)
-
 {
   // Initialize RhiO
   _bind = new RhIO::Bind("teamplay");
@@ -293,6 +292,7 @@ void TeamPlayService::messageSend()
   _selfInfo.set_utc_time_stamp(getUTCTimeStamp());
   updateIdentifier(&_selfInfo);
   updatePerception(&_selfInfo);
+  updateIntention(&_selfInfo);
   updateTeamPlay(&_selfInfo);
   updateMiscExtra(&_selfInfo);
   CaptainService* captain_service = Helpers::getServices()->captain;
@@ -305,7 +305,6 @@ void TeamPlayService::messageSend()
   // Convert selfInfo to Protobuf
   if (_isEnabled && _protobuf_message_manager)
   {
-    //TODO: rework
     hl_communication::GameMsg public_message;
     public_message.mutable_robot_msg()->CopyFrom(_selfInfo);
     if (_isFieldInverted)
