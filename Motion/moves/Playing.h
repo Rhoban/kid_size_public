@@ -24,6 +24,11 @@ public:
   void onStop();
   void step(float elapsed);
 
+  void localizeStep(float elapsed);
+  void approachStep(float elapsed);
+  void walkBallStep(float elapsed);
+  void letPlayStep(float elapsed);
+
   virtual void enterState(std::string state);
   virtual void exitState(std::string state);
 

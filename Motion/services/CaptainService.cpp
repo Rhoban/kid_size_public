@@ -192,7 +192,7 @@ int CaptainService::findCaptainId()
     bool outdated = isOutdated(robotInfo);
     bool undefined_action = action == Action::UNDEFINED;
     bool penalized = referee->isPenalized(robot_id);
-    logger.log("RobotInfo: outdated:%d action:%d penalized:%d", outdated, undefined_action, penalized);
+    // logger.log("RobotInfo: outdated:%d action:%d penalized:%d", outdated, undefined_action, penalized);
     if (!outdated && !undefined_action && !penalized)
     {
       return robot_id;
@@ -268,8 +268,12 @@ void CaptainService::updateCommonBall()
     PerceptionExtra perception_extra = extractPerceptionExtra(info.perception());
     MiscExtra misc_extra = extractMiscExtra(info);
 
-    bool robot_kicked = misc_extra.time_since_last_kick() > kickMemoryDuration;
-    if (perception_extra.ball().valid() && perception_extra.field().valid() && !robot_kicked)
+    bool ball_valid = perception_extra.ball().valid();
+    bool field_valid = perception_extra.field().valid();
+    bool robot_kicked = misc_extra.time_since_last_kick() < kickMemoryDuration;
+    // logger.log("common_ball update: ball_valid:%d, field_valid:%d, robot_kicked:%d", ball_valid, field_valid,
+    //           robot_kicked);
+    if (ball_valid && field_valid && !robot_kicked)
     {
       PositionDistribution ball_in_field =
           fieldFromSelf(info.perception().self_in_field(0).pose(), info.perception().ball_in_self());
@@ -568,7 +572,7 @@ void CaptainService::computePlayingPositions()
 {
   if (info.common_ball.nbRobots == 0)
   {
-    // std::cout << "Nobody sees the ball, searching!" << std::endl;
+    logger.log("Nobody sees the ball, order all robots to search it!");
     // No one is seeing the ball, ordering all to search
     for (auto& entry : robots)
     {
