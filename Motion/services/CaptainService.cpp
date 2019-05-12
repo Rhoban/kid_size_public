@@ -237,6 +237,7 @@ bool CaptainService::importCommonBall(rhoban_geometry::Point* dst)
     return false;
   dst->x = status.ball().position().x();
   dst->y = status.ball().position().y();
+  return true;
 }
 
 void CaptainService::setStatus(const hl_communication::Captain& new_status)

@@ -102,6 +102,11 @@ private:
   double _broadcastPeriod;
 
   /**
+   * Maximal number of obstacles in a teamplay message
+   */
+  int _maxObstacles;
+
+  /**
    * Do message sending if needed
    */
   void messageSend();

@@ -32,7 +32,8 @@ TeamPlayService::TeamPlayService()
   , _allInfo()
   , _t(0.0)
   , _isEnabled(true)
-  , _broadcastPeriod(1.0 / TEAM_PLAY_FREQUENCY)
+  , _broadcastPeriod(0.2)
+  , _maxObstacles(10)
   , _isFieldInverted(false)
 {
   // Initialize RhiO
@@ -41,6 +42,9 @@ TeamPlayService::TeamPlayService()
   _bind->bindNew("broadcastPeriod", _broadcastPeriod, RhIO::Bind::PullOnly)
       ->comment("UDP broadcast period in seconds")
       ->defaultValue(0.2);
+  _bind->bindNew("maxObstacles", _maxObstacles, RhIO::Bind::PullOnly)
+      ->comment("Maximal number of obstacles in a message")
+      ->defaultValue(10);
   _bind->bindNew("isFieldInverted", _isFieldInverted, RhIO::Bind::PullOnly)
       ->comment("true if robot attacks left of the team area")
       ->defaultValue(false);
@@ -168,8 +172,8 @@ void TeamPlayService::updatePerception(RobotMsg* msg)
   self_in_field->mutable_pose()->mutable_dir()->set_mean(loc->getFieldOrientation());
   // Adding obstacles to message
   const std::vector<rhoban_geometry::Point>& opponents = loc->getOpponentsField();
-  size_t nb_opponents = std::min(opponents.size(), (size_t)MAX_OBSTACLES);
-  if (nb_opponents > MAX_OBSTACLES)
+  size_t nb_opponents = std::min(opponents.size(), (size_t)_maxObstacles);
+  if (opponents.size() > (size_t)_maxObstacles)
   {
     logger.warning("Too many obstacles to broadcast");
   }

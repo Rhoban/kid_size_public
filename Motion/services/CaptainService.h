@@ -15,22 +15,6 @@ class CaptainService : public Service
 {
 public:
   /**
-   * Captain instruction for a robot
-   */
-  struct Instruction
-  {
-    // Target position & orientation
-    rhoban_geometry::Point targetPosition;
-    float targetOrientation;
-
-    // Captain order
-    rhoban_team_play::CaptainOrder order;
-
-    // Consensus ball
-    rhoban_team_play::CommonBall ball;
-  };
-
-  /**
    * Captain configuration
    */
   struct Config : public rhoban_utils::JsonSerializable
