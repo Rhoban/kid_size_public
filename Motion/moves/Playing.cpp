@@ -93,7 +93,7 @@ void PlayingMove::step(float elapsed)
   auto loc = getServices()->localisation;
   auto decision = getServices()->decision;
   auto captain = getServices()->captain;
-  auto instruction = captain->getInstruction();
+  StrategyOrder order = captain->getMyOrder();
   t += elapsed;
 
   if (decision->handled && stopOnHandle)
@@ -114,7 +114,7 @@ void PlayingMove::step(float elapsed)
   {
     walkBallStep(elapsed);
   }
-  else if (!decision->shouldLetPlay && instruction.order == CaptainOrder::HandleBall)
+  else if (!decision->shouldLetPlay && order.action() == Action::GOING_TO_KICK)
   {
     logger.log("Captain ordered me to handle the ball, going to walkball");
     setState(STATE_WALKBALL);
@@ -127,7 +127,7 @@ void PlayingMove::step(float elapsed)
   }
   else
   {
-    if (decision->shouldLetPlay || instruction.order == CaptainOrder::Place)
+    if (decision->shouldLetPlay || order.action() == Action::POSITIONING)
     {
       // No confidence in the team, we should see the ball to enter let play,
       // else we are in search state
@@ -157,7 +157,7 @@ void PlayingMove::step(float elapsed)
 
   if (state != STATE_SEARCH && state != STATE_BACKWARD)
   {
-    if (instruction.order == CaptainOrder::SearchBall && !decision->isBallQualityGood)
+    if (order.action() == Action::SEARCHING_BALL && !decision->isBallQualityGood)
     {
       logger.log("Captain ordered me to search the ball and I don't find it");
       if (backwardT < 3)
@@ -276,7 +276,6 @@ void PlayingMove::walkBallStep(float elapsed)
   auto decision = getServices()->decision;
   auto loc = getServices()->localisation;
   auto captain = getServices()->captain;
-  auto instruction = captain->getInstruction();
 
   auto ball = loc->getBallPosSelf();
   auto dist = ball.getLength();
@@ -295,7 +294,10 @@ void PlayingMove::walkBallStep(float elapsed)
   }
   else
   {
-    ballField = Point(instruction.ball.x, instruction.ball.y);
+    if (!captain->importCommonBall(&ballField))
+    {
+      logger.error("No common ball found, while it should be present");
+    }
   }
   auto goalField = loc->getOurGoalPosField();
   double c = -ballField.x * 2 / Constants::field.field_length;
@@ -320,8 +322,8 @@ void PlayingMove::letPlayStep(float elapsed)
   auto loc = getServices()->localisation;
   auto teamPlay = getServices()->teamPlay;
   auto captain = getServices()->captain;
-  auto instruction = captain->getInstruction();
-  if (!teamConfidence || instruction.order != CaptainOrder::Place)
+  StrategyOrder order = captain->getMyOrder();
+  if (!teamConfidence || order.action() != Action::POSITIONING)
   {
     // Letting play: case 1, robot is not placing or there is no trust in team (typically, during the 10 seconds
     // buffer after game interruptions)
@@ -394,8 +396,7 @@ void PlayingMove::letPlayStep(float elapsed)
       }
     }
 
-    auto target = instruction.targetPosition;
-    auto orientation = instruction.targetOrientation;
+    const PoseDistribution& target_pose = order.target_pose();
     if (!placer->isRunning())
     {
       placer->start();
@@ -424,7 +425,7 @@ void PlayingMove::letPlayStep(float elapsed)
         obstacles.push_back(Circle(handler_pos.x(), handler_pos.y(), avoidRadius));
       }
     }
-    placer->goTo(target.x, target.y, orientation, obstacles);
+    placer->goTo(target_pose.position().x(), target_pose.position().y(), target_pose.dir().mean(), obstacles);
   }
 
   if (!teamConfidence && !decision->isBallQualityGood)

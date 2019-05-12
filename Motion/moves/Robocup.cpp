@@ -11,7 +11,7 @@
 #include "Head.h"
 #include "Walk.h"
 
-#include "rhoban_utils/logging/logger.h"
+#include <rhoban_utils/logging/logger.h>
 
 #define STATE_INITIAL "initial"
 #define STATE_WAITING "waiting"
@@ -25,6 +25,7 @@
 
 static rhoban_utils::Logger logger("RobocupSTM");
 
+using namespace hl_communication;
 using namespace rhoban_geometry;
 using namespace rhoban_team_play;
 
@@ -300,8 +301,9 @@ void Robocup::step(float elapsed)
     {
       // Forwarding the captain order to the target
       auto captain = getServices()->captain;
-      auto instruction = captain->getInstruction();
-      placer->goTo(instruction.targetPosition.x, instruction.targetPosition.y, instruction.targetOrientation);
+      StrategyOrder order = captain->getMyOrder();
+      const PoseDistribution& target = order.target_pose();
+      placer->goTo(target.position().x(), target.position().y(), target.dir().mean());
     }
   }
 

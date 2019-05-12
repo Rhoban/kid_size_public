@@ -298,8 +298,7 @@ void TeamPlayService::messageSend()
   CaptainService* captain_service = Helpers::getServices()->captain;
   if (captain_service->amICaptain())
   {
-    hl_communication::Captain* dst = _selfInfo.mutable_captain();
-    exportCaptain(captain_service->getInfo(), _isFieldInverted, dst);
+    _selfInfo.mutable_captain()->CopyFrom(captain_service->getStatus());
   }
 
   // Convert selfInfo to Protobuf
@@ -338,6 +337,12 @@ void TeamPlayService::processInfo(const RobotMsg& original_msg)
     invertField(&msg);
   }
   _allInfo[msg_robot_id] = msg;
+  // Updating captain data if message contains captain message
+  if (msg.has_captain())
+  {
+    getServices()->captain->setStatus(msg.captain());
+  }
+  // Updating shared opponents based on message (duplication with captain updateCommonOpponents???)
   if (msg_robot_id != myId() && msg.has_perception() && msg.perception().self_in_field_size() > 0)
   {
     const Perception& perception = msg.perception();
