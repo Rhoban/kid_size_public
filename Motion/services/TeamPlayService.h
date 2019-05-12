@@ -77,7 +77,7 @@ private:
   /**
    * Protobuf message manager
    */
-  std::unique_ptr<hl_communication::UDPMessageManager> _protobuf_message_manager;
+  std::unique_ptr<hl_communication::UDPMessageManager> message_manager;
 
   /**
    * Current and other robots infos
@@ -127,6 +127,11 @@ private:
    * the team area, then the field is inverted
    */
   bool _isFieldInverted;
+
+  /**
+   * Last team id used to send message. Is used to automatically change port when team number changed.
+   */
+  int last_team_id;
 
   /**
    * RhIO team command

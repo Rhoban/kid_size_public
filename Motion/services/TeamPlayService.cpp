@@ -35,6 +35,7 @@ TeamPlayService::TeamPlayService()
   , _broadcastPeriod(0.2)
   , _maxObstacles(10)
   , _isFieldInverted(false)
+  , last_team_id(-1)
 {
   // Initialize RhiO
   _bind = new RhIO::Bind("teamplay");
@@ -93,11 +94,19 @@ bool TeamPlayService::tick(double elapsed)
 
   // If team id is available and team id
   int teamId = getServices()->referee->teamId;
-  if (teamId != -1 && _protobuf_message_manager == nullptr)//TODO: handle port update
+  if (teamId != last_team_id)
   {
+    if (last_team_id != -1)
+    {
+      int protobuf_team_port = getDefaultTeamPort(last_team_id);
+      logger.log("Ending teamplay service on port %d", protobuf_team_port);
+      message_manager.reset(nullptr);
+      _allInfo.clear();
+    }
     int protobuf_team_port = getDefaultTeamPort(teamId);
     logger.log("Starting teamplay service on port %d", protobuf_team_port);
-    _protobuf_message_manager.reset(new UDPMessageManager(protobuf_team_port, protobuf_team_port));
+    message_manager.reset(new UDPMessageManager(protobuf_team_port, protobuf_team_port));
+    last_team_id = teamId;
   }
 
   // Sending informations at fixed frequency
@@ -108,11 +117,11 @@ bool TeamPlayService::tick(double elapsed)
   }
   _t += elapsed;
 
-  if (_isEnabled && _protobuf_message_manager)
+  if (_isEnabled && message_manager)
   {
     // Receiving informations
     GameMsg received_msg;
-    while (_protobuf_message_manager->receiveMessage(&received_msg))
+    while (message_manager->receiveMessage(&received_msg))
     {   
       // Assign reception timestamp
       if (received_msg.has_robot_msg())
@@ -306,7 +315,7 @@ void TeamPlayService::messageSend()
   }
 
   // Convert selfInfo to Protobuf
-  if (_isEnabled && _protobuf_message_manager)
+  if (_isEnabled && message_manager)
   {
     hl_communication::GameMsg public_message;
     public_message.mutable_robot_msg()->CopyFrom(_selfInfo);
@@ -314,7 +323,7 @@ void TeamPlayService::messageSend()
     {
       invertField(public_message.mutable_robot_msg());
     }
-    _protobuf_message_manager->sendMessage(&public_message);
+    message_manager->sendMessage(&public_message);
   }
 }
 
