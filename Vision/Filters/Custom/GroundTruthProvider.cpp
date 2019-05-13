@@ -18,32 +18,18 @@ namespace Vision
 namespace Filters
 {
   
-GroundTruthProvider::GroundTruthProvider() : Filter("GroundTruthProvider"), imgIndex(0), outputPrefix(""), isFirstFrame(true)
+GroundTruthProvider::GroundTruthProvider() : Filter("GroundTruthProvider"), imgIndex(0), outputPrefix("")
 {
 }
   
 GroundTruthProvider::~GroundTruthProvider()
 {
-  videoWriter.release();
 }
 
 void GroundTruthProvider::process()
 {
   
   img() = getSourceImg();
-
-  
-  if(isFirstFrame)
-  {
-    std::string videoName = outputPrefix + "video.avi";
-    
-    videoWriter.open(videoName, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 1, img().size(), true); // framerate parameter is just for playback
-    // videoWriter.set(cv::VIDEOWRITER_PROP_QUALITY, 100);
-    if (!videoWriter.isOpened())
-      throw std::runtime_error(DEBUG_INFO + "Failed to open video");
-    
-    isFirstFrame = false;
-  }
   
   std::vector<cv::Rect_<float>> rois = generateROIs();
   updateAnnotations();
@@ -159,7 +145,6 @@ void GroundTruthProvider::dumpImg(const std::vector<cv::Rect_<float>>& rois)
   const cv::Mat& src_img = getSourceImg();
   std::string imName = outputPrefix + "img_" + std::to_string(imgIndex) + ".png";
   cv::imwrite(imName.c_str(), src_img);
-  videoWriter.write(src_img);
   
   int patchIndex = 0;
   for (const cv::Rect_<float>& roi : rois)

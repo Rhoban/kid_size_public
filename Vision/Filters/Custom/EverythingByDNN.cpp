@@ -62,9 +62,11 @@ void EverythingByDNN::setParameters()
 {
   debugLevel = ParamInt(0, 0, 1);
   scoreThreshold = ParamFloat(0.5, 0.0, 1.0);
+  imSize = ParamInt(32, 1, 64);
 
   params()->define<ParamInt>("debugLevel", &debugLevel);
   params()->define<ParamFloat>("scoreThreshold", &scoreThreshold);
+  params()->define<ParamInt>("imSize", &imSize);
 
   for (const std::string& className : classNames)
   {
@@ -121,8 +123,8 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
 {
   cv::Size patchSize = patch.size();
 
-  if (patchSize.width != 32 || patchSize.height != 32)  // TODO hardcoded sizes
-    cv::resize(patch, patch, cv::Size(32, 32));
+  if (patchSize.width != imSize || patchSize.height != imSize)  // TODO hardcoded sizes
+    cv::resize(patch, patch, cv::Size(imSize, imSize));
 
   cv::dnn::Blob in = cv::dnn::Blob::fromImages(patch);
 
@@ -132,7 +134,7 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
   net.forward();
   Benchmark::close("predict");
 
-  cv::dnn::Blob prob = net.getBlob("tiny_model/fc2/fc2/Softmax");  // gather output of "prob" layer
+  cv::dnn::Blob prob = net.getBlob("tiny_model/output/output/Softmax");  // gather output of "prob" layer
   // std::cout << prob << std::endl;
   int classId;
   double classProb;
