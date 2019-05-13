@@ -311,13 +311,13 @@ Eigen::Vector3d CameraState::getWorldFromSelf(const Eigen::Vector3d& pos_self) c
 
 Angle CameraState::getPitch()
 {
-  PanTilt panTilt(cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
+  PanTilt panTilt(worldToSelf.linear() * cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
   return panTilt.tilt;
 }
 
 Angle CameraState::getYaw()
 {
-  PanTilt panTilt(cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
+  PanTilt panTilt(worldToSelf.linear() * cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
   return panTilt.pan;
 }
 

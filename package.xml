@@ -35,7 +35,6 @@
   <build_depend>rhoban_model_learning</build_depend> <!-- rhoban/model_learning -->
   <build_depend>csa_mdp_experiments</build_depend> <!-- rhoban/csa_mdp_experiments.git -->
   <build_depend>vive_provider</build_depend> <!-- rhoban/vive_provider -->
-  <build_depend>tiny-dnn</build_depend> <!-- rhobandeps/tiny-dnn.git -->
   <build_depend>tclap</build_depend> <!-- rhobandeps/tclap -->
   <!-- <build_depend>env</build_depend> --> <!-- rhoban/environments -->
 
@@ -50,7 +49,6 @@
   <run_depend>rhoban_model_learning</run_depend>
   <run_depend>csa_mdp_experiments</run_depend>
   <run_depend>vive_provider</run_depend>
-  <run_depend>tiny-dnn</run_depend>
   <run_depend>tclap</run_depend>
 
 </package>
