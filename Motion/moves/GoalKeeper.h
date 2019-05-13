@@ -2,8 +2,8 @@
 
 #include "STM.h"
 
-#include <services/TeamPlayService.h>
 #include <rhoban_geometry/point.h>
+
 
 class Walk;
 class Approach;
@@ -11,7 +11,7 @@ class Placer;
 
 class GoalKeeper : public STM
 {
-public:
+ public:
   GoalKeeper(Walk* walk, Placer* placer);
   std::string getName();
 
@@ -21,44 +21,50 @@ public:
   void enterState(std::string state);
   void exitState(std::string state);
 
-protected:
+ protected:
   Walk* walk;
   Placer* placer;
 
-  bool ballInZone(float xd, float yd);
-  bool ballInAttackZone();
-  bool ballInAttackZoneHysteresis();
-  bool ignoreBall();
-  bool ignoreBallHys();
-  bool isNearHome();
-  bool isNearHomeHys();
-  rhoban_geometry::Point getAlignPoint(const rhoban_geometry::Point&, float&);
   rhoban_geometry::Point home();
-  bool isAligned();
-  rhoban_geometry::Point shootLineCenter();
-  void bufferedSetState(const std::string&);
 
-  void setTeamPlayState(rhoban_team_play::TeamPlayState state);
+  bool ballInZone(float xd, float yd);
+  bool ballInDangerZone();
+  bool ballInAttackZone();
+  bool ballInAttackHysZone();
+  bool isBallSafe();
+  rhoban_geometry::Point alignBallPos();
+  bool goodEnoughPos(rhoban_geometry::Point pos, rhoban_geometry::Point needed_pos);
+  
+  // void bufferedSetState(const std::string&);
+    //  void setTeamPlayState(rhoban_team_play::TeamPlayState state);
 
-  bool stopPosture;
   float t;
-  float targetX, targetY;
+  //  float targetX, targetY;
+  float homeX, homeY;
   float xAttack, yAttack;
   float xAttackHys, yAttackHys;
-  float xIgnoreBall, xIgnoreBallHys;
-  float homeX, maxHomeDistance, maxHomeDistanceHys;
-  float alignTolerance;
-  float maxShootDist;
-  int nextStateSize;
-  std::vector<std::string> nextState;
-  int nextStateIndice;
+  float xIgnoreBall;
+  float distanceAttack;
+  float xApprox, yApprox;
+
+  float timeSinceStop;
+  
+  //init values
+  float init_left_hip_pitch;
+  
+  /*float init_right_hip_pitch;
+  float init_left_knee;
+  float init_right_knee;
+  float ini_left_ankle_pitch;
+  float init_right_ankle_pitch;
+  float init_left_shoulder_roll;
+  float init_right_shoulder_roll;
+  float init_left_elbow;
+  float init_right_elbow;*/
+  
+  // std::vector<std::string> nextState;
+  //int nextStateIndice;
   // bool isPlacing;
-  bool neverWalked;
+  // bool neverWalked;
   bool placedByHand;
-  float initElbowOffsetValue;
-  float initArmsRollValue;
-  float initTrunkZOffsetValue;
-  float stopMoveTime;
-  bool opponentWithGrass;
-  float againstGrassRatio, grassRatio;
 };

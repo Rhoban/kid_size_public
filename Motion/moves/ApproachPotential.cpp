@@ -58,6 +58,7 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
 
   bind->bindNew("ballX", ballX, RhIO::Bind::PushOnly);
   bind->bindNew("ballY", ballY, RhIO::Bind::PushOnly);
+ 
 }
 
 Angle ApproachPotential::getKickCap()

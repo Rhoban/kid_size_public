@@ -91,6 +91,11 @@ public:
   bool myTeamFreeKick();
 
   /**
+   * Is the free kick a throw in?
+   */
+  bool isThrowIn();
+  
+  /**
    * Secondary time
    */
   int getSecondaryTime();
@@ -108,6 +113,8 @@ public:
   int alive;
   bool force, playing, gamePlaying;
 
+  bool throwIn;
+  
   bool wasPenalized;
 
   bool dumpGameState;

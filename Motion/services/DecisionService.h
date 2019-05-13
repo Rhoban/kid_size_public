@@ -95,6 +95,12 @@ public:
   bool freezeKick;
 
   /**
+   * Can we throwin next move ?
+   **/
+  bool nextKickIsThrowIn;
+
+  
+  /**
    * Should we fake team decisons?
    */
   bool fakeTeamDecisions;
@@ -164,6 +170,7 @@ protected:
    * Counting time from free kick
    */
   double freeKickT;
+  
 
   /// When has ball been flagged as moving for the last time
   rhoban_utils::TimeStamp lastBallMoving;

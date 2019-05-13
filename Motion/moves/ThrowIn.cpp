@@ -33,7 +33,7 @@ void ThrowIn::onStart()
   //loading splines
   try
     {
-      splines = Function::fromFile("ThrowIn.json");
+      splines = Function::fromFile("kick_throwin.json");
     }
   catch (const rhoban_utils::JsonParsingError & exc) 
     {

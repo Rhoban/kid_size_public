@@ -26,7 +26,7 @@ DecisionService::DecisionService() : isBallMoving(false), bind("decision")
   bind.bindNew("isBallMoving", isBallMoving, RhIO::Bind::PushOnly)
       ->comment("Is the ball moving significantly according to one of the robot of the team")
       ->defaultValue(false);
-  bind.bindNew("isMateKicking", isMateKicking, RhIO::Bind::PushOnly)
+  bind.bindNew("isMSateKicking", isMateKicking, RhIO::Bind::PushOnly)
       ->comment("True if one of the robot of the team has performed a kick recently")
       ->defaultValue(false);
 
@@ -116,6 +116,9 @@ DecisionService::DecisionService() : isBallMoving(false), bind("decision")
   // Who is the goal ?
   bind.bindNew("goalId", goalId, RhIO::Bind::PullOnly)->comment("Id of the goal")->defaultValue(2);
 
+  bind.bindNew("nextKickIsThrowIn", nextKickIsThrowIn,  RhIO::Bind::PushOnly)->comment("Is next kick a throw in ?")->defaultValue(false);
+
+  
   selfAttackingT = 0;
   freeKickT = 99;
   handledT = 0;
@@ -152,11 +155,19 @@ bool DecisionService::tick(double elapsed)
   }
 
   freezeKick = false;
+  nextKickIsThrowIn = false;
+  
   if (referee->isFreeKick())
   {
     if (referee->myTeamFreeKick())
     {
       freezeKick = true;
+      if (referee->isThrowIn())
+	{
+	  nextKickIsThrowIn = true;
+	}
+      
+	
     }
     else
     {
