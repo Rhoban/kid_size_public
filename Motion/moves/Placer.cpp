@@ -388,7 +388,7 @@ void Placer::step(float elapsed)
     }
 
     // Using mm to control walk
-    walk->control(true, 1000 * stepper.output, 1000 * lateraler.output, turner.output);
+    walk->control(true, stepper.output, lateraler.output, turner.output);
   }
   bind->push();
 }

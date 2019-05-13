@@ -66,11 +66,11 @@ public:
   double swingPhase;
   double trunkHeight;
   double footDistance;
-  double footYOffsetPerYSpeed;
+  double footYOffsetPerStepSizeY;
   double trunkPitch;
 
   // Dynamics orders
-  double xSpeed, ySpeed, yawSpeed;
+  double stepSizeX, stepSizeY, stepSizeYaw;
 
   // Duration of the current step
   double stepDuration;

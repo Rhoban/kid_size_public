@@ -31,7 +31,8 @@ public:
   void step(float elapsed);
 
 protected:
-  rhoban_utils::Control stepper, lateraler, aligner;
+  // Servoing gains
+  double stepP, lateralP, rotationP;
 
   std::vector<Target> targets;
 
@@ -52,9 +53,6 @@ protected:
 
   // Don't walk
   bool dontWalk;
-
-  // Gains
-  double stepP, lateralI, stepI, stepPunch, lateralP;
 
   // Current tolerance used
   double currentTolerance;
