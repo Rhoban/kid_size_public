@@ -70,6 +70,11 @@ FieldPF::FieldPF()
       ->minimum(0)
       ->maximum(180)
       ->comment("Orientation noise applied at border reset in [-x,x] [deg]");
+  rhioNode->newFloat("borderExtraDist")
+      ->defaultValue(0.1)
+      ->minimum(0)
+      ->maximum(1.0)
+      ->comment("Distance to the center line when the robot enters from  the side [m]");
   rhioNode->newFloat("customX")
       ->defaultValue(0)
       ->minimum(-Constants::field.field_length / 2)
@@ -257,7 +262,7 @@ void FieldPF::resetOnLines(int side)
     {
       currSide = sideDistribution(engine) == 0 ? 1 : -1;
     }
-    double y = currSide * Constants::field.field_width / 2;
+    double y = currSide * (Constants::field.field_width / 2 + borderExtraDist);
     double dirNoise = dirNoiseDistribution(generator);
     double dir = -currSide * 90;
     p.first = FieldPosition(x, y, Angle(dir + dirNoise).getSignedValue());
@@ -414,6 +419,7 @@ void FieldPF::importFromRhIO()
   fallNoiseTheta = rhioNode->getValueFloat("fallNoiseTheta").value;
   borderNoise = rhioNode->getValueFloat("borderNoise").value;
   borderNoiseTheta = rhioNode->getValueFloat("borderNoiseTheta").value;
+  borderExtraDist = rhioNode->getValueFloat("borderExtraDist").value;
   customX = rhioNode->getValueFloat("customX").value;
   customY = rhioNode->getValueFloat("customY").value;
   customNoise = rhioNode->getValueFloat("customNoise").value;

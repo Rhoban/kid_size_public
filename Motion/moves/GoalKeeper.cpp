@@ -166,10 +166,10 @@ Point GoalKeeper::alignBallPos()
     {
       return Point(homeX, (ball.y+homeY)/2);
     }
-
+  
   else
     {
-     
+      
      
       //move to the ball proportionnaly with distance x from the goal 
       float coeffa = (Constants::field.goal_width/2.0)/
@@ -197,9 +197,10 @@ Point GoalKeeper::alignBallPos()
 	    return Point(homeX, -Constants::field.goal_width/2.0+
 			 (loc->getOurGoalPosField().x-ball.x)*coeffa+coeffb);
 	}
-	   
-    
+      
     }
+
+    
 }
 
 bool GoalKeeper::goodEnoughPos(Point pos, Point needed_pos)
@@ -227,7 +228,6 @@ void GoalKeeper::step(float elapsed)
   auto decision = getServices()->decision;
   auto pos = loc->getFieldPos();
   auto ball = loc->getBallPosField();
-  
 
   if(pos.getDist(ball)<distanceAttack)
     {

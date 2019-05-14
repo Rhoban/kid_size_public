@@ -14,7 +14,7 @@ public:
   void onStart();
   void onStop();
   void step(float elapsed);
-  
+
   void setShouldBootstrap(bool bootstrap);
 
   // Control the robot using [mm] and [deg]
@@ -22,6 +22,9 @@ public:
 
   // Enabling/disabling arms
   void enableArms(bool enabled);
+
+  // Enabling/disabling the additional roll of the arms to access the hotswap
+  void enableSafeArmsRoll(bool enabled);
 
   /**
    * Boundaries for orders and deltaOrders (step, lateral, turn)
@@ -45,7 +48,7 @@ public:
 
   rhoban_geometry::Point trunkToFlyingFoot(rhoban_geometry::Point point);
 
-  // rhoban_geometry::Point 
+  // rhoban_geometry::Point
 
   /**
    * Set raw (meters, radian) current walk
@@ -66,7 +69,7 @@ public:
   // Will the new step be a new step ?
   bool isNewStep(double elapsed);
 
-  // Gets the walk phase, 0: begin of cycle, 0.5: step 1, 1: step2 
+  // Gets the walk phase, 0: begin of cycle, 0.5: step 1, 1: step2
   double getPhase();
 
   // Maximum rotation speed [deg/step]
@@ -120,9 +123,10 @@ protected:
   double swingGainStart;
 
   // Arms parameters
-  double armsRoll, elbowOffset;
+  double armsRoll, safeArmsRoll, elbowOffset;
   double smoothingArms;
   bool armsEnabled;
+  bool safeArmsRollEnabled;
   void stepArms(double elapsed);
 
   // Security parameters

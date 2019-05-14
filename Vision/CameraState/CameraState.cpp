@@ -332,12 +332,12 @@ double CameraState::getHeight()
   return height;
 }
 
-cv::Point CameraState::imgXYFromWorldPosition(const cv::Point2f& p) const
+cv::Point2f CameraState::imgXYFromWorldPosition(const cv::Point2f& p) const
 {
   return imgXYFromWorldPosition(Eigen::Vector3d(p.x, p.y, 0));
 }
 
-cv::Point CameraState::imgXYFromWorldPosition(const Eigen::Vector3d& posInWorld) const
+cv::Point2f CameraState::imgXYFromWorldPosition(const Eigen::Vector3d& posInWorld) const
 {
   Eigen::Vector3d posInCamera = worldToCamera * posInWorld;
   return _cameraModel.getImgFromObject(eigen2CV(posInCamera));

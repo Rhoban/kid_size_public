@@ -1178,6 +1178,8 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
 
   tmp = pipeline.get("source").getImg()->clone();
 
+  cv::Rect2f img_rect(cv::Point2f(), cv::Point2f(width, height));
+
   cv::resize(tmp, tmp_small, cv::Size(width, height));
 
   cv::cvtColor(tmp_small, img, CV_YCrCb2BGR);
@@ -1192,10 +1194,10 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
       Eigen::Vector3d cpos = candidate.object;
       try
       {
-        auto pos = cs->imgXYFromWorldPosition(cpos);
+        cv::Point2f pos = cs->imgXYFromWorldPosition(cpos);
 
         // I candidate is outside of the image, ignore it
-        if (pos.x < 0 && pos.y < 0)
+        if (!img_rect.contains(pos))
           continue;
 
         // Draw ball candidate
@@ -1235,10 +1237,10 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
       Eigen::Vector3d cpos = candidate.object;
       try
       {
-        auto pos = cs->imgXYFromWorldPosition(cv::Point2f(cpos.x(), cpos.y()));
+        cv::Point2f pos = cs->imgXYFromWorldPosition(cv::Point2f(cpos.x(), cpos.y()));
 
         // If candidate is outside of the image, ignore it
-        if (pos.x < 0 && pos.y < 0)
+        if (!img_rect.contains(pos))
           continue;
 
         // Draw robot candidate
@@ -1285,8 +1287,11 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
     Eigen::Vector3d target = cameraPos + offset;
     try
     {
-      cv::Point p = cs->imgXYFromWorldPosition(target);
-      horizonKeypoints.push_back(p);
+      cv::Point2f p = cs->imgXYFromWorldPosition(target);
+      if (img_rect.contains(p))
+      {
+        horizonKeypoints.push_back(p);
+      }
     }
     catch (const std::runtime_error& exc)
     {

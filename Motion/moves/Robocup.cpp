@@ -157,7 +157,7 @@ void Robocup::applyGameState()
       logger.log("Is now playing");
 
       // There is a free kick pending, just continuing to play normally
-      if (referee->isFreeKick())
+      if (referee->isGameInterruption())
       {
         logger.log("End of free kick freeze phase, going back to play");
       }
@@ -401,6 +401,16 @@ void Robocup::enterState(std::string state)
   else
   {
     head->setDisabled(false);
+  }
+
+  // Starts or stops the safe arms roll used for accessing the hotswap
+  if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
+  {
+    walk->enableSafeArmsRoll(true);
+  }
+  else
+  {
+    walk->enableSafeArmsRoll(false);
   }
 
   if (state == STATE_STANDUP)

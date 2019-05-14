@@ -120,7 +120,6 @@ DecisionService::DecisionService() : isBallMoving(false), bind("decision")
 
   
   selfAttackingT = 0;
-  freeKickT = 99;
   handledT = 0;
 
   // Ensuring all default values have been written
@@ -145,21 +144,19 @@ bool DecisionService::tick(double elapsed)
   letPlayRadius = 0;
 
   shouldLetPlay = false;
-  if (referee->shouldLetPlay())
+  if (referee->isOpponentKickOffStart())
   {
-    if (letPlayRadius < teamPlay->refereeRadius)
-    {
-      letPlayRadius = teamPlay->refereeRadius;
-    }
+    letPlayRadius = std::max(letPlayRadius, teamPlay->kickOffClearanceDist);
     shouldLetPlay = true;
   }
 
   freezeKick = false;
+
   nextKickIsThrowIn = false;
   
-  if (referee->isFreeKick())
+  if (referee->isGameInterruption())
   {
-    if (referee->myTeamFreeKick())
+    if (referee->myTeamGameInterruption())
     {
       freezeKick = true;
       if (referee->isThrowIn())
@@ -171,26 +168,14 @@ bool DecisionService::tick(double elapsed)
     }
     else
     {
+      letPlayRadius = std::max(letPlayRadius, teamPlay->gameInterruptionClearanceDist);
       shouldLetPlay = true;
-      freeKickT = 0;
-      double clearRadius = 0.65;  //[m]
-      if (letPlayRadius < clearRadius)
-      {
-        letPlayRadius = clearRadius;
-      }
     }
   }
-  else if (freeKickT < 10)
+  else if (referee->isRecentGameInterruption() && !referee->myTeamGameInterruption())
   {
-    // We are counting the time from the last free kick, but this
-    // may be available directly in the referee in the future, see
-    // https://github.com/RoboCup-Humanoid-TC/GameController/issues/19
-    freeKickT += elapsed;
     shouldLetPlay = true;
-    if (letPlayRadius < 0.75)
-    {
-      letPlayRadius = 0.75;
-    }
+    letPlayRadius = std::max(letPlayRadius, teamPlay->gameInterruptionClearanceDist);
   }
 
   bind.pull();

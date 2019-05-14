@@ -171,7 +171,6 @@ protected:
    */
   double freeKickT;
   
-
   /// When has ball been flagged as moving for the last time
   rhoban_utils::TimeStamp lastBallMoving;
 

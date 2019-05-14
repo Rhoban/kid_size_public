@@ -49,6 +49,7 @@ LocalisationService::LocalisationService()
   fieldCenterWorld = Eigen::Vector3d(0, 0, 0);
   fieldQ = 0;
   fieldConsistency = 0;
+  consistencyEnabled = false;
   // Visual compass
   visualCompassActivated = false;
 

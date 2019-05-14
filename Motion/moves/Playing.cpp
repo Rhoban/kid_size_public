@@ -245,7 +245,7 @@ void PlayingMove::step(float elapsed)
         Control stepper;
         stepper.min = -walk->maxStepBackward;
         stepper.max = walk->maxStep;
-        stepper.k_p = 100;
+        stepper.k_p = 0.1;
         stepper.update(ballDistance - letPlayRadius);
 
         // Aligning with the ball
@@ -259,7 +259,7 @@ void PlayingMove::step(float elapsed)
         Control lateraler;
         lateraler.min = -walk->maxLateral;
         lateraler.max = walk->maxLateral;
-        lateraler.k_p = 10;
+        lateraler.k_p = 0.01;
         if (fabs(ballAzimuth) > 15 || fabs(ballDistance - letPlayRadius) > 0.35)
         {
           defendAzimuth = 0;

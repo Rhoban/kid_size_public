@@ -33,6 +33,7 @@ ViveService::ViveService() : vive_manager(getDefaultPort(), -1), bind("vive")
       ->comment("Tracker serial number")
       ->persisted(true)
       ->defaultValue("");
+  extra_time_offset = 0;
   bind.bindNew("extra_time_offset", extra_time_offset, RhIO::Bind::PullOnly)
       ->comment("Unit: seconds")
       ->persisted(true)
@@ -83,18 +84,20 @@ std::string ViveService::cmdVive()
 void ViveService::loadLog(const std::string& path)
 {
   vive_manager.loadMessages(path);
-  logger.log("Messages loaded from '%s'", path.c_str());
+  logger.log("Messages loaded from '%s': nb_messages: %d", path.c_str(), vive_manager.getMessages().size());
 
   histories.clear();
 
-  for (auto &entry : vive_manager.getMessages()) {
-    const GlobalMsg &message = entry.second;
+  for (auto& entry : vive_manager.getMessages())
+  {
+    const GlobalMsg& message = entry.second;
     double timestamp = message.time_since_epoch();
-    for (const TrackerMsg& tracker : message.trackers()) {
-      if (!histories.entries().count(tracker.serial_number())) {
+    for (const TrackerMsg& tracker : message.trackers())
+    {
+      if (!histories.entries().count(tracker.serial_number()))
+      {
         histories.pose(tracker.serial_number())->setWindowSize(-1.0);
       }
-
       histories.pose(tracker.serial_number())->pushValue(timestamp, vive_provider::getWorldToTracker(tracker));
     }
   }
