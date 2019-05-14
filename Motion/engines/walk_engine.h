@@ -3,7 +3,7 @@
 #include <map>
 #include <Eigen/Dense>
 #include <LegIK/LegIK.hpp>
-#include "Spline/CubicSpline.hpp"
+#include "rhoban_utils/spline/poly_spline.h"
 #include "Model/HumanoidFixedModel.hpp"
 
 namespace rhoban
@@ -30,7 +30,7 @@ public:
     void clearSplines();
     
     // Splines
-    Leph::CubicSpline xSpline, ySpline, zSpline, yawSpline;
+    rhoban_utils::PolySpline xSpline, ySpline, zSpline, yawSpline;
 
     double trunkYOffset;
   };

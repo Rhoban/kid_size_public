@@ -204,11 +204,11 @@ void Placer::step(float elapsed)
   if (arrived)
     dontWalk = true;
 
-  // Updating stepper properties (maxValues are in mm for walk)
-  stepper.min = -walk->maxStepBackward / 1000;
-  stepper.max = walk->maxStep / 1000;
-  lateraler.min = -walk->maxLateral / 1000;
-  lateraler.max = walk->maxLateral / 1000;
+  // Updating stepper properties
+  stepper.min = -walk->maxStepBackward;
+  stepper.max = walk->maxStep;
+  lateraler.min = -walk->maxLateral;
+  lateraler.max = walk->maxLateral;
   turner.min = -walk->maxRotation;
   turner.max = walk->maxRotation;
 
@@ -386,8 +386,6 @@ void Placer::step(float elapsed)
     if (fabs(turner.output) > 4) {
       lateraler.output = 0;
     }
-
-    // Using mm to control walk
     walk->control(true, stepper.output, lateraler.output, turner.output);
   }
   bind->push();
