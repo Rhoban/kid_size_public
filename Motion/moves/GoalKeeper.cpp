@@ -98,10 +98,12 @@ void GoalKeeper::onStart()
   setState(STATE_INIT);
   RhIO::Root.setFloat("/moves/placer/marginX", 0.1);
   RhIO::Root.setFloat("/moves/placer/marginY", 0.1);
+
 }
 
 void GoalKeeper::onStop()
 {
+
   setState(STATE_WAIT);
 }
 Point GoalKeeper::home()
@@ -420,6 +422,4 @@ bind->push();
  }
  
  
-      
-      
       
