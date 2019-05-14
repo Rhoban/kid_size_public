@@ -106,6 +106,8 @@ public:
 
   int gameTime();
 
+  const std::string& getState() const;
+
   bool tick(double elapsed) override;
   double timeSincePlaying;
   double timeSinceGamePlaying;

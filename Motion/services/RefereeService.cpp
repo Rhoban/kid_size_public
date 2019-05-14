@@ -143,6 +143,11 @@ int RefereeService::gameTime()
   }
 }
 
+const std::string& RefereeService::getState() const
+{
+  return _state;
+}
+
 bool RefereeService::myTeamKickOff()
 {
   const auto& gs = getGameState();
@@ -363,7 +368,7 @@ std::string RefereeService::cmdPlaying()
     ss << "Referee time: " << remaining << "." << std::endl;
     ss << "Referee last update: " << (getGameState().getLastUpdate() / 100.0) << "." << std::endl;
 
-    if (hasStartedPlayingRecently())
+    if (isOpponentKickOffStart())
     {
       ss << "Opponent kick off, ball should not be touched.";
     }

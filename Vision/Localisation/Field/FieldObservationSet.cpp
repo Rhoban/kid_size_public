@@ -1,7 +1,6 @@
 #include "Localisation/Field/FieldObservationSet.hpp"
 
-#include "Localisation/Field/ArenaCornerObservation.hpp"
-#include "Localisation/Field/GoalObservation.hpp"
+#include "Localisation/Field/FeatureObservation.hpp"
 
 using namespace rhoban_unsorted;
 
@@ -55,13 +54,9 @@ void FieldObservationSet::treatObservationNode(const Json::Value& v, const std::
   // TODO: replace by a factory
   std::string className = v["class name"].asString();
   SerializableFieldObservation* obs;
-  if (className == "GoalObservation")
+  if (className == "FeatureObservation")
   {
-    obs = new GoalObservation();
-  }
-  else if (className == "ArenaCornerObservation")
-  {
-    obs = new ArenaCornerObservation();
+    obs = new FeatureObservation();
   }
   else
   {

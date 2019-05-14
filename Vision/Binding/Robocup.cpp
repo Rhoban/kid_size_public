@@ -13,14 +13,8 @@
 
 #include "scheduler/MoveScheduler.h"
 
-#include "Filters/Ball/BallProvider.hpp"
-#include "Filters/Features/CompassProvider.hpp"
-//#include "Filters/Features/VisualCompass.hpp"
-#include "Filters/Custom/FieldBorderData.hpp"
-
+#include "Filters/Features/FeaturesProvider.hpp"
 #include "Filters/Features/TagsDetector.hpp"
-#include "Filters/Goal/GoalProvider.hpp"
-#include "Filters/Obstacles/ObstacleProvider.hpp"
 
 #include "CameraState/CameraState.hpp"
 #include "Utils/Drawing.hpp"
@@ -38,8 +32,6 @@
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/util.h>
 
-#include "Localisation/Field/CompassObservation.hpp"
-
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
 #include "services/ModelService.h"
@@ -50,7 +42,6 @@
 #include <sstream>
 #include <string>
 #include <unistd.h>
-#include "Filters/Custom/FieldBorder.hpp"
 
 #include <vector>
 
@@ -59,6 +50,7 @@
 
 static rhoban_utils::Logger out("vision_robocup");
 
+using namespace hl_monitoring;
 using namespace Vision::Localisation;
 using namespace rhoban_utils;
 using namespace rhoban_geometry;
@@ -69,8 +61,6 @@ using namespace std::chrono;
 using namespace Vision::Utils;
 
 using robocup_referee::Constants;
-using Vision::Filters::BallProvider;
-using Vision::Filters::CompassProvider;
 using Vision::Filters::TagsDetector;
 using Vision::Utils::CameraState;
 using Vision::Utils::ImageLogger;
@@ -95,6 +85,9 @@ Robocup::Robocup(MoveScheduler* scheduler)
   ,  // TODO: maybe put the name of the param file elsewhere
   activeSource(false)
   , clearRememberObservations(false)
+  , detectedFeatures(new Field::POICollection())
+  , detectedBalls(new std::vector<cv::Point3f>())
+  , detectedRobots(new std::vector<cv::Point3f>())
   , wasHandled(false)
   , wasFallen(false)
   , ignoreOutOfFieldBalls(true)
@@ -102,12 +95,6 @@ Robocup::Robocup(MoveScheduler* scheduler)
   ballStackFilter = new BallStackFilter(cs);
   robotFilter = new RobotFilter(cs);
   ballSpeedEstimator = new SpeedEstimator();
-  featureProviders["arena"] = std::vector<std::string>();
-  featureProviders["goal"] = std::vector<std::string>();
-  featureProviders["ball"] = std::vector<std::string>();
-  featureProviders["tags"] = std::vector<std::string>();
-  featureProviders["compass"] = std::vector<std::string>();
-  featureProviders["fieldBorder"] = std::vector<std::string>();
   initObservationTypes();
 
   for (std::string obs : observationTypes)
@@ -150,6 +137,9 @@ Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
   , cs(new CameraState(scheduler))
   , activeSource(false)
   , clearRememberObservations(false)
+  , detectedFeatures(new Field::POICollection())
+  , detectedBalls(new std::vector<cv::Point3f>())
+  , detectedRobots(new std::vector<cv::Point3f>())
   , wasHandled(false)
   , wasFallen(false)
   , ignoreOutOfFieldBalls(true)
@@ -157,12 +147,6 @@ Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
   ballStackFilter = new BallStackFilter(cs);
   robotFilter = new RobotFilter(cs);
   ballSpeedEstimator = new SpeedEstimator();
-  featureProviders["arena"] = std::vector<std::string>();
-  featureProviders["goal"] = std::vector<std::string>();
-  featureProviders["ball"] = std::vector<std::string>();
-  featureProviders["tags"] = std::vector<std::string>();
-  featureProviders["compass"] = std::vector<std::string>();
-  featureProviders["fieldBorder"] = std::vector<std::string>();
   initObservationTypes();
 
   for (std::string obs : observationTypes)
@@ -266,13 +250,7 @@ Json::Value Robocup::toJson() const
   v["logBallExtraTime"] = logBallExtraTime;
   v["writeBallStatus"] = writeBallStatus;
   v["ignoreOutOfFieldBalls"] = ignoreOutOfFieldBalls;
-
-  for (const auto& entry : featureProviders)
-  {
-    const std::string& featureName = entry.first;
-    const std::vector<std::string>& providers = entry.second;
-    v[featureName + "Providers"] = vector2Json(providers);
-  }
+  v["feature_providers"] = vector2Json(featureProviders);
   for (const SpecialImageHandler& sih : imageHandlers)
   {
     v[sih.name] = sih.display;
@@ -292,13 +270,7 @@ void Robocup::fromJson(const Json::Value& v, const std::string& dir_name)
   rhoban_utils::tryRead(v, "logBallExtraTime", &logBallExtraTime);
   rhoban_utils::tryRead(v, "writeBallStatus", &writeBallStatus);
   rhoban_utils::tryRead(v, "ignoreOutOfFieldBalls", &ignoreOutOfFieldBalls);
-  for (auto& entry : featureProviders)
-  {
-    const std::string& featureName = entry.first;
-
-    std::string nodeName = featureName + "Providers";
-    rhoban_utils::tryReadVector<std::string>(v, nodeName, &entry.second);
-  }
+  rhoban_utils::tryReadVector<std::string>(v, "featureProviders", &featureProviders);
   for (SpecialImageHandler& sih : imageHandlers)
   {
     rhoban_utils::tryRead(v, sih.name, &sih.display);
@@ -427,7 +399,11 @@ void Robocup::initRhIO()
 
 void Robocup::initObservationTypes()
 {
-  observationTypes = { "ball", "post", "team_mate", "opponent", "t", "corner", "tag", "clipping", "compass" };
+  observationTypes = { "ball", "robot", "tag"};
+  for (Field::POIType type : Field::getPOITypeValues())
+  {
+    observationTypes.push_back(Field::poiType2String(type));
+  }
 }
 
 void Robocup::finish()
@@ -646,251 +622,110 @@ std::string Robocup::getCameraStatus() const
 }
 
 void Robocup::readPipeline()
-{
-  std::vector<std::string> arenaProviders = featureProviders["arena"];
-  std::vector<std::string> goalProviders = featureProviders["goal"];
-  std::vector<std::string> ballProviders = featureProviders["ball"];
-  std::vector<std::string> tagProviders = featureProviders["tags"];
-  std::vector<std::string> fieldBorderProviders = featureProviders["fieldBorder"];
-  std::vector<std::string> compassProviders = featureProviders["compass"];
-
-  // Goals:
-  goalsMutex.lock();
-  for (const std::string& provider_name : goalProviders)
+{  
+  featuresMutex.lock();
+  // Ball and robots are cleared after every step (used internally)
+  detectedBalls->clear();
+  detectedRobots->clear();
+  for (const auto& provider_name : featureProviders)
   {
     try
     {
-      const Filters::GoalProvider& provider = dynamic_cast<const Filters::GoalProvider&>(pipeline.get(provider_name));
-      std::vector<double> providerGoalsX = provider.getGoalsX();
-      std::vector<double> providerGoalsY = provider.getGoalsY();
-      // Converting the goal from image basis to "origin" basis
-      // and adding it to detected goals
-      for (size_t id = 0; id < providerGoalsX.size(); id++)
+      const Filters::FeaturesProvider& provider =
+          dynamic_cast<const Filters::FeaturesProvider&>(pipeline.get(provider_name));
+      // Balls import
+      std::vector<cv::Point2f> balls_in_img = provider.getBalls();
+      for (const cv::Point2f& ball_in_img : balls_in_img)
       {
-        double goal_x = providerGoalsX[id];
-        double goal_y = providerGoalsY[id];
-        cv::Point2f goal_pos_world = cs->worldPosFromImg(goal_x, goal_y);
-        detectedGoals.push_back(goal_pos_world);
+        cv::Point2f world_pos = cs->worldPosFromImg(ball_in_img.x, ball_in_img.y);
+        detectedBalls->push_back(cv::Point3f(world_pos.x, world_pos.y, Constants::field.ball_radius));
+      }
+      // POI update
+      std::map<Field::POIType, std::vector<cv::Point2f>> pois_in_img = provider.getPOIs();
+      for (const auto& entry : pois_in_img)
+      {
+        Field::POIType poi_type = entry.first;
+        for (const cv::Point2f& feature_pos_in_img : entry.second)
+        {
+          cv::Point2f world_pos = cs->worldPosFromImg(feature_pos_in_img.x, feature_pos_in_img.y);
+          detectedFeatures->operator[](poi_type).push_back(cv::Point3f(world_pos.x, world_pos.y, 0));
+        }
+      }
+      // Robot import
+      std::vector<cv::Point2f> robots_in_img = provider.getRobots();//TODO: add robot info (color)
+      for (const cv::Point2f& robot_in_img : robots_in_img)
+      {
+        cv::Point2f world_pos = cs->worldPosFromImg(robot_in_img.x, robot_in_img.y);
+        detectedRobots->push_back(cv::Point3f(world_pos.x, world_pos.y, Constants::field.ball_radius));
       }
     }
     catch (const std::bad_cast& e)
     {
-      std::cerr << "Failed to import goal positions, check pipeline. Exception = " << e.what() << std::endl;
+      out.error("%s: Failed to import features, check pipeline. Exception: %s", DEBUG_INFO.c_str(), e.what());
     }
     catch (const std::runtime_error& exc)
     {
-      std::cerr << "Robocup::readPipeline: goalProviders: runtime_error: " << exc.what() << std::endl;
+      out.error("%s: Failed to import features, runtime_error. Exception: %s", DEBUG_INFO.c_str(), exc.what());
     }
   }
-  goalsMutex.unlock();
+  featuresMutex.unlock();  
 
-  // Ball
-  for (const std::string& providerName : ballProviders)
-  {
-    try
-    {
-      // Balls from BallProviders
-      Vision::Filter& ballFilter = pipeline.get(providerName);
-      const BallProvider& provider = dynamic_cast<const BallProvider&>(ballFilter);
-      ballsX = provider.getBallsX();
-      ballsY = provider.getBallsY();
-      ballsRadius = provider.getBallsRadius();
-    }
-    catch (const std::bad_cast& e)
-    {
-      std::cerr << "Failed to import ball positions, check pipeline. Exception = " << e.what() << std::endl;
-    }
-  }
-
-  // Robot detection
-  if (pipeline.isFilterPresent("obstacleByDNN"))
-  {
-    try
-    {
-      Vision::Filter& robotDetector_f = pipeline.get("obstacleByDNN");
-      const Filters::ObstacleProvider& robotDetector = dynamic_cast<const Filters::ObstacleProvider&>(robotDetector_f);
-
-      const std::vector<Eigen::Vector2d>& frame_obstacles = robotDetector.getObstacles();
-
-      if (robotFilter)
-      {
-        std::vector<Eigen::Vector3d> positions;
-        for (const Eigen::Vector2d& obs : frame_obstacles)
-        {
-          auto tmp = cs->worldPosFromImg(obs.x(), obs.y());
-          Eigen::Vector3d in_world(tmp.x, tmp.y, 0);
-          positions.push_back(in_world);
-        }
-        robotFilter->newFrame(positions);
-
-        LocalisationService* loc = _scheduler->getServices()->localisation;
-        std::vector<Eigen::Vector3d> filteredPositions;
-        for (auto& candidate : robotFilter->getCandidates())
-        {
-          // XXX: Threshold to Rhioize
-          if (candidate.score > 0.45)
-          {
-            filteredPositions.push_back(candidate.object);
-          }
-        }
-        loc->setOpponentsWorld(filteredPositions);
-      }
-
-      detectedRobots.clear();
-      // Going from pixels to world referential
-      for (const Eigen::Vector2d& obs : frame_obstacles)
-      {
-        detectedRobots.push_back(cs->worldPosFromImg(obs.x(), obs.y()));
-      }
-    }
-    catch (const std::bad_cast& e)
-    {
-      std::cerr << "Failed to import robot positions, check pipeline. Exception = " << e.what() << std::endl;
-    }
-    catch (const std::runtime_error& exc)
-    {
-      std::cerr << "Robocup::readPipeline: robot detection: runtime_error: " << exc.what() << std::endl;
-    }
-  }
-
-  // Tags
-  for (const std::string& tagProviderName : tagProviders)
-  {
-    Vision::Filter& tagFilter = pipeline.get(tagProviderName);
-    cv::Size size = pipeline.get(tagProviderName).getImg()->size();
-    tagsMutex.lock();
-    detectedTimestamp = pipeline.getTimestamp().getTimeMS() / 1000.0;
-    try
-    {
-      const TagsDetector& tagProvider = dynamic_cast<const TagsDetector&>(tagFilter);
-      const std::vector<TagsDetector::Marker>& new_tags = tagProvider.getDetectedMarkers();
-      for (const TagsDetector::Marker& marker : new_tags)
-      {
-        Eigen::Vector3d pos_camera;
-        cv::cv2eigen(marker.tvec, pos_camera);
-        Eigen::Vector3d marker_pos_in_world = cs->getWorldPosFromCamera(pos_camera);
-
-        // Adding Marker to detectedTagsb
-        detectedTagsIndices.push_back(marker.id);
-        detectedTagsPositions.push_back(marker_pos_in_world);
-
-        // Calculating the center of the tags on the image (x, y)
-        // TODO, if the barycenter is not good enough, do better (crossing the
-        // diags?)
-        Eigen::Vector2d avg_in_img(0, 0);
-        for (unsigned int i = 0; i < marker.corners.size(); i++)
-        {
-          avg_in_img += Eigen::Vector2d(marker.corners[i].x, marker.corners[i].y);
-        }
-        avg_in_img /= 4.0;
-        // Rescaling to cameraModel image
-        avg_in_img(0) *= cs->getCameraModel().getImgWidth() / size.width;
-        avg_in_img(1) *= cs->getCameraModel().getImgHeight() / size.height;
-        // Undistort position
-        cv::Point2f avg_in_corrected;
-        avg_in_corrected = cs->getCameraModel().toCorrectedImg(eigen2CV(avg_in_img));
-        // Using a pair instead than a cv::Point so the structure is usable even
-        // without opencv (will be read by the low level)
-        std::pair<float, float> pair_in_img(avg_in_img(0), avg_in_img(1));
-        std::pair<float, float> pair_undistorded(avg_in_corrected.x, avg_in_corrected.y);
-        detectedTagsCenters.push_back(pair_in_img);
-        detectedTagsCentersUndistort.push_back(pair_undistorded);
-      }
-    }
-    catch (const std::bad_cast& exc)
-    {
-      tagsMutex.unlock();
-      throw std::runtime_error("Invalid type for filter 'TagsDetector'");
-    }
-    catch (...)
-    {
-      tagsMutex.unlock();
-      throw;
-    }
-    tagsMutex.unlock();
-  }
-
-  // Clipping and line detection
-  // Ajout des lignes du clipping
-  clippingMutex.lock();
-  /*
-  for (const std::string & name : fieldBorderProviders) {
-    Vision::Filter & fieldBorder_f = pipeline.get(name);
-    try {
-      const Filters::FieldBorder & fieldBorder =
-        dynamic_cast<const Filters::FieldBorder &>(fieldBorder_f);
-      Filters::FieldBorderData data = fieldBorder.loc_data;
-      clipping_data.push_back(data);
-    } catch (const std::bad_cast & e) {
-      out.log("Failed to cast filter '%s' in FieldBorder", name.c_str());
-    }
-  }
-  */
-  // TEMP TEMP
-
-  if (pipeline.isFilterPresent("fieldBorder"))
-  {
-    Vision::Filter& fieldBorder_f = pipeline.get("fieldBorder");
-    try
-    {
-      const Filters::FieldBorder& fieldBorder = dynamic_cast<const Filters::FieldBorder&>(fieldBorder_f);
-      Filters::FieldBorderData data = fieldBorder.loc_data;
-      clipping_data.push_back(data);
-    }
-    catch (const std::bad_cast& e)
-    {
-      // out.log("Failed to cast filter '%s' in FieldBorder", name.c_str());
-      out.log("Failed to cast filter in FieldBorder");
-    }
-  }
-  // /TEMP /TEMP
-  clippingMutex.unlock();
-
-  // Disabling visualCompass temporarily to remove dependency to non free features
-  //  // VisualCompass
-  //  compassMutex.lock();
-  //  if (compassProviders.size() > 1) {
-  //    //TODO: fill vector properly in order to support multiple compassProviders
-  //    throw std::logic_error("Robocup: Only 1 compassProvider is supported now");
-  //  }
-  //  for (const std::string & name : compassProviders) {
-  //    Vision::Filter & compassFilter = pipeline.get(name);
-  //    try {
-  //      const Vision::Filters::VisualCompass & CompassProvider =
-  //        dynamic_cast<const Vision::Filters::VisualCompass &>(compassFilter);
-  //      tmporientations=CompassProvider.getCompasses();
-  //      tmpdispersions=CompassProvider.getDispersions();
-  //      radarOrientations.clear();
-  //      // orientations.reserve(orientations.size()+tmporientations.size());
-  //      // orientations.insert(orientations.end(),tmporientations.begin(),tmporientations.end());
-  //
-  //      detectedDispersions.reserve(detectedDispersions.size()+tmpdispersions.size());
-  //      detectedDispersions.insert(detectedDispersions.end(),tmpdispersions.begin(),tmpdispersions.end());
-  //
-  //
-  //      for (double angle : tmporientations) {
-  //        Angle yaw=cs->getYaw(); //yaw of the camera
-  //        Angle trunkYaw=cs->getTrunkYawInWorld(); //yaw of the trunk in the world
-  //        double opGoalCapOffset=0.0; //TODO
-  //        //angle from the visualcompass is in the anti-normal sign
-  //        //TODO
-  //        double dirGoalInCamera=rad2deg(angle)-opGoalCapOffset;
-  //        double dirGoalInTrunk=dirGoalInCamera+yaw.getSignedValue();
-  //        double dirGoalInWorld=dirGoalInTrunk+trunkYaw.getSignedValue();// Validated until here
-  //
-  //        // Compass value for the trunk in world basis
-  //        detectedOrientations.push_back(dirGoalInWorld);
-  //        radarOrientations.push_back(dirGoalInWorld);
-  //      }
-  //
-  //    } catch (const std::bad_cast &e) {
-  //
-  //      std::cerr
-  //        << "Failed to import visual compass stuff, check pipeline. Exception = "
-  //        << e.what() << std::endl;
-  //    }
-  //  }
-  //  compassMutex.unlock();
+  // Tags (temporarily disabled, to reactivate, require to add a 'tagProvider' similar to featureProviders
+//  for (const std::string& tagProviderName : tagProviders)
+//  {
+//    Vision::Filter& tagFilter = pipeline.get(tagProviderName);
+//    cv::Size size = pipeline.get(tagProviderName).getImg()->size();
+//    tagsMutex.lock();
+//    detectedTimestamp = pipeline.getTimestamp().getTimeMS() / 1000.0;
+//    try
+//    {
+//      const TagsDetector& tagProvider = dynamic_cast<const TagsDetector&>(tagFilter);
+//      const std::vector<TagsDetector::Marker>& new_tags = tagProvider.getDetectedMarkers();
+//      for (const TagsDetector::Marker& marker : new_tags)
+//      {
+//        Eigen::Vector3d pos_camera;
+//        cv::cv2eigen(marker.tvec, pos_camera);
+//        Eigen::Vector3d marker_pos_in_world = cs->getWorldPosFromCamera(pos_camera);
+//
+//        // Adding Marker to detectedTagsb
+//        detectedTagsIndices.push_back(marker.id);
+//        detectedTagsPositions.push_back(marker_pos_in_world);
+//
+//        // Calculating the center of the tags on the image (x, y)
+//        // TODO, if the barycenter is not good enough, do better (crossing the
+//        // diags?)
+//        Eigen::Vector2d avg_in_img(0, 0);
+//        for (unsigned int i = 0; i < marker.corners.size(); i++)
+//        {
+//          avg_in_img += Eigen::Vector2d(marker.corners[i].x, marker.corners[i].y);
+//        }
+//        avg_in_img /= 4.0;
+//        // Rescaling to cameraModel image
+//        avg_in_img(0) *= cs->getCameraModel().getImgWidth() / size.width;
+//        avg_in_img(1) *= cs->getCameraModel().getImgHeight() / size.height;
+//        // Undistort position
+//        cv::Point2f avg_in_corrected;
+//        avg_in_corrected = cs->getCameraModel().toCorrectedImg(eigen2CV(avg_in_img));
+//        // Using a pair instead than a cv::Point so the structure is usable even
+//        // without opencv (will be read by the low level)
+//        std::pair<float, float> pair_in_img(avg_in_img(0), avg_in_img(1));
+//        std::pair<float, float> pair_undistorded(avg_in_corrected.x, avg_in_corrected.y);
+//        detectedTagsCenters.push_back(pair_in_img);
+//        detectedTagsCentersUndistort.push_back(pair_undistorded);
+//      }
+//    }
+//    catch (const std::bad_cast& exc)
+//    {
+//      tagsMutex.unlock();
+//      throw std::runtime_error("Invalid type for filter 'TagsDetector'");
+//    }
+//    catch (...)
+//    {
+//      tagsMutex.unlock();
+//      throw;
+//    }
+//    tagsMutex.unlock();
+//  }
 }
 
 void Robocup::getUpdatedCameraStateFromPipeline()
@@ -1037,14 +872,13 @@ void Robocup::loggingStep()
 
 void Robocup::updateBallInformations()
 {
-  // Getting candidates in ball by ROI
   std::vector<Eigen::Vector3d> positions;
-  for (size_t k = 0; k < ballsX.size(); k++)
+  // Getting candidates in ball by ROI
+  for (const cv::Point3f& ball_pos_in_world : *detectedBalls)
   {
     try
     {
-      cv::Point2f ballPix(ballsX[k], ballsY[k]);
-      Eigen::Vector3d ballInWorld = cs->ballInWorldFromPixel(ballPix);
+      Eigen::Vector3d ballInWorld = cv2Eigen(ball_pos_in_world);
       if (ignoreOutOfFieldBalls && cs->has_camera_field_transform)
       {
         Eigen::Vector3d ballInField = cs->field_from_camera * cs->worldToCamera * ballInWorld;
@@ -1061,7 +895,8 @@ void Robocup::updateBallInformations()
     }
     catch (const std::runtime_error& exc)
     {
-      out.warning("Ignoring a candidate at (%f,%f) because of '%s'", ballsX[k], ballsY[k], exc.what());
+      out.warning("Ignoring a candidate at (%f,%f) because of '%s'", ball_pos_in_world.x, ball_pos_in_world.y,
+                  exc.what());
     }
   }
   // Positions are transmitted in the world referential
@@ -1101,22 +936,12 @@ void Robocup::updateBallInformations()
   }
 }
 
-std::vector<cv::Point2f> Robocup::stealGoals()
+std::unique_ptr<Field::POICollection> Robocup::stealFeatures()
 {
-  goalsMutex.lock();
-  std::vector<cv::Point2f> goalsCopy = detectedGoals;
-  detectedGoals.clear();
-  goalsMutex.unlock();
-  return goalsCopy;
-}
-
-std::vector<Filters::FieldBorderData> Robocup::stealClipping()
-{
-  clippingMutex.lock();
-  std::vector<Filters::FieldBorderData> clippingCopy = clipping_data;
-  clipping_data.clear();
-  clippingMutex.unlock();
-  return clippingCopy;
+  std::lock_guard<std::mutex> lock(featuresMutex);
+  std::unique_ptr<Field::POICollection> tmp = std::move(detectedFeatures);
+  detectedFeatures.reset(new Field::POICollection());
+  return std::move(tmp);
 }
 
 void Robocup::stealTags(std::vector<int>& indices, std::vector<Eigen::Vector3d>& positions,
@@ -1134,16 +959,6 @@ void Robocup::stealTags(std::vector<int>& indices, std::vector<Eigen::Vector3d>&
   detectedTagsCenters.clear();
   detectedTagsCentersUndistort.clear();
   tagsMutex.unlock();
-}
-
-void Robocup::stealCompasses(std::vector<double>& orientations, std::vector<double>& dispersions)
-{
-  compassMutex.lock();
-  orientations = detectedOrientations;
-  dispersions = detectedDispersions;
-  detectedOrientations.clear();
-  detectedDispersions.clear();
-  compassMutex.unlock();
 }
 
 cv::Mat Robocup::getTaggedImg()
@@ -1258,12 +1073,9 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
   }
 
   // Tagging balls seen on current image
-  for (unsigned int ballIndex = 0; ballIndex < ballsRadius.size(); ballIndex++)
+  for (const cv::Point3f& ballPosInWorld : *detectedBalls)
   {
-    if (ballsRadius[ballIndex] <= 0)
-      continue;
-    cv::Point center(ballsX[ballIndex], ballsY[ballIndex]);
-    cv::circle(img, center, ballsRadius[ballIndex], cv::Scalar(100, 0, 100), 2);
+    cv::Point center = cs->imgXYFromWorldPosition(cv2Eigen(ballPosInWorld));
     double ballRadius = cs->computeBallRadiusFromPixel(center);
     if (ballRadius > 0)
     {
@@ -1347,31 +1159,24 @@ cv::Mat Robocup::getRadarImg(int width, int height)
   std::vector<int> delete_me;
   // scale_factor -> conversion [m] -> [px]
   float scale_factor = width / (2 * Constants::field.field_length);
-  int ball_radius = 5;  // px
   cv::Scalar ball_color = cv::Scalar(0, 0, 200);
-  int goal_size = 8;  // px
-  cv::Scalar goal_color = cv::Scalar(200, 0, 0);
-  // int robot_size = 20;
-  // cv::Scalar robot_color = cv::Scalar(255, 0, 255);
   float discount = 0.05;
-  float merge_dist = 0.0;  // in meters. Disabled by default. TODO make this an
-                           // angular condition instead
 
-  // Drawing satic distance marquers each meter (light circles are 0.5 meters)
+  // Drawing static distance marquers each meter (light circles are 0.5 meters)
   for (int i = 1; i < (1 + 2 * Constants::field.field_length); i++)
   {
     cv::circle(img, cv::Point2i(width / 2, height / 2), (i / 2.0) * scale_factor, cv::Scalar(0, 150, 0), 2 - (i % 2));
   }
   // Drawing vision cone
-  rhoban_utils::Angle yaw = -cs->getYaw();
+  rhoban_utils::Angle yaw = cs->getYaw();
   rhoban_utils::Angle half_aperture = cs->getCameraModel().getFOVY();
-  cv::Point2i p1(width / 2 + height * cos(yaw + half_aperture), height / 2 + height * sin(yaw + half_aperture));
-  cv::Point2i p2(width / 2 + height * cos(yaw - half_aperture), height / 2 + height * sin(yaw - half_aperture));
+  cv::Point2i p1(width / 2 - height * sin(yaw + half_aperture), height / 2 - height * cos(yaw + half_aperture));
+  cv::Point2i p2(width / 2 - height * sin(yaw - half_aperture), height / 2 - height * cos(yaw - half_aperture));
 
   cv::line(img, cv::Point2i(width / 2, height / 2), p1, cv::Scalar(0, 100, 100), 2);
   cv::line(img, cv::Point2i(width / 2, height / 2), p2, cv::Scalar(0, 100, 100), 2);
   // 0° orientation (front)
-  cv::line(img, cv::Point2i(width / 2, height / 2), cv::Point2f(width, height / 2), cv::Scalar(255, 0, 0), 1);
+  cv::line(img, cv::Point2i(width / 2, height / 2), cv::Point2f(width / 2, 0), cv::Scalar(255, 0, 0), 1);
 
   for (std::string obsType : observationTypes)
   {
@@ -1401,31 +1206,9 @@ cv::Mat Robocup::getRadarImg(int width, int height)
     // Reading the fresh observations (observation type dependent)
     if (obsType == "ball")
     {
-      for (unsigned int ballIndex = 0; ballIndex < ballsX.size(); ballIndex++)
+      for (const cv::Point3f& ballPosInWorld : *detectedBalls)
       {
-        // Going from and image position to a position on the field, in the
-        // origin (of world) frame
-        try
-        {
-          auto point = cs->worldPosFromImg(ballsX[ballIndex], ballsY[ballIndex]);
-          // std::cout << "DEBUG Ball seen at (origin frame) " << point << std::endl;
-          freshObservations.push_back(point);
-        }
-        catch (const std::runtime_error& exc)
-        {
-          // Ignore the candidate
-        }
-      }
-    }
-    else if (obsType == "post")
-    {
-      // Reading posts
-      cv::Point2f goal;
-      for (unsigned int index = 0; index < detectedGoals.size(); index++)
-      {
-        goal = detectedGoals[index];
-        // std::cout << "Goal seen at (origin frame) " << goal << std::endl;
-        freshObservations.push_back(goal);
+        freshObservations.push_back(cv::Point2f(ballPosInWorld.x, ballPosInWorld.y));
       }
     }
     else if (obsType == "tag")
@@ -1450,228 +1233,68 @@ cv::Mat Robocup::getRadarImg(int width, int height)
         }
       }
     }
-    else if (obsType == "compass")
+    else if (obsType == "robot")
     {
-      cv::Point2f opponentDir;
-      for (unsigned int index = 0; index < radarOrientations.size(); index++)
+      for (const cv::Point3f& robotPosInWorld : *detectedRobots)
       {
-        // we got a direction => transforming into a point
-        // x: angle in degree
-        // y: quality in [0,1]
-        opponentDir.x = radarOrientations[index];
-        opponentDir.y = tmpdispersions[index];
-        freshObservations.push_back(opponentDir);
-      }
-    }
-    else if (obsType == "clipping")
-    {
-      // From position in world to robot relative position
-      for (unsigned int index = 0; index < clipping_data.size(); index++)
-      {
-        // ** CAUTION : HACK ** ... une observation peut être
-        // - plusieurs lignes
-        // - un coin ou pas
-        // le premier élément est une entete:
-        // x contient le nombre de ligne et y s'il y a un coin (1) ou pas.
-        // Ensuite, chaque ligne est représenté par 2 élements et
-        // le coin optionel 1 élément.
-        if (clipping_data[index].is_obs_valid())
-        {
-          int has_coin = clipping_data[index].hasCorner ? 1 : 0;
-          int has_segment = clipping_data[index].hasSegment ? 1 : 0;
-          std::vector<std::pair<cv::Point2f, cv::Point2f>> lines;
-          if (has_coin)
-          {
-            lines = clipping_data[index].getLinesInWorldFrame();
-          }
-          if (has_segment)
-          {
-            lines.push_back(clipping_data[index].getSegmentInWorld());
-          }
-          int line_nb = lines.size();
-          // int line_nb = clipping_data[index].getLinesInWorldFrame().size();
-          freshObservations.push_back(cv::Point2f(line_nb, has_coin));
-          for (auto L : lines)
-          {
-            freshObservations.push_back(L.first);
-            freshObservations.push_back(L.second);
-            // printf("Find line (%f,%f)->(%f,%f)\n",
-            //       L.first.x, L.first.y, L.second.x, L.second.y);
-          }
-          if (clipping_data[index].hasCorner)
-          {
-            freshObservations.push_back(clipping_data[index].getCornerInWorldFrame());
-            // printf("Find corner %f %f\n", clipping_data[index].getCornerInWorldFrame().x,
-            // clipping_data[index].getCornerInWorldFrame().y);
-          }
-        }
-      }
-    }
-    else if (obsType == "opponent")
-    {
-      // Reading posts
-      cv::Point2f robot;
-      for (unsigned int index = 0; index < detectedRobots.size(); index++)
-      {
-        robot = detectedRobots[index];
-        std::cout << "New robot seen at (origin frame) " << robot << std::endl;
-        freshObservations.push_back(robot);
+        freshObservations.push_back(cv::Point2f(robotPosInWorld.x, robotPosInWorld.y));
       }
     }
     else
     {
-      // Unhandled observation type
-      continue;
-    }
-
-    // Adding the observations to the old ones if need be, and updating the
-    // intensities
-    for (unsigned int j = 0; j < freshObservations.size(); j++)
-    {
-      bool found = false;
-      cv::Point2f new_obs = freshObservations[j];
-      if (obsType != "clipping")
-      {  // Pas d'identification pour le clipping
-        for (unsigned int i = 0; i < storedObservations.size(); i++)
-        {
-          auto scored_obs = storedObservations[i];
-          float dist = sqrt((new_obs.x - scored_obs.first.x) * (new_obs.x - scored_obs.first.x) +
-                            (new_obs.y - scored_obs.first.y) * (new_obs.y - scored_obs.first.y));
-          if (dist < merge_dist)
-          {
-            // We're assuming it's the same observation
-            storedObservations[i].second = 1.0;
-            found = true;
-            // Can't be merged to more than one old observation (even if the dist
-            // condition could be valid for more than 1 old observation)
-            break;
-          }
-        }
-      }
-      if (!found)
+      Field::POIType poiType = Field::string2POIType(obsType);
+      for (const cv::Point3f& featurePosInWorld : detectedFeatures->operator[](poiType))
       {
-        // Adding the observation
-        storedObservations.push_back(std::pair<cv::Point2f, float>(new_obs, 1.0));
+        freshObservations.push_back(cv::Point2f(featurePosInWorld.x, featurePosInWorld.y));
       }
     }
 
-    // for (unsigned int i=0; i < storedObservations.size(); i++) {
-    //   std::cout << obsType <<" at " << storedObservations[i].first << " score "
-    //             << storedObservations[i].second << std::endl;
-    // }
+    // Adding the observations to the old ones if need be, and updating the intensities
+    for (const cv::Point2f& new_obs : freshObservations)
+    {
+      storedObservations.push_back(std::pair<cv::Point2f, float>(new_obs, 1.0));
+    }
+
     // Drawing
-    if (obsType == "opponent")
+    for (unsigned int i = 0; i < storedObservations.size(); i++)
     {
-      for (unsigned int i = 0; i < storedObservations.size(); i++)
+      // Going from meters to pixels, and from the origin frame to the robot one
+      // TODO: question, why do we use the max here???
+      cv::Point2f obs_in_self = cs->getPosInSelf(storedObservations[i].first);
+      cv::Point2f obs_in_img(width/2 - obs_in_self.y * scale_factor, height / 2 - obs_in_self.x * scale_factor);
+      double default_radius = 3;// [px]
+      double marker_size = 8;
+      double marker_thickness = 2;
+      if (obsType == "robot")
       {
-        // Going from meters to pixels, and from the origin frame to the robot
-        // one
-        cv::Point2f robot_in_self = cs->getPosInSelf(storedObservations[i].first);
-        robot_in_self.x = max(0, (int)(robot_in_self.x * scale_factor + width / 2));
-        robot_in_self.y = max(0, (int)(-robot_in_self.y * scale_factor + height / 2));
-
-        cv::circle(img, robot_in_self, 15, cv::Scalar(200, 0, 200), -1);
+        cv::circle(img, obs_in_img, 15, cv::Scalar(200, 0, 200), -1);
       }
-    }
-    else if (obsType == "ball")
-    {
-      for (unsigned int i = 0; i < storedObservations.size(); i++)
+      else if (obsType == "ball")
       {
-        // Going from meters to pixels, and from the origin frame to the robot
-        // one
-        cv::Point2f ball_in_self = cs->getPosInSelf(storedObservations[i].first);
-        ball_in_self.x = max(0, (int)(ball_in_self.x * scale_factor + width / 2));
-        ball_in_self.y = max(0, (int)(-ball_in_self.y * scale_factor + height / 2));
-
-        cv::circle(img, ball_in_self, ball_radius, ball_color, -1);
+        cv::circle(img, obs_in_img, default_radius, ball_color, -1);
       }
-    }
-    else if (obsType == "post")
-    {
-      for (unsigned int i = 0; i < storedObservations.size(); i++)
+      else if (obsType == "tag")
       {
-        // Going from meters to pixels, and from the origin frame to the robot
-        // one
-        cv::Point2f goal_in_self = cs->getPosInSelf(storedObservations[i].first);
-        goal_in_self.x = max(0, (int)(goal_in_self.x * scale_factor + width / 2));
-        goal_in_self.y = max(0, (int)(-goal_in_self.y * scale_factor + height / 2));
-
-        cv::Point2i second_point(goal_in_self.x + goal_size, goal_in_self.y + goal_size / 2);
-        cv::rectangle(img, goal_in_self, second_point, goal_color, -1);
+        cv::circle(img, obs_in_img, 5, cv::Scalar(0, 0, 0), -1);
       }
-    }
-    else if (obsType == "tag")
-    {
-      for (unsigned int i = 0; i < storedObservations.size(); i++)
+      else
       {
-        // Going from meters to pixels, and from the origin frame to the robot
-        // one
-        cv::Point2f tag_in_self = cs->getPosInSelf(storedObservations[i].first);
-        tag_in_self.x = max(0, (int)(tag_in_self.x * scale_factor + width / 2));
-        tag_in_self.y = max(0, (int)(-tag_in_self.y * scale_factor + height / 2));
-
-        cv::circle(img, tag_in_self, 5, cv::Scalar(0, 0, 0), -1);
-      }
-    }
-    else if (obsType == "compass")
-    {
-      for (unsigned int i = 0; i < storedObservations.size(); i++)
-      {
-        cv::Point2f opponent = storedObservations[i].first;
-        cv::Point2f tmp;
-
-        Angle goalDirInWorld(opponent.x);
-
-        // trick store angle and quality
-        Angle trunkYaw = cs->getTrunkYawInWorld();  // yaw of the trunk in the world
-
-        Angle goalDirInSelf = goalDirInWorld - trunkYaw;
-        // opponentGoal uses offset but has inverted sign with robot
-        // orientation
-        Angle oppGoalDirInSelf = -CompassObservation::compassToField(goalDirInSelf);
-
-        double x = cos(oppGoalDirInSelf) * 10.0;
-        double y = sin(oppGoalDirInSelf) * 10.0;
-
-        tmp.x = std::max(0, (int)(x * scale_factor + width / 2));
-        tmp.y = std::max(0, (int)(-y * scale_factor + height / 2));
-
-        cv::Point2i center(width / 2, height / 2);
-        cv::Scalar lineColor(0, 0, 255 * opponent.y);  // quality is in y
-        cv::line(img, center, tmp, lineColor, 1);
-      }
-    }
-    else if (obsType == "clipping")
-    {
-      int idx = 0;
-      while (idx < (int)storedObservations.size())
-      {
-        int start_idx = idx;
-        int line_nb = (int)storedObservations[idx].first.x;
-        int has_corner = (int)storedObservations[idx].first.y;
-        idx++;
-        for (int k = 0; k < line_nb; k++)
+        Field::POIType poiType = Field::string2POIType(obsType);
+        switch(poiType)
         {
-          if (idx >= (int)storedObservations.size() - 1)
-            break;  // au cas où ...
-          cv::Point2f A = cs->getPosInSelf(storedObservations[idx].first);
-          cv::Point2f B = cs->getPosInSelf(storedObservations[idx + 1].first);
-          A.x = max(0, (int)(A.x * scale_factor + width / 2));
-          A.y = max(0, (int)(-A.y * scale_factor + height / 2));
-          B.x = max(0, (int)(B.x * scale_factor + width / 2));
-          B.y = max(0, (int)(-B.y * scale_factor + height / 2));
-          cv::line(img, A, B, cv::Scalar::all(255), 2);
-          idx += 2;
-        }
-        if (idx >= (int)storedObservations.size())
-          break;  // au cas où ...
-        if (has_corner && idx == start_idx + line_nb * 2 + 1)
-        {
-          cv::Point2f C = cs->getPosInSelf(storedObservations[idx].first);
-          C.x = max(0, (int)(C.x * scale_factor + width / 2));
-          C.y = max(0, (int)(-C.y * scale_factor + height / 2));
-          cv::circle(img, C, 5, cv::Scalar(255, 255, 255), CV_FILLED);
-          idx++;
+          case Field::POIType::PostBase:
+            cv::circle(img, obs_in_img, default_radius, cv::Scalar(255, 255, 255), -1);
+            break;
+          case Field::POIType::X:
+            cv::drawMarker(img, obs_in_img, cv::Scalar(255, 255, 255), cv::MarkerTypes::MARKER_TILTED_CROSS,
+                           marker_size, marker_thickness);
+            break;
+          case Field::POIType::T:
+            cv::drawMarker(img, obs_in_img, cv::Scalar(255, 255, 255), cv::MarkerTypes::MARKER_TRIANGLE_UP,
+                           marker_size, marker_thickness);
+            break;
+          default:
+            out.warning("Draw of POI of type '%s' is not implemented", obsType.c_str());
         }
       }
     }

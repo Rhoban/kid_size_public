@@ -136,10 +136,6 @@ std::string Placer::getName()
 
 void Placer::onStart()
 {
-  auto teamPlay = getServices()->teamPlay;
-  auto& info = teamPlay->selfInfo();
-  info.placing = true;
-
   targetX = 0;
   targetY = 0;
   targetAzimuth = 0;
@@ -152,10 +148,6 @@ void Placer::onStart()
 
 void Placer::onStop()
 {
-  auto teamPlay = getServices()->teamPlay;
-  auto& info = teamPlay->selfInfo();
-  info.placing = false;
-
   setLateralMode(false);
 
   walk->control(false);
@@ -398,14 +390,15 @@ void Placer::step(float elapsed)
     // Using mm to control walk
     walk->control(true, stepper.output, lateraler.output, turner.output);
   }
-
-  // Sharing the target and temporary target
-  auto teamPlay = getServices()->teamPlay;
-  auto& info = teamPlay->selfInfo();
-  info.targetX = targetX;
-  info.targetY = targetY;
-  info.localTargetX = tmpX;
-  info.localTargetY = tmpY;
-
   bind->push();
+}
+
+Eigen::Vector2d Placer::getLocalTarget() const
+{
+  return Eigen::Vector2d(tmpX, tmpY);
+}
+
+Eigen::Vector2d Placer::getTarget() const
+{
+  return Eigen::Vector2d(targetX, targetY);
 }

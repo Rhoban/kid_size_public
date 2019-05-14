@@ -499,6 +499,11 @@ Leph::HumanoidFixedModel::SupportFoot ModelService::getSupportFoot() const
   return _readModel.getSupportFoot();
 }
 
+const std::string& ModelService::getLowLevelState() const
+{
+  return _lowlevelState;
+}
+
 Eigen::Vector3d ModelService::odometryDiff(const Eigen::Vector3d& state1, const Eigen::Vector3d& state2) const
 {
   // Vector in world
