@@ -10,19 +10,19 @@ namespace rhoban
 {
 void WalkEngine::Foot::clearSplines()
 {
-  xSpline = Leph::CubicSpline();
-  ySpline = Leph::CubicSpline();
-  zSpline = Leph::CubicSpline();
-  yawSpline = Leph::CubicSpline();
+  xSpline = rhoban_utils::PolySpline();
+  ySpline = rhoban_utils::PolySpline();
+  zSpline = rhoban_utils::PolySpline();
+  yawSpline = rhoban_utils::PolySpline();
 }
 
 WalkEngine::FootPose WalkEngine::Foot::getPosition(double t)
 {
   FootPose pose;
-  pose.x = xSpline.pos(t);
-  pose.y = ySpline.pos(t);
-  pose.z = zSpline.pos(t);
-  pose.yaw = yawSpline.pos(t);
+  pose.x = xSpline.get(t);
+  pose.y = ySpline.get(t);
+  pose.z = zSpline.get(t);
+  pose.yaw = yawSpline.get(t);
 
   return pose;
 }
@@ -123,14 +123,15 @@ void WalkEngine::newStep()
   right.trunkYOffset = -(footDistance + footYOffset + footYOffsetPerStepSizeY * fabs(stepSizeY));
 
   // Defining begining of splines according to previous feet position
-  left.xSpline.addPoint(0, oldLeft.xSpline.pos(previousStepDuration), oldLeft.xSpline.vel(previousStepDuration));
-  left.ySpline.addPoint(0, oldLeft.ySpline.pos(previousStepDuration), oldLeft.ySpline.vel(previousStepDuration));
-  left.yawSpline.addPoint(0, oldLeft.yawSpline.pos(previousStepDuration), oldLeft.yawSpline.vel(previousStepDuration));
+  left.xSpline.addPoint(0, oldLeft.xSpline.get(previousStepDuration), oldLeft.xSpline.getVel(previousStepDuration));
+  left.ySpline.addPoint(0, oldLeft.ySpline.get(previousStepDuration), oldLeft.ySpline.getVel(previousStepDuration));
+  left.yawSpline.addPoint(0, oldLeft.yawSpline.get(previousStepDuration),
+                          oldLeft.yawSpline.getVel(previousStepDuration));
 
-  right.xSpline.addPoint(0, oldRight.xSpline.pos(previousStepDuration), oldRight.xSpline.vel(previousStepDuration));
-  right.ySpline.addPoint(0, oldRight.ySpline.pos(previousStepDuration), oldRight.ySpline.vel(previousStepDuration));
-  right.yawSpline.addPoint(0, oldRight.yawSpline.pos(previousStepDuration),
-                           oldRight.yawSpline.vel(previousStepDuration));
+  right.xSpline.addPoint(0, oldRight.xSpline.get(previousStepDuration), oldRight.xSpline.getVel(previousStepDuration));
+  right.ySpline.addPoint(0, oldRight.ySpline.get(previousStepDuration), oldRight.ySpline.getVel(previousStepDuration));
+  right.yawSpline.addPoint(0, oldRight.yawSpline.get(previousStepDuration),
+                           oldRight.yawSpline.getVel(previousStepDuration));
 
   // Changing support foot
   isLeftSupport = !isLeftSupport;
@@ -195,12 +196,12 @@ void WalkEngine::reset()
   isLeftSupport = false;
 
   stepDuration = 1.0 / (2 * frequency);
-  left.xSpline.addPoint(stepDuration, 0);
-  left.ySpline.addPoint(stepDuration, left.trunkYOffset);
-  left.yawSpline.addPoint(stepDuration, 0);
-  right.xSpline.addPoint(stepDuration, 0);
-  right.ySpline.addPoint(stepDuration, right.trunkYOffset);
-  right.yawSpline.addPoint(stepDuration, 0);
+  left.xSpline.addPoint(stepDuration, 0, 0);
+  left.ySpline.addPoint(stepDuration, left.trunkYOffset, 0);
+  left.yawSpline.addPoint(stepDuration, 0, 0);
+  right.xSpline.addPoint(stepDuration, 0, 0);
+  right.ySpline.addPoint(stepDuration, right.trunkYOffset, 0);
+  right.yawSpline.addPoint(stepDuration, 0, 0);
 
   newStep();
 }
