@@ -68,7 +68,7 @@ void WalkEngine::initByModel(rhoban::HumanoidModel& model)
   reset();
 }
 
-void WalkEngine::assignModel(rhoban::HumanoidModel& model, double timeSinceLastStep)
+std::map<std::string, double> WalkEngine::computeAngles(rhoban::HumanoidModel& model, double timeSinceLastStep)
 {
   if (timeSinceLastStep < 0)
   {
@@ -91,16 +91,17 @@ void WalkEngine::assignModel(rhoban::HumanoidModel& model, double timeSinceLastS
   Eigen::Affine3d trunkPitchRot(Eigen::AngleAxisd(-trunkPitch, Eigen::Vector3d::UnitY()));
 
   // XXX: Yaw in the trunk frame appear to behave in the wrong orientation here
+  std::map<std::string, double> angles;
   bool success = true;
   if (!model.computeLegIK(
-          model.Left,
+          angles, model.Left,
           trunkPitchRot * Eigen::Vector3d(leftPose.x, leftPose.y + swing, trunkHeight + trunkZOffset + leftPose.z),
           Eigen::AngleAxisd(-leftPose.yaw, Eigen::Vector3d::UnitZ()) * trunkPitchRot.linear().inverse()))
   {
     success = false;
   }
   if (!model.computeLegIK(
-          model.Right,
+          angles, model.Right,
           trunkPitchRot * Eigen::Vector3d(rightPose.x, rightPose.y + swing, trunkHeight + trunkZOffset + rightPose.z),
           Eigen::AngleAxisd(-rightPose.yaw, Eigen::Vector3d::UnitZ()) * trunkPitchRot.linear().inverse()))
   {
@@ -110,7 +111,10 @@ void WalkEngine::assignModel(rhoban::HumanoidModel& model, double timeSinceLastS
   if (!success)
   {
     logger.warning("Bad kinematics orders received");
+    return std::map<std::string, double>();
   }
+
+  return angles;
 }
 
 void WalkEngine::newStep()

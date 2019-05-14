@@ -46,7 +46,7 @@ public:
   void newStep();
 
   // Updating feet position
-  void assignModel(rhoban::HumanoidModel& model, double timeSinceLastStep);
+  std::map<std::string, double> computeAngles(rhoban::HumanoidModel& model, double timeSinceLastStep);
 
   // Walk engine left and right feet position
   struct Foot left, right;

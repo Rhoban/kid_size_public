@@ -304,10 +304,11 @@ void Walk::step(float elapsed)
   }
 
   // Assigning to robot
-  engine.assignModel(robotModel->goalModel, timeSinceLastStep);
-
-  // Flushing engine leg orders to robot
-  robotModel->flushLegs(_smoothing);
+  std::map<std::string, double> angles = engine.computeAngles(robotModel->goalModel, timeSinceLastStep);
+  for (auto &entry : angles)
+  {
+    setAngle(entry.first, rad2deg(entry.second));
+  }
 
   // Update arms
   stepArms(elapsed);
@@ -332,6 +333,11 @@ void Walk::stepKick(float elapsed)
 
     if (kickState == KickWaitingWalkToStop && state == WalkNotWalking)
     {
+      // Updating support foot in goal model
+      auto robotModel = getServices()->robotModel;
+      getServices()->robotModel->goalModel.setSupportFoot(
+          kickLeftFoot ? rhoban::HumanoidModel::Right : rhoban::HumanoidModel::Left, true);
+
       // Walk is over, go to warmup state
       kickState = KickWarmup;
       kickT = 0;
