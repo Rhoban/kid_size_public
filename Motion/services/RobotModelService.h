@@ -2,6 +2,7 @@
 
 #include "Service.h"
 #include "robot_model/humanoid_model.h"
+#include "robot_model/humanoid_server.h"
 
 class Move;
 
@@ -18,4 +19,5 @@ public:
   // Models
   rhoban::HumanoidModel goalModel;
   rhoban::HumanoidModel readModel;
+  rhoban::HumanoidServer server;
 };

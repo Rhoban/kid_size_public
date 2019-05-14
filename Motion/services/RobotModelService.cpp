@@ -25,19 +25,20 @@ using namespace rhoban_utils;
  */
 RobotModelService::RobotModelService()
 {
-  goalModel.startServer();
 }
 
 bool RobotModelService::tick(double elapsed)
 {
   RhAL::StandardManager* manager = getScheduler()->getManager();
 
+  // Setting written values to the DOFs of the goal model
   for (const std::string& name : goalModel.getDofNames())
   {
     goalModel.setDof(name, RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).goalPosition().getWrittenValue()));
   }
 
-  goalModel.publishModel(false);
+  // Publishing goal model to ZMQ
+  server.publishModel(goalModel, false);
 
   return true;
 }
