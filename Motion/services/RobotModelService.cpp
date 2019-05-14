@@ -25,6 +25,7 @@ using namespace rhoban_utils;
  */
 RobotModelService::RobotModelService()
 {
+  goalModel.startServer();
 }
 
 bool RobotModelService::tick(double elapsed)
@@ -35,6 +36,8 @@ bool RobotModelService::tick(double elapsed)
   {
     goalModel.setDof(name, RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).goalPosition().getWrittenValue()));
   }
+
+  goalModel.publishModel(false);
 
   return true;
 }

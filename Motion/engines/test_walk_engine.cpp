@@ -15,16 +15,19 @@ int main()
   rhoban::WalkEngine engine;
   engine.initByModel(model);
 
-  engine.stepSizeX = 0.1;
+  engine.stepSizeYaw = 1;
+  engine.trunkPitch = 0.6;
   engine.newStep();
 
-  for (int step = 0; step < 2; step++)
+  double totalT = 0;
+  for (int step = 0; step < 4; step++)
   {
     engine.newStep();
-    for (double t = 0; t < engine.stepDuration; t += 0.01)
+    for (double t = 0; t < engine.stepDuration; t += 0.001)
     {
+      totalT += 0.001;
       rhoban::WalkEngine::FootPose pose = engine.left.getPosition(t);
-      std::cout << t << " " << pose.x << " " << pose.y << " " << pose.z << " " << pose.yaw << std::endl;
+      std::cout << totalT << " " << pose.x << " " << pose.y << " " << pose.z << " " << pose.yaw << std::endl;
     }
   }
 }

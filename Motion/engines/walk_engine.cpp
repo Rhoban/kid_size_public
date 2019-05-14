@@ -92,16 +92,20 @@ void WalkEngine::assignModel(rhoban::HumanoidModel& model, double timeSinceLastS
 
   // XXX: Yaw in the trunk frame appear to behave in the wrong orientation here
   bool success = true;
-  success = success && model.computeLegIK(model.Left,
-                                          trunkPitchRot * Eigen::Vector3d(leftPose.x, leftPose.y + swing,
-                                                                          trunkHeight + trunkZOffset + leftPose.z),
-                                          trunkPitchRot.linear().inverse() *
-                                              Eigen::AngleAxisd(-leftPose.yaw, Eigen::Vector3d::UnitZ()));
-  success = success && model.computeLegIK(model.Right,
-                                          trunkPitchRot * Eigen::Vector3d(rightPose.x, rightPose.y + swing,
-                                                                          trunkHeight + trunkZOffset + rightPose.z),
-                                          trunkPitchRot.linear().inverse() *
-                                              Eigen::AngleAxisd(-rightPose.yaw, Eigen::Vector3d::UnitZ()));
+  if (!model.computeLegIK(
+          model.Left,
+          trunkPitchRot * Eigen::Vector3d(leftPose.x, leftPose.y + swing, trunkHeight + trunkZOffset + leftPose.z),
+          Eigen::AngleAxisd(-leftPose.yaw, Eigen::Vector3d::UnitZ()) * trunkPitchRot.linear().inverse()))
+  {
+    success = false;
+  }
+  if (!model.computeLegIK(
+          model.Right,
+          trunkPitchRot * Eigen::Vector3d(rightPose.x, rightPose.y + swing, trunkHeight + trunkZOffset + rightPose.z),
+          Eigen::AngleAxisd(-rightPose.yaw, Eigen::Vector3d::UnitZ()) * trunkPitchRot.linear().inverse()))
+  {
+    success = false;
+  }
 
   if (!success)
   {

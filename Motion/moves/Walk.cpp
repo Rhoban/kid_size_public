@@ -291,10 +291,12 @@ void Walk::step(float elapsed)
 
         if (engine.isLeftSupport)
         {
+          getServices()->robotModel->goalModel.setSupportFoot(rhoban::HumanoidModel::Left, true);
           getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::LeftSupportFoot);
         }
         else
         {
+          getServices()->robotModel->goalModel.setSupportFoot(rhoban::HumanoidModel::Right, true);
           getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::RightSupportFoot);
         }
       }
