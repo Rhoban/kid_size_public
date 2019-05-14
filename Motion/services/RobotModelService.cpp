@@ -31,14 +31,31 @@ bool RobotModelService::tick(double elapsed)
 {
   RhAL::StandardManager* manager = getScheduler()->getManager();
 
-  // Setting written values to the DOFs of the goal model
   for (const std::string& name : goalModel.getDofNames())
   {
-    goalModel.setDof(name, RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).goalPosition().getWrittenValue()));
+    // Setting written values to the DOFs of the goal model
+    double goalValue = RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).goalPosition().getWrittenValue());
+    goalModel.setDof(name, goalValue);
+
+    // Setting read values to the DOFs of the read model
+    double readValue = RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).position().readValue().value);
+    readModel.setDof(name, Helpers::isFakeMode() ? goalValue : readValue);
+  }
+
+  // Using the
+  readModel.setImu(true, getYaw(), getPitch(), getRoll());
+
+  if (getPressureLeftRatio() > 0.9)
+  {
+    readModel.setSupportFoot(readModel.Left, true);
+  }
+  if (getPressureRightRatio() > 0.9)
+  {
+    readModel.setSupportFoot(readModel.Right, true);
   }
 
   // Publishing goal model to ZMQ
-  server.publishModel(goalModel, false);
+  server.publishModel(readModel, false);
 
   return true;
 }
