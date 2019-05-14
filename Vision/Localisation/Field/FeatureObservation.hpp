@@ -1,21 +1,31 @@
 #pragma once
 
-#include "Localisation/Field/SerializableFieldObservation.hpp"
-#include "CameraState/CameraState.hpp"
+#include <Localisation/Field/SerializableFieldObservation.hpp>
+#include <CameraState/CameraState.hpp>
+
+#include <hl_monitoring/field.h>
 
 namespace Vision
 {
 namespace Localisation
 {
-class GoalObservation : public SerializableFieldObservation
+class FeatureObservation : public SerializableFieldObservation
 {
 public:
+  /**
+   * The type of feature observed
+   */
+  hl_monitoring::Field::POIType poiType;
+
+  /**
+   * Direction of the feature
+   */
   rhoban_geometry::PanTilt panTilt;
 
   /// [m]
   double robotHeight;
 
-  /// Several goal observations can be merged into a single one,
+  /// Several feature observations can be merged into a single one,
   /// In this case, the weight of the observation is increased because
   /// observations are consistent
   double weight;
@@ -41,9 +51,10 @@ public:
   static double weightRatio;
 
 public:
-  GoalObservation();
+  FeatureObservation();
 
-  GoalObservation(const rhoban_geometry::PanTilt& panTiltToGoal, double robotHeight, double weight = 1);
+  FeatureObservation(hl_monitoring::Field::POIType poiType, const rhoban_geometry::PanTilt& panTiltToFeature,
+                     double robotHeight, double weight = 1);
 
   cv::Point3f getSeenDir() const;
 
@@ -53,9 +64,9 @@ public:
 
   /// Merge 'other' observation into current one:
   /// average angles and cumulate weights
-  void merge(const GoalObservation& other);
+  void merge(const FeatureObservation& other);
 
-  static bool isSimilar(const GoalObservation& o1, const GoalObservation& o2);
+  static bool isSimilar(const FeatureObservation& o1, const FeatureObservation& o2);
 
   static void bindWithRhIO();
   static void importFromRhIO();
@@ -67,6 +78,8 @@ public:
   double getMinScore() const override;
 
   double getWeightedScore(double score) const;
+
+  std::string getPOITypeName() const;
 
   virtual std::string toStr() const override;
 };

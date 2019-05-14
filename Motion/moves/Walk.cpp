@@ -464,7 +464,8 @@ void Walk::setRawOrder(const Eigen::Vector3d& params, bool enable)
 
 rhoban_geometry::Point Walk::trunkToFlyingFoot(rhoban_geometry::Point point)
 {
-  if (!isRunning()) {
+  if (!isRunning())
+  {
     return point;
   }
 

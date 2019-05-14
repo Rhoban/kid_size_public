@@ -50,6 +50,7 @@ public:
   bool consistencyEnabled;
 
   // Opponent
+  std::vector<Eigen::Vector3d> getOpponentsSelf();
   std::vector<rhoban_geometry::Point> getOpponentsField();
   double opponentsRadius;
   bool opponentsAreFake;
@@ -140,7 +141,7 @@ public:
   Eigen::Vector3d fieldToWorld(const Eigen::Vector3d& pos_in_field);
 
   void enableFieldFilter(bool enable = true);
-  void isGoalKeeper(bool status = false);
+  void setGoalKeeper(bool status = false);
 
   void setRobocup(Vision::Robocup* robocup);
   void setLocBinding(Vision::LocalisationBinding* locBinding);

@@ -3,5 +3,6 @@ set (SOURCES
   TagsDetector.cpp
   CompassProvider.cpp
   homography_decomp.cpp
+  FeaturesProvider.cpp
 #  VisualCompass.cpp
 )

@@ -6,6 +6,7 @@
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <rhoban_utils/util.h>
 
 using robocup_referee::Constants;
 using hl_monitoring::Field;
@@ -16,13 +17,20 @@ namespace Vision
 {
 namespace Filters
 {
+  
 GroundTruthProvider::GroundTruthProvider() : Filter("GroundTruthProvider"), imgIndex(0), outputPrefix("")
+{
+}
+  
+GroundTruthProvider::~GroundTruthProvider()
 {
 }
 
 void GroundTruthProvider::process()
 {
+  
   img() = getSourceImg();
+  
   std::vector<cv::Rect_<float>> rois = generateROIs();
   updateAnnotations();
   tagImg();
@@ -133,6 +141,11 @@ void GroundTruthProvider::dumpImg(const std::vector<cv::Rect_<float>>& rois)
   // TODO: fill with 0 as in printf
   std::string img_annotation_path = outputPrefix + "img_" + std::to_string(imgIndex) + ".json";
   rhoban_utils::writeJson(getImgAnnotation(rois), img_annotation_path);
+  
+  const cv::Mat& src_img = getSourceImg();
+  std::string imName = outputPrefix + "img_" + std::to_string(imgIndex) + ".png";
+  cv::imwrite(imName.c_str(), src_img);
+  
   int patchIndex = 0;
   for (const cv::Rect_<float>& roi : rois)
   {

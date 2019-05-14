@@ -38,6 +38,7 @@ class GoalKeeper : public STM
   // void bufferedSetState(const std::string&);
     //  void setTeamPlayState(rhoban_team_play::TeamPlayState state);
 
+
   float t;
   //  float targetX, targetY;
   float homeX, homeY;

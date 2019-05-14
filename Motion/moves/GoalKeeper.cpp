@@ -4,11 +4,9 @@
 #include "Placer.h"
 #include "Walk.h"
 #include <services/LocalisationService.h>
-//#include <services/TeamPlayService.h>
 #include <services/StrategyService.h>
 #include <services/DecisionService.h>
 #include <robocup_referee/constants.h>
-//#include <services/TeamPlayService.h>
 #include "Playing.h"
 #include "rhoban_utils/logging/logger.h"
 
@@ -100,14 +98,11 @@ void GoalKeeper::onStart()
   setState(STATE_INIT);
   RhIO::Root.setFloat("/moves/placer/marginX", 0.1);
   RhIO::Root.setFloat("/moves/placer/marginY", 0.1);
- 
-  
 }
 
 void GoalKeeper::onStop()
 {
   setState(STATE_WAIT);
-
 }
 Point GoalKeeper::home()
 {
@@ -366,6 +361,7 @@ bind->push();
       placer->setDirectMode(false);
       startMove("placer", 0.0);
     }
+
    else if (state == STATE_STOP)
      {
        /*setAngle("left_hip_pitch", -30);
@@ -427,4 +423,3 @@ bind->push();
       
       
       
-	  
