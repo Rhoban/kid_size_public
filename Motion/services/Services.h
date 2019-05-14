@@ -8,6 +8,7 @@ class MoveScheduler;
 class Service;
 
 class ModelService;
+class RobotModelService;
 class OdometryService;
 class RefereeService;
 class LocalisationService;
@@ -48,6 +49,7 @@ public:
    * Direct access to services instance
    */
   ModelService* model;
+  RobotModelService *robotModel;
   OdometryService* odometry;
   RefereeService* referee;
   LocalisationService* localisation;

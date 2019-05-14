@@ -1,6 +1,7 @@
 #include <math.h>
 #include "Walk.h"
 #include "services/DecisionService.h"
+#include "services/RobotModelService.h"
 #include "services/ModelService.h"
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
@@ -105,8 +106,8 @@ std::string Walk::getName()
 
 void Walk::onStart()
 {
-  Leph::HumanoidFixedModel& model = getServices()->model->goalModel();
-  engine.initByModel(model);
+  auto robotModel = getServices()->robotModel;
+  engine.initByModel(robotModel->goalModel);
 
   bind->node().setBool("walkEnable", false);
 
@@ -163,6 +164,8 @@ void Walk::setShouldBootstrap(bool bootstrap)
 
 void Walk::step(float elapsed)
 {
+  auto robotModel = getServices()->robotModel;
+
   bind->pull();
   engine.trunkPitch = deg2rad(trunkPitch);
 
@@ -299,11 +302,10 @@ void Walk::step(float elapsed)
   }
 
   // Assigning to robot
-  engine.assignModel(getServices()->model->goalModel(), timeSinceLastStep);
+  engine.assignModel(robotModel->goalModel, timeSinceLastStep);
 
   // Flushing engine leg orders to robot
-  ModelService* model = getServices()->model;
-  model->flushLegs(_smoothing);
+  robotModel->flushLegs(_smoothing);
 
   // Update arms
   stepArms(elapsed);

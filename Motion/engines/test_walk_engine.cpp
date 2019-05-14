@@ -1,5 +1,5 @@
 #include "walk_engine.h"
-#include "Model/HumanoidFixedModel.hpp"
+#include "robot_model/humanoid_model.h"
 #include "rhoban_utils/angle.h"
 
 using namespace rhoban_utils;
@@ -11,7 +11,7 @@ using namespace rhoban_utils;
 int main()
 {
   // Initializing walk engine with humanoid model
-  Leph::HumanoidFixedModel model(Leph::RobotType::SigmabanModel);
+  rhoban::HumanoidModel model;
   rhoban::WalkEngine engine;
   engine.initByModel(model);
 

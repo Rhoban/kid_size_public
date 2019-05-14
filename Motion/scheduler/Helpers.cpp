@@ -4,6 +4,7 @@
 #include "services/Services.h"
 #include "scheduler/MoveScheduler.h"
 #include "services/ModelService.h"
+#include "services/RobotModelService.h"
 #include "services/LocalisationService.h"
 #include "Helpers.h"
 #include <Devices/GY85.hpp>
@@ -90,6 +91,7 @@ void Helpers::stopMove(const std::string& moveName, double fade) const
 void Helpers::setAngle(const std::string& servo, float angle)
 {
   _scheduler->getManager()->dev<RhAL::DXL>(servo).goalPosition().writeValue(angle);
+
   _scheduler->getServices()->model->goalModel().get().setDOF(
       servo, _scheduler->getManager()->dev<RhAL::DXL>(servo).goalPosition().getWrittenValue() * M_PI / 180.0);
 }

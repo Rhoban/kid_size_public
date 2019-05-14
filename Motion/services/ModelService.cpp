@@ -13,6 +13,15 @@
 #include <vector>
 #include <algorithm>
 
+/**
+ *  - DOF goals
+ * 
+ *  - DOF reads
+ *  - Pressure
+ *  - IMU
+ *  - Camera pose
+ */
+
 using namespace rhoban_utils;
 
 ModelService::ModelService()

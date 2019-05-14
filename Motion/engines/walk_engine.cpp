@@ -2,6 +2,9 @@
 #include "Utils/AxisAngle.h"
 #include "rhoban_geometry/point.h"
 #include "rhoban_utils/angle.h"
+#include "rhoban_utils/logging/logger.h"
+
+static rhoban_utils::Logger logger("walk_engine");
 
 using rhoban_geometry::Point;
 using rhoban_utils::rad2deg;
@@ -56,17 +59,16 @@ WalkEngine::WalkEngine()
 {
 }
 
-void WalkEngine::initByModel(Leph::HumanoidFixedModel& model)
+void WalkEngine::initByModel(rhoban::HumanoidModel& model)
 {
   // Getting the trunk height and foot distance in zero position from URDF model
-  model.get().setDOFZeros();
-  trunkHeight = model.get().position("left_foot_tip", "trunk").z();
-  footDistance = model.get().position("left_foot_tip", "trunk").y();
+  trunkHeight = -model.distHipToGround;
+  footDistance = model.distFootYOffset;
 
   reset();
 }
 
-void WalkEngine::assignModel(Leph::HumanoidFixedModel& model, double timeSinceLastStep)
+void WalkEngine::assignModel(rhoban::HumanoidModel& model, double timeSinceLastStep)
 {
   if (timeSinceLastStep < 0)
   {
@@ -80,8 +82,6 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model, double timeSinceLa
   FootPose leftPose = left.getPosition(timeSinceLastStep);
   FootPose rightPose = right.getPosition(timeSinceLastStep);
 
-  bool success = true;
-
   // XXX: This could be done with a spline with more possible adjustements
   // Adding swing with a sine
   double swingP = isLeftSupport ? M_PI : 0;
@@ -91,20 +91,21 @@ void WalkEngine::assignModel(Leph::HumanoidFixedModel& model, double timeSinceLa
   Eigen::Affine3d trunkPitchRot(Eigen::AngleAxisd(-trunkPitch, Eigen::Vector3d::UnitY()));
 
   // XXX: Yaw in the trunk frame appear to behave in the wrong orientation here
-  success = success && model.get().legIkLeft(
-                           "trunk",
-                           trunkPitchRot *
-                               Eigen::Vector3d(leftPose.x, leftPose.y + swing, trunkHeight + trunkZOffset + leftPose.z),
-                           trunkPitchRot.linear().inverse() * Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -leftPose.yaw)));
-  success = success && model.get().legIkRight("trunk",
-                                              trunkPitchRot * Eigen::Vector3d(rightPose.x, rightPose.y + swing,
-                                                                              trunkHeight + trunkZOffset + rightPose.z),
-                                              trunkPitchRot.linear().inverse() *
-                                                  Leph::AxisToMatrix(Eigen::Vector3d(0, 0, -rightPose.yaw)));
+  bool success = true;
+  success = success && model.computeLegIK(model.Left,
+                                          trunkPitchRot * Eigen::Vector3d(leftPose.x, leftPose.y + swing,
+                                                                          trunkHeight + trunkZOffset + leftPose.z),
+                                          trunkPitchRot.linear().inverse() *
+                                              Eigen::AngleAxisd(-leftPose.yaw, Eigen::Vector3d::UnitZ()));
+  success = success && model.computeLegIK(model.Right,
+                                          trunkPitchRot * Eigen::Vector3d(rightPose.x, rightPose.y + swing,
+                                                                          trunkHeight + trunkZOffset + rightPose.z),
+                                          trunkPitchRot.linear().inverse() *
+                                              Eigen::AngleAxisd(-rightPose.yaw, Eigen::Vector3d::UnitZ()));
 
   if (!success)
   {
-    std::cerr << "WalkEngine bad orders!" << std::endl;
+    logger.warning("Bad kinematics orders received");
   }
 }
 
