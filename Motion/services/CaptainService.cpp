@@ -576,7 +576,7 @@ void CaptainService::computePlayingPositions()
 {
   if (!status.has_ball())
   {
-    logger.log("Nobody sees the ball, order all robots to search it!");
+    // logger.log("Nobody sees the ball, order all robots to search it!");
     // No one is seeing the ball, ordering all to search
     for (auto& entry : robots)
     {
@@ -714,14 +714,19 @@ void CaptainService::compute()
     Action action = info.intention().action_planned();
     int robot_id = info.robot_id().robot_id();
     PerceptionExtra extra = extractPerceptionExtra(info.perception());
-    if (!isOutdated(info) &&                                          // Info should not be updated
-        !referee->isPenalized(robot_id) &&                            // Robot should not be penalized
-        action != Action::UNDEFINED && action != Action::INACTIVE &&  // It should be playing
-        extra.field().valid()                                         // It knows where it is
-    )
+    bool outdated = isOutdated(info);
+    bool penalized = referee->isPenalized(robot_id);
+    bool playing = action != Action::UNDEFINED && action != Action::INACTIVE;
+    bool localized = extra.field().valid();
+    if (!outdated && !penalized && playing && localized)
     {
       robots[robot_id] = info;
       robotIds.push_back(robot_id);
+    }
+    else
+    {
+      logger.log("Ignoring robot entry-> outdated:%d, penalized:%d, playing:%d, localized:%d", outdated, penalized,
+                 playing, localized);
     }
   }
 

@@ -122,7 +122,7 @@ bool TeamPlayService::tick(double elapsed)
     // Receiving informations
     GameMsg received_msg;
     while (message_manager->receiveMessage(&received_msg))
-    {   
+    {
       // Assign reception timestamp
       if (received_msg.has_robot_msg())
       {
@@ -213,6 +213,7 @@ void TeamPlayService::updateIntention(RobotMsg* msg)
   Intention* intention = msg->mutable_intention();
   PlayingMove* playing = dynamic_cast<PlayingMove*>(getMoves()->getMove("playing"));
   Placer* placer = dynamic_cast<Placer*>(getMoves()->getMove("placer"));
+  Robocup* robocup = dynamic_cast<Robocup*>(getMoves()->getMove("robocup"));
   if (!playing)
   {
     throw std::logic_error(DEBUG_INFO + "'playing' move is not of the right type");
@@ -223,7 +224,12 @@ void TeamPlayService::updateIntention(RobotMsg* msg)
   }
   // Updating Action
   Action action = Action::WAITING;
-  if (!getMoves()->getMove("robocup")->isRunning())
+  bool robocup_running = robocup->isRunning();
+  bool playing_running = playing->isRunning();
+  bool approach_running = getMoves()->getMove("approach_potential")->isRunning();
+  // During test sessions, playing and approach can run alone, in this case, we do not want to declare the robot as
+  // inactive
+  if (!playing_running && !approach_running && (!robocup_running || robocup->getStatus() != "placing"))
   {
     action = Action::INACTIVE;
   }
@@ -286,14 +292,14 @@ void TeamPlayService::updateMiscExtra(RobotMsg* msg)
 {
   StrategyService* strategy = getServices()->strategy;
   ModelService* model = getServices()->model;
-  
+
   MiscExtra extra;
   extra.set_time_since_last_kick(strategy->getTimeSinceLastKick());
-  extra.set_referee(getServices()->referee->getState().substr(0,15));
-  extra.set_robocup(getMoves()->getMove("robocup")->getStatus().substr(0,10));
-  extra.set_playing(getMoves()->getMove("playing")->getStatus().substr(0,10));
-  extra.set_search(getMoves()->getMove("search")->getStatus().substr(0,10));
-  extra.set_hardware_warnings(model->getLowLevelState().substr(0,30));
+  extra.set_referee(getServices()->referee->getState().substr(0, 15));
+  extra.set_robocup(getMoves()->getMove("robocup")->getStatus().substr(0, 10));
+  extra.set_playing(getMoves()->getMove("playing")->getStatus().substr(0, 10));
+  extra.set_search(getMoves()->getMove("search")->getStatus().substr(0, 10));
+  extra.set_hardware_warnings(model->getLowLevelState().substr(0, 30));
   extra.SerializeToString(msg->mutable_free_field());
 }
 
@@ -340,7 +346,7 @@ void TeamPlayService::processInfo(const RobotMsg& original_msg)
   if (msg_team_id != getServices()->referee->teamId)
   {
     logger.warning("Received a message from another team: %d", msg_team_id);
-    return; 
+    return;
   }
 
   // Updates stored informations
