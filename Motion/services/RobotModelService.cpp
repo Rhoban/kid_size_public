@@ -136,11 +136,13 @@ bool RobotModelService::tick(double elapsed)
 
   if (!isReplay)
   {
-    // Logging
+    // Logging robot poses
     double timestamp = currentTimeStamp();
     histories.pose("camera")->pushValue(timestamp, model.frameToWorld("camera"));
     histories.pose("trunk")->pushValue(timestamp, model.frameToWorld("trunk"));
     histories.pose("self")->pushValue(timestamp, model.selfToWorld());
+
+    // XXX: Log low level informations
   }
 
   // Updating low level state
