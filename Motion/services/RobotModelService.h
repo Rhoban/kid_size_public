@@ -16,8 +16,13 @@ public:
 
   bool tick(double elapsed);
 
+  // Should we update the base ?
+  void enableOdometry(bool enabled);
+  bool odometryEnabled;
+
   // Models
-  rhoban::HumanoidModel goalModel;
-  rhoban::HumanoidModel readModel;
+  rhoban::HumanoidModel model;
   rhoban::HumanoidServer server;
+
+  double timeSinceLastPublish;
 };

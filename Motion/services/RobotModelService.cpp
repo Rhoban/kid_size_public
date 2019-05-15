@@ -23,7 +23,7 @@ using namespace rhoban_utils;
  *  - IMU
  *  - Camera pose
  */
-RobotModelService::RobotModelService()
+RobotModelService::RobotModelService() : odometryEnabled(false), timeSinceLastPublish(0)
 {
 }
 
@@ -31,31 +31,53 @@ bool RobotModelService::tick(double elapsed)
 {
   RhAL::StandardManager* manager = getScheduler()->getManager();
 
-  for (const std::string& name : goalModel.getDofNames())
+  for (const std::string& name : model.getDofNames())
   {
-    // Setting written values to the DOFs of the goal model
-    double goalValue = RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).goalPosition().getWrittenValue());
-    goalModel.setDof(name, goalValue);
-
-    // Setting read values to the DOFs of the read model
-    double readValue = RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).position().readValue().value);
-    readModel.setDof(name, Helpers::isFakeMode() ? goalValue : readValue);
+    if (Helpers::isFakeMode())
+    {
+      // Setting written values to the DOFs of the goal model
+      double goalValue = RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).goalPosition().getWrittenValue());
+      model.setDof(name, goalValue);
+    }
+    else
+    {
+      // Setting read values to the DOFs of the read model
+      double readValue = RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).position().readValue().value);
+      model.setDof(name, readValue);
+    }
   }
 
-  // Using the
-  readModel.setImu(true, getYaw(), getPitch(), getRoll());
+  if (!Helpers::isFakeMode() || Helpers::isPython)
+  {
+    // Using the IMU
+    model.setImu(true, getYaw(), getPitch(), getRoll());
 
-  if (getPressureLeftRatio() > 0.9)
-  {
-    readModel.setSupportFoot(readModel.Left, true);
-  }
-  if (getPressureRightRatio() > 0.9)
-  {
-    readModel.setSupportFoot(readModel.Right, true);
+    // Integrating odometry
+    if (odometryEnabled)
+    {
+      if (getPressureLeftRatio() > 0.9)
+      {
+        model.setSupportFoot(model.Left, true);
+      }
+      if (getPressureRightRatio() > 0.9)
+      {
+        model.setSupportFoot(model.Right, true);
+      }
+    }
   }
 
   // Publishing goal model to ZMQ
-  server.publishModel(readModel, false);
+  timeSinceLastPublish += elapsed;
+  if (timeSinceLastPublish > 0.01)
+  {
+    timeSinceLastPublish = 0;
+    server.publishModel(model, false);
+  }
 
   return true;
+}
+
+void RobotModelService::enableOdometry(bool enabled)
+{
+  odometryEnabled = enabled;
 }
