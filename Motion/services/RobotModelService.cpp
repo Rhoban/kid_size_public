@@ -128,9 +128,12 @@ bool RobotModelService::tick(double elapsed)
 
   // Publishing goal model to ZMQ
   timeSinceLastPublish += elapsed;
-  if (timeSinceLastPublish > 0.01)
+  if (timeSinceLastPublish > 0.02)
   {
     timeSinceLastPublish = 0;
+    LocalisationService* localisationService = getServices()->localisation;
+    auto ballWorld = localisationService->getBallPosWorld();
+    server.setBallPosition(Eigen::Vector3d(ballWorld.x, ballWorld.y, 0));
     server.publishModel(model, false);
   }
 
