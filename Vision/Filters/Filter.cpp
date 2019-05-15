@@ -156,7 +156,7 @@ void Filter::initWindow()
         }
         // Print coordinate, pixel value and world estimated position
         const CameraState& cs = filter->getCS();
-        const Leph::CameraModel& cameraModel = cs.getCameraModel();
+        const rhoban::CameraModel& cameraModel = cs.getCameraModel();
         cv::Vec3b pixel = filter->getImg()->at<cv::Vec3b>(y, x);
         cv::Point2f ball_center_in_img = cv::Point2f(x, y);
         std::cout << "filter->getCS()->timestamp" << cs.getTimeStampDouble() << std::endl;

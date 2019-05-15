@@ -1,6 +1,6 @@
 #include "Head.h"
 
-#include "services/ModelService.h"
+#include "services/RobotModelService.h"
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
 
@@ -175,16 +175,8 @@ void Head::step(float elapsed)
   LocalisationService* loc = getServices()->localisation;
 
   // Use Model and camera parameters to determine position
-  Leph::HumanoidModel* model = nullptr;
-  if (Helpers::isFakeMode())
-  {
-    model = &(Helpers::getServices()->model->goalModel().get());
-  }
-  else
-  {
-    model = &(Helpers::getServices()->model->correctedModel().get());
-  }
-  const Leph::CameraModel& camera_model = Helpers::getServices()->model->getCameraModel();
+  rhoban::HumanoidModel* model = &getServices()->robotModel->model;
+  const rhoban::CameraModel& camera_model = getServices()->robotModel->cameraModel;
 
   Eigen::Vector3d target_in_self;
   if (disabled)
@@ -217,11 +209,11 @@ void Head::step(float elapsed)
   target_x = target_in_self[0];
   target_y = target_in_self[1];
 
-  Eigen::Vector3d target_in_world = model->selfInFrame("origin", target_in_self);
+  Eigen::Vector3d target_in_world = model->selfToWorld() * target_in_self;
 
   double wished_pan_rad, wished_tilt_rad;
 
-  bool modelSuccess = model->cameraLookAtNoUpdate(wished_pan_rad, wished_tilt_rad, target_in_world);
+  bool modelSuccess = model->cameraLookAt(wished_pan_rad, wished_tilt_rad, target_in_world);
 
   if (!modelSuccess)
   {
@@ -319,9 +311,9 @@ bool Head::shouldTrackBall()
   return scanning_time > scan_period + scan_extra_period;
 }
 
-Eigen::Vector3d Head::getScanTarget(Leph::HumanoidModel* model, const HeadScan& scannerUsed)
+Eigen::Vector3d Head::getScanTarget(rhoban::HumanoidModel* model, const HeadScan& scannerUsed)
 {
-  double robotHeight = model->frameInSelf("camera", Eigen::Vector3d::Zero())(2);  //[m]
+  double robotHeight = model->position("camera", "support_foot").z();
 
   /// Reading wished pan/tilt for scanning
   Eigen::Vector2d wished_pan_tilt = scannerUsed.getTarget(scanning_time);
@@ -353,9 +345,9 @@ Eigen::Vector3d Head::getScanTarget(Leph::HumanoidModel* model, const HeadScan& 
   return target_in_self;
 }
 
-Eigen::Vector3d Head::getBallTarget(Leph::HumanoidModel* model, const Leph::CameraModel& camera_model)
+Eigen::Vector3d Head::getBallTarget(rhoban::HumanoidModel* model, const rhoban::CameraModel& camera_model)
 {
-  double robotHeight = model->frameInSelf("camera", Eigen::Vector3d::Zero())(2);  //[m]
+  double robotHeight = model->position("camera", "support_foot").z();  //[m]
 
   LocalisationService* loc = getServices()->localisation;
   auto point = loc->getPredictedBallSelf();
@@ -378,7 +370,7 @@ Eigen::Vector3d Head::getBallTarget(Leph::HumanoidModel* model, const Leph::Came
 
 void Head::updateScanners()
 {
-  const Leph::CameraModel camera_model = Helpers::getServices()->model->getCameraModel();
+  const rhoban::CameraModel& camera_model = getServices()->robotModel->cameraModel;
   double fovx = camera_model.getFOVX().getSignedValue();
   double fovy = camera_model.getFOVY().getSignedValue();
   // Update default scanner

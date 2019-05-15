@@ -2,7 +2,6 @@
 
 #include <rhoban_geometry/point.h>
 #include <Eigen/Dense>
-#include <services/ModelService.h>
 #include <CameraState/CameraState.hpp>
 #include "RadarFilter.hpp"
 

@@ -2,7 +2,7 @@
 #include "services/Services.h"
 #include "services/Service.h"
 
-#include "ModelService.h"
+// #include "ModelService.h"
 #include "RobotModelService.h"
 #include "RefereeService.h"
 #include "LocalisationService.h"
@@ -20,8 +20,8 @@ Services::Services(MoveScheduler* scheduler) : _scheduler(scheduler)
   }
 
   // Services instanciation
-  model = new ModelService;
-  add("model", model);
+  // model = new ModelService;
+  // add("model", model);
   robotModel = new RobotModelService;
   add("robotModel", robotModel);
   referee = new RefereeService;

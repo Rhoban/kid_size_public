@@ -2,7 +2,7 @@
 set (SOURCES
     Services.cpp
     Service.cpp
-    ModelService.cpp
+    # ModelService.cpp
     RobotModelService.cpp
     RefereeService.cpp
     LocalisationService.cpp

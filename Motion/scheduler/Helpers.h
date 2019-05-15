@@ -79,7 +79,6 @@ public:
    */
   float getPitch();
   float getRoll();
-  float getYaw();
   float getGyroYaw();
 
   void setFakeIMU(double yaw, double pitch, double roll);

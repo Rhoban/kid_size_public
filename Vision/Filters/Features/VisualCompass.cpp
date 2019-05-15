@@ -8,7 +8,6 @@
 #include "CameraState/CameraState.hpp"
 #include <vector>
 #include "rhoban_utils/timing/benchmark.h"
-#include "services/ModelService.h"
 #include <cmath>
 #include "rhoban_utils/logging/logger.h"
 #include "Filters/Features/homography_decomp.hpp"
@@ -270,7 +269,7 @@ void VisualCompass::process()
       double fovx, fovy, focalLength, aspectRatio;
       cv::Point2d principalPoint;
 
-      const Leph::CameraModel& cam_model = getCS().getCameraModel();
+      const rhoban::CameraModel& cam_model = getCS().getCameraModel();
 
       cv::calibrationMatrixValues(cam_model.getCameraMatrix(), cv::Size(width, height), appertureW, appertureH, fovx,
                                   fovy, focalLength, principalPoint, aspectRatio);

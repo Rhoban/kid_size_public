@@ -2,7 +2,6 @@
 #include "Walk.h"
 #include "services/DecisionService.h"
 #include "services/RobotModelService.h"
-#include "services/ModelService.h"
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/control/variation_bound.h>
@@ -136,8 +135,7 @@ void Walk::onStart()
 
 void Walk::onStop()
 {
-  Helpers::getServices()->model->setReadBaseUpdate(false);
-  Helpers::getServices()->robotModel->enableOdometry(false);
+  getServices()->robotModel->enableOdometry(false);
   state = WalkNotWalking;
   kickState = KickNotKicking;
 }
@@ -181,7 +179,7 @@ void Walk::step(float elapsed)
 
   stepKick(elapsed);
 
-  getServices()->model->setReadBaseUpdate(state != WalkNotWalking);
+  getServices()->robotModel->enableOdometry(state != WalkNotWalking);
 
   if (state == WalkNotWalking)
   {
@@ -303,15 +301,6 @@ void Walk::step(float elapsed)
         {
           getServices()->robotModel->model.setSupportFoot(
               engine.isLeftSupport ? rhoban::HumanoidModel::Left : rhoban::HumanoidModel::Right, true);
-
-          if (engine.isLeftSupport)
-          {
-            getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::LeftSupportFoot);
-          }
-          else
-          {
-            getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::RightSupportFoot);
-          }
         }
       }
     }
@@ -347,7 +336,7 @@ void Walk::stepKick(float elapsed)
 
     if (kickState == KickWaitingWalkToStop && state == WalkNotWalking)
     {
-      // Updating support foot in goal model
+      // Forcing support foot in the model
       auto robotModel = getServices()->robotModel;
       getServices()->robotModel->model.setSupportFoot(
           kickLeftFoot ? rhoban::HumanoidModel::Right : rhoban::HumanoidModel::Left, true);
