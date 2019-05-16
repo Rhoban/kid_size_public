@@ -2,8 +2,6 @@
 #include <stdexcept>
 #include <rhoban_utils/angle.h>
 #include <rhoban_utils/util.h>
-#include <Utils/Angle.h>
-#include <Model/NamesModel.h>
 #include <rhoban_utils/timing/time_stamp.h>
 #include "services/RobotModelService.h"
 #include "services/LocalisationService.h"
