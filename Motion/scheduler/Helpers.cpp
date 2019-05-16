@@ -166,6 +166,30 @@ float Helpers::getAngle(const std::string& servo)
   }
 }
 
+float Helpers::getGoalAngle(const std::string& servo)
+{
+  return _scheduler->getManager()->dev<RhAL::DXL>(servo).goalPosition().getWrittenValue();
+}
+
+double Helpers::getLastReadTimestamp()
+{
+  // Retrieve the RhAL Manager
+  RhAL::StandardManager* manager = getScheduler()->getManager();
+  // Compute the max timestamp over
+  // all DOF and look for communication error
+  RhAL::TimePoint timestamp;
+  for (const std::string& name : getServices()->robotModel->model.getDofNames())
+  {
+    RhAL::ReadValueFloat value = manager->dev<RhAL::DXL>(name).position().readValue();
+    if (timestamp < value.timestamp)
+    {
+      timestamp = value.timestamp;
+    }
+  }
+
+  return RhAL::duration_float(timestamp);
+}
+
 float Helpers::getError(const std::string& servo)
 {
   if (isFakeMode())
@@ -381,4 +405,32 @@ float Helpers::getPressureY()
   {
     return 0;
   }
+}
+
+float Helpers::getLeftPressureX()
+{
+  updatePressure();
+
+  return pressureLeftX;
+}
+
+float Helpers::getLeftPressureY()
+{
+  updatePressure();
+
+  return pressureLeftY;
+}
+
+float Helpers::getRightPressureX()
+{
+  updatePressure();
+
+  return pressureRightX;
+}
+
+float Helpers::getRightPressureY()
+{
+  updatePressure();
+
+  return pressureRightY;
 }

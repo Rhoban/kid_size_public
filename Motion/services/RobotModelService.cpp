@@ -50,9 +50,30 @@ RobotModelService::RobotModelService()
   odometryYawOffset = 0;
   bind.bindFunc("odometryReset", "Resets the robot odometry", &RobotModelService::cmdOdometryReset, *this);
 
+  // Declaration of history entries
   histories.pose("camera");
   histories.pose("trunk");
   histories.pose("self");
+
+  // DOFs reading and writing
+  for (auto& name : model.getDofNames())
+  {
+    histories.number("read:" + name);
+    histories.number("goal:" + name);
+  }
+
+  // IMU
+  histories.number("imu_gyro_yaw");
+  histories.number("imu_pitch");
+  histories.number("imu_roll");
+
+  // Pressure sensors
+  histories.number("left_foot_weight");
+  histories.number("left_pressure_x");
+  histories.number("left_pressure_y");
+  histories.number("right_foot_weight");
+  histories.number("right_pressure_x");
+  histories.number("right_pressure_y");
 }
 
 bool RobotModelService::isFakeMode()
@@ -67,42 +88,19 @@ std::string RobotModelService::cmdOdometryReset()
   return "OK";
 }
 
-double RobotModelService::currentTimeStamp()
-{
-  // Retrieve the RhAL Manager
-  RhAL::StandardManager* manager = getScheduler()->getManager();
-  // Compute the max timestamp over
-  // all DOF and look for communication error
-  RhAL::TimePoint timestamp;
-  for (const std::string& name : model.getDofNames())
-  {
-    RhAL::ReadValueFloat value = manager->dev<RhAL::DXL>(name).position().readValue();
-    if (timestamp < value.timestamp)
-    {
-      timestamp = value.timestamp;
-    }
-  }
-
-  return RhAL::duration_float(timestamp);
-}
-
 bool RobotModelService::tick(double elapsed)
 {
-  RhAL::StandardManager* manager = getScheduler()->getManager();
-
   for (const std::string& name : model.getDofNames())
   {
     if (Helpers::isFakeMode())
     {
       // Setting written values to the DOFs of the goal model
-      double goalValue = RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).goalPosition().getWrittenValue());
-      model.setDof(name, goalValue);
+      model.setDof(name, deg2rad(getGoalAngle(name)));
     }
     else
     {
       // Setting read values to the DOFs of the read model
-      double readValue = RhAL::Deg2Rad(manager->dev<RhAL::DXL>(name).position().readValue().value);
-      model.setDof(name, readValue);
+      model.setDof(name, deg2rad(getAngle(name)));
     }
   }
 
@@ -139,13 +137,7 @@ bool RobotModelService::tick(double elapsed)
 
   if (!isReplay)
   {
-    // Logging robot poses
-    double timestamp = currentTimeStamp();
-    histories.pose("camera")->pushValue(timestamp, model.frameToWorld("camera"));
-    histories.pose("trunk")->pushValue(timestamp, model.frameToWorld("trunk"));
-    histories.pose("self")->pushValue(timestamp, model.selfToWorld());
-
-    // XXX: Log low level informations
+    tickLog();
   }
 
   // Updating low level state
@@ -192,10 +184,6 @@ Eigen::Vector3d RobotModelService::odometryDiff(double timestampStart, double ti
   Eigen::Affine3d endToWorld = selfToWorld(timestampEnd);
   Eigen::Affine3d endToStart = startToWorld.inverse() * endToWorld;
 
-  std::cout << "~~~~~~" << std::endl;
-  std::cout << startToWorld.rotation().matrix() << std::endl;
-  std::cout << endToWorld.rotation().matrix() << std::endl;
-
   return Eigen::Vector3d(endToStart.translation().x(), endToStart.translation().y(),
                          rhoban::frameYaw(endToStart.rotation()));
 }
@@ -210,6 +198,39 @@ bool RobotModelService::wasOdometryUpdated()
   bool result = odometryUpdated;
   odometryUpdated = false;
   return result;
+}
+
+void RobotModelService::tickLog()
+{
+  // Logging robot poses
+  double timestamp = getLastReadTimestamp();
+
+  // Logging main poses
+  histories.pose("camera")->pushValue(timestamp, model.frameToWorld("camera"));
+  histories.pose("trunk")->pushValue(timestamp, model.frameToWorld("trunk"));
+  histories.pose("self")->pushValue(timestamp, model.selfToWorld());
+
+  // Logging DOFs
+  for (auto& name : model.getDofNames())
+  {
+    histories.number("read:" +name)->pushValue(timestamp, deg2rad(getAngle(name)));
+    histories.number("goal:"+name)->pushValue(timestamp, deg2rad(getGoalAngle(name)));
+  }
+
+  // Logging IMU
+  histories.number("imu_gyro_yaw")->pushValue(timestamp, getGyroYaw());
+  histories.number("imu_pitch")->pushValue(timestamp, getPitch());
+  histories.number("imu_roll")->pushValue(timestamp, getRoll());
+
+  // Loggin pressure sensors
+  double weight = getPressureWeight();
+  histories.number("left_pressure_weight")->pushValue(timestamp, weight * getPressureLeftRatio());
+  histories.number("left_pressure_x")->pushValue(timestamp, weight * getLeftPressureX());
+  histories.number("left_pressure_y")->pushValue(timestamp, weight * getLeftPressureY());
+
+  histories.number("right_pressure_weight")->pushValue(timestamp, weight * getPressureRightRatio());
+  histories.number("right_pressure_x")->pushValue(timestamp, weight * getRightPressureX());
+  histories.number("right_pressure_y")->pushValue(timestamp, weight * getRightPressureY());
 }
 
 std::string RobotModelService::getCameraState()

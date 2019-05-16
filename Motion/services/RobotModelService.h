@@ -54,6 +54,7 @@ public:
   void loadReplay(const std::string& filename);
   void setReplayTimestamp(double timestamp);
   rhoban_utils::HistoryCollection histories;
+  void tickLog();
 
   // XXX: This has nothing to do here...
   std::string lowLevelState;

@@ -67,8 +67,11 @@ public:
   bool isRX(const std::string& servo);
   bool isMX(const std::string& servo);
   float getAngle(const std::string& servo);
+  float getGoalAngle(const std::string& servo);
   float getError(const std::string& servo);
   std::vector<std::string> getServoNames();
+
+  double getLastReadTimestamp();
 
   void lockScheduler();
   void unlockScheduler();
@@ -93,6 +96,10 @@ public:
   float getPressureWeight();
   float getPressureX();
   float getPressureY();
+  float getLeftPressureX();
+  float getLeftPressureY();
+  float getRightPressureX();
+  float getRightPressureY();
   void updatePressure();
 
   void setFakePressure(
