@@ -88,7 +88,7 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
       ->defaultValue(safeArmsRoll = 40)
       ->minimum(-20.0)
       ->maximum(150.0);
-  bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-165.0)->minimum(-200.0)->maximum(30.0);
+  bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-160.0)->minimum(-200.0)->maximum(30.0);
   bind->bindNew("armsEnabled", armsEnabled, RhIO::Bind::PullOnly)->defaultValue(armsEnabled = true);
   bind->bindNew("safeArmsRollEnabled", safeArmsRollEnabled, RhIO::Bind::PullOnly)
       ->defaultValue(safeArmsRollEnabled = false);
@@ -154,6 +154,11 @@ void Walk::kick(bool rightFoot, const std::string& kickName)
 bool Walk::isKicking()
 {
   return kickState != KickNotKicking;
+}
+
+bool Walk::isThrowIn()
+{
+  return kickName == "throwin";
 }
 
 void Walk::setShouldBootstrap(bool bootstrap)

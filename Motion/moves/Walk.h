@@ -66,6 +66,9 @@ public:
   // Is the walk currently kicking ?
   bool isKicking();
 
+  //Is th kick a throwin ?
+  bool isThrowIn();
+
   // Will the new step be a new step ?
   bool isNewStep(double elapsed);
 

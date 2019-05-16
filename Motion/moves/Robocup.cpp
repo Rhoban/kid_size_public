@@ -386,7 +386,7 @@ void Robocup::step(float elapsed)
 void Robocup::enterState(std::string state)
 {
   logger.log("Entering state %s", state.c_str());
-
+  auto decision = getServices()->decision;
   t = 0;
 
   Head* head = (Head*)getMoves()->getMove("head");
@@ -419,7 +419,17 @@ void Robocup::enterState(std::string state)
   }
   else
   {
-    walk->enableArms(true);
+    // CHANGE
+    if (walk->isThrowIn())
+    {
+      walk->enableArms(false);
+    }
+
+    else
+    {
+      walk->enableArms(true);
+    }
+
     walk->control(false);
   }
 
