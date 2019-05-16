@@ -23,6 +23,10 @@ class ThrowIn : public Move
  protected:
   float time;
   float tMax;
+
+  double manualT;
+  bool reloadSpline;
+bool useManualT;
   
   std::map<std::string, rhoban_utils::Function> splines;
 
