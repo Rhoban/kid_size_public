@@ -5,7 +5,7 @@
 #include "StrategyService.h"
 #include "rhoban_utils/logging/logger.h"
 #include "robocup_referee/constants.h"
-
+#include "moves/Move.h"
 #include <hl_communication/wrapper.pb.h>
 
 using namespace hl_communication;
@@ -120,9 +120,10 @@ DecisionService::DecisionService() : isBallMoving(false), bind("decision")
   // Who is the goal ?
   bind.bindNew("goalId", goalId, RhIO::Bind::PullOnly)->comment("Id of the goal")->defaultValue(2);
 
-  bind.bindNew("nextKickIsThrowIn", nextKickIsThrowIn,  RhIO::Bind::PushOnly)->comment("Is next kick a throw in ?")->defaultValue(false);
+  bind.bindNew("nextKickIsThrowIn", nextKickIsThrowIn, RhIO::Bind::PushOnly)
+      ->comment("Is next kick a throw in ?")
+      ->defaultValue(false);
 
-  
   selfAttackingT = 0;
   handledT = 0;
 
@@ -158,18 +159,16 @@ bool DecisionService::tick(double elapsed)
   freezeKick = false;
 
   nextKickIsThrowIn = false;
-  
+
   if (referee->isGameInterruption())
   {
     if (referee->myTeamGameInterruption())
     {
       freezeKick = true;
       if (referee->isThrowIn())
-	{
-	  nextKickIsThrowIn = true;
-	}
-      
-	
+      {
+        nextKickIsThrowIn = true;
+      }
     }
     else
     {
@@ -235,7 +234,7 @@ bool DecisionService::tick(double elapsed)
             float X = fieldX + cos(a) * ballX - sin(a) * ballY;
             float Y = fieldY + sin(a) * ballX + cos(a) * ballY;
 
-            const PositionDistribution&  kickTarget = info.intention().kick().target();
+            const PositionDistribution& kickTarget = info.intention().kick().target();
             ballTargetX = kickTarget.x();
             ballTargetY = kickTarget.y();
 
@@ -291,9 +290,11 @@ bool DecisionService::tick(double elapsed)
 
     double threshold_falling = 45;
     double threshold_fallen = 60;
-    isFallen = max_imu_angle > threshold_falling;
+    bool isKickRunning = getMoves()->getMove("kick")->isRunning();
 
-    if (max_imu_angle < threshold_falling)
+    isFallen = !isKickRunning && max_imu_angle > threshold_falling;
+
+    if (max_imu_angle < threshold_falling || isKickRunning)
     {
       fallStatus = FallStatus::Ok;
       fallDirection = FallDirection::None;
