@@ -114,7 +114,7 @@ void Kick::loadKick(std::string filename)
         replaceAll(name, "shoot_", "");
         replaceAll(name, "support_", "");
 
-        if (strContains(name, "roll"))
+        if (strContains(name, "roll") && strContains(dof, "left"))
         {
           sign = -1;
         }
