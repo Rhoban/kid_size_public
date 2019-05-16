@@ -12,10 +12,12 @@ static rhoban_utils::Logger logger("kick");
 using namespace rhoban_utils;
 
 // DOFs
-static std::vector<std::string> dofs = {
-  "right_hip_yaw", "right_hip_pitch", "right_hip_roll", "right_knee", "right_ankle_pitch", "right_ankle_roll",
-  "left_hip_yaw",  "left_hip_pitch",  "left_hip_roll",  "left_knee",  "left_ankle_pitch",  "left_ankle_roll"
-};
+static std::vector<std::string> dofs = { "right_hip_yaw",       "right_hip_pitch",      "right_hip_roll",
+                                         "right_knee",          "right_ankle_pitch",    "right_ankle_roll",
+                                         "right_shoulder_roll", "right_shoulder_pitch", "right_elbow",
+                                         "left_hip_yaw",        "left_hip_pitch",       "left_hip_roll",
+                                         "left_knee",           "left_ankle_pitch",     "left_ankle_roll",
+                                         "left_shoulder_roll",  "left_shoulder_pitch",  "left_elbow" };
 
 Kick::Kick()
 {
@@ -103,9 +105,27 @@ void Kick::loadKick(std::string filename)
     for (auto dof : dofs)
     {
       auto name = dof;
+      double sign = 1;
       replaceAll(name, "right", "shoot");
       replaceAll(name, "left", "support");
-      splines[dof].addPoint(T, kickSplines[name].get(t));
+      /* If there is no shoot or support, try symetrical splines*/
+      if (kickSplines.count(name) == 0)
+      {
+        replaceAll(name, "shoot_", "");
+        replaceAll(name, "support_", "");
+
+        if (strContains(name, "roll"))
+        {
+          sign = -1;
+        }
+      }
+      double val = 0;
+      if (kickSplines.count(name) > 0)
+      {
+        val = sign * kickSplines[name].get(t);
+      }
+
+      splines[dof].addPoint(T, val);
     }
   }
 
@@ -286,7 +306,7 @@ void Kick::step(float elapsed)
       double sign = 1;
 
       // Mirroring the play for the left foot
-      if (left)
+      if (left && kickName != "throwin")
       {
         if (strContains(name, "left"))
         {
