@@ -653,6 +653,8 @@ std::string LocalisationService::cmdFakeLoc(double fieldX, double fieldY, double
   return "Set fake localization in world";
 }
 
+// XXX: Actually, this method name is only real in simulation mode
+//      because it sets the robot at some world position and not field position
 std::string LocalisationService::cmdMoveOnField(double x, double y, double yaw)
 {
   fieldQ = 1;
