@@ -33,6 +33,7 @@ class GoalKeeper : public STM
   bool ballInAttackHysZone();
   bool isBallSafe();
   rhoban_geometry::Point alignBallPos();
+  float getAngle(); 
   bool goodEnoughPos(rhoban_geometry::Point pos, rhoban_geometry::Point needed_pos);
   
   // void bufferedSetState(const std::string&);
@@ -46,9 +47,10 @@ class GoalKeeper : public STM
   float xIgnoreBall;
   float distanceAttack;
   float xApprox, yApprox;
-
+  rhoban_geometry::Point needed_pos;
   float timeSinceStop;
-  
+  float coeffa;
+  float distX, distY;
   //init values
   float init_left_hip_pitch;
   
