@@ -1086,7 +1086,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
     }
     catch (const std::runtime_error& exc)
     {
-      logger.warning("%s, cannot find imgXY from world for ballPos: '%s'", DEBUG_INFO, exc.what().c_str());
+      out.warning("%s, cannot find imgXY from world for ballPos: '%s'", DEBUG_INFO, exc.what());
     }
   }
 
