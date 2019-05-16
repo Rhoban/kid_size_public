@@ -1,5 +1,4 @@
 #include "walk_engine.h"
-#include "Utils/AxisAngle.h"
 #include "rhoban_geometry/point.h"
 #include "rhoban_utils/angle.h"
 #include "rhoban_utils/logging/logger.h"
