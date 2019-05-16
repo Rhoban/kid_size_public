@@ -215,6 +215,9 @@ void Head::step(float elapsed)
 
   bool modelSuccess = model->cameraLookAt(wished_pan_rad, wished_tilt_rad, target_in_world);
 
+  wished_pan = rad2deg(wished_pan_rad);
+  wished_tilt = rad2deg(wished_tilt_rad);
+
   if (!modelSuccess)
   {
     std::cout << "head: failed lookAtNoUpdate" << std::endl;
