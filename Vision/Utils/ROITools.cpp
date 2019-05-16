@@ -24,7 +24,7 @@ bool isContained(const cv::Rect& rect, const cv::Size& size)
 {
   const cv::Point2f& tl = rect.tl();
   const cv::Point2f& br = rect.br();
-  return (tl.x >= 0 && br.x <= size.width && tl.y >= 0 && br.y <= size.height);
+  return (tl.x >= 0 && br.x <= size.width - 1 && tl.y >= 0 && br.y <= size.height - 1);
 }
 
 cv::Rect cropRect(const cv::Rect& roi, const cv::Mat& img)
