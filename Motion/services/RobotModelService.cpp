@@ -66,10 +66,10 @@ RobotModelService::RobotModelService()
   histories.number("imu_roll");
 
   // Pressure sensors
-  histories.number("left_foot_weight");
+  histories.number("left_pressure_weight");
   histories.number("left_pressure_x");
   histories.number("left_pressure_y");
-  histories.number("right_foot_weight");
+  histories.number("right_pressure_weight");
   histories.number("right_pressure_x");
   histories.number("right_pressure_y");
 }
