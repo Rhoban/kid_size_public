@@ -399,7 +399,7 @@ void Robocup::initRhIO()
 
 void Robocup::initObservationTypes()
 {
-  observationTypes = { "ball", "robot", "tag"};
+  observationTypes = { "ball", "robot", "tag" };
   for (Field::POIType type : Field::getPOITypeValues())
   {
     observationTypes.push_back(Field::poiType2String(type));
@@ -622,7 +622,7 @@ std::string Robocup::getCameraStatus() const
 }
 
 void Robocup::readPipeline()
-{  
+{
   featuresMutex.lock();
   // Ball and robots are cleared after every step (used internally)
   detectedBalls->clear();
@@ -652,7 +652,7 @@ void Robocup::readPipeline()
         }
       }
       // Robot import
-      std::vector<cv::Point2f> robots_in_img = provider.getRobots();//TODO: add robot info (color)
+      std::vector<cv::Point2f> robots_in_img = provider.getRobots();  // TODO: add robot info (color)
       for (const cv::Point2f& robot_in_img : robots_in_img)
       {
         cv::Point2f world_pos = cs->worldPosFromImg(robot_in_img.x, robot_in_img.y);
@@ -668,64 +668,64 @@ void Robocup::readPipeline()
       out.error("%s: Failed to import features, runtime_error. Exception: %s", DEBUG_INFO.c_str(), exc.what());
     }
   }
-  featuresMutex.unlock();  
+  featuresMutex.unlock();
 
   // Tags (temporarily disabled, to reactivate, require to add a 'tagProvider' similar to featureProviders
-//  for (const std::string& tagProviderName : tagProviders)
-//  {
-//    Vision::Filter& tagFilter = pipeline.get(tagProviderName);
-//    cv::Size size = pipeline.get(tagProviderName).getImg()->size();
-//    tagsMutex.lock();
-//    detectedTimestamp = pipeline.getTimestamp().getTimeMS() / 1000.0;
-//    try
-//    {
-//      const TagsDetector& tagProvider = dynamic_cast<const TagsDetector&>(tagFilter);
-//      const std::vector<TagsDetector::Marker>& new_tags = tagProvider.getDetectedMarkers();
-//      for (const TagsDetector::Marker& marker : new_tags)
-//      {
-//        Eigen::Vector3d pos_camera;
-//        cv::cv2eigen(marker.tvec, pos_camera);
-//        Eigen::Vector3d marker_pos_in_world = cs->getWorldPosFromCamera(pos_camera);
-//
-//        // Adding Marker to detectedTagsb
-//        detectedTagsIndices.push_back(marker.id);
-//        detectedTagsPositions.push_back(marker_pos_in_world);
-//
-//        // Calculating the center of the tags on the image (x, y)
-//        // TODO, if the barycenter is not good enough, do better (crossing the
-//        // diags?)
-//        Eigen::Vector2d avg_in_img(0, 0);
-//        for (unsigned int i = 0; i < marker.corners.size(); i++)
-//        {
-//          avg_in_img += Eigen::Vector2d(marker.corners[i].x, marker.corners[i].y);
-//        }
-//        avg_in_img /= 4.0;
-//        // Rescaling to cameraModel image
-//        avg_in_img(0) *= cs->getCameraModel().getImgWidth() / size.width;
-//        avg_in_img(1) *= cs->getCameraModel().getImgHeight() / size.height;
-//        // Undistort position
-//        cv::Point2f avg_in_corrected;
-//        avg_in_corrected = cs->getCameraModel().toCorrectedImg(eigen2CV(avg_in_img));
-//        // Using a pair instead than a cv::Point so the structure is usable even
-//        // without opencv (will be read by the low level)
-//        std::pair<float, float> pair_in_img(avg_in_img(0), avg_in_img(1));
-//        std::pair<float, float> pair_undistorded(avg_in_corrected.x, avg_in_corrected.y);
-//        detectedTagsCenters.push_back(pair_in_img);
-//        detectedTagsCentersUndistort.push_back(pair_undistorded);
-//      }
-//    }
-//    catch (const std::bad_cast& exc)
-//    {
-//      tagsMutex.unlock();
-//      throw std::runtime_error("Invalid type for filter 'TagsDetector'");
-//    }
-//    catch (...)
-//    {
-//      tagsMutex.unlock();
-//      throw;
-//    }
-//    tagsMutex.unlock();
-//  }
+  //  for (const std::string& tagProviderName : tagProviders)
+  //  {
+  //    Vision::Filter& tagFilter = pipeline.get(tagProviderName);
+  //    cv::Size size = pipeline.get(tagProviderName).getImg()->size();
+  //    tagsMutex.lock();
+  //    detectedTimestamp = pipeline.getTimestamp().getTimeMS() / 1000.0;
+  //    try
+  //    {
+  //      const TagsDetector& tagProvider = dynamic_cast<const TagsDetector&>(tagFilter);
+  //      const std::vector<TagsDetector::Marker>& new_tags = tagProvider.getDetectedMarkers();
+  //      for (const TagsDetector::Marker& marker : new_tags)
+  //      {
+  //        Eigen::Vector3d pos_camera;
+  //        cv::cv2eigen(marker.tvec, pos_camera);
+  //        Eigen::Vector3d marker_pos_in_world = cs->getWorldPosFromCamera(pos_camera);
+  //
+  //        // Adding Marker to detectedTagsb
+  //        detectedTagsIndices.push_back(marker.id);
+  //        detectedTagsPositions.push_back(marker_pos_in_world);
+  //
+  //        // Calculating the center of the tags on the image (x, y)
+  //        // TODO, if the barycenter is not good enough, do better (crossing the
+  //        // diags?)
+  //        Eigen::Vector2d avg_in_img(0, 0);
+  //        for (unsigned int i = 0; i < marker.corners.size(); i++)
+  //        {
+  //          avg_in_img += Eigen::Vector2d(marker.corners[i].x, marker.corners[i].y);
+  //        }
+  //        avg_in_img /= 4.0;
+  //        // Rescaling to cameraModel image
+  //        avg_in_img(0) *= cs->getCameraModel().getImgWidth() / size.width;
+  //        avg_in_img(1) *= cs->getCameraModel().getImgHeight() / size.height;
+  //        // Undistort position
+  //        cv::Point2f avg_in_corrected;
+  //        avg_in_corrected = cs->getCameraModel().toCorrectedImg(eigen2CV(avg_in_img));
+  //        // Using a pair instead than a cv::Point so the structure is usable even
+  //        // without opencv (will be read by the low level)
+  //        std::pair<float, float> pair_in_img(avg_in_img(0), avg_in_img(1));
+  //        std::pair<float, float> pair_undistorded(avg_in_corrected.x, avg_in_corrected.y);
+  //        detectedTagsCenters.push_back(pair_in_img);
+  //        detectedTagsCentersUndistort.push_back(pair_undistorded);
+  //      }
+  //    }
+  //    catch (const std::bad_cast& exc)
+  //    {
+  //      tagsMutex.unlock();
+  //      throw std::runtime_error("Invalid type for filter 'TagsDetector'");
+  //    }
+  //    catch (...)
+  //    {
+  //      tagsMutex.unlock();
+  //      throw;
+  //    }
+  //    tagsMutex.unlock();
+  //  }
 }
 
 void Robocup::getUpdatedCameraStateFromPipeline()
@@ -1075,11 +1075,18 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
   // Tagging balls seen on current image
   for (const cv::Point3f& ballPosInWorld : *detectedBalls)
   {
-    cv::Point center = cs->imgXYFromWorldPosition(cv2Eigen(ballPosInWorld));
-    double ballRadius = cs->computeBallRadiusFromPixel(center);
-    if (ballRadius > 0)
+    try
     {
-      cv::circle(img, center, (int)ballRadius, cv::Scalar(0, 0, 0), 2);
+      cv::Point center = cs->imgXYFromWorldPosition(cv2Eigen(ballPosInWorld));
+      double ballRadius = cs->computeBallRadiusFromPixel(center);
+      if (ballRadius > 0)
+      {
+        cv::circle(img, center, (int)ballRadius, cv::Scalar(0, 0, 0), 2);
+      }
+    }
+    catch (const std::runtime_error& exc)
+    {
+      logger.warning("%s, cannot find imgXY from world for ballPos: '%s'", DEBUG_INFO, exc.what().c_str());
     }
   }
 
@@ -1123,13 +1130,13 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
     distortion_coeffs = cs->getCameraModel().getDistortionCoeffs();
     affineToCV(cs->camera_from_field, &rvec, &tvec);
 
-    cv::Scalar line_color(0,0,0);
-    double line_thickness = 2.0;//px
+    cv::Scalar line_color(0, 0, 0);
+    double line_thickness = 2.0;  // px
     int nb_segments = 10;
     Constants::field.tagLines(camera_matrix, distortion_coeffs, rvec, tvec, &img, line_color, line_thickness,
                               nb_segments);
     // Drawing tagged points
-    ViveService * vive = _scheduler->getServices()->vive;
+    ViveService* vive = _scheduler->getServices()->vive;
     if (vive->isActive())
     {
       Constants::field.tagPointsOfInterest(camera_matrix, distortion_coeffs, rvec, tvec, &img);
@@ -1261,8 +1268,8 @@ cv::Mat Robocup::getRadarImg(int width, int height)
       // Going from meters to pixels, and from the origin frame to the robot one
       // TODO: question, why do we use the max here???
       cv::Point2f obs_in_self = cs->getPosInSelf(storedObservations[i].first);
-      cv::Point2f obs_in_img(width/2 - obs_in_self.y * scale_factor, height / 2 - obs_in_self.x * scale_factor);
-      double default_radius = 3;// [px]
+      cv::Point2f obs_in_img(width / 2 - obs_in_self.y * scale_factor, height / 2 - obs_in_self.x * scale_factor);
+      double default_radius = 3;  // [px]
       double marker_size = 8;
       double marker_thickness = 2;
       if (obsType == "robot")
@@ -1280,7 +1287,7 @@ cv::Mat Robocup::getRadarImg(int width, int height)
       else
       {
         Field::POIType poiType = Field::string2POIType(obsType);
-        switch(poiType)
+        switch (poiType)
         {
           case Field::POIType::PostBase:
             cv::circle(img, obs_in_img, default_radius, cv::Scalar(255, 255, 255), -1);
@@ -1290,8 +1297,8 @@ cv::Mat Robocup::getRadarImg(int width, int height)
                            marker_size, marker_thickness);
             break;
           case Field::POIType::T:
-            cv::drawMarker(img, obs_in_img, cv::Scalar(255, 255, 255), cv::MarkerTypes::MARKER_TRIANGLE_UP,
-                           marker_size, marker_thickness);
+            cv::drawMarker(img, obs_in_img, cv::Scalar(255, 255, 255), cv::MarkerTypes::MARKER_TRIANGLE_UP, marker_size,
+                           marker_thickness);
             break;
           default:
             out.warning("Draw of POI of type '%s' is not implemented", obsType.c_str());
