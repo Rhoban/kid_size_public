@@ -2,7 +2,6 @@
 
 #include <map>
 #include <Eigen/Dense>
-#include <LegIK/LegIK.hpp>
 #include "rhoban_utils/spline/poly_spline.h"
 #include "robot_model/humanoid_model.h"
 #include "Model/HumanoidFixedModel.hpp"
