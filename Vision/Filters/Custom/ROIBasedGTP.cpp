@@ -25,48 +25,62 @@ int ROIBasedGTP::expectedDependencies() const
   return 2;
 }
 
+void ROIBasedGTP::setParameters()
+{
+  GroundTruthProvider::setParameters();
+  nbGeneratedPatches = ParamInt(5, 0, 20);
+  maxPosNoise = ParamInt(5, 0, 20);
+  maxRatioNoise = ParamFloat(0.1, 0.0, 1.0);
+
+  params()->define<ParamInt>("nbGeneratedPatches", &nbGeneratedPatches);
+  params()->define<ParamInt>("maxPosNoise", &maxPosNoise);
+  params()->define<ParamFloat>("maxRatioNoise", &maxRatioNoise);
+}
+
 std::vector<cv::Rect_<float>> ROIBasedGTP::generateROIs()
 {
+  std::uniform_int_distribution<int> pos_distribution(-maxPosNoise, maxPosNoise);
+  // See formula below to understand how negative ratios are used, just making sure that center is no transformation
+  std::uniform_real_distribution<double> ratio_distribution(-maxRatioNoise, maxRatioNoise);
 
-  std::random_device rd;     // only used once to initialise (seed) engine
-  std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
-  std::uniform_int_distribution<int> uni(-5, 5); // guaranteed unbiased
-  
   int width = this->getSourceImg().cols;
   int height = this->getSourceImg().rows;
+  cv::Size img_size(width, height);
 
   std::vector<cv::Rect_<float>> rois;
-  for (const auto& entry: getDependency(1).getRois())
+  for (const auto& entry : getDependency(1).getRois())
   {
-    rois.push_back(Utils::toRect(entry.second));
-    auto rect = Utils::toRect(entry.second);
-    // logger.log("%d, %d, %d, %d", rect.x, rect.y, rect.width, rect.height);
+    cv::Rect_<float> original_rect = Utils::toRect(entry.second);
+    rois.push_back(original_rect);
 
-    // Data Augmentation
-
-    int x_offset;
-    int y_offset;
-    int nbTranslations = 5;
-    for(int i = 0 ; i < nbTranslations ; i++)
+    for (int i = 0; i < nbGeneratedPatches; i++)
     {
-      x_offset = uni(rng);
-      y_offset = uni(rng);
-
-      while(rect.x+x_offset < 0 || rect.x+x_offset+rect.width > width-1 ||
-	    rect.y+y_offset < 0 || rect.y+y_offset+rect.height > height-1)
+      // Note: no distinction between width and height because roi are squares
+      double original_size = original_rect.width;
+      double size_ratio = ratio_distribution(engine);
+      double size_increase;
+      if (size_ratio > 0)
       {
-	x_offset = uni(rng);
-	y_offset = uni(rng);
+        size_increase = original_size * size_ratio;
       }
+      else
+      {
+        size_increase = -original_size / size_ratio;
+      }
+      //
+      cv::Point2f new_tl = original_rect.tl();
+      new_tl.x += pos_distribution(engine) - size_increase / 2;
+      new_tl.y += pos_distribution(engine) - size_increase / 2;
 
-      rect.x += x_offset;
-      rect.y += y_offset;
-      
-      rois.push_back(rect);      
-      // logger.log("%d, %d", x_offset, y_offset);
+      int new_size = original_size + size_increase;
+      cv::Rect2f new_roi(new_tl, cv::Size(new_size, new_size));
+
+      if (!Utils::isContained(new_roi, img_size))
+      {
+        continue;
+      }
+      rois.push_back(new_roi);
     }
-    
-    
   }
   return rois;
 }
