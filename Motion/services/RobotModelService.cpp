@@ -61,9 +61,9 @@ RobotModelService::RobotModelService()
   }
 
   // IMU
-  histories.number("imu_gyro_yaw");
-  histories.number("imu_pitch");
-  histories.number("imu_roll");
+  histories.angle("imu_gyro_yaw");
+  histories.angle("imu_pitch");
+  histories.angle("imu_roll");
 
   // Pressure sensors
   histories.number("left_pressure_weight");
@@ -130,6 +130,7 @@ bool RobotModelService::tick(double elapsed)
     LocalisationService* localisationService = getServices()->localisation;
     auto ballWorld = localisationService->getBallPosWorld();
     server.setBallPosition(Eigen::Vector3d(ballWorld.x, ballWorld.y, 0));
+    server.setFieldPose(localisationService->world_from_field);
     server.publishModel(model, false);
   }
 
