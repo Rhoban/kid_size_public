@@ -251,6 +251,7 @@ void Placer::step(float elapsed)
     for (const auto& mate_entry : loc->getTeamMatesField())
     {
       rhoban_geometry::Point pos(mate_entry.second(0), mate_entry.second(1));
+
       avoider.addObstacle(pos, loc->teamMatesRadius);
     }
   }
@@ -383,7 +384,8 @@ void Placer::step(float elapsed)
   }
   else
   {
-    if (fabs(turner.output) > 4) {
+    if (fabs(turner.output) > 4)
+    {
       lateraler.output = 0;
     }
     walk->control(true, stepper.output, lateraler.output, turner.output);
