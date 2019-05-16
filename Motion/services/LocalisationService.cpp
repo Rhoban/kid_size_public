@@ -55,8 +55,8 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   // Visual compass
   visualCompassActivated = false;
 
-  self_from_world = Eigen::Affine3d::Identity();
-  field_from_world = Eigen::Affine3d::Identity();
+  world_from_self = self_from_world = Eigen::Affine3d::Identity();
+  world_from_field = field_from_world = Eigen::Affine3d::Identity();
 
   bind.bindFunc("fakeBall", "Set a fake ball observation in model world", &LocalisationService::cmdFakeBall, *this);
   bind.node().newCommand("fakeOpponents", "Fake opponents",

@@ -167,7 +167,7 @@ void CameraState::updateInternalModel(double timeStamp)
     RobotModelService *robotModel = _moveScheduler->getServices()->robotModel;
 
     selfToWorld = robotModel->selfToWorld(timeStamp);
-    worldToCamera = robotModel->cameraToWorld(timeStamp);
+    worldToCamera = robotModel->cameraToWorld(timeStamp).inverse();
     _cameraModel = robotModel->cameraModel;
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
@@ -361,30 +361,22 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
     return -1;
   }
 
-  try
-  {
-    Eigen::Vector3d ballCenter = getIntersection(viewRay, ballPlane);
+  Eigen::Vector3d ballCenter = getIntersection(viewRay, ballPlane);
 
-    // Getting a perpendicular direction. We know that viewRay.dir.z<0, thus the
-    // vectors will be different
-    Eigen::Vector3d groundDir = viewRay.dir;
-    groundDir(2) = 0;
-    Eigen::Vector3d altDir = viewRay.dir.cross(groundDir).normalized();
+  // Getting a perpendicular direction. We know that viewRay.dir.z<0, thus the
+  // vectors will be different
+  Eigen::Vector3d groundDir = viewRay.dir;
+  groundDir(2) = 0;
+  Eigen::Vector3d altDir = viewRay.dir.cross(groundDir).normalized();
 
-    // Getting one of the points on the side of the ball, this is not an exact
-    // method, but the approximation should be good enough
-    Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ball_radius;
+  // Getting one of the points on the side of the ball, this is not an exact
+  // method, but the approximation should be good enough
+  Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ball_radius;
 
-    // Getting pixel for ballSide
-    cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
+  // Getting pixel for ballSide
+  cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
 
-    return (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
-  }
-  catch (const std::runtime_error& exc)
-  {
-    logger.warning("%s: Failed to compute ball radius: %s", DEBUG_INFO.c_str(), exc.what());
-    return -1;
-  }
+  return (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
 }
 
 Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f& pos) const

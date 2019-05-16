@@ -206,8 +206,8 @@ void RobotModelService::tickLog()
   double timestamp = getLastReadTimestamp();
 
   // Logging main poses
-  histories.pose("camera")->pushValue(timestamp, model.frameToWorld("camera"));
-  histories.pose("trunk")->pushValue(timestamp, model.frameToWorld("trunk"));
+  histories.pose("camera")->pushValue(timestamp, model.frameToWorld("camera", false));
+  histories.pose("trunk")->pushValue(timestamp, model.frameToWorld("trunk", false));
   histories.pose("self")->pushValue(timestamp, model.selfToWorld());
 
   // Logging DOFs
