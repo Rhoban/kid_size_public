@@ -171,7 +171,7 @@ void WalkEngine::newStep()
     // For both feet, computing the new position in the
     Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
     sFoot = (sFoot - center).rotation(rad2deg(-stepSizeYaw / 2.0)) + center;
-    Point sFootSpeed = speed.rotation(rad2deg(-stepSizeYaw / 2.0));
+    Point sFootSpeed = -speed.rotation(rad2deg(-stepSizeYaw / 2.0));
     supportFoot().xSpline.addPoint(stepDuration, sFoot.x, sFootSpeed.x / stepDuration);
     supportFoot().ySpline.addPoint(stepDuration, sFoot.y, sFootSpeed.y / stepDuration);
 

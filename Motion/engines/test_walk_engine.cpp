@@ -15,7 +15,9 @@ int main()
   rhoban::WalkEngine engine;
   engine.initByModel(model);
 
-  engine.stepSizeYaw = 1;
+  engine.frequency = 1;
+  engine.stepSizeYaw = 0.2;
+  engine.stepSizeX = 0.06;
   engine.trunkPitch = 0.6;
   engine.newStep();
 
