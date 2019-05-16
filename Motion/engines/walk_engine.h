@@ -4,7 +4,6 @@
 #include <Eigen/Dense>
 #include "rhoban_utils/spline/poly_spline.h"
 #include "robot_model/humanoid_model.h"
-#include "Model/HumanoidFixedModel.hpp"
 
 namespace rhoban
 {
