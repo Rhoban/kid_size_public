@@ -172,28 +172,28 @@ void WalkEngine::newStep()
     Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
     sFoot = (sFoot - center).rotation(rad2deg(-stepSizeYaw / 2.0)) + center;
     Point sFootSpeed = -speed.rotation(rad2deg(-stepSizeYaw / 2.0));
-    supportFoot().xSpline.addPoint(stepDuration, sFoot.x, sFootSpeed.x / stepDuration);
-    supportFoot().ySpline.addPoint(stepDuration, sFoot.y, sFootSpeed.y / stepDuration);
+    supportFoot().xSpline.addPoint(stepDuration, sFoot.x, sFootSpeed.x);
+    supportFoot().ySpline.addPoint(stepDuration, sFoot.y, sFootSpeed.y);
 
     Point fFoot(trunkXOffset, flyingFoot().trunkYOffset);
     fFoot = (fFoot - center).rotation(rad2deg(stepSizeYaw / 2.0)) + center;
     Point fFootSpeed = -speed.rotation(rad2deg(stepSizeYaw / 2.0));
-    flyingFoot().xSpline.addPoint(stepDuration, fFoot.x, fFootSpeed.x / stepDuration);
-    flyingFoot().ySpline.addPoint(stepDuration, fFoot.y, fFootSpeed.y / stepDuration);
+    flyingFoot().xSpline.addPoint(stepDuration, fFoot.x, fFootSpeed.x);
+    flyingFoot().ySpline.addPoint(stepDuration, fFoot.y, fFootSpeed.y);
   }
   else
   {
-    supportFoot().xSpline.addPoint(stepDuration, trunkXOffset - stepSizeX / 2.0, -stepSizeX / stepDuration);
+    supportFoot().xSpline.addPoint(stepDuration, trunkXOffset - stepSizeX / 2.0, -stepSizeX);
     supportFoot().ySpline.addPoint(stepDuration, supportFoot().trunkYOffset - stepSizeY / 2.0,
-                                   -stepSizeY / stepDuration);
+                                   -stepSizeY);
 
-    flyingFoot().xSpline.addPoint(stepDuration, trunkXOffset + stepSizeX / 2.0, -stepSizeX / stepDuration);
-    flyingFoot().ySpline.addPoint(stepDuration, flyingFoot().trunkYOffset + stepSizeY / 2.0, -stepSizeY / stepDuration);
+    flyingFoot().xSpline.addPoint(stepDuration, trunkXOffset + stepSizeX / 2.0, -stepSizeX);
+    flyingFoot().ySpline.addPoint(stepDuration, flyingFoot().trunkYOffset + stepSizeY / 2.0, -stepSizeY);
   }
 
   // Yaw spline
-  supportFoot().yawSpline.addPoint(stepDuration, -stepSizeYaw / 2, -stepSizeYaw / stepDuration);
-  flyingFoot().yawSpline.addPoint(stepDuration, stepSizeYaw / 2, -stepSizeYaw / stepDuration);
+  supportFoot().yawSpline.addPoint(stepDuration, -stepSizeYaw / 2, -stepSizeYaw);
+  flyingFoot().yawSpline.addPoint(stepDuration, stepSizeYaw / 2, -stepSizeYaw);
 }
 
 void WalkEngine::reset()
