@@ -101,8 +101,7 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
       ->maximum(150.0);
   bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-165.0)->minimum(-200.0)->maximum(30.0);
   bind->bindNew("armsEnabled", armsEnabled, RhIO::Bind::PullOnly)->defaultValue(armsEnabled);
-  bind->bindNew("safeArmsRollEnabled", safeArmsRollEnabled, RhIO::Bind::PullOnly)
-      ->defaultValue(safeArmsRollEnabled);
+  bind->bindNew("safeArmsRollEnabled", safeArmsRollEnabled, RhIO::Bind::PullOnly)->defaultValue(safeArmsRollEnabled);
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
@@ -160,10 +159,20 @@ void Walk::control(bool enable, double step, double lateral, double turn)
 {
   if (isRunning())
   {
+    step = bound(step, -maxStepBackward, maxStep);
+    lateral = bound(lateral, -maxLateral, maxLateral);
+    turn = bound(turn, -maxRotation, maxRotation);
+
+    double magnitude = fabs(step) / maxStep + fabs(turn) / maxRotation + fabs(lateral) / maxLateral;
+    if (magnitude < 1)
+    {
+      magnitude = 1;
+    }
+
     bind->node().setBool("walkEnable", enable);
-    bind->node().setFloat("walkStep", bound(step, -maxStepBackward, maxStep));
-    bind->node().setFloat("walkLateral", bound(lateral, -maxLateral, maxLateral));
-    bind->node().setFloat("walkTurn", bound(turn, -maxRotation, maxRotation));
+    bind->node().setFloat("walkStep", step / magnitude);
+    bind->node().setFloat("walkLateral", lateral / magnitude);
+    bind->node().setFloat("walkTurn", turn / magnitude);
   }
 }
 
