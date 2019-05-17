@@ -196,6 +196,8 @@ void WalkEngine::reset()
   isLeftSupport = false;
 
   stepDuration = 1.0 / (2 * frequency);
+  left.clearSplines();
+  right.clearSplines();
   left.xSpline.addPoint(stepDuration, 0, 0);
   left.ySpline.addPoint(stepDuration, left.trunkYOffset, 0);
   left.yawSpline.addPoint(stepDuration, 0, 0);
