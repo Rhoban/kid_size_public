@@ -44,8 +44,8 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 
   // Walk limits (to inform other moves about limits)
   bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(15);
-  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.065);
-  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(0.035);
+  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.1);
+  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(0.04);
   bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(0.030);
 
   // Walk engine parameters
@@ -61,6 +61,7 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("footYOffsetPerStepSizeY", engine.footYOffsetPerStepSizeY, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerStepSizeY);
   bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch);
+  bind->bindNew("speedInflexion", engine.speedInflexion, RhIO::Bind::PullOnly)->defaultValue(engine.speedInflexion);
 
   // XXX: This feature can be deleted later if it is of no use
   bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps);

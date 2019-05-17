@@ -67,6 +67,7 @@ public:
   double footDistance;
   double footYOffsetPerStepSizeY;
   double trunkPitch;
+  double speedInflexion;
 
   // Dynamics orders
   double stepSizeX, stepSizeY, stepSizeYaw;
