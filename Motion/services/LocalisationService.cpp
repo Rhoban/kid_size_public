@@ -52,8 +52,6 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   fieldQ = 0;
   fieldConsistency = 0;
   consistencyEnabled = false;
-  // Visual compass
-  visualCompassActivated = false;
 
   world_from_self = self_from_world = Eigen::Affine3d::Identity();
   world_from_field = field_from_world = Eigen::Affine3d::Identity();
@@ -562,16 +560,6 @@ void LocalisationService::bordersReset()
   {
     robocup->robotsClear();
   }
-}
-
-void LocalisationService::setVisualCompassStatus(bool inUse)
-{
-  visualCompassActivated = inUse;
-}
-
-bool LocalisationService::getVisualCompassStatus() const
-{
-  return visualCompassActivated;
 }
 
 bool LocalisationService::isVisionActive() const
