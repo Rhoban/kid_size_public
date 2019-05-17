@@ -54,7 +54,7 @@ RefereeService::RefereeService()
   bind->bindNew("alive", alive, RhIO::Bind::PullOnly)->comment("Referee alive status")->defaultValue(2);
 
   bind->bindFunc("infoPlaying", "Are we playing?", &RefereeService::cmdPlaying, *this);
-  bind->bindNew("throwIn", throwIn,  RhIO::Bind::PushOnly)->defaultValue(false);
+  bind->bindNew("throwIn", throwIn, RhIO::Bind::PushOnly)->defaultValue(false);
 
   bind->pull();
 
@@ -166,14 +166,15 @@ bool RefereeService::isDroppedBall()
 bool RefereeService::isGameInterruption()
 {
   const auto& gs = getGameState();
-  switch(gs.getSecGameState()) {
-  case Constants::STATE2_DIRECT_FREE_KICK: 
-  case Constants::STATE2_INDIRECT_FREE_KICK:
-  case Constants::STATE2_PENALTY_KICK:
-  case Constants::STATE2_CORNER_KICK:
-  case Constants::STATE2_GOAL_KICK:
-  case Constants::STATE2_THROW_IN:
-    return true;
+  switch (gs.getSecGameState())
+  {
+    case Constants::STATE2_DIRECT_FREE_KICK:
+    case Constants::STATE2_INDIRECT_FREE_KICK:
+    case Constants::STATE2_PENALTY_KICK:
+    case Constants::STATE2_CORNER_KICK:
+    case Constants::STATE2_GOAL_KICK:
+    case Constants::STATE2_THROW_IN:
+      return true;
   }
   return false;
 }
@@ -195,17 +196,15 @@ bool RefereeService::myTeamGameInterruption()
 bool RefereeService::isThrowIn()
 {
   const auto& gs = getGameState();
-  if( gs.getSecGameState() == Constants::STATE2_THROW_IN)
-    {
-      throwIn = true;
-      return true;
-    }
+  if (gs.getSecGameState() == Constants::STATE2_THROW_IN)
+  {
+    throwIn = true;
+    return true;
+  }
 
   else
     return false;
-  
 }
-
 
 bool RefereeService::isPenalized()
 {
@@ -449,9 +448,9 @@ void RefereeService::setTextualState()
     _state = "Penalized ";
   }
   else if (isThrowIn())
-    {
-      _state = "ThrowIn";
-    }
+  {
+    _state = "ThrowIn";
+  }
   else
   {
     _state = "Not playing ";
