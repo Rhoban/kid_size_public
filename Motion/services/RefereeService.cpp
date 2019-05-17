@@ -165,7 +165,8 @@ bool RefereeService::isDroppedBall()
 bool RefereeService::isGameInterruption()
 {
   const auto& gs = getGameState();
-  switch(gs.getSecGameState()) {
+  switch (gs.getSecGameState())
+  {
     case Constants::STATE2_DIRECT_FREE_KICK:
     case Constants::STATE2_INDIRECT_FREE_KICK:
     case Constants::STATE2_PENALTY_KICK:
@@ -189,6 +190,11 @@ bool RefereeService::myTeamGameInterruption()
 {
   const auto& gs = getGameState();
   return gs.getSecondaryTeam() == teamId;
+}
+
+bool RefereeService::isThrowIn()
+{
+  return lastGameInterruptionType == Constants::STATE2_THROW_IN;
 }
 
 bool RefereeService::isPenalized()
