@@ -89,7 +89,7 @@ std::map<std::string, double> WalkEngine::computeAngles(rhoban::HumanoidModel& m
 
   Eigen::Affine3d trunkPitchRot(Eigen::AngleAxisd(-trunkPitch, Eigen::Vector3d::UnitY()));
 
-  // XXX: Yaw in the trunk frame appear to behave in the wrong orientation here
+  // XXX: Yaw in the trunk frame appear to behave in the wrong orientation in LegIK
   std::map<std::string, double> angles;
   bool success = true;
   if (!model.computeLegIK(
@@ -204,6 +204,8 @@ void WalkEngine::reset()
   isLeftSupport = false;
 
   stepDuration = 1.0 / (2 * frequency);
+  left.clearSplines();
+  right.clearSplines();
   left.xSpline.addPoint(stepDuration, 0, 0);
   left.ySpline.addPoint(stepDuration, left.trunkYOffset, 0);
   left.yawSpline.addPoint(stepDuration, 0, 0);
