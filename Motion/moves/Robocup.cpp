@@ -11,7 +11,7 @@
 #include "Head.h"
 #include "Walk.h"
 
-#include "rhoban_utils/logging/logger.h"
+#include <rhoban_utils/logging/logger.h>
 
 #define STATE_INITIAL "initial"
 #define STATE_WAITING "waiting"
@@ -25,6 +25,7 @@
 
 static rhoban_utils::Logger logger("RobocupSTM");
 
+using namespace hl_communication;
 using namespace rhoban_geometry;
 using namespace rhoban_team_play;
 
@@ -89,16 +90,12 @@ void Robocup::onStart()
 
   timeSinceNoConsistency = 0;
   timeSinceVisionInactive = 0;
-
-  setTeamPlayState(Inactive);
 }
 
 void Robocup::onStop()
 {
   stopMove("head");
   setState(STATE_STOPPING);
-
-  setTeamPlayState(Unknown);
 }
 
 void Robocup::applyGameState()
@@ -235,7 +232,6 @@ void Robocup::applyGameState()
 void Robocup::step(float elapsed)
 {
   auto& decision = getServices()->decision;
-  getServices()->teamPlay->selfInfo().goalKeeper = goalKeeper;
   bind->pull();
 
   // We gave up, just die
@@ -305,8 +301,9 @@ void Robocup::step(float elapsed)
     {
       // Forwarding the captain order to the target
       auto captain = getServices()->captain;
-      auto instruction = captain->getInstruction();
-      placer->goTo(instruction.targetPosition.x, instruction.targetPosition.y, instruction.targetOrientation);
+      StrategyOrder order = captain->getMyOrder();
+      const PoseDistribution& target = order.target_pose();
+      placer->goTo(target.position().x(), target.position().y(), target.dir().mean());
     }
   }
 
@@ -339,7 +336,7 @@ void Robocup::step(float elapsed)
       timeSinceVisionInactive = 0;
     }
 
-    if (!loc->getVisualCompassStatus() && loc->fieldConsistency <= 0.1 && loc->consistencyEnabled)
+    if (loc->fieldConsistency <= 0.1 && loc->consistencyEnabled)
     {
       timeSinceNoConsistency += elapsed;
 
@@ -432,7 +429,6 @@ void Robocup::enterState(std::string state)
     walk->control(false);
     stopMove("walk", 0.3);
     startMove("standup", 0.0);
-    setTeamPlayState(Inactive);
   }
 
   if (state == STATE_PLACING)
@@ -440,11 +436,6 @@ void Robocup::enterState(std::string state)
     walk->control(true);
     startMove("placer");
     logger.log("Starting placer");
-    setTeamPlayState(Playing);
-  }
-  else
-  {
-    setTeamPlayState(Inactive);
   }
 
   if (state == STATE_PLAYING)
@@ -520,7 +511,7 @@ void Robocup::exitState(std::string state)
   }
 }
 
-void Robocup::setTeamPlayState(TeamPlayState state)
+bool Robocup::isGoalKeeper() const
 {
-  getServices()->teamPlay->selfInfo().state = state;
+  return goalKeeper;
 }

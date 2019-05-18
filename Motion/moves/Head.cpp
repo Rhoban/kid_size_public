@@ -1,6 +1,6 @@
 #include "Head.h"
 
-#include "services/ModelService.h"
+#include "services/RobotModelService.h"
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
 
@@ -28,9 +28,6 @@ Head::Head()
 {
   Move::initializeBinding();
   // Special modes variables
-  bind->bindNew("forceCompass", force_compass, RhIO::Bind::PullOnly)
-      ->comment("Special mode: looking above to get visual compass observation")
-      ->defaultValue(false);
   bind->bindNew("forceLocalize", force_localize, RhIO::Bind::PullOnly)
       ->comment("Special scanning mode: not looking nearby")
       ->defaultValue(false);
@@ -63,16 +60,6 @@ Head::Head()
   bind->bindNew("localizeMinOverlap", localize_min_overlap, RhIO::Bind::PullOnly)
       ->comment("Minimal overlap between control points [degrees]")
       ->defaultValue(5);
-  // Compass scan parameters
-  bind->bindNew("compassMinTilt", compass_min_tilt, RhIO::Bind::PullOnly)
-      ->comment("Minimum tilt wished for an image point")
-      ->defaultValue(-30);
-  bind->bindNew("compassMaxTilt", compass_max_tilt, RhIO::Bind::PullOnly)
-      ->comment("Maximum tilt wished for an image point")
-      ->defaultValue(10);
-  bind->bindNew("compassMaxPan", compass_max_pan, RhIO::Bind::PullOnly)
-      ->comment("Maximum pan wished for an image point")
-      ->defaultValue(160);
   // Speed and acc limits for orders
   // WARNING: persisted, because 'Tom' has a different camera requiring a higher shutter
   bind->bindNew("maxSpeed", max_speed, RhIO::Bind::PullOnly)
@@ -80,9 +67,6 @@ Head::Head()
       ->defaultValue(240)
       ->persisted(true);
   bind->bindNew("maxAcc", max_acc, RhIO::Bind::PullOnly)->comment("Maximal acceleration [deg/s^2]")->defaultValue(3600);
-  bind->bindNew("vcMaxSpeed", vc_max_speed, RhIO::Bind::PullOnly)
-      ->comment("Maximal angular speed with visual compass [deg/s]")
-      ->defaultValue(60);
   // Tracking
   bind->bindNew("maxTiltTrack", max_tilt_track, RhIO::Bind::PullOnly)
       ->comment("Maximum tilt wished for the center of the image when tracking")
@@ -96,8 +80,6 @@ Head::Head()
   bind->bindNew("scanPeriod", scan_period, RhIO::Bind::PushOnly)->comment("Duration of scan cycle [s]");
   bind->bindNew("localizeScanPeriod", localize_scan_period, RhIO::Bind::PushOnly)
       ->comment("Duration of scan cycle in localize mode [s]");
-  bind->bindNew("compassScanPeriod", compass_scan_period, RhIO::Bind::PushOnly)
-      ->comment("Duration of scan cycle in compassMode [s]");
   bind->bindNew("scanExtraPeriod", scan_extra_period, RhIO::Bind::PullOnly)
       ->comment("Extra time to ensure we are looking everywhere [s]")
       ->defaultValue(0.5);
@@ -175,26 +157,13 @@ void Head::step(float elapsed)
   LocalisationService* loc = getServices()->localisation;
 
   // Use Model and camera parameters to determine position
-  Leph::HumanoidModel* model = nullptr;
-  if (Helpers::isFakeMode())
-  {
-    model = &(Helpers::getServices()->model->goalModel().get());
-  }
-  else
-  {
-    model = &(Helpers::getServices()->model->correctedModel().get());
-  }
-  const Leph::CameraModel& camera_model = Helpers::getServices()->model->getCameraModel();
+  rhoban::HumanoidModel* model = &getServices()->robotModel->model;
+  const rhoban::CameraModel& camera_model = getServices()->robotModel->cameraModel;
 
   Eigen::Vector3d target_in_self;
   if (disabled)
   {
     target_in_self = Eigen::Vector3d(1, 0, 0);
-  }
-  else if (force_compass || loc->getVisualCompassStatus())
-  {
-    target_in_self = getScanTarget(model, compass_scanner);
-    is_tracking = false;
   }
   else if (force_localize)
   {
@@ -217,11 +186,14 @@ void Head::step(float elapsed)
   target_x = target_in_self[0];
   target_y = target_in_self[1];
 
-  Eigen::Vector3d target_in_world = model->selfInFrame("origin", target_in_self);
+  Eigen::Vector3d target_in_world = model->selfToWorld() * target_in_self;
 
   double wished_pan_rad, wished_tilt_rad;
 
-  bool modelSuccess = model->cameraLookAtNoUpdate(wished_pan_rad, wished_tilt_rad, target_in_world);
+  bool modelSuccess = model->cameraLookAt(wished_pan_rad, wished_tilt_rad, target_in_world);
+
+  wished_pan = rad2deg(wished_pan_rad);
+  wished_tilt = rad2deg(wished_tilt_rad);
 
   if (!modelSuccess)
   {
@@ -319,9 +291,9 @@ bool Head::shouldTrackBall()
   return scanning_time > scan_period + scan_extra_period;
 }
 
-Eigen::Vector3d Head::getScanTarget(Leph::HumanoidModel* model, const HeadScan& scannerUsed)
+Eigen::Vector3d Head::getScanTarget(rhoban::HumanoidModel* model, const HeadScan& scannerUsed)
 {
-  double robotHeight = model->frameInSelf("camera", Eigen::Vector3d::Zero())(2);  //[m]
+  double robotHeight = model->position("camera", "support_foot").z();
 
   /// Reading wished pan/tilt for scanning
   Eigen::Vector2d wished_pan_tilt = scannerUsed.getTarget(scanning_time);
@@ -353,9 +325,9 @@ Eigen::Vector3d Head::getScanTarget(Leph::HumanoidModel* model, const HeadScan& 
   return target_in_self;
 }
 
-Eigen::Vector3d Head::getBallTarget(Leph::HumanoidModel* model, const Leph::CameraModel& camera_model)
+Eigen::Vector3d Head::getBallTarget(rhoban::HumanoidModel* model, const rhoban::CameraModel& camera_model)
 {
-  double robotHeight = model->frameInSelf("camera", Eigen::Vector3d::Zero())(2);  //[m]
+  double robotHeight = model->position("camera", "support_foot").z();  //[m]
 
   LocalisationService* loc = getServices()->localisation;
   auto point = loc->getPredictedBallSelf();
@@ -378,7 +350,7 @@ Eigen::Vector3d Head::getBallTarget(Leph::HumanoidModel* model, const Leph::Came
 
 void Head::updateScanners()
 {
-  const Leph::CameraModel camera_model = Helpers::getServices()->model->getCameraModel();
+  const rhoban::CameraModel& camera_model = getServices()->robotModel->cameraModel;
   double fovx = camera_model.getFOVX().getSignedValue();
   double fovy = camera_model.getFOVY().getSignedValue();
   // Update default scanner
@@ -395,24 +367,13 @@ void Head::updateScanners()
   localize_scanner.setMaxPan(localize_max_pan);
   localize_scanner.setMinOverlap(localize_min_overlap);
   localize_scanner.setControlLaw(max_speed, max_acc);
-  // update compass_scanner
-  double tmp_max_speed = vc_max_speed;
-  double tmp_max_pan = compass_max_pan;
-  compass_scanner.setFOV(fovx, fovy);
-  compass_scanner.setMinTilt(compass_min_tilt);
-  compass_scanner.setMaxTilt(compass_max_tilt);
-  compass_scanner.setMaxPan(tmp_max_pan);
-  compass_scanner.setMinOverlap(0);  // We don't care about overlap for compass
-  compass_scanner.setControlLaw(tmp_max_speed, max_acc);
 
   // Update trajectory if parameters have changed
   scanner.synchronize();
   localize_scanner.synchronize();
-  compass_scanner.synchronize();
   // Update scan periods parameters
   scan_period = scanner.getCycleDuration();
   localize_scan_period = localize_scanner.getCycleDuration();
-  compass_scan_period = compass_scanner.getCycleDuration();
 }
 
 void Head::applyProtection()

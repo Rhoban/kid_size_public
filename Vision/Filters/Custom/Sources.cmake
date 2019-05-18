@@ -5,8 +5,6 @@ set (SOURCES
   Recorder.cpp
   ROIBasedGTP.cpp
   ColorDensity.cpp
-  FieldBorder.cpp
-  FieldBorderData.cpp
-  ClippingByBorder.cpp
   WhiteLines.cpp
+  EverythingByDNN.cpp
 )

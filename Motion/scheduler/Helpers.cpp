@@ -3,7 +3,7 @@
 #include <rhoban_utils/logging/logger.h>
 #include "services/Services.h"
 #include "scheduler/MoveScheduler.h"
-#include "services/ModelService.h"
+#include "services/RobotModelService.h"
 #include "services/LocalisationService.h"
 #include "Helpers.h"
 #include <Devices/GY85.hpp>
@@ -90,8 +90,6 @@ void Helpers::stopMove(const std::string& moveName, double fade) const
 void Helpers::setAngle(const std::string& servo, float angle)
 {
   _scheduler->getManager()->dev<RhAL::DXL>(servo).goalPosition().writeValue(angle);
-  _scheduler->getServices()->model->goalModel().get().setDOF(
-      servo, _scheduler->getManager()->dev<RhAL::DXL>(servo).goalPosition().getWrittenValue() * M_PI / 180.0);
 }
 
 void Helpers::setTorqueLimit(const std::string& servo, float torque)
@@ -160,12 +158,36 @@ float Helpers::getAngle(const std::string& servo)
 {
   if (isFakeMode())
   {
-    return getServices()->model->goalModel().get().getDOF(servo);
+    return getServices()->robotModel->model.getDof(servo);
   }
   else
   {
     return _scheduler->getManager()->dev<RhAL::DXL>(servo).position().readValue().value;
   }
+}
+
+float Helpers::getGoalAngle(const std::string& servo)
+{
+  return _scheduler->getManager()->dev<RhAL::DXL>(servo).goalPosition().getWrittenValue();
+}
+
+double Helpers::getLastReadTimestamp()
+{
+  // Retrieve the RhAL Manager
+  RhAL::StandardManager* manager = getScheduler()->getManager();
+  // Compute the max timestamp over
+  // all DOF and look for communication error
+  RhAL::TimePoint timestamp;
+  for (const std::string& name : getServices()->robotModel->model.getDofNames())
+  {
+    RhAL::ReadValueFloat value = manager->dev<RhAL::DXL>(name).position().readValue();
+    if (timestamp < value.timestamp)
+    {
+      timestamp = value.timestamp;
+    }
+  }
+
+  return RhAL::duration_float(timestamp);
 }
 
 float Helpers::getError(const std::string& servo)
@@ -216,33 +238,17 @@ void Helpers::setFakeBallPosition(double x, double y)
   loc->cmdFakeBall(x, y);
 }
 
-float Helpers::getYaw()
-{
-  if (Helpers::fakeIMU) {
-    return Helpers::fakeYaw;
-  }
-
-  if (isFakeMode())
-  {
-    return _scheduler->getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
-  }
-  else
-  {
-    auto& gy85 = _scheduler->getManager()->dev<RhAL::GY85>("imu");
-    return gy85.getYaw();
-  }
-}
-
-
 float Helpers::getPitch()
 {
-  if (Helpers::fakeIMU) {
+  if (Helpers::fakeIMU)
+  {
     return Helpers::fakePitch;
   }
 
   if (isFakeMode())
   {
-    return _scheduler->getServices()->model->goalModel().get().trunkSelfOrientation().y();
+    // XXX: Do we care about having a pitch in fake mode ?
+    return 0.0;
   }
   else
   {
@@ -253,13 +259,15 @@ float Helpers::getPitch()
 
 float Helpers::getRoll()
 {
-  if (Helpers::fakeIMU) {
+  if (Helpers::fakeIMU)
+  {
     return Helpers::fakeRoll;
   }
 
   if (isFakeMode())
   {
-    return _scheduler->getServices()->model->goalModel().get().trunkSelfOrientation().x();
+    // XXX: Do we care about having a roll in fake mode ?
+    return 0.0;
   }
   else
   {
@@ -270,13 +278,14 @@ float Helpers::getRoll()
 
 float Helpers::getGyroYaw()
 {
-  if (Helpers::fakeIMU) {
+  if (Helpers::fakeIMU)
+  {
     return Helpers::fakeYaw;
   }
 
   if (isFakeMode())
   {
-    return _scheduler->getServices()->model->goalModel().get().orientationYaw("trunk", "origin");
+    return rhoban::frameYaw(getServices()->robotModel->model.selfToWorld().rotation());
   }
   else
   {
@@ -294,7 +303,7 @@ void Helpers::updatePressure()
 
   if (isFakeMode())
   {
-    if (_scheduler->getServices()->model->goalModel().getSupportFoot() == Leph::HumanoidFixedModel::LeftSupportFoot)
+    if (_scheduler->getServices()->robotModel->model.supportFoot == rhoban::HumanoidModel::Left)
     {
       pressureLeftWeight = 1.0;
       pressureRightWeight = 0.0;
@@ -319,8 +328,8 @@ void Helpers::updatePressure()
   }
 }
 
-void Helpers::setFakePressure(double left_x, double left_y, double left_weight, 
-                              double right_x, double right_y, double right_weight)
+void Helpers::setFakePressure(double left_x, double left_y, double left_weight, double right_x, double right_y,
+                              double right_weight)
 {
   fakePressure = true;
   pressureLeftX = left_x;
@@ -396,4 +405,32 @@ float Helpers::getPressureY()
   {
     return 0;
   }
+}
+
+float Helpers::getLeftPressureX()
+{
+  updatePressure();
+
+  return pressureLeftX;
+}
+
+float Helpers::getLeftPressureY()
+{
+  updatePressure();
+
+  return pressureLeftY;
+}
+
+float Helpers::getRightPressureX()
+{
+  updatePressure();
+
+  return pressureRightX;
+}
+
+float Helpers::getRightPressureY()
+{
+  updatePressure();
+
+  return pressureRightY;
 }

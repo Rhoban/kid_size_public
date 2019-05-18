@@ -18,6 +18,8 @@ public:
   void step(float elapsed);
   bool isFallen();
 
+  bool isGoalKeeper() const;
+
 protected:
   Walk* walk;
   StandUp* standup;
@@ -51,6 +53,4 @@ protected:
 
   void enterState(std::string state);
   void exitState(std::string state);
-
-  void setTeamPlayState(rhoban_team_play::TeamPlayState state);
 };

@@ -156,7 +156,7 @@ void Filter::initWindow()
         }
         // Print coordinate, pixel value and world estimated position
         const CameraState& cs = filter->getCS();
-        const Leph::CameraModel& cameraModel = cs.getCameraModel();
+        const rhoban::CameraModel& cameraModel = cs.getCameraModel();
         cv::Vec3b pixel = filter->getImg()->at<cv::Vec3b>(y, x);
         cv::Point2f ball_center_in_img = cv::Point2f(x, y);
         std::cout << "filter->getCS()->timestamp" << cs.getTimeStampDouble() << std::endl;
@@ -313,7 +313,7 @@ const Filter& Filter::getDependency(const std::string& name) const
 
 const Filter& Filter::getDependency(int index) const
 {
-  if (index > _dependencies.size() || index < 0) {
+  if (index > (int)_dependencies.size() || index < 0) {
     throw std::logic_error(DEBUG_INFO + "invalid index " + std::to_string(index));
   }
   return _pipeline->get(_dependencies[index]);

@@ -7,9 +7,8 @@
 #include "scheduler/MoveScheduler.h"
 #include <rhoban_geometry/3d/ray.h>
 #include <rhoban_geometry/3d/pan_tilt.h>
-#include <Model/HumanoidFixedPressureModel.hpp>
-#include <Model/HumanoidModel.hpp>
 #include "rhoban_utils/timing/time_stamp.h"
+#include "robot_model/camera_model.h"
 #include <utility>
 #include <string>
 
@@ -54,7 +53,7 @@ public:
   void exportToProtobuf(rhoban_vision_proto::IntrinsicParameters* dst) const;
   void exportToProtobuf(rhoban_vision_proto::CameraState* dst) const;
 
-  const Leph::CameraModel& getCameraModel() const;
+  const rhoban::CameraModel& getCameraModel() const;
 
   /// Asks the model to update itself to the state the robot had at timeStamp
   void updateInternalModel(double timeStamp);
@@ -173,9 +172,7 @@ public:
   void setClockOffset(int64_t new_offset);
 
   MoveScheduler* _moveScheduler;
-  Leph::HumanoidFixedPressureModel _pastReadModel;
-  Leph::HumanoidModel* _model;
-  Leph::CameraModel _cameraModel;
+  rhoban::CameraModel _cameraModel;
   double _timeStamp;
   double _angularPitchErrorDefault = 0.0;
 

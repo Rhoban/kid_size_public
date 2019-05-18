@@ -54,7 +54,7 @@ void MovieRecorder::startStream(const cv::Size& size)
   // Setting intrinsic parameters
   rhoban_vision_proto::IntrinsicParameters* intrinsic = videoMetaInformation.mutable_camera_parameters();
   getCS().exportToProtobuf(intrinsic);
-  if (intrinsic->img_width() != size.width || intrinsic->img_height() != size.height)
+  if (intrinsic->img_width() != (size_t)size.width || intrinsic->img_height() != (size_t)size.height)
   {
     // TODO: rescale parameters if size is not the same
     throw std::logic_error(DEBUG_INFO + " size of provided image is not the same as camerastate size");

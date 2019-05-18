@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Localisation/Field/FieldPosition.hpp"
-#include "Localisation/Field/FieldPF.hpp"
+#include <Localisation/Field/FieldPosition.hpp>
+#include <Localisation/Field/FieldPF.hpp>
 
-#include "rhoban_unsorted/particle_filter/observation.h"
-#include "Localisation/Field/ArenaCornerObservation.hpp"
+#include <hl_monitoring/field.h>
+#include <rhoban_unsorted/particle_filter/observation.h>
+#include <rhoban_utils/timing/time_stamp.h>
 
 #include <thread>
 #include <vector>
@@ -17,9 +18,8 @@ namespace Vision
 class Robocup;
 namespace Localisation
 {
-class CompassObservation;
+class FeatureObservation;
 class FieldPF;
-class GoalObservation;
 class TagsObservation;
 }  // namespace Localisation
 namespace Utils
@@ -58,10 +58,8 @@ public:
   /// Steal all the localisation informations provided by the vision
   void stealFromVision();
 
-  std::vector<Localisation::GoalObservation*> extractGoalObservations();
+  std::vector<Localisation::FeatureObservation*> extractFeatureObservations();
   std::vector<Localisation::TagsObservation*> extractTagsObservations();
-  std::vector<Localisation::CompassObservation*> extractCompassObservations();
-  std::vector<Localisation::ArenaCornerObservation*> extractArenaCornerObservations();
   /// Use the provided informations in origin basis to create observations
   ObservationVector extractObservations();
 
@@ -78,8 +76,6 @@ public:
   void publishToLoc();
 
   cv::Mat getTopView(int width, int height);
-
-  void setVisualCompassStatus(bool active);
 
   bool refereeAllowsToPlay();
 
@@ -143,36 +139,20 @@ public:
   /// [s] After a full reset, duration of the noiseBoost
   double noiseBoostDuration;
 
-  /// Status of visual compass
-  bool isUsingVisualCompass;
-
   // VISION INFORMATION MEMORY
   // All informations are provided in world basis using [m]
   // Informations are cleared at every step of the LocalisationBinding
 
-  /// Locations of the goals
-  std::vector<cv::Point2f> goalsLocations;
+  /**
+   * All the features perceived since last tick
+   */
+  std::unique_ptr<hl_monitoring::Field::POICollection> features;
 
   /// Indices of markers
   std::vector<int> markerIndices;
 
   /// Position of the center of the markers in the world
   std::vector<Eigen::Vector3d> markerPositions;
-
-  /// Clipping infos
-  std::vector<Vision::Filters::FieldBorderData> clipping_data;
-
-  /// Orientations seen by the visual compass
-  std::vector<double> compassOrientations;
-
-  /// Quality of the compass observations
-  std::vector<double> compassQuality;
-
-  /// Number of compass observations acquired since start of VC phase
-  int nbVCObs;
-
-  /// After minVCObs, VC mode is disbled
-  int minVCObs;
 
   /// Was last tick forbidden by the referee?
   ::rhoban_utils::TimeStamp lastForbidden;
@@ -192,9 +172,6 @@ private:
 
   /// Locking access
   std::mutex filterMutex;
-
-  /// Locking access to number of VC Observations
-  std::mutex vcCounterMutex;
 };
 
 }  // namespace Vision

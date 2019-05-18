@@ -5,7 +5,6 @@
 
 #include "rhoban_utils/logging/logger.h"
 #include <services/LocalisationService.h>
-#include <services/ModelService.h>
 #include <fstream>
 #include <stdexcept>
 

@@ -176,16 +176,6 @@ bool StrategyService::tick(double elapsed)
     kick_target_x = 0;
     kick_target_y = 0;
   }
-
-  // Publishing ball target in team play
-  auto teamPlay = getServices()->teamPlay;
-  auto& info = teamPlay->selfInfo();
-  info.ballTargetX = kick_target_x;
-  info.ballTargetY = kick_target_y;
-
-  // Publishing time elapsed since last kick
-  info.timeSinceLastKick = diffSec(lastKick, TimeStamp::now());
-
   bind.push();
 
   return true;
@@ -194,4 +184,14 @@ bool StrategyService::tick(double elapsed)
 void StrategyService::announceKick()
 {
   lastKick = TimeStamp::now();
+}
+
+double StrategyService::getTimeSinceLastKick() const
+{
+  return diffSec(lastKick, TimeStamp::now());
+}
+  
+Eigen::Vector2d StrategyService::getKickTarget() const
+{
+  return Eigen::Vector2d(kick_target_x, kick_target_y);
 }

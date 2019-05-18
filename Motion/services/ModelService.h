@@ -204,6 +204,8 @@ public:
    */
   Leph::HumanoidFixedModel::SupportFoot getSupportFoot() const;
 
+  const std::string& getLowLevelState() const;
+
 private:
   /**
    * Lowlevel missing state

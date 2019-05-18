@@ -34,21 +34,17 @@ public:
   int myId();
 
   /**
-   * Access a teamplay info
-   * struct of current robot
+   * Access the teamplay info from current robot, field referential is in team point of view
    */
-  const rhoban_team_play::TeamPlayInfo& selfInfo() const;
-  rhoban_team_play::TeamPlayInfo& selfInfo();
+  const hl_communication::RobotMsg& selfInfo() const;
 
   /**
-   * Access to container to information
-   * on available other players
+   * Access to the latest message from each player, field referential is in team point of view
    */
-  const std::map<int, rhoban_team_play::TeamPlayInfo>& allInfo() const;
+  const std::map<int, hl_communication::RobotMsg>& allInfo() const;
 
   /**
-   * Read/Write network and
-   * update outputs
+   * Read/Write network and update outputs
    */
   bool tick(double elapsed);
 
@@ -79,25 +75,15 @@ private:
   RhIO::Bind* _bind;
 
   /**
-   * UDPBroadcast instance
-   */
-  rhoban_utils::UDPBroadcast* _broadcaster;
-
-  /**
    * Protobuf message manager
    */
-  std::unique_ptr<hl_communication::UDPMessageManager> _protobuf_message_manager;
+  std::unique_ptr<hl_communication::UDPMessageManager> message_manager;
 
   /**
    * Current and other robots infos
    */
-  rhoban_team_play::TeamPlayInfo _selfInfo;
-  std::map<int, rhoban_team_play::TeamPlayInfo> _allInfo;
-
-  /**
-   * Protobuf Communication
-   */
-  hl_communication::GameMsg _myMessage;
+  hl_communication::RobotMsg _selfInfo;
+  std::map<int, hl_communication::RobotMsg> _allInfo;
 
   /**
    * Send and check
@@ -116,15 +102,19 @@ private:
   double _broadcastPeriod;
 
   /**
+   * Maximal number of obstacles in a teamplay message
+   */
+  int _maxObstacles;
+
+  /**
    * Do message sending if needed
    */
   void messageSend();
 
   /**
-   * Parse given message
-   * and update teamplay state
+   * Parse given message and update teamplay state
    */
-  void processInfo(rhoban_team_play::TeamPlayInfo info);
+  void processInfo(const hl_communication::RobotMsg& info);
 
   /**
    * Is the placing aggressive or defensive?
@@ -139,7 +129,18 @@ private:
   bool _isFieldInverted;
 
   /**
+   * Last team id used to send message. Is used to automatically change port when team number changed.
+   */
+  int last_team_id;
+
+  /**
    * RhIO team command
    */
   std::string cmdTeam();
+
+  void updateIdentifier(hl_communication::RobotMsg* msg);
+  void updatePerception(hl_communication::RobotMsg* msg);
+  void updateIntention(hl_communication::RobotMsg* msg);
+  void updateTeamPlay(hl_communication::RobotMsg* msg);
+  void updateMiscExtra(hl_communication::RobotMsg* msg);
 };

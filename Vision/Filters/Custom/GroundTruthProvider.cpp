@@ -6,9 +6,10 @@
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <rhoban_utils/util.h>
 
-using robocup_referee::Constants;
 using hl_monitoring::Field;
+using robocup_referee::Constants;
 
 static rhoban_utils::Logger logger("GroundTruthProvider");
 
@@ -20,9 +21,14 @@ GroundTruthProvider::GroundTruthProvider() : Filter("GroundTruthProvider"), imgI
 {
 }
 
+GroundTruthProvider::~GroundTruthProvider()
+{
+}
+
 void GroundTruthProvider::process()
 {
   img() = getSourceImg();
+
   std::vector<cv::Rect_<float>> rois = generateROIs();
   updateAnnotations();
   tagImg();
@@ -58,7 +64,8 @@ void GroundTruthProvider::updateAnnotations()
 {
   annotations.clear();
   // In case pose of the camera in the field is not available, no annotation are available
-  if (!getCS().has_camera_field_transform) {
+  if (!getCS().has_camera_field_transform)
+  {
     logger.log("No camera field transform");
     return;
   }
@@ -88,13 +95,14 @@ void GroundTruthProvider::updateAnnotations()
     std::string feature_name = entry.first;
     for (const Eigen::Vector3d& field_pos : entry.second)
     {
-      try {
-        //TODO: functions allowing to retrieve the point without risking to throw exception should be available
+      try
+      {
+        // TODO: functions allowing to retrieve the point without risking to throw exception should be available
         Annotation a;
         a.distance = (getCS().camera_from_field * field_pos).norm();
         a.center = getCS().imgFromFieldPosition(field_pos);
         // Only include annotation if center is inside image
-        if (cv::Rect(0,0,img().cols,img().rows).contains(a.center))
+        if (cv::Rect(0, 0, img().cols, img().rows).contains(a.center))
         {
           annotations[feature_name].push_back(a);
         }
@@ -114,11 +122,11 @@ void GroundTruthProvider::tagImg()
       return;
     case 1:
       img() = getSourceImg().clone();
-      for (const auto& entry: annotations)
+      for (const auto& entry : annotations)
       {
         for (const Annotation& a : entry.second)
         {
-          cv::circle(img(), a.center, 5, cv::Scalar(255,0,255), CV_FILLED);
+          cv::circle(img(), a.center, 5, cv::Scalar(255, 0, 255), CV_FILLED);
         }
       }
   }
@@ -133,6 +141,11 @@ void GroundTruthProvider::dumpImg(const std::vector<cv::Rect_<float>>& rois)
   // TODO: fill with 0 as in printf
   std::string img_annotation_path = outputPrefix + "img_" + std::to_string(imgIndex) + ".json";
   rhoban_utils::writeJson(getImgAnnotation(rois), img_annotation_path);
+
+  const cv::Mat& src_img = getSourceImg();
+  std::string imName = outputPrefix + "img_" + std::to_string(imgIndex) + ".png";
+  cv::imwrite(imName.c_str(), src_img);
+
   int patchIndex = 0;
   for (const cv::Rect_<float>& roi : rois)
   {
@@ -147,6 +160,7 @@ void GroundTruthProvider::dumpImg(const std::vector<cv::Rect_<float>>& rois)
 void GroundTruthProvider::dumpROI(const cv::Rect_<float>& roi, const std::string& output)
 {
   const cv::Mat& src_img = getSourceImg();
+  // logger.log("Dumping ROI: (%f,%f) to (%f,%f)", roi.tl().x, roi.tl().y, roi.br().x, roi.br().y);
   cv::Mat raw_patch(src_img, cv::Rect(roi));
   cv::Mat rescaled_patch;
   cv::resize(raw_patch, rescaled_patch, cv::Size(patchSize, patchSize));
@@ -161,11 +175,11 @@ Json::Value GroundTruthProvider::getPatchAnnotation(const cv::Rect_<float>& roi)
     std::string type_name = entry.first;
     for (int idx = 0; idx < (int)entry.second.size(); idx++)
     {
-      const Annotation & annotation = entry.second[idx];
+      const Annotation& annotation = entry.second[idx];
       if (roi.contains(entry.second[idx].center))
       {
         double ratio = patchSize / (double)roi.size().width;
-        cv::Point2f patch_pos  = (annotation.center - roi.tl()) * ratio;
+        cv::Point2f patch_pos = (annotation.center - roi.tl()) * ratio;
         v[type_name][idx]["distance"] = annotation.distance;
         v[type_name][idx]["center"][0] = patch_pos.x;
         v[type_name][idx]["center"][1] = patch_pos.y;
@@ -183,7 +197,7 @@ Json::Value GroundTruthProvider::getImgAnnotation(const std::vector<cv::Rect_<fl
     std::string type_name = entry.first;
     for (int idx = 0; idx < (int)entry.second.size(); idx++)
     {
-      const Annotation & annotation = entry.second[idx];
+      const Annotation& annotation = entry.second[idx];
       bool inside_roi = false;
       for (const cv::Rect_<float>& roi : rois)
       {

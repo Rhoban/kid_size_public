@@ -50,12 +50,10 @@ void ApproachMove::initBindings()
 
 void ApproachMove::onStart()
 {
-  getServices()->teamPlay->selfInfo().state = Playing;
 }
 
 void ApproachMove::onStop()
 {
-  getServices()->teamPlay->selfInfo().state = Inactive;
 }
 
 Angle ApproachMove::getKickCap()

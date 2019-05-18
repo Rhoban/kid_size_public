@@ -5,7 +5,7 @@
 
 #include "Utils/HomogeneousTransform.hpp"
 #include "services/DecisionService.h"
-#include "services/ModelService.h"
+#include "services/RobotModelService.h"
 #include "services/LocalisationService.h"
 #include "services/ViveService.h"
 
@@ -86,23 +86,16 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, rhoban_vision_proto::P
 }
 
 CameraState::CameraState(MoveScheduler* moveScheduler)
-  : _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
-  , has_camera_field_transform(false)
+  : has_camera_field_transform(false)
   , clock_offset(0)
 {
   _moveScheduler = moveScheduler;
-  _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
-  double now = ::rhoban_utils::TimeStamp::now().getTimeMS() / 1000.0;
-  _moveScheduler->getServices()->model->pastReadModel(now, _pastReadModel);
-  _model = &(_pastReadModel.get());
-  _model->setAutoUpdate(false);
-  _model->updateDOFPosition();
+  _cameraModel = _moveScheduler->getServices()->robotModel->cameraModel;
 }
 
 CameraState::CameraState(const rhoban_vision_proto::IntrinsicParameters& camera_parameters,
                          const rhoban_vision_proto::CameraState& cs)
   : _moveScheduler(nullptr)
-  , _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
   , has_camera_field_transform(false)
   , clock_offset(0)
 {
@@ -159,7 +152,7 @@ void CameraState::exportToProtobuf(rhoban_vision_proto::CameraState* dst) const
   setProtobufFromAffine(selfToWorld, dst->mutable_self_to_world());
 }
 
-const Leph::CameraModel& CameraState::getCameraModel() const
+const rhoban::CameraModel& CameraState::getCameraModel() const
 
 {
   return _cameraModel;
@@ -171,16 +164,11 @@ void CameraState::updateInternalModel(double timeStamp)
 
   if (_moveScheduler != nullptr)
   {
-    // Update World, Self and Camera transforms based on model
-    _model->setAutoUpdate(true);
-    _moveScheduler->getServices()->model->pastReadModel(timeStamp, _pastReadModel);
-    _model = &(_pastReadModel.get());
-    _model->setAutoUpdate(false);
-    _model->updateDOFPosition();
+    RobotModelService *robotModel = _moveScheduler->getServices()->robotModel;
 
-    selfToWorld = _model->selfFrameTransform("origin");
-    worldToCamera = _model->getTransform("camera", "origin");
-    _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
+    selfToWorld = robotModel->selfToWorld(timeStamp);
+    worldToCamera = robotModel->cameraToWorld(timeStamp).inverse();
+    _cameraModel = robotModel->cameraModel;
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
     // Update camera/field transform based on (by order of priority)
@@ -311,13 +299,13 @@ Eigen::Vector3d CameraState::getWorldFromSelf(const Eigen::Vector3d& pos_self) c
 
 Angle CameraState::getPitch()
 {
-  PanTilt panTilt(cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
+  PanTilt panTilt(worldToSelf.linear() * cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
   return panTilt.tilt;
 }
 
 Angle CameraState::getYaw()
 {
-  PanTilt panTilt(cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
+  PanTilt panTilt(worldToSelf.linear() * cameraToWorld.linear() * Eigen::Vector3d::UnitZ());
   return panTilt.pan;
 }
 

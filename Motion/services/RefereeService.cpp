@@ -143,6 +143,11 @@ int RefereeService::gameTime()
   }
 }
 
+const std::string& RefereeService::getState() const
+{
+  return _state;
+}
+
 bool RefereeService::myTeamKickOff()
 {
   const auto& gs = getGameState();
@@ -160,7 +165,8 @@ bool RefereeService::isDroppedBall()
 bool RefereeService::isGameInterruption()
 {
   const auto& gs = getGameState();
-  switch(gs.getSecGameState()) {
+  switch (gs.getSecGameState())
+  {
     case Constants::STATE2_DIRECT_FREE_KICK:
     case Constants::STATE2_INDIRECT_FREE_KICK:
     case Constants::STATE2_PENALTY_KICK:
@@ -184,6 +190,11 @@ bool RefereeService::myTeamGameInterruption()
 {
   const auto& gs = getGameState();
   return gs.getSecondaryTeam() == teamId;
+}
+
+bool RefereeService::isThrowIn()
+{
+  return lastGameInterruptionType == Constants::STATE2_THROW_IN;
 }
 
 bool RefereeService::isPenalized()
@@ -363,7 +374,7 @@ std::string RefereeService::cmdPlaying()
     ss << "Referee time: " << remaining << "." << std::endl;
     ss << "Referee last update: " << (getGameState().getLastUpdate() / 100.0) << "." << std::endl;
 
-    if (hasStartedPlayingRecently())
+    if (isOpponentKickOffStart())
     {
       ss << "Opponent kick off, ball should not be touched.";
     }

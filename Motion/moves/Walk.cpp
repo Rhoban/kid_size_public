@@ -1,7 +1,9 @@
 #include <math.h>
 #include "Walk.h"
+#include "Head.h"
 #include "services/DecisionService.h"
-#include "services/ModelService.h"
+#include "services/RobotModelService.h"
+#include <scheduler/MoveScheduler.h>
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/control/variation_bound.h>
@@ -24,6 +26,13 @@ static double bound(double value, double min, double max)
 Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 {
   Move::initializeBinding();
+  swingGainStart = 0.04;
+  trunkPitch = 13;
+  bootstrapSteps = 3;
+  safeArmsRoll = 40;
+  shouldBootstrap = false;
+  armsEnabled = true;
+  safeArmsRollEnabled = false;
 
   // Enables or disables the walk
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
@@ -34,10 +43,10 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("walkTurn", walkTurn, RhIO::Bind::PullOnly)->comment("Walk control Turn [deg/step]")->defaultValue(0.0);
 
   // Walk limits (to inform other moves about limits)
-  bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(15.0);
-  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(65.0);
-  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(35.0);
-  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(30.0);
+  bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(15);
+  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.1);
+  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(0.04);
+  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(0.030);
 
   // Walk engine parameters
   bind->bindNew("trunkXOffset", engine.trunkXOffset, RhIO::Bind::PullOnly)->defaultValue(engine.trunkXOffset);
@@ -47,20 +56,23 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("riseGain", engine.riseGain, RhIO::Bind::PullOnly)->defaultValue(engine.riseGain);
   bind->bindNew("riseDuration", engine.riseDuration, RhIO::Bind::PullOnly)->defaultValue(engine.riseDuration);
   bind->bindNew("swingGain", engine.swingGain, RhIO::Bind::PullOnly)->defaultValue(engine.swingGain);
-  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(swingGainStart = 0.04);
+  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(swingGainStart);
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
-  bind->bindNew("footYOffsetPerYSpeed", engine.footYOffsetPerYSpeed, RhIO::Bind::PullOnly)
-      ->defaultValue(engine.footYOffsetPerYSpeed);
-  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch = 13);
-  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps = 3);
-  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(shouldBootstrap = false);
+  bind->bindNew("footYOffsetPerStepSizeY", engine.footYOffsetPerStepSizeY, RhIO::Bind::PullOnly)
+      ->defaultValue(engine.footYOffsetPerStepSizeY);
+  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch);
+  bind->bindNew("speedInflexion", engine.speedInflexion, RhIO::Bind::PullOnly)->defaultValue(engine.speedInflexion);
+
+  // XXX: This feature can be deleted later if it is of no use
+  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps);
+  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(shouldBootstrap);
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(20)
+      ->defaultValue(0.02)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDLatByCycle", maxDLatByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(20)
+      ->defaultValue(0.02)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
       ->defaultValue(10)
@@ -85,13 +97,12 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   // Arms
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)->defaultValue(-5.0)->minimum(-20.0)->maximum(150.0);
   bind->bindNew("safeArmsRoll", safeArmsRoll, RhIO::Bind::PullOnly)
-      ->defaultValue(safeArmsRoll = 40)
+      ->defaultValue(safeArmsRoll)
       ->minimum(-20.0)
       ->maximum(150.0);
   bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-165.0)->minimum(-200.0)->maximum(30.0);
-  bind->bindNew("armsEnabled", armsEnabled, RhIO::Bind::PullOnly)->defaultValue(armsEnabled = true);
-  bind->bindNew("safeArmsRollEnabled", safeArmsRollEnabled, RhIO::Bind::PullOnly)
-      ->defaultValue(safeArmsRollEnabled = false);
+  bind->bindNew("armsEnabled", armsEnabled, RhIO::Bind::PullOnly)->defaultValue(armsEnabled);
+  bind->bindNew("safeArmsRollEnabled", safeArmsRollEnabled, RhIO::Bind::PullOnly)->defaultValue(safeArmsRollEnabled);
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
@@ -105,8 +116,22 @@ std::string Walk::getName()
 
 void Walk::onStart()
 {
-  Leph::HumanoidFixedModel& model = getServices()->model->goalModel();
-  engine.initByModel(model);
+  // Ensuring safety of head
+  Move* head = getScheduler()->getMove("head");
+  if (!head->isRunning())
+  {
+    walkLogger.log("Move 'head' is not running, starting it for safety");
+    startMove("head", 0.5);
+    Head* tmp = dynamic_cast<Head*>(head);
+    if (tmp == nullptr)
+    {
+      throw std::logic_error("Failed to cast 'head' motion to 'Head' type");
+    }
+    tmp->setDisabled(true);
+  }
+
+  auto robotModel = getServices()->robotModel;
+  engine.initByModel(robotModel->model);
 
   bind->node().setBool("walkEnable", false);
 
@@ -126,7 +151,7 @@ void Walk::onStart()
 
 void Walk::onStop()
 {
-  Helpers::getServices()->model->setReadBaseUpdate(false);
+  getServices()->robotModel->enableOdometry(false);
   state = WalkNotWalking;
   kickState = KickNotKicking;
 }
@@ -135,10 +160,20 @@ void Walk::control(bool enable, double step, double lateral, double turn)
 {
   if (isRunning())
   {
+    step = bound(step, -maxStepBackward, maxStep);
+    lateral = bound(lateral, -maxLateral, maxLateral);
+    turn = bound(turn, -maxRotation, maxRotation);
+
+    double magnitude = fabs(step) / maxStep + fabs(turn) / maxRotation + fabs(lateral) / maxLateral;
+    if (magnitude < 1)
+    {
+      magnitude = 1;
+    }
+
     bind->node().setBool("walkEnable", enable);
-    bind->node().setFloat("walkStep", bound(step, -maxStepBackward, maxStep));
-    bind->node().setFloat("walkLateral", bound(lateral, -maxLateral, maxLateral));
-    bind->node().setFloat("walkTurn", bound(turn, -maxRotation, maxRotation));
+    bind->node().setFloat("walkStep", step / magnitude);
+    bind->node().setFloat("walkLateral", lateral / magnitude);
+    bind->node().setFloat("walkTurn", turn / magnitude);
   }
 }
 
@@ -163,21 +198,23 @@ void Walk::setShouldBootstrap(bool bootstrap)
 
 void Walk::step(float elapsed)
 {
+  auto robotModel = getServices()->robotModel;
+
   bind->pull();
   engine.trunkPitch = deg2rad(trunkPitch);
 
   stepKick(elapsed);
 
-  getServices()->model->setReadBaseUpdate(state != WalkNotWalking);
+  getServices()->robotModel->enableOdometry(state != WalkNotWalking);
 
   if (state == WalkNotWalking)
   {
     // Walk is not enabled, just freezing the engine
     engine.riseGain = 0;
     engine.swingGain = 0;
-    engine.xSpeed = 0;
-    engine.ySpeed = 0;
-    engine.yawSpeed = 0;
+    engine.stepSizeX = 0;
+    engine.stepSizeY = 0;
+    engine.stepSizeYaw = 0;
     engine.reset();
     timeSinceLastStep = 0;
     stepCount = 0;
@@ -236,7 +273,7 @@ void Walk::step(float elapsed)
           else
           {
             bool walkingTooMuch =
-                fabs(engine.xSpeed) > 0.01 || fabs(engine.ySpeed) > 0.01 || rad2deg(fabs(engine.yawSpeed)) > 3;
+                fabs(engine.stepSizeX) > 0.01 || fabs(engine.stepSizeY) > 0.01 || rad2deg(fabs(engine.stepSizeYaw)) > 3;
             if (state == Walking && walkingTooMuch)
             {
               // We will apply an extra step with null orders to be sure the walk stops properly
@@ -253,16 +290,16 @@ void Walk::step(float elapsed)
         if (state != Walking)
         {
           // We are not walking, starting or starting, we have no orders
-          engine.xSpeed = 0;
-          engine.ySpeed = 0;
-          engine.yawSpeed = 0;
+          engine.stepSizeX = 0;
+          engine.stepSizeY = 0;
+          engine.stepSizeYaw = 0;
         }
         else
         {
           // Updating engine speed according to acc. limits
-          VariationBound::update(engine.xSpeed, walkStep / 1000.0, maxDStepByCycle / 1000.0, 1);
-          VariationBound::update(engine.ySpeed, walkLateral / 1000.0, maxDLatByCycle / 1000.0, 1);
-          VariationBound::update(engine.yawSpeed, deg2rad(walkTurn), deg2rad(maxDTurnByCycle), 1);
+          VariationBound::update(engine.stepSizeX, walkStep, maxDStepByCycle, 1);
+          VariationBound::update(engine.stepSizeY, walkLateral, maxDLatByCycle, 1);
+          VariationBound::update(engine.stepSizeYaw, deg2rad(walkTurn), deg2rad(maxDTurnByCycle), 1);
         }
 
         if (state == WalkStarting)
@@ -286,24 +323,21 @@ void Walk::step(float elapsed)
         // Creating a new footstep
         engine.newStep();
 
-        if (engine.isLeftSupport)
+        if (Helpers::isFakeMode())
         {
-          getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::LeftSupportFoot);
-        }
-        else
-        {
-          getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::RightSupportFoot);
+          getServices()->robotModel->model.setSupportFoot(
+              engine.isLeftSupport ? rhoban::HumanoidModel::Left : rhoban::HumanoidModel::Right, true);
         }
       }
     }
   }
 
   // Assigning to robot
-  engine.assignModel(getServices()->model->goalModel(), timeSinceLastStep);
-
-  // Flushing engine leg orders to robot
-  ModelService* model = getServices()->model;
-  model->flushLegs(_smoothing);
+  std::map<std::string, double> angles = engine.computeAngles(robotModel->model, timeSinceLastStep);
+  for (auto& entry : angles)
+  {
+    setAngle(entry.first, rad2deg(entry.second));
+  }
 
   // Update arms
   stepArms(elapsed);
@@ -328,6 +362,11 @@ void Walk::stepKick(float elapsed)
 
     if (kickState == KickWaitingWalkToStop && state == WalkNotWalking)
     {
+      // Forcing support foot in the model
+      auto robotModel = getServices()->robotModel;
+      getServices()->robotModel->model.setSupportFoot(
+          kickLeftFoot ? rhoban::HumanoidModel::Right : rhoban::HumanoidModel::Left, true);
+
       // Walk is over, go to warmup state
       kickState = KickWarmup;
       kickT = 0;
@@ -414,47 +453,47 @@ double Walk::getPhase()
 Eigen::Vector3d Walk::getMinOrders() const
 {
   Eigen::Vector3d bound;
-  bound << -maxStepBackward / 1000, -maxLateral / 1000, deg2rad(-maxRotation);
+  bound << -maxStepBackward, -maxLateral, deg2rad(-maxRotation);
   return bound;
 }
 
 Eigen::Vector3d Walk::getMaxOrders() const
 {
   Eigen::Vector3d bound;
-  bound << maxStep / 1000, maxLateral / 1000, deg2rad(maxRotation);
+  bound << maxStep, maxLateral, deg2rad(maxRotation);
   return bound;
 }
 
 Eigen::Vector3d Walk::getMinDeltaOrders() const
 {
   Eigen::Vector3d bound;
-  bound << -maxDStepByCycle / 1000, -maxDLatByCycle / 1000, deg2rad(-maxDTurnByCycle);
+  bound << -maxDStepByCycle, -maxDLatByCycle, deg2rad(-maxDTurnByCycle);
   return bound;
 }
 
 Eigen::Vector3d Walk::getMaxDeltaOrders() const
 {
   Eigen::Vector3d bound;
-  bound << maxDStepByCycle / 1000, maxDLatByCycle / 1000, deg2rad(maxDTurnByCycle);
+  bound << maxDStepByCycle, maxDLatByCycle, deg2rad(maxDTurnByCycle);
   return bound;
 }
 
 Eigen::Vector4d Walk::getRawOrder() const
 {
-  return Eigen::Vector4d(engine.xSpeed, engine.ySpeed, engine.yawSpeed, state == Walking ? 1 : 0);
+  return Eigen::Vector4d(engine.stepSizeX, engine.stepSizeY, engine.stepSizeYaw, state == Walking ? 1 : 0);
 }
 
 Eigen::Vector4d Walk::getOrder() const
 {
   // XXX: To update with new walk, what is the goal here?
-  return Eigen::Vector4d(engine.xSpeed, engine.ySpeed, engine.yawSpeed, state == Walking ? 1 : 0);
+  return Eigen::Vector4d(engine.stepSizeX, engine.stepSizeY, engine.stepSizeYaw, state == Walking ? 1 : 0);
 }
 
 void Walk::setRawOrder(double step, double lateral, double turn, bool enable)
 {
   bind->node().setBool("walkEnable", enable);
-  bind->node().setFloat("walkStep", step * 1000.0);
-  bind->node().setFloat("walkLateral", lateral * 1000.0);
+  bind->node().setFloat("walkStep", step);
+  bind->node().setFloat("walkLateral", lateral);
   bind->node().setFloat("walkTurn", rad2deg(turn));
 }
 void Walk::setRawOrder(const Eigen::Vector3d& params, bool enable)
@@ -464,6 +503,11 @@ void Walk::setRawOrder(const Eigen::Vector3d& params, bool enable)
 
 rhoban_geometry::Point Walk::trunkToFlyingFoot(rhoban_geometry::Point point)
 {
+  if (!isRunning())
+  {
+    return point;
+  }
+
   rhoban::WalkEngine::FootPose flyingPose;
   double deltaY;
 

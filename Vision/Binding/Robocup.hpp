@@ -7,11 +7,11 @@
 
 #include <thread>
 #include "Filters/Pipeline.hpp"
-#include "Filters/Custom/FieldBorderData.hpp"
 #include "Application/Application.hpp"
 #include "Utils/ImageLogger.h"
 
-#include "rhoban_utils/timing/time_stamp.h"
+#include <hl_monitoring/field.h>
+#include <rhoban_utils/timing/time_stamp.h>
 
 #include <Eigen/Core>
 #include <utility>
@@ -173,20 +173,17 @@ public:
   void loggingStep();
   void updateBallInformations();
 
-  /// Get all goals currently stored and remove them from the list
-  std::vector<cv::Point2f> stealGoals();
+  /**
+   * Get all the features detected since last 'stealFeatures'
+   * thread-safe
+   */
+  std::unique_ptr<hl_monitoring::Field::POICollection> stealFeatures();
 
   /// Lock mutex on tags, retrieve indices and position of tags
   /// Finally clear all memory about tags
   void stealTags(std::vector<int>& indices, std::vector<Eigen::Vector3d>& positions,
                  std::vector<std::pair<float, float>>& centers,
                  std::vector<std::pair<float, float>>& undistorded_centers, double* timestamp);
-
-  // steal the observations from the visual compass
-  void stealCompasses(std::vector<double>& orientations, std::vector<double>& dispersions);
-
-  /// Get all clipping loc info currently stored and remove them from the list
-  std::vector<Vision::Filters::FieldBorderData> stealClipping();
 
   // Apply a kick on the ball stack filter
   void applyKick(double x, double y);
@@ -241,9 +238,6 @@ public:
   Utils::CameraState* cs;
   ::rhoban_utils::TimeStamp lastTS, sourceTS;
 
-  bool ballDetected;
-  std::vector<double> ballsX, ballsY, ballsRadius;
-
   // Estimating ball speed
   bool _firstLoop = true;
 
@@ -255,11 +249,20 @@ public:
   bool clearRememberObservations;
 
 private:
-  /// Detected positions for goals in "origin" basis
-  std::vector<cv::Point2f> detectedGoals;
+  /**
+   * Detected field features in "world" basis
+   */
+  std::unique_ptr<hl_monitoring::Field::POICollection> detectedFeatures;
 
-  /// Detected robots in "origin" basis
-  std::vector<cv::Point2f> detectedRobots;
+  /**
+   * Detected positions for the ball in "world" basis
+   */
+  std::unique_ptr<std::vector<cv::Point3f>> detectedBalls;
+
+  /**
+   * Detected robots in "world" basis
+   */
+  std::unique_ptr<std::vector<cv::Point3f>> detectedRobots;
 
   std::vector<std::string> observationTypes;
 
@@ -267,12 +270,6 @@ private:
   /// detected positions for the observation in "self" basis with a living time
   /// (can stay alive for more than 1 step)
   std::map<std::string, std::vector<std::pair<cv::Point2f, float>>> rememberObservations;
-
-  /// Controls access to the goals
-  mutable std::mutex goalsMutex;
-
-  /// Controls access to the clipping
-  mutable std::mutex clippingMutex;
 
   /// Indexes of the tags detected
   std::vector<int> detectedTagsIndices;
@@ -288,23 +285,13 @@ private:
   /// Controls access to the tags
   mutable std::mutex tagsMutex;
 
-  /// Controls access to the visualcompass
-  mutable std::mutex compassMutex;
+  /// Controls access to the features provided (Points of Interests + robots)
+  mutable std::mutex featuresMutex;
 
-  // Orientations and corresponding dispersions (quality) for the visual compass
-  std::vector<double> detectedOrientations;
-  std::vector<double> detectedDispersions;
-
-  std::vector<double> radarOrientations;
-  std::vector<double> tmporientations;
-  std::vector<double> tmpdispersions;
-
-  /// key: featureName
-  /// values: feature providers
-  std::map<std::string, std::vector<std::string>> featureProviders;
-
-  // clipping data for the localisation
-  std::vector<Vision::Filters::FieldBorderData> clipping_data;
+  /**
+   * The list of filters providing features
+   */
+  std::vector<std::string> featureProviders;
 
   /// Was robot handled at previous step
   bool wasHandled;

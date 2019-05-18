@@ -2,6 +2,7 @@
 
 #include "Filters/Filter.hpp"
 
+#include <opencv2/videoio.hpp>
 namespace Vision
 {
 namespace Filters
@@ -27,6 +28,7 @@ public:
   };
 
   GroundTruthProvider();
+  ~GroundTruthProvider();
 
   Json::Value toJson() const override;
   void fromJson(const Json::Value& v, const std::string& dir_name) override;

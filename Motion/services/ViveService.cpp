@@ -113,9 +113,6 @@ Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clo
 
   GlobalMsg vive_status = vive_manager.getMessage(time_stamp, true);
 
-  uint64_t msg_ts = vive_status.time_since_epoch();
-  int64_t elapsed_since_msg = time_stamp - msg_ts;
-
   std::vector<std::string> available_serials;
 
   for (const TrackerMsg& tracker : vive_status.trackers())
@@ -123,8 +120,9 @@ Eigen::Affine3d ViveService::getFieldToVive(uint64_t time_stamp, bool system_clo
     if (tracker.serial_number() == tracker_serial)
     {
       uint64_t tslt = tracker.time_since_last_tracked();
-      if (tslt > 0) {
-        throw std::runtime_error("Tracking has been lost for " + std::to_string(tslt/1000) + "ms");
+      if (tslt > 0)
+      {
+        throw std::runtime_error("Tracking has been lost for " + std::to_string(tslt / 1000) + "ms");
       }
 
       return histories.pose(tracker.serial_number())->interpolate((double)(time_stamp));
@@ -170,7 +168,7 @@ std::vector<Eigen::Vector3d> ViveService::getTaggedPositions(uint64_t time_stamp
   GlobalMsg vive_status = vive_manager.getMessage(time_stamp, true);
 
   std::vector<Eigen::Vector3d> positions;
-  for (const Vector3d & pos : vive_status.tagged_positions())
+  for (const Vector3d& pos : vive_status.tagged_positions())
   {
     positions.push_back(vive_provider::getPos(pos));
   }
@@ -198,7 +196,6 @@ std::vector<Eigen::Vector3d> ViveService::getOthersTrackersPos(uint64_t time_sta
   }
   return positions;
 }
-
 
 void ViveService::setPosOffset(const Eigen::Vector3d& pos)
 {

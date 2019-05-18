@@ -13,10 +13,9 @@
 #include "GoalKeeper.h"
 #include "Placer.h"
 #include "ApproachPotential.h"
-#include "LogMachine.hpp"
+// #include "LogMachine.hpp"
 #include "GoalKick.hpp"
 #include "AutonomousPlaying.h"
-#include "OldWalk.h"
 
 #include "ReactiveKicker.h"
 
@@ -49,11 +48,9 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   kick->cmdKickGen();
 
   Walk* walk = new Walk(kick);
-  OldWalk* oldWalk = new OldWalk(kick);
   Head* head = new Head;
   Placer* placer = new Placer(walk);
   StandUp* standup = new StandUp;
-  add(oldWalk);
   add(standup);
   add(head);
   add(new Search(walk, placer));
@@ -69,7 +66,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new IMUTest);
   add(new Replayer);
 
-  add(new LogMachine(walk, head));
+  // add(new LogMachine(walk, head));
 
   // add(new KickCalibration(approach));
   add(new GoalKick());

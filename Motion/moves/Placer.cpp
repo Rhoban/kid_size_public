@@ -136,10 +136,6 @@ std::string Placer::getName()
 
 void Placer::onStart()
 {
-  auto teamPlay = getServices()->teamPlay;
-  auto& info = teamPlay->selfInfo();
-  info.placing = true;
-
   targetX = 0;
   targetY = 0;
   targetAzimuth = 0;
@@ -152,10 +148,6 @@ void Placer::onStart()
 
 void Placer::onStop()
 {
-  auto teamPlay = getServices()->teamPlay;
-  auto& info = teamPlay->selfInfo();
-  info.placing = false;
-
   setLateralMode(false);
 
   walk->control(false);
@@ -212,11 +204,11 @@ void Placer::step(float elapsed)
   if (arrived)
     dontWalk = true;
 
-  // Updating stepper properties (maxValues are in mm for walk)
-  stepper.min = -walk->maxStepBackward / 1000;
-  stepper.max = walk->maxStep / 1000;
-  lateraler.min = -walk->maxLateral / 1000;
-  lateraler.max = walk->maxLateral / 1000;
+  // Updating stepper properties
+  stepper.min = -walk->maxStepBackward;
+  stepper.max = walk->maxStep;
+  lateraler.min = -walk->maxLateral;
+  lateraler.max = walk->maxLateral;
   turner.min = -walk->maxRotation;
   turner.max = walk->maxRotation;
 
@@ -259,6 +251,7 @@ void Placer::step(float elapsed)
     for (const auto& mate_entry : loc->getTeamMatesField())
     {
       rhoban_geometry::Point pos(mate_entry.second(0), mate_entry.second(1));
+
       avoider.addObstacle(pos, loc->teamMatesRadius);
     }
   }
@@ -391,21 +384,21 @@ void Placer::step(float elapsed)
   }
   else
   {
-    if (fabs(turner.output) > 4) {
+    if (fabs(turner.output) > 4)
+    {
       lateraler.output = 0;
     }
-
-    // Using mm to control walk
-    walk->control(true, 1000 * stepper.output, 1000 * lateraler.output, turner.output);
+    walk->control(true, stepper.output, lateraler.output, turner.output);
   }
-
-  // Sharing the target and temporary target
-  auto teamPlay = getServices()->teamPlay;
-  auto& info = teamPlay->selfInfo();
-  info.targetX = targetX;
-  info.targetY = targetY;
-  info.localTargetX = tmpX;
-  info.localTargetY = tmpY;
-
   bind->push();
+}
+
+Eigen::Vector2d Placer::getLocalTarget() const
+{
+  return Eigen::Vector2d(tmpX, tmpY);
+}
+
+Eigen::Vector2d Placer::getTarget() const
+{
+  return Eigen::Vector2d(targetX, targetY);
 }

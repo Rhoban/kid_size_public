@@ -5,8 +5,6 @@
 #include <RhAL.hpp>
 #include "services/Service.h"
 #include <rhoban_utils/history/history.h>
-#include <Model/HumanoidFixedPressureModel.hpp>
-#include <Model/HumanoidFixedModel.hpp>
 
 class Move;
 

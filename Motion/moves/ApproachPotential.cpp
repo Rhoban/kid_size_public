@@ -43,13 +43,9 @@ ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTo
   bind->bindNew("repulsion", repulsion, RhIO::Bind::PullOnly)->defaultValue(0.5);
 
   // Servoing
-  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(6);
-  bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(6);
-  bind->bindNew("stepI", stepI, RhIO::Bind::PullOnly)->defaultValue(0.0);
-  bind->bindNew("lateralI", lateralI, RhIO::Bind::PullOnly)->defaultValue(0.0);
-  bind->bindNew("stepPunch", stepPunch, RhIO::Bind::PullOnly)->defaultValue(0);
-  bind->bindNew("rotationP", aligner.k_p, RhIO::Bind::PullOnly)->defaultValue(1.2);
-  bind->bindNew("rotationI", aligner.k_i, RhIO::Bind::PullOnly)->defaultValue(0.0);
+  bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(0.6);
+  bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(0.6);
+  bind->bindNew("rotationP", rotationP, RhIO::Bind::PullOnly)->defaultValue(1.2);
 
   bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.35);
 
@@ -76,17 +72,6 @@ void ApproachPotential::onStart()
   lastFootChoice = 1e6;
   kick_score = 0;
   setState(STATE_PLACE);
-
-  stepper.max = walk->maxStep;
-  stepper.min = -walk->maxStepBackward;
-  lateraler.min = -walk->maxLateral;
-  lateraler.max = walk->maxLateral;
-  aligner.min = -walk->maxRotation;
-  aligner.max = walk->maxRotation;
-
-  stepper.reset();
-  lateraler.reset();
-  aligner.reset();
 }
 
 void ApproachPotential::onStop()
@@ -100,13 +85,10 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
 {
   double dist = target.position.getLength();
 
+  // Checking if the robot is in direct placement circle
   rhoban_geometry::Point ballToTarget = target.position - ball;
   rhoban_geometry::Circle directPlacementCircle(ball + ballToTarget.normalize(placementDistance), placementDistance);
   bool directPlace = directPlacementCircle.contains(Point(0, 0));
-
-  // Going directly (to debug the target)
-  // logger.log("Target: %f, %f, %f\n", target.position.x, target.position.y, target.yaw.getSignedValue());
-  // walk->control(true, target.position.x*100, target.position.y*100, target.yaw.getSignedValue());
 
   // Magical potential field
   // See Motion/python/potential.py
@@ -127,15 +109,17 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   // XXX: Some below variable should be rhiorized
   Point control(-X, -Y);
 
-  if (directPlace) {
+  if (directPlace)
+  {
     control = target.position;
   }
 
   // XXX: dist here may be replaced with the distance following the potential fields
-  double P = dist * 100;
-  control.normalize(P);
+  control.normalize(dist);
+  control.x *= stepP;
+  control.y *= lateralP;
 
-  // Normalizing using walk max speeds
+  // Capping control speeds
   if (control.x > walk->maxStep)
     control.normalize(walk->maxStep);
   if (control.x < -walk->maxStepBackward)
@@ -155,7 +139,9 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   {
     // We are near the goal, let's face the goal
     error = targetCap;
-  } else {
+  }
+  else
+  {
     // Avoiding walking backward when error azimuth is high
     control *= std::max<double>(0, cos(error));
     y = 0;
@@ -167,18 +153,17 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     y = 0;
   }
 
-  yaw = rad2deg(error);
+  // Capping yaw
+  yaw = rad2deg(error) * rotationP;
+  if (yaw > walk->maxRotation)
+    yaw = walk->maxRotation;
+  if (yaw < -walk->maxRotation)
+    yaw = -walk->maxRotation;
 }
 
 void ApproachPotential::step(float elapsed)
 {
   bind->pull();
-
-  stepper.k_p = stepP;
-  lateraler.k_p = lateralP;
-
-  stepper.k_i = stepI;
-  lateraler.k_i = lateralI;
 
   auto loc = getServices()->localisation;
 
@@ -197,7 +182,7 @@ void ApproachPotential::step(float elapsed)
 
     // Ball position
     auto ball = loc->getBallPosSelf();
-    // ball = walk->trunkToFlyingFoot(ball);
+    ball = walk->trunkToFlyingFoot(ball);
     ballX = ball.x;  // XXX: To debug
     ballY = ball.y;
 
@@ -308,7 +293,8 @@ void ApproachPotential::step(float elapsed)
         }
       }
 
-      // std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " << target.yaw.getSignedValue()
+      // std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " <<
+      // target.yaw.getSignedValue()
       //           << " (kick: " << target.kickName << ")" << std::endl;
 
       // Setting expectedKick
@@ -330,10 +316,6 @@ void ApproachPotential::step(float elapsed)
         double controlX, controlY, controlYaw;
         getControl(target, ball, controlX, controlY, controlYaw);
 
-        controlX = stepper.update(controlX, elapsed);
-        controlY = lateraler.update(controlY, elapsed);
-        controlYaw = aligner.update(controlYaw, elapsed);
-
         walk->control(!dontWalk, controlX, controlY, controlYaw);
       }
     }
@@ -348,9 +330,6 @@ void ApproachPotential::step(float elapsed)
 
 void ApproachPotential::enterState(std::string state)
 {
-  stepper.reset();
-  lateraler.reset();
-  aligner.reset();
 }
 
 void ApproachPotential::exitState(std::string state)

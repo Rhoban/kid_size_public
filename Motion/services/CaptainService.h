@@ -15,22 +15,6 @@ class CaptainService : public Service
 {
 public:
   /**
-   * Captain instruction for a robot
-   */
-  struct Instruction
-  {
-    // Target position & orientation
-    rhoban_geometry::Point targetPosition;
-    float targetOrientation;
-
-    // Captain order
-    rhoban_team_play::CaptainOrder order;
-
-    // Consensus ball
-    rhoban_team_play::CommonBall ball;
-  };
-
-  /**
    * Captain configuration
    */
   struct Config : public rhoban_utils::JsonSerializable
@@ -66,14 +50,27 @@ public:
   bool amICaptain();
 
   /**
-   * Getting captain info
+   * Getting last captain message, either received or generated
+   * If no message has been received or built, returns an empty message
    */
-  rhoban_team_play::CaptainInfo getInfo();
+  hl_communication::Captain getStatus();
 
   /**
-   * Get the captain instruction for us (see above)
+   * Getting self order from captain message
+   * If no orders are found, return an empty StrategyOrder
    */
-  Instruction getInstruction();
+  hl_communication::StrategyOrder getMyOrder();
+
+  /**
+   * Return false if there is no common_ball, otherwise return true and set 'dst' to the common ball in field
+   * referential
+   */
+  bool importCommonBall(rhoban_geometry::Point* dst);
+
+  /**
+   * Update the captain status based on the provided message
+   */
+  void setStatus(const hl_communication::Captain& new_status);
 
 protected:
   // RhIO binding
@@ -87,15 +84,25 @@ protected:
 
   // Captain asynchronous thread
   volatile bool running;
-  std::thread* captainThread;
+  std::unique_ptr<std::thread> captainThread;
   std::mutex mutex;
 
   // Either the info computed or the one grabbed from the captain
-  rhoban_team_play::CaptainInfo info;
+  hl_communication::Captain status;
+
+  /**
+   * Storing last ball candidate to see if there
+   */
+  hl_communication::CommonBall last_common_ball;
 
   // Available robots
-  std::map<int, rhoban_team_play::TeamPlayInfo> robots;
+  std::map<int, hl_communication::RobotMsg> robots;
   std::vector<int> robotIds;
+
+  /**
+   * Frequency of the captain strategy update
+   */
+  double frequency;
 
   // Geometric parameters
   double passPlacingRatio, passPlacingOffset;
@@ -132,43 +139,57 @@ protected:
   /// Has a mate kicked recently
   bool recentlyKicked;
 
+  /**
+   * Number of robots voting for the common ball
+   */
+  int commonBallStrength;
+  /**
+   * Position of the common ball according to the team in field referential
+   */
+  rhoban_geometry::Point commonBall;
+
   std::vector<PlacementOptimizer::Target> getTargetPositions(rhoban_geometry::Point ball,
                                                              rhoban_geometry::Point ballTarget);
 
-  /// Perform a majority vote for ball position
+  /**
+   * Uses information from teamplay to reach a consensus on ball position
+   * Do not clear potentially existing ball, this has to be done before
+   */
   void updateCommonBall();
 
-  /// Use the obstacle information to extract a consensus on opponents
-  /// Removes the obstacles near allies and merge some of the other obstacles
+  /**
+   * Use the obstacle information to extract a consensus on opponents
+   * Removes the obstacles near allies and merge some of the other obstacles
+   * Fill the *status* field
+   */
   void updateCommonOpponents();
 
   /**
-   * Do the update for the base positions
+   * Do the update for the base positions (Ready state)
+   * mutex has to be locked before calling the function
    */
   void computeBasePositions();
 
   /**
    * Do the update for the game position
+   * mutex has to be locked before calling the function
    */
   void computePlayingPositions();
 
   /**
    * Computation of the captain orders
+   * mutex has to be locked before calling the function
    */
   void compute();
 
   /**
-   * Execution thread
+   * Main loop of the background thread updating the robot positions
    */
   void execThread();
 
   /**
    * Updates the captain info from a placement optimizer solution
+   * Does not affect players which are not in the solution
    */
   void setSolution(PlacementOptimizer::Solution solution);
-
-  /**
-   * UDPBroadcast instance
-   */
-  rhoban_utils::UDPBroadcast* _broadcaster;
 };
