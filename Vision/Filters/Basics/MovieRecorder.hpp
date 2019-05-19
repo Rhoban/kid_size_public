@@ -2,7 +2,7 @@
 
 #include "Filters/Filter.hpp"
 
-#include "video.pb.h"
+#include <hl_monitoring/camera.pb.h>
 
 #include <opencv2/videoio.hpp>
 
@@ -24,6 +24,8 @@ public:
   virtual ~MovieRecorder();
 
   std::string getClassName() const override;
+
+  void finish() override;
 
 protected:
   /**
@@ -56,7 +58,7 @@ private:
   /// Name of the video currently written (without extension)
   std::string videoPath;
 
-  rhoban_vision_proto::VideoMetaInformation videoMetaInformation;
+  hl_monitoring::VideoMetaInformation videoMetaInformation;
 };
 }  // namespace Filters
 }  // namespace Vision

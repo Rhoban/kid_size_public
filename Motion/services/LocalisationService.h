@@ -130,9 +130,6 @@ public:
   void fallReset();
   void bordersReset();
 
-  void setVisualCompassStatus(bool inUse);
-  bool getVisualCompassStatus() const;
-
   /**
    * Convert given position from world refential to field referential (not thread safe)
    */
@@ -203,12 +200,8 @@ protected:
 private:
   bool simulateWalk;
 
-  /// Is the visual compass currently enabled in Localisation?
-  bool visualCompassActivated;
-
-  // Conversions between self, field and world referentials
-
 public:
+  // Conversions between self, field and world referentials
   Eigen::Affine3d field_from_world;
   Eigen::Affine3d world_from_field;
   Eigen::Affine3d self_from_world;

@@ -28,9 +28,6 @@ Head::Head()
 {
   Move::initializeBinding();
   // Special modes variables
-  bind->bindNew("forceCompass", force_compass, RhIO::Bind::PullOnly)
-      ->comment("Special mode: looking above to get visual compass observation")
-      ->defaultValue(false);
   bind->bindNew("forceLocalize", force_localize, RhIO::Bind::PullOnly)
       ->comment("Special scanning mode: not looking nearby")
       ->defaultValue(false);
@@ -63,16 +60,6 @@ Head::Head()
   bind->bindNew("localizeMinOverlap", localize_min_overlap, RhIO::Bind::PullOnly)
       ->comment("Minimal overlap between control points [degrees]")
       ->defaultValue(5);
-  // Compass scan parameters
-  bind->bindNew("compassMinTilt", compass_min_tilt, RhIO::Bind::PullOnly)
-      ->comment("Minimum tilt wished for an image point")
-      ->defaultValue(-30);
-  bind->bindNew("compassMaxTilt", compass_max_tilt, RhIO::Bind::PullOnly)
-      ->comment("Maximum tilt wished for an image point")
-      ->defaultValue(10);
-  bind->bindNew("compassMaxPan", compass_max_pan, RhIO::Bind::PullOnly)
-      ->comment("Maximum pan wished for an image point")
-      ->defaultValue(160);
   // Speed and acc limits for orders
   // WARNING: persisted, because 'Tom' has a different camera requiring a higher shutter
   bind->bindNew("maxSpeed", max_speed, RhIO::Bind::PullOnly)
@@ -80,9 +67,6 @@ Head::Head()
       ->defaultValue(240)
       ->persisted(true);
   bind->bindNew("maxAcc", max_acc, RhIO::Bind::PullOnly)->comment("Maximal acceleration [deg/s^2]")->defaultValue(3600);
-  bind->bindNew("vcMaxSpeed", vc_max_speed, RhIO::Bind::PullOnly)
-      ->comment("Maximal angular speed with visual compass [deg/s]")
-      ->defaultValue(60);
   // Tracking
   bind->bindNew("maxTiltTrack", max_tilt_track, RhIO::Bind::PullOnly)
       ->comment("Maximum tilt wished for the center of the image when tracking")
@@ -96,8 +80,6 @@ Head::Head()
   bind->bindNew("scanPeriod", scan_period, RhIO::Bind::PushOnly)->comment("Duration of scan cycle [s]");
   bind->bindNew("localizeScanPeriod", localize_scan_period, RhIO::Bind::PushOnly)
       ->comment("Duration of scan cycle in localize mode [s]");
-  bind->bindNew("compassScanPeriod", compass_scan_period, RhIO::Bind::PushOnly)
-      ->comment("Duration of scan cycle in compassMode [s]");
   bind->bindNew("scanExtraPeriod", scan_extra_period, RhIO::Bind::PullOnly)
       ->comment("Extra time to ensure we are looking everywhere [s]")
       ->defaultValue(0.5);
@@ -182,11 +164,6 @@ void Head::step(float elapsed)
   if (disabled)
   {
     target_in_self = Eigen::Vector3d(1, 0, 0);
-  }
-  else if (force_compass || loc->getVisualCompassStatus())
-  {
-    target_in_self = getScanTarget(model, compass_scanner);
-    is_tracking = false;
   }
   else if (force_localize)
   {
@@ -390,24 +367,13 @@ void Head::updateScanners()
   localize_scanner.setMaxPan(localize_max_pan);
   localize_scanner.setMinOverlap(localize_min_overlap);
   localize_scanner.setControlLaw(max_speed, max_acc);
-  // update compass_scanner
-  double tmp_max_speed = vc_max_speed;
-  double tmp_max_pan = compass_max_pan;
-  compass_scanner.setFOV(fovx, fovy);
-  compass_scanner.setMinTilt(compass_min_tilt);
-  compass_scanner.setMaxTilt(compass_max_tilt);
-  compass_scanner.setMaxPan(tmp_max_pan);
-  compass_scanner.setMinOverlap(0);  // We don't care about overlap for compass
-  compass_scanner.setControlLaw(tmp_max_speed, max_acc);
 
   // Update trajectory if parameters have changed
   scanner.synchronize();
   localize_scanner.synchronize();
-  compass_scanner.synchronize();
   // Update scan periods parameters
   scan_period = scanner.getCycleDuration();
   localize_scan_period = localize_scanner.getCycleDuration();
-  compass_scan_period = compass_scanner.getCycleDuration();
 }
 
 void Head::applyProtection()

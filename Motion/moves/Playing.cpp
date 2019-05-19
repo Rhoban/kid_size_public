@@ -185,9 +185,8 @@ void PlayingMove::step(float elapsed)
     }
   }
 
-  // When field quality is low or when the robot is running visual
-  // compass: go to state localize
-  if (!decision->isFieldQualityGood || loc->getVisualCompassStatus())
+  // When field quality is low go to state localize
+  if (!decision->isFieldQualityGood)
   {
     logger.log("Requiring more field observations, going to localize");
     setState(STATE_LOCALIZE);
@@ -245,7 +244,7 @@ void PlayingMove::localizeStep(float elapsed)
     }
   }
   // Once quality is good enough, go to search state
-  if (decision->isFieldQualityGood && !loc->getVisualCompassStatus())
+  if (decision->isFieldQualityGood)
   {
     logger.log("I am now localized, going to search the ball");
     setState(STATE_SEARCH);

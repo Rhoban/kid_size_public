@@ -224,6 +224,10 @@ void Filter::previous()
   throw std::runtime_error("Previous is not implemented for filter: " + getClassName());
 }
 
+void Filter::finish()
+{
+}
+
 void Filter::runStep(UpdateType updateType)
 {
   Benchmark::open(name);
@@ -313,12 +317,12 @@ const Filter& Filter::getDependency(const std::string& name) const
 
 const Filter& Filter::getDependency(int index) const
 {
-  if (index > (int)_dependencies.size() || index < 0) {
+  if (index > (int)_dependencies.size() || index < 0)
+  {
     throw std::logic_error(DEBUG_INFO + "invalid index " + std::to_string(index));
   }
   return _pipeline->get(_dependencies[index]);
 }
-
 
 void Filter::initRhIO(const std::string& path)
 {

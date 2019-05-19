@@ -1,5 +1,7 @@
 * Perception and localisation manual
 
+Note from May 17th, 2019: vastly outdated (visual compass etc...)
+
 Created on: June 3rd, 2018
 
 This manual aims at providing basic knowledge on the Vision and Localisation

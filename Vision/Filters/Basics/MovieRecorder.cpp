@@ -26,6 +26,11 @@ std::string MovieRecorder::getClassName() const
   return "MovieRecorder";
 }
 
+void MovieRecorder::finish()
+{
+  closeStream();
+}
+
 void MovieRecorder::setParameters()
 {
   enabled = ParamInt(0, 0, 1);
@@ -52,7 +57,7 @@ void MovieRecorder::startStream(const cv::Size& size)
   }
 
   // Setting intrinsic parameters
-  rhoban_vision_proto::IntrinsicParameters* intrinsic = videoMetaInformation.mutable_camera_parameters();
+  hl_monitoring::IntrinsicParameters* intrinsic = videoMetaInformation.mutable_camera_parameters();
   getCS().exportToProtobuf(intrinsic);
   if (intrinsic->img_width() != (size_t)size.width || intrinsic->img_height() != (size_t)size.height)
   {
@@ -65,8 +70,8 @@ void MovieRecorder::pushEntry()
 {
   videoWriter.write(img());
   const Utils::CameraState& cs = getCS();
-  rhoban_vision_proto::CameraState* new_cs = videoMetaInformation.add_camera_states();
-  cs.exportToProtobuf(new_cs);
+  hl_monitoring::FrameEntry* new_fe = videoMetaInformation.add_frames();
+  cs.exportToProtobuf(new_fe);
 }
 
 void MovieRecorder::closeStream()
@@ -87,7 +92,7 @@ void MovieRecorder::closeStream()
 
   // Clearing existing meta informations
   videoMetaInformation.clear_camera_parameters();
-  videoMetaInformation.clear_camera_states();
+  videoMetaInformation.clear_frames();
 
   videoPath.clear();
 }

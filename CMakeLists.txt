@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(kid_size)
 
-include(FindProtobuf)
-find_package(Protobuf REQUIRED)
-
 set(OpenCV_DIR "/usr/local/include/")
 find_package(OpenCV 3.2.0 REQUIRED)
 
@@ -83,7 +80,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 set (LINKED_LIBRARIES
     pthread
     ${catkin_LIBRARIES}
-    ${PROTOBUF_LIBRARIES}
     ${OpenCV_LIBS}
 )
 
@@ -135,17 +131,6 @@ set (SOURCES_DIRECTORIES
   Vision/Tags
   Vision/Utils
   )
-
-#TODO: use a scheme similar to the one used for sources if 
-set (PROTOBUF_MESSAGES
-  Vision/Protobuf/camera_state.proto
-  Vision/Protobuf/video.proto
-  )
-
-include_directories(${PROTOBUF_INCLUDE_DIR})
-protobuf_generate_cpp(PROTO_SOURCES PROTO_HEADERS ${PROTOBUF_MESSAGES})
-
-set (ALL_SOURCES ${PROTO_SOURCES})
 
 #Include Sources sub sources
 foreach (DIRECTORY ${SOURCES_DIRECTORIES})

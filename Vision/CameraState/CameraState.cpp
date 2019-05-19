@@ -37,7 +37,7 @@ namespace Vision
 {
 namespace Utils
 {
-Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D& pose)
+Eigen::Affine3d getAffineFromProtobuf(const hl_monitoring::Pose3D& pose)
 {
   Eigen::Matrix3d rotation = Eigen::Matrix3d::Identity();
   Eigen::Vector3d translation = Eigen::Vector3d::Zero();
@@ -71,7 +71,7 @@ Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D& pose)
   return Eigen::Translation3d(translation) * Eigen::Affine3d(rotation);
 }
 
-void setProtobufFromAffine(const Eigen::Affine3d& affine, rhoban_vision_proto::Pose3D* pose)
+void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D* pose)
 {
   pose->clear_rotation();
   pose->clear_translation();
@@ -85,25 +85,21 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, rhoban_vision_proto::P
   pose->add_translation(affine.translation()(2));
 }
 
-CameraState::CameraState(MoveScheduler* moveScheduler)
-  : has_camera_field_transform(false)
-  , clock_offset(0)
+CameraState::CameraState(MoveScheduler* moveScheduler) : has_camera_field_transform(false), clock_offset(0)
 {
   _moveScheduler = moveScheduler;
   _cameraModel = _moveScheduler->getServices()->robotModel->cameraModel;
 }
 
-CameraState::CameraState(const rhoban_vision_proto::IntrinsicParameters& camera_parameters,
-                         const rhoban_vision_proto::CameraState& cs)
-  : _moveScheduler(nullptr)
-  , has_camera_field_transform(false)
-  , clock_offset(0)
+CameraState::CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters,
+                         const hl_monitoring::FrameEntry& frame_entry)
+  : _moveScheduler(nullptr), has_camera_field_transform(false), clock_offset(0)
 {
   importFromProtobuf(camera_parameters);
-  importFromProtobuf(cs);
+  importFromProtobuf(frame_entry);
 }
 
-void CameraState::importFromProtobuf(const rhoban_vision_proto::IntrinsicParameters& camera_parameters)
+void CameraState::importFromProtobuf(const hl_monitoring::IntrinsicParameters& camera_parameters)
 {
   _cameraModel.setCenter(Eigen::Vector2d(camera_parameters.center_x(), camera_parameters.center_y()));
   _cameraModel.setFocal(Eigen::Vector2d(camera_parameters.focal_x(), camera_parameters.focal_y()));
@@ -120,16 +116,16 @@ void CameraState::importFromProtobuf(const rhoban_vision_proto::IntrinsicParamet
   }
 }
 
-void CameraState::importFromProtobuf(const rhoban_vision_proto::CameraState& src)
+void CameraState::importFromProtobuf(const hl_monitoring::FrameEntry& src)
 {
   _timeStamp = src.time_stamp();
-  cameraToWorld = getAffineFromProtobuf(src.camera_to_world());
-  selfToWorld = getAffineFromProtobuf(src.self_to_world());
+  cameraToWorld = getAffineFromProtobuf(src.pose());
+  selfToWorld = Eigen::Affine3d::Identity();  // Protobuf does not store the position of the robot
   worldToCamera = cameraToWorld.inverse();
   worldToSelf = selfToWorld.inverse();
 }
 
-void CameraState::exportToProtobuf(rhoban_vision_proto::IntrinsicParameters* dst) const
+void CameraState::exportToProtobuf(hl_monitoring::IntrinsicParameters* dst) const
 {
   dst->set_focal_x(_cameraModel.getFocalX());
   dst->set_focal_y(_cameraModel.getFocalY());
@@ -145,11 +141,10 @@ void CameraState::exportToProtobuf(rhoban_vision_proto::IntrinsicParameters* dst
   }
 }
 
-void CameraState::exportToProtobuf(rhoban_vision_proto::CameraState* dst) const
+void CameraState::exportToProtobuf(hl_monitoring::FrameEntry* dst) const
 {
   dst->set_time_stamp(_timeStamp);
-  setProtobufFromAffine(cameraToWorld, dst->mutable_camera_to_world());
-  setProtobufFromAffine(selfToWorld, dst->mutable_self_to_world());
+  setProtobufFromAffine(cameraToWorld, dst->mutable_pose());
 }
 
 const rhoban::CameraModel& CameraState::getCameraModel() const
@@ -164,7 +159,7 @@ void CameraState::updateInternalModel(double timeStamp)
 
   if (_moveScheduler != nullptr)
   {
-    RobotModelService *robotModel = _moveScheduler->getServices()->robotModel;
+    RobotModelService* robotModel = _moveScheduler->getServices()->robotModel;
 
     selfToWorld = robotModel->selfToWorld(timeStamp);
     worldToCamera = robotModel->cameraToWorld(timeStamp).inverse();
