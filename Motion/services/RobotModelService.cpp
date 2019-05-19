@@ -36,7 +36,7 @@ RobotModelService::RobotModelService()
   : odometryEnabled(false)
   , odometryUpdated(false)
   , timeSinceLastPublish(0)
-  , bind("robot_model")
+  , bind("model")
   , isReplay(false)
   , histories(30.0)
   , lowLevelState("")
@@ -47,6 +47,8 @@ RobotModelService::RobotModelService()
 
   odometryYawOffset = 0;
   bind.bindFunc("odometryReset", "Resets the robot odometry", &RobotModelService::cmdOdometryReset, *this);
+
+  bind.bindNew("publish", publish, RhIO::Bind::PullOnly)->defaultValue(publish = false);
 
   // Declaration of history entries
   histories.pose("camera");
@@ -111,11 +113,11 @@ bool RobotModelService::tick(double elapsed)
     if (odometryEnabled)
     {
       odometryUpdated = true;
-      if (getPressureLeftRatio() > 0.9)
+      if (getPressureLeftRatio() > 0.6)
       {
         model.setSupportFoot(model.Left, true);
       }
-      if (getPressureRightRatio() > 0.9)
+      if (getPressureRightRatio() > 0.6)
       {
         model.setSupportFoot(model.Right, true);
       }
@@ -124,7 +126,7 @@ bool RobotModelService::tick(double elapsed)
 
   // Publishing goal model to ZMQ
   timeSinceLastPublish += elapsed;
-  if (timeSinceLastPublish > 0.02)
+  if (timeSinceLastPublish > 0.02 && publish)
   {
     timeSinceLastPublish = 0;
     LocalisationService* localisationService = getServices()->localisation;
@@ -212,8 +214,8 @@ void RobotModelService::tickLog()
   // Logging DOFs
   for (auto& name : model.getDofNames())
   {
-    histories.number("read:" +name)->pushValue(timestamp, deg2rad(getAngle(name)));
-    histories.number("goal:"+name)->pushValue(timestamp, deg2rad(getGoalAngle(name)));
+    histories.number("read:" + name)->pushValue(timestamp, deg2rad(getAngle(name)));
+    histories.number("goal:" + name)->pushValue(timestamp, deg2rad(getGoalAngle(name)));
   }
 
   // Logging IMU
