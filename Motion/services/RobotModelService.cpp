@@ -90,6 +90,8 @@ std::string RobotModelService::cmdOdometryReset()
 
 bool RobotModelService::tick(double elapsed)
 {
+  bind.pull();
+
   for (const std::string& name : model.getDofNames())
   {
     if (Helpers::isFakeMode())
@@ -145,6 +147,7 @@ bool RobotModelService::tick(double elapsed)
   // XXX: Why this is done in model service?
   tickCheckLowLevelState();
 
+  bind.push();
   return true;
 }
 
