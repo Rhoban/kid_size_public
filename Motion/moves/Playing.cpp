@@ -185,7 +185,7 @@ void PlayingMove::step(float elapsed)
     }
   }
 
-  // When field quality is low: go to state localize
+  // When field quality is low go to state localize
   if (!decision->isFieldQualityGood)
   {
     logger.log("Requiring more field observations, going to localize");

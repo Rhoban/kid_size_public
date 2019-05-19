@@ -363,7 +363,6 @@ void Walk::stepKick(float elapsed)
     if (kickState == KickWaitingWalkToStop && state == WalkNotWalking)
     {
       // Forcing support foot in the model
-      auto robotModel = getServices()->robotModel;
       getServices()->robotModel->model.setSupportFoot(
           kickLeftFoot ? rhoban::HumanoidModel::Right : rhoban::HumanoidModel::Left, true);
 

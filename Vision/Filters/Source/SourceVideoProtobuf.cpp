@@ -41,7 +41,7 @@ void SourceVideoProtobuf::loadMetaInformation()
 
 Utils::CameraState* SourceVideoProtobuf::buildCameraState()
 {
-  if (index < 0 || index >= videoMetaInformation.camera_states_size())
+  if (index < 0 || index >= videoMetaInformation.frames_size())
   {
     throw std::runtime_error(DEBUG_INFO + " invalid index: " + std::to_string(index));
   }
@@ -49,7 +49,7 @@ Utils::CameraState* SourceVideoProtobuf::buildCameraState()
   {
     throw std::runtime_error(DEBUG_INFO + " camera_parameters were not provided");
   }
-  return new Utils::CameraState(videoMetaInformation.camera_parameters(), videoMetaInformation.camera_states(index));
+  return new Utils::CameraState(videoMetaInformation.camera_parameters(), videoMetaInformation.frames(index));
 }
 
 void SourceVideoProtobuf::process()

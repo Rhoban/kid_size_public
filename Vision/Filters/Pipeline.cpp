@@ -194,6 +194,14 @@ void Pipeline::runStep()
   step(Filter::UpdateType::forward);
 }
 
+void Pipeline::finish()
+{
+  for (auto& entry : filters())
+  {
+    entry.second->finish();
+  }
+}
+
 void Pipeline::resolveDependencies()
 {
   if (_children.size() != 0)

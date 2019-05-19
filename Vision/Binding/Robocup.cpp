@@ -1327,9 +1327,7 @@ void Robocup::closeCamera()
 {
   if (pipeline.isFilterPresent("source"))
   {
-    std::cerr << "Someone asked to close camera in Robocup, not implemented "
-                 "for PtGrey"
-              << std::endl;
+    std::cerr << "Someone asked to close camera in Robocup, not implemented for PtGrey" << std::endl;
   }
   else
   {

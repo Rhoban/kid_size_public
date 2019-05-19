@@ -3,7 +3,7 @@
 #include "Filters/Source/Source.hpp"
 #include "FrameSource/ImageSequence.hpp"
 
-#include "video.pb.h"
+#include <hl_monitoring/camera.pb.h>
 
 #include <opencv2/videoio.hpp>
 
@@ -67,7 +67,7 @@ private:
 
   cv::VideoCapture video;
 
-  rhoban_vision_proto::VideoMetaInformation videoMetaInformation;
+  hl_monitoring::VideoMetaInformation videoMetaInformation;
 };
 }  // namespace Filters
 }  // namespace Vision

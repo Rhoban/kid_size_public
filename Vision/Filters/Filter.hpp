@@ -202,6 +202,12 @@ public:
 
   static bool GPU_ON;
 
+  /**
+   * Apply all the operations which should be performed when stream is finished:
+   * e.g. dumping images
+   */
+  virtual void finish();
+
 protected:
   // If an image is shown by a filter, then its name should be here
   static std::vector<std::string> listOfPresentWindows;
@@ -300,7 +306,7 @@ protected:
    * List of Regions of interest
    */
   std::vector<std::pair<float, cv::RotatedRect>> _rois;  //<roi, quality> (.boundingRect() on a RotatedRect to get a
-                                                         //Rect)
+                                                         // Rect)
   std::vector<std::pair<float, rhoban_geometry::Circle>> _circleRois;
 
 protected:
