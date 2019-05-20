@@ -1,16 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
 project(kid_size)
 
-include(FindProtobuf)
-find_package(Protobuf REQUIRED)
-
 set(OpenCV_DIR "/usr/local/include/")
 find_package(OpenCV 3.2.0 REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   hl_communication
   RhAL
-  model
+  robot_model
   robocup_referee
   rhoban_graphs
   rhoban_random
@@ -25,7 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS Motion/
   #LIBRARIES #TODO: which libraries are published?
-  CATKIN_DEPENDS tclap RhAL model robocup_referee rhoban_graphs rhoban_team_play rhoban_random rhoban_unsorted rhoban_model_learning hl_communication vive_provider
+  CATKIN_DEPENDS tclap RhAL robot_model robocup_referee rhoban_graphs rhoban_team_play rhoban_random rhoban_unsorted rhoban_model_learning hl_communication vive_provider
   )
 
 #Build option
@@ -83,7 +80,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 set (LINKED_LIBRARIES
     pthread
     ${catkin_LIBRARIES}
-    ${PROTOBUF_LIBRARIES}
     ${OpenCV_LIBS}
 )
 
@@ -135,17 +131,6 @@ set (SOURCES_DIRECTORIES
   Vision/Tags
   Vision/Utils
   )
-
-#TODO: use a scheme similar to the one used for sources if 
-set (PROTOBUF_MESSAGES
-  Vision/Protobuf/camera_state.proto
-  Vision/Protobuf/video.proto
-  )
-
-include_directories(${PROTOBUF_INCLUDE_DIR})
-protobuf_generate_cpp(PROTO_SOURCES PROTO_HEADERS ${PROTOBUF_MESSAGES})
-
-set (ALL_SOURCES ${PROTO_SOURCES})
 
 #Include Sources sub sources
 foreach (DIRECTORY ${SOURCES_DIRECTORIES})

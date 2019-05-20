@@ -3,7 +3,6 @@ set (SOURCES
     ApproachMove.cpp
     AutonomousPlaying.cpp
     Penalty.cpp
-    OldWalk.cpp
     StandUp.cpp
     Move.cpp
     Moves.cpp
@@ -20,7 +19,7 @@ set (SOURCES
     Kick.cpp
     ThrowIn.cpp
     
-    LogMachine.cpp
+    # LogMachine.cpp
     
     GoalKick.cpp
     ReactiveKicker.cpp

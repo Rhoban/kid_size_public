@@ -89,6 +89,11 @@ public:
   void step(Filter::UpdateType updateType);
 
   /**
+   * Call the finish methods on all filters
+   */
+  void finish();
+
+  /**
    * Start all Filters processing
    * in a thread and return
    */

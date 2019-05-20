@@ -8,7 +8,7 @@
 #include "RefereeService.h"
 #include "TeamPlayService.h"
 #include "LocalisationService.h"
-#include "ModelService.h"
+#include "RobotModelService.h"
 #include <moves/Walk.h>
 #include <moves/Moves.h>
 #include <robocup_referee/constants.h>
@@ -34,8 +34,7 @@ using Vision::Localisation::FieldPF;
 
 static rhoban_utils::Logger out("localisation_service");
 
-LocalisationService::LocalisationService()
-  : bind("localisation"), robocup(NULL), locBinding(NULL), fakeRobot(InitHumanoidModel<Leph::HumanoidFixedModel>())
+LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL), locBinding(NULL)
 {
   lastKick = rhoban_utils::TimeStamp::now();
   // Ball
@@ -53,11 +52,9 @@ LocalisationService::LocalisationService()
   fieldQ = 0;
   fieldConsistency = 0;
   consistencyEnabled = false;
-  // Visual compass
-  visualCompassActivated = false;
 
-  self_from_world = Eigen::Affine3d::Identity();
-  field_from_world = Eigen::Affine3d::Identity();
+  world_from_self = self_from_world = Eigen::Affine3d::Identity();
+  world_from_field = field_from_world = Eigen::Affine3d::Identity();
 
   bind.bindFunc("fakeBall", "Set a fake ball observation in model world", &LocalisationService::cmdFakeBall, *this);
   bind.node().newCommand("fakeOpponents", "Fake opponents",
@@ -406,8 +403,8 @@ void LocalisationService::updatePosSelf()
   bind.push();
 }
 
-void LocalisationService::setPosSelf(const Eigen::Vector3d& center_in_self, float orientation, float quality, float consistency,
-                                     bool consistencyEnabled_)
+void LocalisationService::setPosSelf(const Eigen::Vector3d& center_in_self, float orientation, float quality,
+                                     float consistency, bool consistencyEnabled_)
 {
   bind.pull();
 
@@ -435,7 +432,8 @@ void LocalisationService::applyKick(float x_, float y_)
 
   if (Helpers::isFakeMode() && !Helpers::isPython)
   {
-    double yaw = getFakeRobot().get().getDOF("base_yaw");
+    double yaw = rhoban::frameYaw(getServices()->robotModel->model.selfToWorld().rotation());
+    ;
     std::random_device rd;
     std::default_random_engine engine(rd());
     std::uniform_real_distribution<double> unif(-0.1, 0.1);
@@ -564,16 +562,6 @@ void LocalisationService::bordersReset()
   }
 }
 
-void LocalisationService::setVisualCompassStatus(bool inUse)
-{
-  visualCompassActivated = inUse;
-}
-
-bool LocalisationService::getVisualCompassStatus() const
-{
-  return visualCompassActivated;
-}
-
 bool LocalisationService::isVisionActive() const
 {
   if (NULL != robocup)
@@ -653,33 +641,24 @@ std::string LocalisationService::cmdFakeLoc(double fieldX, double fieldY, double
   return "Set fake localization in world";
 }
 
-Leph::HumanoidFixedModel &LocalisationService::getFakeRobot()
-{
-  if (Helpers::isPython) {
-    return fakeRobot;
-  } else {
-    return getServices()->model->goalModel();
-  }
-}
-
+// XXX: Actually, this method name is only real in simulation mode
+//      because it sets the robot at some world position and not field position
 std::string LocalisationService::cmdMoveOnField(double x, double y, double yaw)
 {
   fieldQ = 1;
 
-  if (Helpers::isFakeMode())
-  {
-    getFakeRobot().get().setDOF("base_yaw", 0);
-    getFakeRobot().get().setDOF("base_x", x);
-    getFakeRobot().get().setDOF("base_y", y);
-    getFakeRobot().get().setDOF("base_yaw", yaw);
-  }
-  else
-  {
-    auto& odometry = getServices()->model->getOdometryModel();
-    Eigen::Vector3d pos(x, y, yaw);
+  // Computing the new selfInWorld target
+  Eigen::Affine3d selfToWorld = Eigen::Affine3d::Identity();
+  selfToWorld.translation().x() = x;
+  selfToWorld.translation().y() = y;
+  selfToWorld.linear() = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()).toRotationMatrix();
 
-    odometry.reset(pos);
-  }
+  // Updating supportToWorld accordingly
+  rhoban::HumanoidModel& model = getServices()->robotModel->model;
+  Eigen::Affine3d supportToSelf = model.selfToWorld().inverse() * model.supportToWorld;
+  model.supportToWorld = selfToWorld * supportToSelf;
+
+  model.updateImu();
 
   updateBallPos();
   updatePosSelf();
@@ -689,19 +668,7 @@ std::string LocalisationService::cmdMoveOnField(double x, double y, double yaw)
 
 std::string LocalisationService::cmdResetPosition()
 {
-  if (Helpers::isFakeMode())
-  {
-    getFakeRobot().get().setDOF("base_x", 0);
-    getFakeRobot().get().setDOF("base_y", 0);
-    getFakeRobot().get().setDOF("base_yaw", 0);
-  }
-  else
-  {
-    auto& odometry = getServices()->model->getOdometryModel();
-    odometry.reset(Eigen::Vector3d(0, 0, 0));
-  }
-
-  return "Position reseted";
+  return cmdMoveOnField(0, 0, 0);
 }
 
 int LocalisationService::getFrames()
@@ -748,7 +715,8 @@ bool LocalisationService::tick(double elapsed)
 
   if (Helpers::isFakeMode())
   {
-    if (!Helpers::isPython) {
+    if (!Helpers::isPython)
+    {
       updatePosSelf();
       updateBallPos();
     }
@@ -771,22 +739,7 @@ void LocalisationService::updateFieldWorldTransforms()
 
 void LocalisationService::updateSelfWorldTransforms()
 {
-  if (Helpers::isFakeMode())
-  {
-    // XXX: Should have a "log mode" ?
-    if (NULL != robocup)
-    {
-      world_from_self = getServices()->model->readModel().get().selfFrameTransform("origin");
-    }
-    else
-    {
-      world_from_self = getFakeRobot().get().selfFrameTransform("origin");
-    }
-  }
-  else
-  {
-    world_from_self = getServices()->model->readModel().get().selfFrameTransform("origin");
-  }
+  world_from_self = getServices()->robotModel->model.selfToWorld();
   self_from_world = world_from_self.inverse();
 }
 

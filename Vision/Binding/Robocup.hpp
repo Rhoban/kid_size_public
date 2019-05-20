@@ -282,7 +282,7 @@ private:
   /// Controls access to the tags
   mutable std::mutex tagsMutex;
 
-  /// Controls access to the visualcompass
+  /// Controls access to the features provided (Points of Interests + robots)
   mutable std::mutex featuresMutex;
 
   /**

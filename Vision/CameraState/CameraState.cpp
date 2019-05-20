@@ -5,7 +5,7 @@
 
 #include "Utils/HomogeneousTransform.hpp"
 #include "services/DecisionService.h"
-#include "services/ModelService.h"
+#include "services/RobotModelService.h"
 #include "services/LocalisationService.h"
 #include "services/ViveService.h"
 
@@ -37,7 +37,7 @@ namespace Vision
 {
 namespace Utils
 {
-Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D& pose)
+Eigen::Affine3d getAffineFromProtobuf(const hl_monitoring::Pose3D& pose)
 {
   Eigen::Matrix3d rotation = Eigen::Matrix3d::Identity();
   Eigen::Vector3d translation = Eigen::Vector3d::Zero();
@@ -71,7 +71,7 @@ Eigen::Affine3d getAffineFromProtobuf(const rhoban_vision_proto::Pose3D& pose)
   return Eigen::Translation3d(translation) * Eigen::Affine3d(rotation);
 }
 
-void setProtobufFromAffine(const Eigen::Affine3d& affine, rhoban_vision_proto::Pose3D* pose)
+void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D* pose)
 {
   pose->clear_rotation();
   pose->clear_translation();
@@ -85,32 +85,21 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, rhoban_vision_proto::P
   pose->add_translation(affine.translation()(2));
 }
 
-CameraState::CameraState(MoveScheduler* moveScheduler)
-  : _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
-  , has_camera_field_transform(false)
-  , clock_offset(0)
+CameraState::CameraState(MoveScheduler* moveScheduler) : has_camera_field_transform(false), clock_offset(0)
 {
   _moveScheduler = moveScheduler;
-  _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
-  double now = ::rhoban_utils::TimeStamp::now().getTimeMS() / 1000.0;
-  _moveScheduler->getServices()->model->pastReadModel(now, _pastReadModel);
-  _model = &(_pastReadModel.get());
-  _model->setAutoUpdate(false);
-  _model->updateDOFPosition();
+  _cameraModel = _moveScheduler->getServices()->robotModel->cameraModel;
 }
 
-CameraState::CameraState(const rhoban_vision_proto::IntrinsicParameters& camera_parameters,
-                         const rhoban_vision_proto::CameraState& cs)
-  : _moveScheduler(nullptr)
-  , _pastReadModel(InitHumanoidModel<Leph::HumanoidFixedPressureModel>())
-  , has_camera_field_transform(false)
-  , clock_offset(0)
+CameraState::CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters,
+                         const hl_monitoring::FrameEntry& frame_entry)
+  : _moveScheduler(nullptr), has_camera_field_transform(false), clock_offset(0)
 {
   importFromProtobuf(camera_parameters);
-  importFromProtobuf(cs);
+  importFromProtobuf(frame_entry);
 }
 
-void CameraState::importFromProtobuf(const rhoban_vision_proto::IntrinsicParameters& camera_parameters)
+void CameraState::importFromProtobuf(const hl_monitoring::IntrinsicParameters& camera_parameters)
 {
   _cameraModel.setCenter(Eigen::Vector2d(camera_parameters.center_x(), camera_parameters.center_y()));
   _cameraModel.setFocal(Eigen::Vector2d(camera_parameters.focal_x(), camera_parameters.focal_y()));
@@ -127,16 +116,16 @@ void CameraState::importFromProtobuf(const rhoban_vision_proto::IntrinsicParamet
   }
 }
 
-void CameraState::importFromProtobuf(const rhoban_vision_proto::CameraState& src)
+void CameraState::importFromProtobuf(const hl_monitoring::FrameEntry& src)
 {
   _timeStamp = src.time_stamp();
-  cameraToWorld = getAffineFromProtobuf(src.camera_to_world());
-  selfToWorld = getAffineFromProtobuf(src.self_to_world());
+  cameraToWorld = getAffineFromProtobuf(src.pose());
+  selfToWorld = Eigen::Affine3d::Identity();  // Protobuf does not store the position of the robot
   worldToCamera = cameraToWorld.inverse();
   worldToSelf = selfToWorld.inverse();
 }
 
-void CameraState::exportToProtobuf(rhoban_vision_proto::IntrinsicParameters* dst) const
+void CameraState::exportToProtobuf(hl_monitoring::IntrinsicParameters* dst) const
 {
   dst->set_focal_x(_cameraModel.getFocalX());
   dst->set_focal_y(_cameraModel.getFocalY());
@@ -152,14 +141,13 @@ void CameraState::exportToProtobuf(rhoban_vision_proto::IntrinsicParameters* dst
   }
 }
 
-void CameraState::exportToProtobuf(rhoban_vision_proto::CameraState* dst) const
+void CameraState::exportToProtobuf(hl_monitoring::FrameEntry* dst) const
 {
   dst->set_time_stamp(_timeStamp);
-  setProtobufFromAffine(cameraToWorld, dst->mutable_camera_to_world());
-  setProtobufFromAffine(selfToWorld, dst->mutable_self_to_world());
+  setProtobufFromAffine(cameraToWorld, dst->mutable_pose());
 }
 
-const Leph::CameraModel& CameraState::getCameraModel() const
+const rhoban::CameraModel& CameraState::getCameraModel() const
 
 {
   return _cameraModel;
@@ -171,16 +159,11 @@ void CameraState::updateInternalModel(double timeStamp)
 
   if (_moveScheduler != nullptr)
   {
-    // Update World, Self and Camera transforms based on model
-    _model->setAutoUpdate(true);
-    _moveScheduler->getServices()->model->pastReadModel(timeStamp, _pastReadModel);
-    _model = &(_pastReadModel.get());
-    _model->setAutoUpdate(false);
-    _model->updateDOFPosition();
+    RobotModelService* robotModel = _moveScheduler->getServices()->robotModel;
 
-    selfToWorld = _model->selfFrameTransform("origin");
-    worldToCamera = _model->getTransform("camera", "origin");
-    _cameraModel = _moveScheduler->getServices()->model->getCameraModel();
+    selfToWorld = robotModel->selfToWorld(timeStamp);
+    worldToCamera = robotModel->cameraToWorld(timeStamp).inverse();
+    _cameraModel = robotModel->cameraModel;
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
     // Update camera/field transform based on (by order of priority)
@@ -373,30 +356,22 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
     return -1;
   }
 
-  try
-  {
-    Eigen::Vector3d ballCenter = getIntersection(viewRay, ballPlane);
+  Eigen::Vector3d ballCenter = getIntersection(viewRay, ballPlane);
 
-    // Getting a perpendicular direction. We know that viewRay.dir.z<0, thus the
-    // vectors will be different
-    Eigen::Vector3d groundDir = viewRay.dir;
-    groundDir(2) = 0;
-    Eigen::Vector3d altDir = viewRay.dir.cross(groundDir).normalized();
+  // Getting a perpendicular direction. We know that viewRay.dir.z<0, thus the
+  // vectors will be different
+  Eigen::Vector3d groundDir = viewRay.dir;
+  groundDir(2) = 0;
+  Eigen::Vector3d altDir = viewRay.dir.cross(groundDir).normalized();
 
-    // Getting one of the points on the side of the ball, this is not an exact
-    // method, but the approximation should be good enough
-    Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ball_radius;
+  // Getting one of the points on the side of the ball, this is not an exact
+  // method, but the approximation should be good enough
+  Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ball_radius;
 
-    // Getting pixel for ballSide
-    cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
+  // Getting pixel for ballSide
+  cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
 
-    return (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
-  }
-  catch (const std::runtime_error& exc)
-  {
-    logger.warning("%s: Failed to compute ball radius: %s", DEBUG_INFO.c_str(), exc.what());
-    return -1;
-  }
+  return (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
 }
 
 Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f& pos) const

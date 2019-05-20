@@ -6,7 +6,6 @@
 #include <Eigen/Dense>
 #include <rhoban_geometry/point.h>
 #include <rhoban_utils/timing/time_stamp.h>
-#include <Model/HumanoidFixedModel.hpp>
 
 namespace Vision
 {
@@ -131,9 +130,6 @@ public:
   void fallReset();
   void bordersReset();
 
-  void setVisualCompassStatus(bool inUse);
-  bool getVisualCompassStatus() const;
-
   /**
    * Convert given position from world refential to field referential (not thread safe)
    */
@@ -204,12 +200,8 @@ protected:
 private:
   bool simulateWalk;
 
-  /// Is the visual compass currently enabled in Localisation?
-  bool visualCompassActivated;
-
-  // Conversions between self, field and world referentials
-
 public:
+  // Conversions between self, field and world referentials
   Eigen::Affine3d field_from_world;
   Eigen::Affine3d world_from_field;
   Eigen::Affine3d self_from_world;
@@ -223,10 +215,6 @@ public:
   std::string cmdFakeLoc(double fieldX, double fieldY, double orientation);
   std::string cmdResetPosition();
   std::string cmdMoveOnField(double x, double y, double yaw);
-
-  Leph::HumanoidFixedModel fakeRobot;
-
-  Leph::HumanoidFixedModel &getFakeRobot();
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

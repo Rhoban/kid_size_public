@@ -1,7 +1,9 @@
 #include <math.h>
 #include "Walk.h"
+#include "Head.h"
 #include "services/DecisionService.h"
-#include "services/ModelService.h"
+#include "services/RobotModelService.h"
+#include <scheduler/MoveScheduler.h>
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/control/variation_bound.h>
@@ -24,6 +26,13 @@ static double bound(double value, double min, double max)
 Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 {
   Move::initializeBinding();
+  swingGainStart = 0.04;
+  trunkPitch = 13;
+  bootstrapSteps = 3;
+  safeArmsRoll = 40;
+  shouldBootstrap = false;
+  armsEnabled = true;
+  safeArmsRollEnabled = false;
 
   // Enables or disables the walk
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
@@ -35,8 +44,8 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 
   // Walk limits (to inform other moves about limits)
   bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(15);
-  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.065);
-  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(0.035);
+  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.1);
+  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(0.04);
   bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(0.030);
 
   // Walk engine parameters
@@ -47,13 +56,16 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("riseGain", engine.riseGain, RhIO::Bind::PullOnly)->defaultValue(engine.riseGain);
   bind->bindNew("riseDuration", engine.riseDuration, RhIO::Bind::PullOnly)->defaultValue(engine.riseDuration);
   bind->bindNew("swingGain", engine.swingGain, RhIO::Bind::PullOnly)->defaultValue(engine.swingGain);
-  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(swingGainStart = 0.04);
+  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(swingGainStart);
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
   bind->bindNew("footYOffsetPerStepSizeY", engine.footYOffsetPerStepSizeY, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerStepSizeY);
-  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch = 13);
-  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps = 3);
-  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(shouldBootstrap = false);
+  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch);
+  bind->bindNew("speedInflexion", engine.speedInflexion, RhIO::Bind::PullOnly)->defaultValue(engine.speedInflexion);
+
+  // XXX: This feature can be deleted later if it is of no use
+  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps);
+  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(shouldBootstrap);
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
@@ -75,6 +87,8 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 
   // Kick parameters
   bind->bindNew("kickPending", kickPending, RhIO::Bind::PullOnly)->defaultValue(false);
+  bind->bindNew("kickLeftPending", kickLeftPending, RhIO::Bind::PushAndPull)->defaultValue(false);
+  bind->bindNew("kickRightPending", kickRightPending, RhIO::Bind::PushAndPull)->defaultValue(false);
   bind->bindNew("kickLeftFoot", kickLeftFoot, RhIO::Bind::PullOnly)->defaultValue(false);
   bind->bindNew("kickName", kickName, RhIO::Bind::PullOnly)->defaultValue("classic");
   bind->bindNew("kickCooldown", kickCooldown, RhIO::Bind::PullOnly)
@@ -122,8 +136,22 @@ std::string Walk::getName()
 
 void Walk::onStart()
 {
-  Leph::HumanoidFixedModel& model = getServices()->model->goalModel();
-  engine.initByModel(model);
+  // Ensuring safety of head
+  Move* head = getScheduler()->getMove("head");
+  if (!head->isRunning())
+  {
+    walkLogger.log("Move 'head' is not running, starting it for safety");
+    startMove("head", 0.5);
+    Head* tmp = dynamic_cast<Head*>(head);
+    if (tmp == nullptr)
+    {
+      throw std::logic_error("Failed to cast 'head' motion to 'Head' type");
+    }
+    tmp->setDisabled(true);
+  }
+
+  auto robotModel = getServices()->robotModel;
+  engine.initByModel(robotModel->model);
 
   bind->node().setBool("walkEnable", false);
 
@@ -134,6 +162,8 @@ void Walk::onStart()
 
   // Cancelling eventual previous pending kicks
   bind->node().setBool("kickPending", false);
+  bind->node().setBool("kickLeftPending", false);
+  bind->node().setBool("kickRightPending", false);
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
@@ -143,7 +173,7 @@ void Walk::onStart()
 
 void Walk::onStop()
 {
-  Helpers::getServices()->model->setReadBaseUpdate(false);
+  getServices()->robotModel->enableOdometry(false);
   state = WalkNotWalking;
   kickState = KickNotKicking;
 }
@@ -152,10 +182,14 @@ void Walk::control(bool enable, double step, double lateral, double turn)
 {
   if (isRunning())
   {
+    step = bound(step, -maxStepBackward, maxStep);
+    lateral = bound(lateral, -maxLateral, maxLateral);
+    turn = bound(turn, -maxRotation, maxRotation);
+
     bind->node().setBool("walkEnable", enable);
-    bind->node().setFloat("walkStep", bound(step, -maxStepBackward, maxStep));
-    bind->node().setFloat("walkLateral", bound(lateral, -maxLateral, maxLateral));
-    bind->node().setFloat("walkTurn", bound(turn, -maxRotation, maxRotation));
+    bind->node().setFloat("walkStep", step);
+    bind->node().setFloat("walkLateral", lateral);
+    bind->node().setFloat("walkTurn", turn);
   }
 }
 
@@ -181,6 +215,7 @@ void Walk::setShouldBootstrap(bool bootstrap)
 void Walk::step(float elapsed)
 {
   ArmsState lastTickArmsState = armsState;
+  auto robotModel = getServices()->robotModel;
 
   bind->pull();
   if (lastTickArmsState != armsState)
@@ -190,7 +225,7 @@ void Walk::step(float elapsed)
 
   stepKick(elapsed);
 
-  getServices()->model->setReadBaseUpdate(state != WalkNotWalking);
+  getServices()->robotModel->enableOdometry(state != WalkNotWalking);
 
   if (state == WalkNotWalking)
   {
@@ -308,24 +343,21 @@ void Walk::step(float elapsed)
         // Creating a new footstep
         engine.newStep();
 
-        if (engine.isLeftSupport)
+        if (Helpers::isFakeMode())
         {
-          getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::LeftSupportFoot);
-        }
-        else
-        {
-          getServices()->model->goalModel().setSupportFoot(Leph::HumanoidFixedModel::RightSupportFoot);
+          getServices()->robotModel->model.setSupportFoot(
+              engine.isLeftSupport ? rhoban::HumanoidModel::Left : rhoban::HumanoidModel::Right, true);
         }
       }
     }
   }
 
   // Assigning to robot
-  engine.assignModel(getServices()->model->goalModel(), timeSinceLastStep);
-
-  // Flushing engine leg orders to robot
-  ModelService* model = getServices()->model;
-  model->flushLegs(_smoothing);
+  std::map<std::string, double> angles = engine.computeAngles(robotModel->model, timeSinceLastStep);
+  for (auto& entry : angles)
+  {
+    setAngle(entry.first, rad2deg(entry.second));
+  }
 
   // Update arms
 
@@ -336,6 +368,22 @@ void Walk::step(float elapsed)
 
 void Walk::stepKick(float elapsed)
 {
+  if (kickLeftPending)
+  {
+    bind->node().setBool("kickLeftFoot", true);
+    kickLeftFoot = true;
+    kickPending = true;
+    kickLeftPending = false;
+  }
+
+  if (kickRightPending)
+  {
+    bind->node().setBool("kickLeftFoot", false);
+    kickLeftFoot = false;
+    kickPending = true;
+    kickRightPending = false;
+  }
+
   if (kickPending)
   {
     // Enter the kick STM
@@ -351,6 +399,10 @@ void Walk::stepKick(float elapsed)
 
     if (kickState == KickWaitingWalkToStop && state == WalkNotWalking)
     {
+      // Forcing support foot in the model
+      getServices()->robotModel->model.setSupportFoot(
+          kickLeftFoot ? rhoban::HumanoidModel::Right : rhoban::HumanoidModel::Left, true);
+
       // Walk is over, go to warmup state
       kickState = KickWarmup;
       kickT = 0;

@@ -13,6 +13,15 @@
 #include <vector>
 #include <algorithm>
 
+/**
+ *  - DOF goals
+ * 
+ *  - DOF reads
+ *  - Pressure
+ *  - IMU
+ *  - Camera pose
+ */
+
 using namespace rhoban_utils;
 
 ModelService::ModelService()
@@ -38,7 +47,7 @@ ModelService::ModelService()
   // Reading the correection to bring to the model
   rhoban_model_learning::CalibrationModel calibration_model;
   calibration_model.loadFile("calibration.json");
-  _cameraModel = calibration_model.getCameraModel();
+  // _cameraModel = calibration_model.getCameraModel();
   _imuOffset = calibration_model.getImuOffsetsRad();
 
   // Load odometry model parameters from file

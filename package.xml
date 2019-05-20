@@ -26,7 +26,7 @@
 
   <build_depend>hl_communication</build_depend> <!-- rhoban/hl_communication -->
   <build_depend>RhAL</build_depend> <!-- rhoban/rhal -->
-  <build_depend>model</build_depend> <!-- rhoban/model -->
+  <build_depend>robot_model</build_depend> <!-- rhoban/robot_model -->
   <build_depend>robocup_referee</build_depend> <!-- rhoban/robocupreferee -->
   <build_depend>rhoban_graphs</build_depend> <!-- rhoban/graphs -->
   <build_depend>rhoban_unsorted</build_depend> <!-- rhoban/unsorted -->
@@ -40,7 +40,7 @@
 
   <run_depend>hl_communication</run_depend>
   <run_depend>RhAL</run_depend>
-  <run_depend>model</run_depend>
+  <run_depend>robot_model</run_depend>
   <run_depend>robocup_referee</run_depend>
   <run_depend>rhoban_graphs</run_depend>
   <run_depend>rhoban_unsorted</run_depend>

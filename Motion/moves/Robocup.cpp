@@ -348,7 +348,7 @@ void Robocup::step(float elapsed)
       timeSinceVisionInactive = 0;
     }
 
-    if (!loc->getVisualCompassStatus() && loc->fieldConsistency <= 0.1 && loc->consistencyEnabled)
+    if (loc->fieldConsistency <= 0.1 && loc->consistencyEnabled)
     {
       timeSinceNoConsistency += elapsed;
 

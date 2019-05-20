@@ -4,18 +4,17 @@
 
 #include "rhoban_unsorted/head_scan.h"
 
-namespace Leph
+namespace rhoban
 {
 class HumanoidModel;
 class CameraModel;
-}  // namespace Leph
+}  // namespace rhoban
 
 /// PermaScan Move based on smooth trajectories
 ///
-/// There is 3 different modes for head with the following priority
-/// 1. Compass   (looking around above horizon)
-/// 2. Localize  (looking around near horizon to find posts)
-/// 3. Scan/Track ball
+/// There is 2 different modes for head with the following priority
+/// 1. Localize  (looking around near horizon to find features for localization)
+/// 2. Scan/Track ball
 class Head : public Move
 {
 public:
@@ -39,10 +38,10 @@ private:
   bool shouldTrackBall();
 
   /// Get the scan target in self referential according to the scanner
-  Eigen::Vector3d getScanTarget(Leph::HumanoidModel* model, const rhoban_unsorted::HeadScan& scannerUsed);
+  Eigen::Vector3d getScanTarget(rhoban::HumanoidModel* model, const rhoban_unsorted::HeadScan& scannerUsed);
 
   /// Get the ball target in self referential
-  Eigen::Vector3d getBallTarget(Leph::HumanoidModel* model, const Leph::CameraModel& camera_model);
+  Eigen::Vector3d getBallTarget(rhoban::HumanoidModel* model, const rhoban::CameraModel& camera_model);
 
   /// Apply the protection orders based on provided status
   void applyProtection();
@@ -51,8 +50,6 @@ private:
   rhoban_unsorted::HeadScan scanner;
   /// Specific scanner for localization
   rhoban_unsorted::HeadScan localize_scanner;
-  /// Specific scanner for compass
-  rhoban_unsorted::HeadScan compass_scanner;
 
   /// Min tilt [deg]
   double min_tilt;
@@ -72,13 +69,6 @@ private:
   /// Minimal overlap between two adjacent control points in localization mode [deg]
   double localize_min_overlap;
 
-  /// Min tilt wished for compass [deg]
-  double compass_min_tilt;
-  /// Max tilt wished for compass [deg]
-  double compass_max_tilt;
-  /// Max pan wished for compass [deg]
-  double compass_max_pan;
-
   /// Maximal pan allowed for tracking [deg]
   double max_pan_track;
   /// Maximal tilt allowed for tracking [deg]
@@ -88,15 +78,11 @@ private:
   double max_speed;
   /// Maximal acceleration [deg/s^2]
   double max_acc;
-  /// Maximal angular speed when using visual compass [deg/s]
-  double vc_max_speed;
 
   /// Duration of a default cycle in [s]
   double scan_period;
   /// Duration of a localize cycle in [s]
   double localize_scan_period;
-  /// Duration of the compass cycle in [s]
-  double compass_scan_period;
 
   /// Pan sent to motors in [deg]
   double pan_deg;
@@ -144,9 +130,6 @@ private:
 
   /// Is the robot supposed to perform a pure localization
   bool force_localize;
-
-  /// Is the robot supposed to perform a compass scan
-  bool force_compass;
 
   /// When Head is disabled, it looks at a fixed position and uses only
   /// safety

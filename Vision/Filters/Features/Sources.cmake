@@ -4,5 +4,4 @@ set (SOURCES
   CompassProvider.cpp
   homography_decomp.cpp
   FeaturesProvider.cpp
-#  VisualCompass.cpp
 )

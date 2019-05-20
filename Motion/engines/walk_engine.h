@@ -2,9 +2,8 @@
 
 #include <map>
 #include <Eigen/Dense>
-#include <LegIK/LegIK.hpp>
 #include "rhoban_utils/spline/poly_spline.h"
-#include "Model/HumanoidFixedModel.hpp"
+#include "robot_model/humanoid_model.h"
 
 namespace rhoban
 {
@@ -37,7 +36,7 @@ public:
 
   // Ticks the walk engine
   WalkEngine();
-  void initByModel(Leph::HumanoidFixedModel& model);
+  void initByModel(rhoban::HumanoidModel& model);
 
   // Re-compute splines
   void reset();
@@ -45,7 +44,7 @@ public:
   void newStep();
 
   // Updating feet position
-  void assignModel(Leph::HumanoidFixedModel& model, double timeSinceLastStep);
+  std::map<std::string, double> computeAngles(rhoban::HumanoidModel& model, double timeSinceLastStep);
 
   // Walk engine left and right feet position
   struct Foot left, right;
@@ -68,6 +67,7 @@ public:
   double footDistance;
   double footYOffsetPerStepSizeY;
   double trunkPitch;
+  double speedInflexion;
 
   // Dynamics orders
   double stepSizeX, stepSizeY, stepSizeYaw;

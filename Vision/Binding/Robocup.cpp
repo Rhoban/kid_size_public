@@ -34,7 +34,7 @@
 
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
-#include "services/ModelService.h"
+#include "services/RobotModelService.h"
 #include "services/RefereeService.h"
 #include "services/ViveService.h"
 #include <cmath>
@@ -579,7 +579,7 @@ void Robocup::step()
   if (isFakeMode())
   {
     double ts = pipeline.getTimestamp().getTimeMS();
-    _scheduler->getServices()->model->setReplayTimestamp(ts / 1000.0);
+    _scheduler->getServices()->robotModel->setReplayTimestamp(ts / 1000.0);
   }
 }
 
@@ -1327,9 +1327,7 @@ void Robocup::closeCamera()
 {
   if (pipeline.isFilterPresent("source"))
   {
-    std::cerr << "Someone asked to close camera in Robocup, not implemented "
-                 "for PtGrey"
-              << std::endl;
+    std::cerr << "Someone asked to close camera in Robocup, not implemented for PtGrey" << std::endl;
   }
   else
   {
@@ -1348,7 +1346,7 @@ TimeStamp Robocup::getNowTS() const
 
 bool Robocup::isFakeMode() const
 {
-  return _scheduler->getServices()->model->isFakeMode();
+  return _scheduler->getServices()->robotModel->isFakeMode();
 }
 
 void Robocup::ballClear()
@@ -1368,7 +1366,7 @@ void Robocup::ballReset(float x, float y)
 
 void Robocup::setLogMode(const std::string& path)
 {
-  _scheduler->getServices()->model->loadReplays(path);
+  _scheduler->getServices()->robotModel->loadReplay(path);
 
   std::cout << "Loaded replay" << std::endl;
 }
@@ -1381,14 +1379,14 @@ void Robocup::setViveLog(const std::string& path)
 void Robocup::startLoggingLowLevel(const std::string& path)
 {
   std::cout << DEBUG_INFO << ": " << path << std::endl;
-  _scheduler->getServices()->model->startNamedLog(path);
+  _scheduler->getServices()->robotModel->startLogging(path);
 }
 
 void Robocup::stopLoggingLowLevel(const std::string& path)
 {
   out.log("Saving lowlevel log to: %s", path.c_str());
   TimeStamp start_save = TimeStamp::now();
-  _scheduler->getServices()->model->stopNamedLog(path);
+  _scheduler->getServices()->robotModel->stopLogging(path);
   TimeStamp end_save = TimeStamp::now();
   out.log("Lowlevel logs saved in %f seconds", diffSec(start_save, end_save));
 }

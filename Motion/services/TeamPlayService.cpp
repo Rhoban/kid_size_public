@@ -6,7 +6,7 @@
 #include "CaptainService.h"
 #include "DecisionService.h"
 #include "LocalisationService.h"
-#include "ModelService.h"
+#include "RobotModelService.h"
 #include "Services.h"
 #include "RefereeService.h"
 #include "StrategyService.h"
@@ -291,7 +291,7 @@ void TeamPlayService::updateTeamPlay(RobotMsg* msg)
 void TeamPlayService::updateMiscExtra(RobotMsg* msg)
 {
   StrategyService* strategy = getServices()->strategy;
-  ModelService* model = getServices()->model;
+  RobotModelService* model = getServices()->robotModel;
 
   MiscExtra extra;
   extra.set_time_since_last_kick(strategy->getTimeSinceLastKick());
@@ -299,7 +299,7 @@ void TeamPlayService::updateMiscExtra(RobotMsg* msg)
   extra.set_robocup(getMoves()->getMove("robocup")->getStatus().substr(0, 10));
   extra.set_playing(getMoves()->getMove("playing")->getStatus().substr(0, 10));
   extra.set_search(getMoves()->getMove("search")->getStatus().substr(0, 10));
-  extra.set_hardware_warnings(model->getLowLevelState().substr(0, 30));
+  extra.set_hardware_warnings(model->lowLevelState.substr(0, 30));
   extra.SerializeToString(msg->mutable_free_field());
 }
 

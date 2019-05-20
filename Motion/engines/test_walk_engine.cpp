@@ -1,5 +1,5 @@
 #include "walk_engine.h"
-#include "Model/HumanoidFixedModel.hpp"
+#include "robot_model/humanoid_model.h"
 #include "rhoban_utils/angle.h"
 
 using namespace rhoban_utils;
@@ -11,20 +11,25 @@ using namespace rhoban_utils;
 int main()
 {
   // Initializing walk engine with humanoid model
-  Leph::HumanoidFixedModel model(Leph::RobotType::SigmabanModel);
+  rhoban::HumanoidModel model;
   rhoban::WalkEngine engine;
   engine.initByModel(model);
 
-  engine.stepSizeX = 0.1;
+  engine.frequency = 1;
+  engine.stepSizeYaw = 0.2;
+  engine.stepSizeX = 0.06;
+  engine.trunkPitch = 0.6;
   engine.newStep();
 
-  for (int step = 0; step < 2; step++)
+  double totalT = 0;
+  for (int step = 0; step < 4; step++)
   {
     engine.newStep();
-    for (double t = 0; t < engine.stepDuration; t += 0.01)
+    for (double t = 0; t < engine.stepDuration; t += 0.001)
     {
+      totalT += 0.001;
       rhoban::WalkEngine::FootPose pose = engine.left.getPosition(t);
-      std::cout << t << " " << pose.x << " " << pose.y << " " << pose.z << " " << pose.yaw << std::endl;
+      std::cout << totalT << " " << pose.x << " " << pose.y << " " << pose.z << " " << pose.yaw << std::endl;
     }
   }
 }

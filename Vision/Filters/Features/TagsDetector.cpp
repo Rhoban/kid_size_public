@@ -110,7 +110,7 @@ void TagsDetector::process()
 
   Benchmark::open("Estimating poses");
   std::vector<cv::Vec3d> rvecs, tvecs;
-  const Leph::CameraModel& cam_model = getCS().getCameraModel();
+  const rhoban::CameraModel& cam_model = getCS().getCameraModel();
   cv::aruco::estimatePoseSingleMarkers(markerCorners, markerSize, cam_model.getCameraMatrix(),
                                        cam_model.getDistortionCoeffs(), rvecs, tvecs);
   Benchmark::close("Estimating poses");
