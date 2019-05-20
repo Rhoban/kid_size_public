@@ -195,7 +195,8 @@ bool RefereeService::myTeamGameInterruption()
 
 bool RefereeService::isThrowIn()
 {
-  return lastGameInterruptionType == Constants::STATE2_THROW_IN;
+  throwIn = lastGameInterruptionType == Constants::STATE2_THROW_IN;
+  return throwIn;
 }
 
 bool RefereeService::isPenalized()

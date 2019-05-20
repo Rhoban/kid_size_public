@@ -124,6 +124,14 @@ DecisionService::DecisionService() : isBallMoving(false), bind("decision")
       ->comment("Is next kick a throw in ?")
       ->defaultValue(false);
 
+  bind.bindNew("isKickRunning", isKickRunning, RhIO::Bind::PushOnly)
+      ->comment("Is a kick running ?")
+      ->defaultValue(false);
+
+  bind.bindNew("isThrowInRunning", isThrowInRunning, RhIO::Bind::PushOnly)
+      ->comment("Is a throw in running ?")
+      ->defaultValue(false);
+
   selfAttackingT = 0;
   handledT = 0;
 
@@ -290,7 +298,8 @@ bool DecisionService::tick(double elapsed)
 
     double threshold_falling = 45;
     double threshold_fallen = 60;
-    bool isKickRunning = getMoves()->getMove("kick")->isRunning();
+    isKickRunning = getMoves()->getMove("kick")->isRunning();
+    isThrowInRunning = isKickRunning && referee->isThrowIn();
 
     isFallen = !isKickRunning && max_imu_angle > threshold_falling;
 

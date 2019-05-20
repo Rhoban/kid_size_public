@@ -99,6 +99,15 @@ public:
    **/
   bool nextKickIsThrowIn;
 
+  /**
+   * Is a kick running ?
+   **/
+  bool isKickRunning;
+
+  /**
+   * Is a throwIn running ?
+   **/
+  bool isThrowInRunning;  
   
   /**
    * Should we fake team decisons?
