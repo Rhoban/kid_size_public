@@ -32,9 +32,11 @@ public:
 
   // Models
   rhoban::HumanoidModel model;
-  rhoban::HumanoidServer server;
 
+  // Publishing
+  rhoban::HumanoidServer server;
   double timeSinceLastPublish;
+  bool publish;
 
   // RhIO commands
   RhIO::Bind bind;

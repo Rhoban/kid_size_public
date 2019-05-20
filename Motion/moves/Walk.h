@@ -136,6 +136,8 @@ protected:
   // Kicking
   Kick* kickMove;
   bool kickPending;
+  bool kickLeftPending;
+  bool kickRightPending;
   bool kickLeftFoot;
   double kickWarmup;
   double kickCooldown;

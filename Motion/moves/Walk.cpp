@@ -87,6 +87,8 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 
   // Kick parameters
   bind->bindNew("kickPending", kickPending, RhIO::Bind::PullOnly)->defaultValue(false);
+  bind->bindNew("kickLeftPending", kickLeftPending, RhIO::Bind::PushAndPull)->defaultValue(false);
+  bind->bindNew("kickRightPending", kickRightPending, RhIO::Bind::PushAndPull)->defaultValue(false);
   bind->bindNew("kickLeftFoot", kickLeftFoot, RhIO::Bind::PullOnly)->defaultValue(false);
   bind->bindNew("kickName", kickName, RhIO::Bind::PullOnly)->defaultValue("classic");
   bind->bindNew("kickCooldown", kickCooldown, RhIO::Bind::PullOnly)
@@ -142,6 +144,8 @@ void Walk::onStart()
 
   // Cancelling eventual previous pending kicks
   bind->node().setBool("kickPending", false);
+  bind->node().setBool("kickLeftPending", false);
+  bind->node().setBool("kickRightPending", false);
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
@@ -164,16 +168,10 @@ void Walk::control(bool enable, double step, double lateral, double turn)
     lateral = bound(lateral, -maxLateral, maxLateral);
     turn = bound(turn, -maxRotation, maxRotation);
 
-    double magnitude = fabs(step) / maxStep + fabs(turn) / maxRotation + fabs(lateral) / maxLateral;
-    if (magnitude < 1)
-    {
-      magnitude = 1;
-    }
-
     bind->node().setBool("walkEnable", enable);
-    bind->node().setFloat("walkStep", step / magnitude);
-    bind->node().setFloat("walkLateral", lateral / magnitude);
-    bind->node().setFloat("walkTurn", turn / magnitude);
+    bind->node().setFloat("walkStep", step);
+    bind->node().setFloat("walkLateral", lateral);
+    bind->node().setFloat("walkTurn", turn);
   }
 }
 
@@ -347,6 +345,22 @@ void Walk::step(float elapsed)
 
 void Walk::stepKick(float elapsed)
 {
+  if (kickLeftPending)
+  {
+    bind->node().setBool("kickLeftFoot", true);
+    kickLeftFoot = true;
+    kickPending = true;
+    kickLeftPending = false;
+  }
+
+  if (kickRightPending)
+  {
+    bind->node().setBool("kickLeftFoot", false);
+    kickLeftFoot = false;
+    kickPending = true;
+    kickRightPending = false;
+  }
+
   if (kickPending)
   {
     // Enter the kick STM
