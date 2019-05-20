@@ -168,21 +168,10 @@ void Walk::control(bool enable, double step, double lateral, double turn)
     lateral = bound(lateral, -maxLateral, maxLateral);
     turn = bound(turn, -maxRotation, maxRotation);
 
-    double magnitude = 1;
-
-    if (fabs(maxStep) > 0 && fabs(maxRotation) > 0 && fabs(maxLateral) > 0)
-    {
-      magnitude = fabs(step) / maxStep + fabs(turn) / maxRotation + fabs(lateral) / maxLateral;
-    }
-    if (magnitude < 1)
-    {
-      magnitude = 1;
-    }
-
     bind->node().setBool("walkEnable", enable);
-    bind->node().setFloat("walkStep", step / magnitude);
-    bind->node().setFloat("walkLateral", lateral / magnitude);
-    bind->node().setFloat("walkTurn", turn / magnitude);
+    bind->node().setFloat("walkStep", step);
+    bind->node().setFloat("walkLateral", lateral);
+    bind->node().setFloat("walkTurn", turn);
   }
 }
 
