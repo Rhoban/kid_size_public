@@ -40,11 +40,28 @@ namespace Utils
 Eigen::Affine3d getAffineFromProtobuf(const hl_monitoring::Pose3D& pose)
 {
   Eigen::Matrix3d rotation = Eigen::Matrix3d::Identity();
-  Eigen::Vector3d translation = Eigen::Vector3d::Zero();
+  Eigen::Vector3d src_in_dst = Eigen::Vector3d::Zero();
   switch (pose.rotation_size())
   {
     case 0:
       break;
+    case 3:
+    {
+      // Rodrigues vector case
+      Eigen::Vector3d rotation_axis(pose.rotation(0), pose.rotation(1), pose.rotation(2));
+      double angle = 0;
+      if (rotation_axis.norm() > std::pow(10, -6))
+      {
+        angle = rotation_axis.norm();
+        rotation_axis.normalize();
+      }
+      else
+      {
+        rotation_axis = Eigen::Vector3d::UnitZ();
+      }
+      rotation = Eigen::AngleAxisd(angle, rotation_axis);
+      break;
+    }
     case 4:
     {
       Eigen::Quaterniond q(pose.rotation(0), pose.rotation(1), pose.rotation(2), pose.rotation(3));
@@ -61,18 +78,18 @@ Eigen::Affine3d getAffineFromProtobuf(const hl_monitoring::Pose3D& pose)
     case 3:
       for (int dim = 0; dim < 3; dim++)
       {
-        translation(dim) = pose.translation(dim);
+        src_in_dst(dim) = pose.translation(dim);
       }
       break;
     default:
-      throw std::runtime_error(DEBUG_INFO +
-                               " invalid size for translation: " + std::to_string(pose.translation_size()));
+      throw std::runtime_error(DEBUG_INFO + " invalid size for src_in_dst: " + std::to_string(pose.translation_size()));
   }
-  return Eigen::Translation3d(translation) * Eigen::Affine3d(rotation);
+  return Eigen::Translation3d(src_in_dst) * Eigen::Affine3d(rotation);
 }
 
 void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D* pose)
 {
+  Eigen::Vector3d src_in_dst = affine * Eigen::Vector3d::Zero();
   pose->clear_rotation();
   pose->clear_translation();
   Eigen::Quaterniond q(affine.linear());
@@ -80,9 +97,9 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D*
   pose->add_rotation(q.x());
   pose->add_rotation(q.y());
   pose->add_rotation(q.z());
-  pose->add_translation(affine.translation()(0));
-  pose->add_translation(affine.translation()(1));
-  pose->add_translation(affine.translation()(2));
+  pose->add_translation(src_in_dst(0));
+  pose->add_translation(src_in_dst(1));
+  pose->add_translation(src_in_dst(2));
 }
 
 CameraState::CameraState(MoveScheduler* moveScheduler) : has_camera_field_transform(false), clock_offset(0)
@@ -118,10 +135,10 @@ void CameraState::importFromProtobuf(const hl_monitoring::IntrinsicParameters& c
 
 void CameraState::importFromProtobuf(const hl_monitoring::FrameEntry& src)
 {
-  _timeStamp = src.time_stamp();
-  cameraToWorld = getAffineFromProtobuf(src.pose());
+  _timeStamp = ((double)src.time_stamp()) / std::pow(10, 6);
+  worldToCamera = getAffineFromProtobuf(src.pose());
+  cameraToWorld = worldToCamera.inverse();
   selfToWorld = Eigen::Affine3d::Identity();  // Protobuf does not store the position of the robot
-  worldToCamera = cameraToWorld.inverse();
   worldToSelf = selfToWorld.inverse();
 }
 
@@ -143,8 +160,8 @@ void CameraState::exportToProtobuf(hl_monitoring::IntrinsicParameters* dst) cons
 
 void CameraState::exportToProtobuf(hl_monitoring::FrameEntry* dst) const
 {
-  dst->set_time_stamp(_timeStamp);
-  setProtobufFromAffine(cameraToWorld, dst->mutable_pose());
+  dst->set_time_stamp((uint64_t)(_timeStamp * std::pow(10, 6)));
+  setProtobufFromAffine(worldToCamera, dst->mutable_pose());
 }
 
 const rhoban::CameraModel& CameraState::getCameraModel() const
