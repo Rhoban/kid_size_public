@@ -637,8 +637,8 @@ void Robocup::readPipeline()
       std::vector<cv::Point2f> balls_in_img = provider.getBalls();
       for (const cv::Point2f& ball_in_img : balls_in_img)
       {
-        cv::Point2f world_pos = cs->worldPosFromImg(ball_in_img.x, ball_in_img.y);
-        detectedBalls->push_back(cv::Point3f(world_pos.x, world_pos.y, Constants::field.ball_radius));
+        Eigen::Vector3d ball_pos = cs->ballInWorldFromPixel(ball_in_img);
+        detectedBalls->push_back(eigen2CV(ball_pos));
       }
       // POI update
       std::map<Field::POIType, std::vector<cv::Point2f>> pois_in_img = provider.getPOIs();
