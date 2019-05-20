@@ -20,7 +20,7 @@ RobotModelService::RobotModelService()
   , timeSinceLastPublish(0)
   , bind("model")
   , isReplay(false)
-  , histories(30.0)
+  , histories(60.0)
   , lowLevelState("")
 {
   rhoban_model_learning::CalibrationModel calibration_model;
