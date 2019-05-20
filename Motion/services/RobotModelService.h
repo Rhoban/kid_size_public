@@ -32,11 +32,13 @@ public:
 
   // Models
   rhoban::HumanoidModel model;
+  double supportRatioThreshold;
 
   // Publishing
   rhoban::HumanoidServer server;
   double timeSinceLastPublish;
   bool publish;
+  bool publishField;
 
   // RhIO commands
   RhIO::Bind bind;
