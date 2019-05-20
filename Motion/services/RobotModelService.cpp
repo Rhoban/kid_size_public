@@ -14,24 +14,6 @@
 
 using namespace rhoban_utils;
 
-/**
- * Head
- * - Camera look at etc.
- *
- * Localisation service
- *
- * Vision
- * - Pose de la camera avec timestamp
- * - Pose du trunk avec timestamp
- * - Camera model XXX
- *
- * Binding Robocup: Logs
- *  - DOF goals
- *  - DOF reads
- *  - Pressure
- *  - IMU
- *  - Camera pose
- */
 RobotModelService::RobotModelService()
   : odometryEnabled(false)
   , odometryUpdated(false)
@@ -51,11 +33,16 @@ RobotModelService::RobotModelService()
   bind.bindNew("publish", publish, RhIO::Bind::PullOnly)->defaultValue(publish = false);
   bind.bindNew("publishField", publishField, RhIO::Bind::PullOnly)->defaultValue(publishField = true);
 
+  bind.bindNew("supportRatioThreshold", supportRatioThreshold, RhIO::Bind::PullOnly)
+      ->defaultValue(supportRatioThreshold = 0.8);
+
   // Declaration of history entries
   histories.pose("camera");
   histories.pose("trunk");
   histories.pose("self");
   histories.pose("field");
+  histories.pose("support");
+  histories.pose("supportPitchRoll");
 
   // DOFs reading and writing
   for (auto& name : model.getDofNames())
@@ -94,41 +81,86 @@ bool RobotModelService::tick(double elapsed)
 {
   bind.pull();
 
-  for (const std::string& name : model.getDofNames())
+  if (isReplay)
   {
-    if (Helpers::isFakeMode())
+    // Updating DOFs from replay
+    for (const std::string& name : model.getDofNames())
     {
-      // Setting written values to the DOFs of the goal model
-      model.setDof(name, deg2rad(getGoalAngle(name)));
+      model.setDof(name, histories.number("read:" + name)->interpolate(replayTimestamp));
     }
-    else
-    {
-      // Setting read values to the DOFs of the read model
-      model.setDof(name, deg2rad(getAngle(name)));
-    }
-  }
 
-  if (!Helpers::isFakeMode() || Helpers::isPython)
-  {
-    // Using the IMU
-    model.setImu(true, getGyroYaw() - odometryYawOffset, getPitch(), getRoll());
+    // Updating robot position
+    model.supportToWorld = histories.pose("support")->interpolate(replayTimestamp);
+    model.supportToWorldPitchRoll = histories.pose("supportPitchRoll")->interpolate(replayTimestamp);
 
-    // Integrating odometry
-    if (odometryEnabled)
+    double left = histories.number("left_pressure_weight")->interpolate(replayTimestamp);
+    double right = histories.number("right_pressure_weight")->interpolate(replayTimestamp);
+    double total = left + right;
+    if (total > 0)
     {
-      odometryUpdated = true;
-      if (getPressureLeftRatio() > 0.8)
+      if (left / total > supportRatioThreshold)
       {
-        model.setSupportFoot(model.Left, true);
+        model.setSupportFoot(model.Left, false);
       }
-      if (getPressureRightRatio() > 0.8)
+      if (right / total > supportRatioThreshold)
       {
-        model.setSupportFoot(model.Right, true);
+        model.setSupportFoot(model.Right, false);
       }
     }
+
+    // Updating field position, if localisation replay is enabled
+    LocalisationService* localisation = getServices()->localisation;
+    if (localisation->isReplay)
+    {
+      Eigen::Affine3d fieldToWorld = histories.pose("field")->interpolate(replayTimestamp);
+      localisation->setPosSelf(fieldToWorld.translation(), rhoban::frameYaw(fieldToWorld.rotation()), 1, 1, false,
+                               true);
+    }
+  }
+  else
+  {
+    for (const std::string& name : model.getDofNames())
+    {
+      if (Helpers::isFakeMode())
+      {
+        // Setting written values to the DOFs of the goal model
+        model.setDof(name, deg2rad(getGoalAngle(name)));
+      }
+      else
+      {
+        // Setting read values to the DOFs of the read model
+        model.setDof(name, deg2rad(getAngle(name)));
+      }
+    }
+
+    if (!Helpers::isFakeMode() || Helpers::isPython)
+    {
+      // Using the IMU
+      model.setImu(true, getGyroYaw() - odometryYawOffset, getPitch(), getRoll());
+
+      // Integrating odometry
+      if (odometryEnabled)
+      {
+        odometryUpdated = true;
+        if (getPressureLeftRatio() > supportRatioThreshold)
+        {
+          model.setSupportFoot(model.Left, true);
+        }
+        if (getPressureRightRatio() > supportRatioThreshold)
+        {
+          model.setSupportFoot(model.Right, true);
+        }
+      }
+    }
+
+    tickLog();
   }
 
-  // Publishing goal model to ZMQ
+  // Updating low level state
+  // XXX: Why this is done in model service?
+  tickCheckLowLevelState();
+
+  // Publishing model to ZMQ
   timeSinceLastPublish += elapsed;
   if (timeSinceLastPublish > 0.02 && publish)
   {
@@ -146,15 +178,6 @@ bool RobotModelService::tick(double elapsed)
     }
     server.publishModel(model, false);
   }
-
-  if (!isReplay)
-  {
-    tickLog();
-  }
-
-  // Updating low level state
-  // XXX: Why this is done in model service?
-  tickCheckLowLevelState();
 
   bind.push();
   return true;
@@ -188,6 +211,7 @@ void RobotModelService::loadReplay(const std::string& filename)
 
 void RobotModelService::setReplayTimestamp(double timestamp)
 {
+  std::cout << "REPLAY TIMESTAMP: " << timestamp << std::endl;
   replayTimestamp = timestamp;
 }
 
@@ -223,6 +247,8 @@ void RobotModelService::tickLog()
   histories.pose("trunk")->pushValue(timestamp, model.frameToWorld("trunk", false));
   histories.pose("self")->pushValue(timestamp, model.selfToWorld());
   histories.pose("field")->pushValue(timestamp, getServices()->localisation->field_from_world);
+  histories.pose("support")->pushValue(timestamp, model.supportToWorld);
+  histories.pose("supportPitchRoll")->pushValue(timestamp, model.supportToWorldPitchRoll);
 
   // Logging DOFs
   for (auto& name : model.getDofNames())
