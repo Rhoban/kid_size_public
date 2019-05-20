@@ -16,7 +16,7 @@
 #include "scheduler/MoveScheduler.h"
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
-#include "services/RobotModelService.h"
+#include "services/ModelService.h"
 #include "services/RefereeService.h"
 
 #include "unistd.h"
@@ -540,7 +540,7 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
 void LocalisationBinding::updateFilter(
     const std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition>*>& obs)
 {
-  RobotModelService* model_service = scheduler->getServices()->robotModel;
+  ModelService* model_service = scheduler->getServices()->model;
 
   // Check if base has been updated since last tick:
   bool isWalkEnabled = model_service->wasOdometryUpdated();
