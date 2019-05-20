@@ -389,7 +389,7 @@ void Robocup::initRhIO()
   {
     std::string prefix = "Vision/" + sih.name;
     RhIO::Root.newFloat(prefix + "_scale")->defaultValue(1.0)->comment("");
-    RhIO::Root.newFrame(prefix, "", RhIO::FrameFormat::BGR);
+    RhIO::Root.newFrame(prefix, "");
   }
 
   ballStackFilter->bindToRhIO("ballStack", "ballStack");
@@ -559,7 +559,7 @@ void Robocup::step()
     if (sih.display)
       cv::imshow(sih.name, sih.lastImg);
     if (isStreaming)
-      RhIO::Root.framePush(prefix, img_width, img_height, sih.lastImg.data, sih.getSize());
+      RhIO::Root.framePush(prefix, sih.lastImg);
     Benchmark::close(sih.name.c_str());
   }
 

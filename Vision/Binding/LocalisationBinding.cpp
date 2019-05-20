@@ -241,7 +241,7 @@ void LocalisationBinding::initRhIO()
       ->defaultValue(1)
       ->comment("Verbosity level for Localisation: 0 -> silent");
 
-  RhIO::Root.newFrame("localisation/TopView", "", RhIO::FrameFormat::BGR);
+  RhIO::Root.newFrame("localisation/TopView", "Top view");
 
   // Binding Localisation items
   RobotController::bindWithRhIO();
@@ -271,7 +271,7 @@ void LocalisationBinding::publishToRhIO()
     int width = 1040;
     int height = 740;
     cv::Mat topView = getTopView(width, height);
-    RhIO::Root.framePush("/localisation/TopView", width, height, topView.data, width * height * 3);
+    RhIO::Root.framePush("/localisation/TopView", topView);
   }
 }
 
