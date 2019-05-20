@@ -469,7 +469,6 @@ void PlayingMove::enterState(std::string state)
   if (state == STATE_WALKBALL)
   {
     startMove("placer", 0.0);
-    walk->enableArms(true);
   }
 
   t = 0;

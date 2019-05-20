@@ -84,17 +84,34 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 
   // Arms
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)->defaultValue(-5.0)->minimum(-20.0)->maximum(150.0);
-  bind->bindNew("safeArmsRoll", safeArmsRoll, RhIO::Bind::PullOnly)
-      ->defaultValue(safeArmsRoll = 40)
+  bind->bindNew("maintenanceArmsRoll", maintenanceArmsRoll, RhIO::Bind::PullOnly)
+      ->defaultValue(40)
       ->minimum(-20.0)
       ->maximum(150.0);
+  bind->bindNew("disabledArmsRoll", disabledArmsRoll, RhIO::Bind::PullOnly)
+      ->defaultValue(5.0)
+      ->minimum(-20.0)
+      ->maximum(150.0);
+
   bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-160.0)->minimum(-200.0)->maximum(30.0);
-  bind->bindNew("armsEnabled", armsEnabled, RhIO::Bind::PullOnly)->defaultValue(armsEnabled = true);
-  bind->bindNew("safeArmsRollEnabled", safeArmsRollEnabled, RhIO::Bind::PullOnly)
-      ->defaultValue(safeArmsRollEnabled = false);
+  bind->bindNew("maintenanceElbowOffset", maintenanceElbowOffset, RhIO::Bind::PullOnly)
+      ->defaultValue(-120.0)
+      ->minimum(-200.0)
+      ->maximum(30.0);
+  bind->bindNew("disabledElbowOffset", disabledElbowOffset, RhIO::Bind::PullOnly)
+      ->defaultValue(0.0)
+      ->minimum(-200.0)
+      ->maximum(30.0);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+  bind->bindNew("armsState", (int&)armsState, RhIO::Bind::PullOnly)->defaultValue(0);
+#pragma GCC diagnostic pop
+
+  bind->bindNew("smoothingArms", smoothingArms, RhIO::Bind::PushOnly)->defaultValue(0);
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
+  armsState = ArmsDisabled;
   timeSinceLastStep = 0;
 }
 
@@ -120,7 +137,7 @@ void Walk::onStart()
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
-  bind->node().setBool("armsEnabled", true);
+  armsState = ArmsDisabled;
   smoothingArms = 0;
 }
 
@@ -156,11 +173,6 @@ bool Walk::isKicking()
   return kickState != KickNotKicking;
 }
 
-bool Walk::isThrowIn()
-{
-  return kickName == "throwin";
-}
-
 void Walk::setShouldBootstrap(bool bootstrap)
 {
   bind->node().setBool("shouldBootstrap", bootstrap);
@@ -168,7 +180,12 @@ void Walk::setShouldBootstrap(bool bootstrap)
 
 void Walk::step(float elapsed)
 {
+  ArmsState lastTickArmsState = armsState;
+
   bind->pull();
+  if (lastTickArmsState != armsState)
+    setArms(armsState, true);
+
   engine.trunkPitch = deg2rad(trunkPitch);
 
   stepKick(elapsed);
@@ -311,6 +328,7 @@ void Walk::step(float elapsed)
   model->flushLegs(_smoothing);
 
   // Update arms
+
   stepArms(elapsed);
 
   bind->push();
@@ -360,41 +378,66 @@ void Walk::stepKick(float elapsed)
   }
 }
 
-void Walk::enableArms(bool enabled)
+void Walk::setArms(ArmsState newArmsState, bool force)
 {
-  bind->node().setBool("armsEnabled", enabled);
-}
+  if (armsState == newArmsState && !force)
+  {
+    return;
+  }
 
-void Walk::enableSafeArmsRoll(bool enabled)
-{
-  bind->node().setBool("safeArmsRollEnabled", enabled);
+  lastAngle = actualAngle;
+
+  switch (newArmsState)
+  {
+    case ArmsEnabled:
+    {
+      actualAngle.elbow = elbowOffset;
+      actualAngle.shoulder_roll = armsRoll;
+      actualAngle.shoulder_pitch = rad2deg(getPitch());
+      break;
+    }
+    case ArmsMaintenance:
+    {
+      actualAngle.elbow = maintenanceElbowOffset;
+      actualAngle.shoulder_roll = maintenanceArmsRoll;
+      actualAngle.shoulder_pitch = 0;
+      break;
+    }
+    case ArmsDisabled:
+    {
+      actualAngle.elbow = disabledElbowOffset;
+      actualAngle.shoulder_roll = disabledArmsRoll;
+      actualAngle.shoulder_pitch = 0;
+      break;
+    }
+  }
+
+  lastArmsState = armsState;
+  armsState = newArmsState;
+  bind->node().setInt("armsState", armsState);
+  smoothingArms = 0;
 }
 
 void Walk::stepArms(double elapsed)
 {
-  smoothingArms = bound(smoothingArms + elapsed * (armsEnabled ? 3 : -3), 0, 1);
+  smoothingArms = bound(smoothingArms + elapsed * 3, 0, 1);
 
   // IMU Pitch to arms
-  float imuPitch = rad2deg(getPitch());
-  setAngle("left_shoulder_pitch", imuPitch * smoothingArms);
-  setAngle("right_shoulder_pitch", imuPitch * smoothingArms);
+  if (armsState == ArmsEnabled)
+    actualAngle.shoulder_pitch = rad2deg(getPitch());
 
-  // Rolls to arms
-  double roll;
-  if (safeArmsRollEnabled)
-  {
-    roll = safeArmsRoll;
-  }
-  else
-  {
-    roll = armsRoll;
-  }
-  setAngle("left_shoulder_roll", roll * smoothingArms);
-  setAngle("right_shoulder_roll", -roll * smoothingArms);
+  setAngle("left_shoulder_pitch",
+           lastAngle.shoulder_pitch * (1 - smoothingArms) + actualAngle.shoulder_pitch * smoothingArms);
+  setAngle("right_shoulder_pitch",
+           lastAngle.shoulder_pitch * (1 - smoothingArms) + actualAngle.shoulder_pitch * smoothingArms);
 
-  // Elbows
-  setAngle("left_elbow", elbowOffset * smoothingArms);
-  setAngle("right_elbow", elbowOffset * smoothingArms);
+  setAngle("left_shoulder_roll",
+           lastAngle.shoulder_roll * (1 - smoothingArms) + actualAngle.shoulder_roll * smoothingArms);
+  setAngle("right_shoulder_roll",
+           -(lastAngle.shoulder_roll * (1 - smoothingArms) + actualAngle.shoulder_roll * smoothingArms));
+
+  setAngle("left_elbow", lastAngle.elbow * (1 - smoothingArms) + actualAngle.elbow * smoothingArms);
+  setAngle("right_elbow", lastAngle.elbow * (1 - smoothingArms) + actualAngle.elbow * smoothingArms);
 }
 
 bool Walk::isNewStep(double elapsed)

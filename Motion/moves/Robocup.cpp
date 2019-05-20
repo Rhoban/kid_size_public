@@ -252,6 +252,18 @@ void Robocup::step(float elapsed)
   {
     wasHandled = true;
   }
+  Head* head = (Head*)getMoves()->getMove("head");
+
+  if (decision->isThrowInRunning)
+  {
+    walk->setArms(Walk::ArmsState::ArmsDisabled);
+    head->setDisabled(true);
+  }
+  else
+  {
+    walk->setArms(Walk::ArmsState::ArmsEnabled);
+    head->setDisabled(false);
+  }
 
   t += elapsed;
   auto& referee = getServices()->referee;
@@ -403,33 +415,23 @@ void Robocup::enterState(std::string state)
   // Starts or stops the safe arms roll used for accessing the hotswap
   if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
   {
-    walk->enableSafeArmsRoll(true);
+    walk->setArms(Walk::ArmsState::ArmsMaintenance);
   }
   else
   {
-    walk->enableSafeArmsRoll(false);
+    walk->setArms(Walk::ArmsState::ArmsEnabled);
   }
 
   if (state == STATE_STANDUP)
   {
     standup->setLayDown(false);
-    walk->enableArms(false);
+    walk->setArms(Walk::ArmsState::ArmsDisabled);
     startMove("standup", 0.0);
     standup->trying = standup_try;
   }
   else
   {
-    // CHANGE
-    if (walk->isThrowIn())
-    {
-      walk->enableArms(false);
-    }
-
-    else
-    {
-      walk->enableArms(true);
-    }
-
+    walk->setArms(Walk::ArmsState::ArmsEnabled);
     walk->control(false);
   }
 

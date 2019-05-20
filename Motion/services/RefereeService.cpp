@@ -195,15 +195,7 @@ bool RefereeService::myTeamGameInterruption()
 
 bool RefereeService::isThrowIn()
 {
-  const auto& gs = getGameState();
-  if (gs.getSecGameState() == Constants::STATE2_THROW_IN)
-  {
-    throwIn = true;
-    return true;
-  }
-
-  else
-    return false;
+  return lastGameInterruptionType == Constants::STATE2_THROW_IN;
 }
 
 bool RefereeService::isPenalized()
