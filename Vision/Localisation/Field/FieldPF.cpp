@@ -298,12 +298,12 @@ void FieldPF::customReset()
              customX, customY, customTheta, customNoise, customThetaNoise);
 }
 
-static void tag(cv::Mat& img, const FieldPosition & p, const TopViewDrawer & drawer,
+static void tag(cv::Mat& img, const FieldPosition& p, const TopViewDrawer& drawer,
                 const cv::Scalar& color = cv::Scalar(255, 0, 255), int thickness = 1)
 {
   cv::Point2f pos_field = p.getRobotPositionCV();
   Angle orientation = p.getOrientation();
-  double vec_length = 0.2;//[m]
+  double vec_length = 0.2;  //[m]
   cv::Point2f delta(cos(orientation) * vec_length, sin(orientation) * vec_length);
   double radius = 3;
   cv::Point2f end_field = pos_field + delta;
@@ -318,7 +318,7 @@ static void tag(cv::Mat& img, const FieldPosition & p, const TopViewDrawer & dra
 void FieldPF::draw(cv::Mat& img) const
 {
   TopViewDrawer drawer(cv::Size(img.cols, img.rows));
-  
+
   img = drawer.getImg(Constants::field);
   for (unsigned int i = 0; i < nbParticles(); i++)
   {
@@ -384,14 +384,9 @@ cv::Point2d FieldPF::getRobotPosition()
   return cv::Point2d(representativeParticle.x(), representativeParticle.y());
 }
 
-cv::Point2d FieldPF::getCenterPosition()
-{
-  return cv::Point2d(-representativeParticle.x(), -representativeParticle.y());
-}
-
 cv::Point2d FieldPF::getCenterPositionInSelf()
 {
-  cv::Point2d p = getCenterPosition();
+  cv::Point2d p = -getRobotPosition();
   Angle o = representativeParticle.getOrientation();
   cv::Point2d res;
   res.x = p.x * cos(o) + p.y * sin(o);
