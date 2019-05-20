@@ -69,7 +69,6 @@ public:
 
   /// Return robot position in field [m]
   cv::Point2d getRobotPosition();
-  cv::Point2d getCenterPosition();
   cv::Point2d getCenterPositionInSelf();
   rhoban_utils::Angle getOrientation();
   double getQuality();
