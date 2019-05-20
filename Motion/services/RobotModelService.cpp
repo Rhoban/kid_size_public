@@ -49,11 +49,13 @@ RobotModelService::RobotModelService()
   bind.bindFunc("odometryReset", "Resets the robot odometry", &RobotModelService::cmdOdometryReset, *this);
 
   bind.bindNew("publish", publish, RhIO::Bind::PullOnly)->defaultValue(publish = false);
+  bind.bindNew("publishField", publishField, RhIO::Bind::PullOnly)->defaultValue(publishField = true);
 
   // Declaration of history entries
   histories.pose("camera");
   histories.pose("trunk");
   histories.pose("self");
+  histories.pose("field");
 
   // DOFs reading and writing
   for (auto& name : model.getDofNames())
@@ -115,11 +117,11 @@ bool RobotModelService::tick(double elapsed)
     if (odometryEnabled)
     {
       odometryUpdated = true;
-      if (getPressureLeftRatio() > 0.6)
+      if (getPressureLeftRatio() > 0.8)
       {
         model.setSupportFoot(model.Left, true);
       }
-      if (getPressureRightRatio() > 0.6)
+      if (getPressureRightRatio() > 0.8)
       {
         model.setSupportFoot(model.Right, true);
       }
@@ -134,7 +136,14 @@ bool RobotModelService::tick(double elapsed)
     LocalisationService* localisationService = getServices()->localisation;
     auto ballWorld = localisationService->getBallPosWorld();
     server.setBallPosition(Eigen::Vector3d(ballWorld.x, ballWorld.y, 0));
-    server.setFieldPose(localisationService->world_from_field);
+    if (publishField)
+    {
+      server.setFieldPose(localisationService->world_from_field);
+    }
+    else
+    {
+      server.setFieldPose(Eigen::Affine3d::Identity());
+    }
     server.publishModel(model, false);
   }
 
@@ -213,6 +222,7 @@ void RobotModelService::tickLog()
   histories.pose("camera")->pushValue(timestamp, model.frameToWorld("camera", false));
   histories.pose("trunk")->pushValue(timestamp, model.frameToWorld("trunk", false));
   histories.pose("self")->pushValue(timestamp, model.selfToWorld());
+  histories.pose("field")->pushValue(timestamp, getServices()->localisation->field_from_world);
 
   // Logging DOFs
   for (auto& name : model.getDofNames())
