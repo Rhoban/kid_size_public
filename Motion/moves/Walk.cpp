@@ -27,7 +27,7 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 {
   Move::initializeBinding();
   swingGainStart = 0.04;
-  trunkPitch = 13;
+  trunkPitch = 10;
   bootstrapSteps = 3;
   safeArmsRoll = 40;
   shouldBootstrap = false;

@@ -42,7 +42,7 @@ WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0)
 }
 
 WalkEngine::WalkEngine()
-  : trunkXOffset(0.0)
+  : trunkXOffset(-0.01)
   , trunkZOffset(0.02)
   , footYOffset(0.03)
   , riseGain(0.04)
@@ -204,10 +204,10 @@ void WalkEngine::reset()
   stepDuration = 1.0 / (2 * frequency);
   left.clearSplines();
   right.clearSplines();
-  left.xSpline.addPoint(stepDuration, 0, 0);
+  left.xSpline.addPoint(stepDuration, trunkXOffset, 0);
   left.ySpline.addPoint(stepDuration, left.trunkYOffset, 0);
   left.yawSpline.addPoint(stepDuration, 0, 0);
-  right.xSpline.addPoint(stepDuration, 0, 0);
+  right.xSpline.addPoint(stepDuration, trunkXOffset, 0);
   right.ySpline.addPoint(stepDuration, right.trunkYOffset, 0);
   right.yawSpline.addPoint(stepDuration, 0, 0);
 
