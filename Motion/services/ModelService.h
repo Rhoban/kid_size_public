@@ -1,82 +1,13 @@
 #pragma once
 
-#include <rhoban_model_learning/humanoid_models/calibration_model.h>
+#include "Service.h"
+#include "rhoban_utils/history/history.h"
+#include "robot_model/humanoid_model.h"
+#include "robot_model/humanoid_server.h"
+#include "robot_model/camera_model.h"
 
-#include <Eigen/Dense>
-#include <string>
-#include <map>
-#include <RhAL.hpp>
-#include "services/Service.h"
-#include <rhoban_utils/history/history.h>
-#include <Model/HumanoidFixedPressureModel.hpp>
-#include <Model/HumanoidFixedModel.hpp>
-#include <Odometry/Odometry.hpp>
-#include <RhIO.hpp>
-#include <Utils/Euler.h>
-#include <Utils/FileEigen.h>
-#include <Utils/FileMap.h>
-#include <iostream>
 class Move;
 
-/// Initialize and return an Humanoid Model where the robot type is retrieved
-/// from RhIO and the geometry parameter from the camera model file.
-/// ModelType should be either HumanoidFixedModel or HumanoidFixedPressureModel.
-template <typename ModelType>
-ModelType InitHumanoidModel()
-{
-  // Retrieve the robot model type from RhIO configuration
-  Leph::RobotType robotType;
-  if (RhIO::Root.getValueType("/model/modelType") == RhIO::TypeStr)
-  {
-    std::string type = RhIO::Root.getStr("/model/modelType");
-    if (type == "sigmaban")
-    {
-      robotType = Leph::SigmabanModel;
-    }
-    else if (type == "grosban")
-    {
-      robotType = Leph::GrosbanModel;
-    }
-    else
-    {
-      throw std::logic_error("ModelService invalid modelType in RhIO: " + type);
-    }
-  }
-  else
-  {
-    std::cout << "WARNING ModelService no model type defined. "
-              << "Default is SigmabanModel" << std::endl;
-    robotType = Leph::SigmabanModel;
-  }
-
-  // Reading the correction to bring to the model
-  rhoban_model_learning::CalibrationModel calibration_model;
-  calibration_model.loadFile("calibration.json");
-
-  // Importing geometry data from a default model
-  // Current intialization is based on the fact that initial root doesn't matter
-  Leph::HumanoidModel tmpModel(robotType, "left_foot_tip");
-  Eigen::MatrixXd geometryData;
-  std::map<std::string, size_t> geometryName;
-  geometryData = tmpModel.getGeometryData();
-  geometryName = tmpModel.getGeometryName();
-
-  // Modification of geometry data
-  geometryData.block(geometryName.at("camera"), 0, 1, 3) += calibration_model.getCameraOffsetsRad().transpose();
-  geometryData.block(geometryName.at("head_yaw"), 0, 1, 3) += calibration_model.getNeckOffsetsRad().transpose();
-
-  // Initialize and return the model
-  return ModelType(robotType, Eigen::MatrixXd(), {}, geometryData, geometryName);
-}
-
-/**
- * ModelService
- *
- * Provide interface to Robot Model.
- * There is one model for goal position and
- * inverse kinematic computation and one
- * model for current read state value.
- */
 class ModelService : public Service
 {
 public:
@@ -85,287 +16,52 @@ public:
    */
   ModelService();
 
-  /**
-   * Implement ElapseTick.
-   * Update Read model using
-   * RhAL low level information
-   */
-  bool tick(double elapsed) override;
+  bool tick(double elapsed);
 
-  /**
-   * Send target motor position to RhAL low level.
-   * Applay all DOF of only apply both arms,
-   * both legs, head or left/right leg.
-   */
-  void flushAll(double gain = 1.0);
-  void flushArms(double gain = 1.0);
-  void flushHead(double gain = 1.0);
-  void flushLegs(double gain = 1.0);
-  void flushLeftLeg(double gain = 1.0);
-  void flushRightLeg(double gain = 1.0);
+  double currentTimeStamp();
 
-  /**
-   * Flush the goal model for
-   * given DOFs
-   */
-  void flush(bool doHead, bool doLeftArm, bool doRightArm, bool doLeftLeg, bool doRightLeg, double gain = 1.0);
+  // Are we currently in fake mode ?
+  bool isFakeMode();
 
-  /**
-   * Access to Goal and Read  and odometry
-   * corrected model
-   */
-  Leph::HumanoidFixedModel& goalModel();
-  Leph::HumanoidFixedPressureModel& readModel();
-  Leph::HumanoidFixedPressureModel& correctedModel();
+  // Should we update the base ?
+  Eigen::Vector3d odometryDiff(double timestampStart, double timestampEnd);
+  void enableOdometry(bool enabled);
+  bool wasOdometryUpdated();
+  bool odometryEnabled;
+  bool odometryUpdated;
 
-  /**
-   * Update given Model with past read state
-   * interpolated at given timestamp.
-   * The model does integrate corrected odometry.
-   * The method is thread safe.
-   * Also return the magnetometer absolute value
-   * and boolean is base updated at given timestamp.
-   */
-  void pastReadModel(double timestamp, Leph::HumanoidFixedPressureModel& pastReadModel);
-  double pastMagneto(double timestamp);
-  bool pastIsBaseUpdated(double timestamp);
+  // Models
+  rhoban::HumanoidModel model;
+  double supportRatioThreshold;
 
-  /**
-   * Assign for the read model the base update option.
-   * If true, the base position is integrated.
-   */
-  void setReadBaseUpdate(bool isEnable);
+  // Publishing
+  rhoban::HumanoidServer server;
+  double timeSinceLastPublish;
+  bool publish;
+  bool publishField;
 
-  /**
-   * Returns true if _isUpdateReadBase was true atleast once since last call
-   * (resets on call)
-   */
-  bool wasReadBaseUpdate();
+  // RhIO commands
+  RhIO::Bind bind;
+  double odometryYawOffset;
+  std::string cmdOdometryReset();
 
-  /**
-   * Return the RhAL Timestamp and the flag
-   * indicating if the last read have error values
-   * associated to the Read Model.
-   */
-  const RhAL::TimePoint& readTimestamp();
-  bool readIsError();
+  // Returns camera in world transformation
+  Eigen::Affine3d cameraToWorld(double timestamp);
+  Eigen::Affine3d selfToWorld(double timestamp);
+  rhoban::CameraModel cameraModel;
 
-  /**
-   * Compute and return [dx,dy,dtheta] relative
-   * odometry displacement interpolated between given
-   * timestamp in self frame of source position.
-   */
-  Eigen::Vector3d odometryDiff(double timestamp1, double timestamp2);
+  // Logging
+  double replayTimestamp;
+  bool isReplay;
+  void startLogging(const std::string& filename);
+  void stopLogging(const std::string& filename);
+  void loadReplay(const std::string& filename);
+  void setReplayTimestamp(double timestamp);
+  rhoban_utils::HistoryCollection histories;
+  void tickLog();
 
-  /**
-   * Start or stop the lowlevel logging.
-   * For starting, a file path is given to dump
-   * the data.
-   */
-  void startLogging(const std::string& filepath);
-  void stopLogging();
-
-  /**
-   * Start a named log session on all histories
-   */
-  void startNamedLog(const std::string& filePath);
-  /**
-   * Stop adding new entries for the given log name (on all histories)
-   * Then, write the logs, histories will be written at filePath
-   */
-  void stopNamedLog(const std::string& filePath);
-
-  /**
-   * Enable the replay mode and load history
-   * data from given log file name
-   */
-  void loadReplays(const std::string& filepath);
-
-  /**
-   * Assign the replay timestamp
-   * for updating the read model
-   * debug.
-   */
-  void setReplayTimestamp(double ts);
-
-  /**
-   * Access to Odometry displacement
-   * model and utilities
-   */
-  Leph::Odometry& getOdometryModel();
-
-  /**
-   * Access to the Camera Model
-   */
-  const Leph::CameraModel& getCameraModel() const;
-
-  /**
-   * Get current support foot
-   */
-  Leph::HumanoidFixedModel::SupportFoot getSupportFoot() const;
-
-  const std::string& getLowLevelState() const;
-
-private:
-  /**
-   * Lowlevel missing state
-   */
-  std::string _lowlevelState;
-
-  /**
-   * If true, the IMU is disable for
-   * pitch and roll (still use yaw).
-   */
-  bool _noIMU;
-
-  /**
-   * If true, the control and power
-   * voltage of all motors are requested
-   * and log in histories
-   */
-  bool _isReadVoltages;
-
-  /**
-   * Container for all read value hitories
-   */
-  rhoban_utils::HistoryCollection _histories;
-
-  /**
-   * Model for target goal state
-   */
-  Leph::HumanoidFixedModel _goalModel;
-
-  /**
-   * Model for present read state
-   */
-  Leph::HumanoidFixedPressureModel _readModel;
-
-  /**
-   * Model for present state with
-   * corrected odometry
-   */
-  Leph::HumanoidFixedPressureModel _correctedModel;
-
-  /**
-   * Camera Model camera angular parameters
-   * and IMU angle offsets
-   */
-  Leph::CameraModel _cameraModel;
-  Eigen::Vector3d _imuOffset;
-
-  /**
-   * If true, the read model base position is
-   * integrated. Prevent odometry drfit when
-   * the robot is stopped
-   */
-  bool _isUpdateReadBase;
-
-  bool _wasUpdateReadBase;
-
-  /**
-   * If true, the read model update
-   * is forced
-   */
-  bool _forceUpdateReadBase;
-
-  /**
-   * Timestamp associated to values used by
-   * the Read Model
-   */
-  RhAL::TimePoint _timestamp;
-
-  /**
-   * If true, the replay mode is enable.
-   * History values are not updated in step().
-   * Current timestamp replaying.
-   */
-  bool _isReplay;
-  double _replayTimestamp;
-
-  /**
-   * RhIO binding
-   */
-  RhIO::Bind _bind;
-
-  /**
-   * Odometry displacement
-   * correction model
-   */
-  Leph::Odometry _odometry;
-
-  /**
-   * If doWriteLog true, logs have to be
-   * written in next tick().
-   * Log filename and format option.
-   */
-  bool _doWriteLog;
-  std::string _logPath;
-
-  /**
-   * Compute odometry displacement
-   * between two given state from state1
-   * to state2
-   */
-  Eigen::Vector3d odometryDiff(const Eigen::Vector3d& state1, const Eigen::Vector3d& state2) const;
-
-  /**
-   * Integrate given odometry diff to
-   * given state and update it
-   */
-  void odometryInt(const Eigen::Vector3d& diff, Eigen::Vector3d& state) const;
-
-  /**
-   * Publish to RhIO given model state with given prefix
-   */
-  void publishModelState(const std::string& prefix, const Leph::HumanoidFixedModel& model, bool initialize = false);
-
-  /**
-   * Dump into file the contains of
-   * histories data
-   */
-  void tickDumpLogs();
-
-  /**
-   * Check camera and lowlevel state
-   * for teamplay error message
-   */
+  // XXX: This has nothing to do here...
+  std::string lowLevelState;
   std::string getCameraState();
-  void tickCheckLowlevelState();
-
-  /**
-   * Update the odometry from readModel
-   * and save it into history
-   */
-  void tickOdometryUpdate();
-
-  /**
-   * Find the maximum motors timestamp
-   */
-  void tickFindTimestamp();
-
-  /**
-   * Assign motors state to readModel
-   */
-  void tickAssignReadDOF();
-
-  /**
-   * Assign pressure state to readModel
-   */
-  void tickAssignReadPressure();
-
-  /**
-   * Assign imu state to readModel
-   */
-  void tickAssignReadIMU();
-
-  /**
-   * Publish to RhIO odometry
-   * and models state
-   */
-  void tickRhIOPublish();
-
-  /**
-   * Push into hisotries read state
-   */
-  void tickHistoryUpdate();
+  void tickCheckLowLevelState();
 };

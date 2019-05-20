@@ -8,7 +8,7 @@
 #include "RefereeService.h"
 #include "TeamPlayService.h"
 #include "LocalisationService.h"
-#include "RobotModelService.h"
+#include "ModelService.h"
 #include <moves/Walk.h>
 #include <moves/Moves.h>
 #include <robocup_referee/constants.h>
@@ -439,7 +439,7 @@ void LocalisationService::applyKick(float x_, float y_)
 
   if (Helpers::isFakeMode() && !Helpers::isPython)
   {
-    double yaw = rhoban::frameYaw(getServices()->robotModel->model.selfToWorld().rotation());
+    double yaw = rhoban::frameYaw(getServices()->model->model.selfToWorld().rotation());
     ;
     std::random_device rd;
     std::default_random_engine engine(rd());
@@ -661,7 +661,7 @@ std::string LocalisationService::cmdMoveOnField(double x, double y, double yaw)
   selfToWorld.linear() = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()).toRotationMatrix();
 
   // Updating supportToWorld accordingly
-  rhoban::HumanoidModel& model = getServices()->robotModel->model;
+  rhoban::HumanoidModel& model = getServices()->model->model;
   Eigen::Affine3d supportToSelf = model.selfToWorld().inverse() * model.supportToWorld;
   model.supportToWorld = selfToWorld * supportToSelf;
 
@@ -746,7 +746,7 @@ void LocalisationService::updateFieldWorldTransforms()
 
 void LocalisationService::updateSelfWorldTransforms()
 {
-  world_from_self = getServices()->robotModel->model.selfToWorld();
+  world_from_self = getServices()->model->model.selfToWorld();
   self_from_world = world_from_self.inverse();
 }
 

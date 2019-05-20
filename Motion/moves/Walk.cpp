@@ -2,7 +2,7 @@
 #include "Walk.h"
 #include "Head.h"
 #include "services/DecisionService.h"
-#include "services/RobotModelService.h"
+#include "services/ModelService.h"
 #include <scheduler/MoveScheduler.h>
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
@@ -131,8 +131,8 @@ void Walk::onStart()
     tmp->setDisabled(true);
   }
 
-  auto robotModel = getServices()->robotModel;
-  engine.initByModel(robotModel->model);
+  auto model = getServices()->model;
+  engine.initByModel(model->model);
 
   bind->node().setBool("walkEnable", false);
 
@@ -154,7 +154,7 @@ void Walk::onStart()
 
 void Walk::onStop()
 {
-  getServices()->robotModel->enableOdometry(false);
+  getServices()->model->enableOdometry(false);
   state = WalkNotWalking;
   kickState = KickNotKicking;
 }
@@ -195,14 +195,14 @@ void Walk::setShouldBootstrap(bool bootstrap)
 
 void Walk::step(float elapsed)
 {
-  auto robotModel = getServices()->robotModel;
+  ModelService *modelService = getServices()->model;
 
   bind->pull();
   engine.trunkPitch = deg2rad(trunkPitch);
 
   stepKick(elapsed);
 
-  getServices()->robotModel->enableOdometry(state != WalkNotWalking);
+  modelService->enableOdometry(state != WalkNotWalking);
 
   if (state == WalkNotWalking)
   {
@@ -325,7 +325,7 @@ void Walk::step(float elapsed)
 
         if (Helpers::isFakeMode())
         {
-          getServices()->robotModel->model.setSupportFoot(
+          modelService->model.setSupportFoot(
               engine.isLeftSupport ? rhoban::HumanoidModel::Left : rhoban::HumanoidModel::Right, true);
         }
       }
@@ -333,7 +333,7 @@ void Walk::step(float elapsed)
   }
 
   // Assigning to robot
-  std::map<std::string, double> angles = engine.computeAngles(robotModel->model, timeSinceLastStep);
+  std::map<std::string, double> angles = engine.computeAngles(modelService->model, timeSinceLastStep);
   for (auto& entry : angles)
   {
     setAngle(entry.first, rad2deg(entry.second));
@@ -379,7 +379,7 @@ void Walk::stepKick(float elapsed)
     if (kickState == KickWaitingWalkToStop && state == WalkNotWalking)
     {
       // Forcing support foot in the model
-      getServices()->robotModel->model.setSupportFoot(
+      getServices()->model->model.setSupportFoot(
           kickLeftFoot ? rhoban::HumanoidModel::Right : rhoban::HumanoidModel::Left, true);
 
       // Walk is over, go to warmup state

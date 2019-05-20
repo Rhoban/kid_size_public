@@ -5,7 +5,7 @@
 
 #include "Utils/HomogeneousTransform.hpp"
 #include "services/DecisionService.h"
-#include "services/RobotModelService.h"
+#include "services/ModelService.h"
 #include "services/LocalisationService.h"
 #include "services/ViveService.h"
 
@@ -105,7 +105,7 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D*
 CameraState::CameraState(MoveScheduler* moveScheduler) : has_camera_field_transform(false), clock_offset(0)
 {
   _moveScheduler = moveScheduler;
-  _cameraModel = _moveScheduler->getServices()->robotModel->cameraModel;
+  _cameraModel = _moveScheduler->getServices()->model->cameraModel;
 }
 
 CameraState::CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters,
@@ -176,11 +176,11 @@ void CameraState::updateInternalModel(double timeStamp)
 
   if (_moveScheduler != nullptr)
   {
-    RobotModelService* robotModel = _moveScheduler->getServices()->robotModel;
+    ModelService* modelService = _moveScheduler->getServices()->model;
 
-    selfToWorld = robotModel->selfToWorld(timeStamp);
-    worldToCamera = robotModel->cameraToWorld(timeStamp).inverse();
-    _cameraModel = robotModel->cameraModel;
+    selfToWorld = modelService->selfToWorld(timeStamp);
+    worldToCamera = modelService->cameraToWorld(timeStamp).inverse();
+    _cameraModel = modelService->cameraModel;
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
     // Update camera/field transform based on (by order of priority)
