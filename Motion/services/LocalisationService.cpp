@@ -37,6 +37,8 @@ static rhoban_utils::Logger out("localisation_service");
 LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL), locBinding(NULL)
 {
   lastKick = rhoban_utils::TimeStamp::now();
+  isReplay = false;
+
   // Ball
   ballPosX = ballPosY = 0;
   ballPosWorld = Eigen::Vector3d(0, 0, 0);
@@ -88,8 +90,6 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   bind.bindNew("worldFieldX", fieldCenterWorld.x(), RhIO::Bind::PushOnly);
   bind.bindNew("worldFieldY", fieldCenterWorld.y(), RhIO::Bind::PushOnly);
 
-  bind.bindNew("simulateWalk", simulateWalk, RhIO::Bind::PullOnly)->defaultValue(false)->comment("Simulate walking");
-
   bind.bindNew("fieldQ", fieldQ, RhIO::Bind::PushOnly)->comment("Field quality");
   bind.bindNew("fieldConsistency", fieldConsistency, RhIO::Bind::PushOnly)->comment("Field consistency");
 
@@ -101,6 +101,8 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   bind.bindNew("fieldOrientation", fieldOrientation, RhIO::Bind::PushOnly)
       ->comment("Robot orientation in the field referential [deg]")
       ->defaultValue(0);
+
+  bind.bindNew("replayLocalisation", isReplay, RhIO::Bind::PullOnly)->defaultValue(isReplay = false);
 
   bind.bindNew("block", block, RhIO::Bind::PullOnly)->comment("Block")->defaultValue(false);
 }
@@ -404,8 +406,13 @@ void LocalisationService::updatePosSelf()
 }
 
 void LocalisationService::setPosSelf(const Eigen::Vector3d& center_in_self, float orientation, float quality,
-                                     float consistency, bool consistencyEnabled_)
+                                     float consistency, bool consistencyEnabled_, bool replayValue)
 {
+  if (isReplay != replayValue)
+  {
+    return;
+  }
+
   bind.pull();
 
   fieldQ = quality;
