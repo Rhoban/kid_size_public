@@ -211,7 +211,6 @@ void RobotModelService::loadReplay(const std::string& filename)
 
 void RobotModelService::setReplayTimestamp(double timestamp)
 {
-  std::cout << "REPLAY TIMESTAMP: " << timestamp << std::endl;
   replayTimestamp = timestamp;
 }
 
