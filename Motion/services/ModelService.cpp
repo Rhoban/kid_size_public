@@ -43,6 +43,7 @@ ModelService::ModelService()
   histories.pose("field");
   histories.pose("support");
   histories.pose("supportPitchRoll");
+  histories.boolean("supportIsLeft");
 
   // DOFs reading and writing
   for (auto& name : model.getDofNames())
@@ -92,21 +93,7 @@ bool ModelService::tick(double elapsed)
     // Updating robot position
     model.supportToWorld = histories.pose("support")->interpolate(replayTimestamp);
     model.supportToWorldPitchRoll = histories.pose("supportPitchRoll")->interpolate(replayTimestamp);
-
-    double left = histories.number("left_pressure_weight")->interpolate(replayTimestamp);
-    double right = histories.number("right_pressure_weight")->interpolate(replayTimestamp);
-    double total = left + right;
-    if (total > 0)
-    {
-      if (left / total > supportRatioThreshold)
-      {
-        model.setSupportFoot(model.Left, false);
-      }
-      if (right / total > supportRatioThreshold)
-      {
-        model.setSupportFoot(model.Right, false);
-      }
-    }
+    model.setSupportFoot(histories.boolean("supportIsLeft")->interpolate(replayTimestamp) ? model.Left : model.Right);
 
     // Updating field position, if localisation replay is enabled
     LocalisationService* localisation = getServices()->localisation;
@@ -248,6 +235,7 @@ void ModelService::tickLog()
   histories.pose("field")->pushValue(timestamp, getServices()->localisation->field_from_world);
   histories.pose("support")->pushValue(timestamp, model.supportToWorld);
   histories.pose("supportPitchRoll")->pushValue(timestamp, model.supportToWorldPitchRoll);
+  histories.boolean("supportIsLeft")->pushValue(timestamp, model.supportFoot == model.Left);
 
   // Logging DOFs
   for (auto& name : model.getDofNames())
