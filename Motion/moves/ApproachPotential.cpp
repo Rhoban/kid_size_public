@@ -263,7 +263,7 @@ void ApproachPotential::step(float elapsed)
 
         // Score is a rough time estimation, we suppose that we will walk at
         // max speed
-        double score = (t.position.getLength() * 1000.0) / walk->maxStep;
+        double score = t.position.getLength() / walk->maxStep;
 
         // That we have to align with current yaw (that can be potential field provided)
         double degsToTravel = fabs(cYaw);
