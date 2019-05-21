@@ -68,13 +68,13 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(0.02)
+      ->defaultValue(0.05)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDLatByCycle", maxDLatByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(0.02)
+      ->defaultValue(0.03)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(7.5)
+      ->defaultValue(10)
       ->comment("Maximal difference between two steps [deg/step^2]");
 
   // Security parameters
