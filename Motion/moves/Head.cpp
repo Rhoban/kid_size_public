@@ -110,6 +110,10 @@ Head::Head()
   bind->bindNew("wishedDist", wished_dist, RhIO::Bind::PushOnly)
       ->comment("Distance of the point provided by the scanner [m]");
 
+  bind->bindNew("predictedBallTimeOffset", predicted_ball_time_offset, RhIO::Bind::PullOnly)
+      ->comment("Predicted ball in future [ms]")
+      ->defaultValue(200.0);
+
   bind->bindNew("smoothing", smoothing, RhIO::Bind::PullOnly)
       ->comment("smoothing of the orders applied for both scan and track")
       ->defaultValue(0.9);
@@ -269,8 +273,7 @@ bool Head::shouldTrackBall()
   // For some cases, tracking is forced to stay active
   if (force_track || ball_dist < force_track_dist ||
       // Currently disabled because there are too much false positives!
-      //      getServices()->decision->isBallMoving||
-      getServices()->decision->isMateKicking)
+      getServices()->decision->isBallMoving || getServices()->decision->isMateKicking)
   {
     return true;
   }
@@ -330,7 +333,8 @@ Eigen::Vector3d Head::getBallTarget(rhoban::HumanoidModel* model, const rhoban::
   double robotHeight = model->position("camera", "support_foot").z();  //[m]
 
   LocalisationService* loc = getServices()->localisation;
-  auto point = loc->getPredictedBallSelf();
+  double futureTimestampMS = rhoban_utils::TimeStamp::now().getTimeMS() + predicted_ball_time_offset;
+  auto point = loc->getPredictedBallSelf(rhoban_utils::TimeStamp::fromMS(futureTimestampMS));
 
   // Getting limits angle
   double max_tilt_value = max_tilt_track;

@@ -140,4 +140,7 @@ private:
 
   /// Head_pitch used for forward falls
   double fall_forward_pitch;
+
+  /// Time offset (in the future) for ball prediction [ms]
+  double predicted_ball_time_offset;
 };
