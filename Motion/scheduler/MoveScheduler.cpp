@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "scheduler/MoveScheduler.h"
 #include <rhoban_utils/timing/time_stamp.h>
@@ -156,11 +157,18 @@ void MoveScheduler::execute(bool manualClock)
 
   while (!_isOver)
   {
-    if (manualClock) {
+    if (isFakeMode())
+    {
+      usleep(5000);
+    }
+
+    if (manualClock)
+    {
       double tmp = _manualClock;
-      manualElapsed = tmp-lastManualClock;
+      manualElapsed = tmp - lastManualClock;
       lastManualClock = tmp;
-      if (manualElapsed <= 0) {
+      if (manualElapsed <= 0)
+      {
         continue;
       }
     }
@@ -177,9 +185,12 @@ void MoveScheduler::execute(bool manualClock)
     TimeStamp startTickServices = TimeStamp::now();
     for (const auto& service : _services->getAllServices())
     {
-      if (manualClock) {
+      if (manualClock)
+      {
         service.second->ElapseTick::tickElapsed(manualElapsed);
-      } else {
+      }
+      else
+      {
         service.second->ElapseTick::tick();
       }
     }
@@ -191,9 +202,12 @@ void MoveScheduler::execute(bool manualClock)
     for (const auto& move : _moves->getAllMoves())
     {
       // Ticking the move
-      if (manualClock) {
+      if (manualClock)
+      {
         move.second->ElapseTick::tickElapsed(manualElapsed);
-      } else {
+      }
+      else
+      {
         move.second->ElapseTick::tick();
       }
     }
