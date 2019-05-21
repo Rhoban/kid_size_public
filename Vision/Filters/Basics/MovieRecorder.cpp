@@ -45,7 +45,8 @@ void MovieRecorder::startStream(const cv::Size& size)
   {
     throw std::logic_error(DEBUG_INFO + "A video is already being written to " + videoPath);
   }
-  videoPath = rhoban_utils::getFormattedTime();
+  // videoPath = rhoban_utils::getFormattedTime();
+  videoPath = "movie_recorder_output";
   std::string filename = videoPath + ".avi";
   bool useColor = true;  // TODO: add as parameter
   // TODO: add quality and fourcc as parameter
@@ -78,7 +79,7 @@ void MovieRecorder::closeStream()
 {
   videoWriter.release();
 
-  std::string metadataPath = videoPath + "_metadata.bin";
+  std::string metadataPath = videoPath + "_metadata.pb";
   std::ofstream out(metadataPath);
   if (!out.good())
   {
