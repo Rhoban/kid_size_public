@@ -74,7 +74,7 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
       ->defaultValue(0.02)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(5)
+      ->defaultValue(7.5)
       ->comment("Maximal difference between two steps [deg/step^2]");
 
   // Security parameters

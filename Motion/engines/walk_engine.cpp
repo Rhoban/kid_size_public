@@ -55,6 +55,7 @@ WalkEngine::WalkEngine()
   , stepSizeX(0)
   , stepSizeY(0)
   , stepSizeYaw(0)
+  , enableCircular(false)
 {
 }
 
@@ -162,7 +163,7 @@ void WalkEngine::newStep()
   }
   flyingFoot().zSpline.addPoint(stepDuration, 0, 0);
 
-  if (fabs(stepSizeYaw) > 0.01)
+  if (fabs(stepSizeYaw) > 0.01 && enableCircular)
   {
     // Speed vector
     Point speed(stepSizeX, stepSizeY);
