@@ -29,10 +29,7 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   swingGainStart = 0.04;
   trunkPitch = 13;
   bootstrapSteps = 3;
-  safeArmsRoll = 40;
   shouldBootstrap = false;
-  armsEnabled = true;
-  safeArmsRollEnabled = false;
 
   // Enables or disables the walk
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
