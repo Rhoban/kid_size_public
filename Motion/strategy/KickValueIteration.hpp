@@ -11,9 +11,8 @@ class KickValueIteration
 {
 public:
   // TODO: This class should be parsed instead of having so many parameters
-  KickValueIteration(std::string kicksFile, double accuracy = 0.2, double angleAccuracy = 5, double goalieWidth = 0.5,
-                     bool enableExcentric = false, bool dump = false, double tolerance = 5, double grassOffset = 180,
-                     double penaltyMultiplier = 1, std::string corridorProfilePath = "");
+  KickValueIteration(std::string kicksFile, double accuracy = 0.2, double angleAccuracy = 5,
+                     bool dump = false, double tolerance = 5, double grassOffset = 180);
 
   // Actions are discrete ints
   struct Action
@@ -47,6 +46,7 @@ public:
   {
     double score;
     int x, y;
+    double fieldX, fieldY;
     std::map<Action, Model> models;
   };
 
@@ -58,18 +58,16 @@ public:
 
   KickStrategy generate();
 
+  KickStrategy::Action bestAction(State *state);
+
   Json::Value toJson();
 
 protected:
   csa_mdp::KickModelCollection kicks;
   double accuracy;
   double angleAccuracy;
-  double goalieWidth;
-  bool enableExcentric;
   bool dump;
   double tolerance;
-  double penaltyMultiplier;
-  CorridorProfile corridorProfile;
 
   // Fail & success states
   State failState, successState;

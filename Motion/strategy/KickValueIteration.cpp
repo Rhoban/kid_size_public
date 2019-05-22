@@ -10,23 +10,12 @@
 using namespace robocup_referee;
 using namespace rhoban_geometry;
 
-KickValueIteration::KickValueIteration(std::string kickFiles, double accuracy, double angleAccuracy, double goalieWidth,
-                                       bool enableExcentric, bool dump, double tolerance, double grassOffset,
-                                       double penaltyMultiplier, std::string corridorProfilePath)
-  : accuracy(accuracy)
-  , angleAccuracy(angleAccuracy)
-  , goalieWidth(goalieWidth)
-  , enableExcentric(enableExcentric)
-  , dump(dump)
-  , tolerance(tolerance)
-  , penaltyMultiplier(penaltyMultiplier)
+KickValueIteration::KickValueIteration(std::string kickFiles, double accuracy, double angleAccuracy, bool dump,
+                                       double tolerance, double grassOffset)
+  : accuracy(accuracy), angleAccuracy(angleAccuracy), dump(dump), tolerance(tolerance)
 {
   kicks.loadFile(kickFiles);
   kicks.setGrassConeOffset(grassOffset);
-  if (corridorProfilePath != "")
-  {
-    corridorProfile.loadFile(corridorProfilePath);
-  }
 }
 
 double KickValueIteration::rewardFor(State* from, State* state)
@@ -41,49 +30,10 @@ double KickValueIteration::rewardFor(State* from, State* state)
     return -300;
   }
 
-  // double fX = accuracy*from->x;
-  // double fY = accuracy*from->y;
-  double X = accuracy * state->x;
-  double Y = accuracy * state->y;
-  double multiplier = corridorProfile.getWeight(X, Y);
+  // Distance we have to walk
+  double dist = sqrt(pow(from->fieldX - state->fieldX, 2) + pow(from->fieldY - state->fieldY, 2));
 
-  if (X > (Constants::field.field_length - Constants::field.goal_area_length) &&
-      fabs(Y - Constants::field.field_width / 2) < Constants::field.goal_area_width)
-  {
-    multiplier = penaltyMultiplier;
-  }
-
-  if (enableExcentric)
-  {
-    bool ok = false;
-    double limitA = Constants::field.field_length * 0.5;
-    double yOff = fabs(Y - Constants::field.field_width / 2);
-    if (X < limitA)
-    {
-      ok = (yOff < Constants::field.goal_width / 2);
-    }
-    else
-    {
-      /*
-      double dX = X - limitA;
-      ok = (yOff < Constants::field.goal_width/2 - dX*1.5);
-      */
-    }
-    /*
-    if (yOff > Constants::field.field_width/2 - 0.25) {
-        ok = true;
-    }
-    */
-    if (ok)
-    {
-      multiplier = 3;
-    }
-  }
-
-  double dist =
-      sqrt(pow(from->x * accuracy - state->x * accuracy, 2) + pow(from->y * accuracy - state->y * accuracy, 2));
-
-  return -multiplier * (10 + dist / 0.15);
+  return -(10 + dist / 0.15);
 }
 
 KickStrategy KickValueIteration::generate()
@@ -109,80 +59,84 @@ KickStrategy KickValueIteration::generate()
     {
       double X = accuracy * x;
       double Y = accuracy * y;
+      State* state = &states[x][y];
 
-      Action action;
-      double bestScore = -1000;
-      double bestLength = -1;
-      std::set<int> possibleOrientations;
-      std::set<std::string> possibleKicks;
-      std::map<std::string, double> kickLength;
-      for (auto& kickName : getKickNames())
-      {
-        auto& kickModel = kicks.getKickModel(kickName);
-        auto tmp = kickModel.applyKick(Eigen::Vector2d(0, 0), 0);
-        kickLength[kickName] = tmp[0];
-      }
-
-      for (auto& entry : states[x][y].models)
-      {
-        double actionScore = 0;
-        auto tmpAction = entry.first;
-
-        for (auto& possibility : entry.second)
-        {
-          actionScore += possibility.first * (rewardFor(&states[x][y], possibility.second) + possibility.second->score);
-        }
-
-        double tmpTol = tolerance;
-        if (X < Constants::field.field_length / 2)
-          tmpTol *= 2;
-        if (fabs(actionScore - states[x][y].score) < tmpTol)
-        {
-          possibleKicks.insert(tmpAction.kick);
-          possibleOrientations.insert(round(tmpAction.orientation * 1000));
-          auto length = kickLength[tmpAction.kick];
-
-          if (bestScore < actionScore || bestLength < 0 || bestLength < length)
-          {
-            bestLength = length;
-            action = tmpAction;
-            bestScore = actionScore;
-          }
-
-          if (dump)
-          {
-            // Debug draw of the kick arrows
-            double R = 0.1;
-            double kickX = X + cos(tmpAction.orientation) * R;
-            double kickY = Y + sin(tmpAction.orientation) * R;
-
-            std::cout << X << " " << Y << " " << actionScore << std::endl;
-            std::cout << kickX << " " << kickY << " " << actionScore << std::endl;
-            std::cout << std::endl << std::endl;
-          }
-        }
-      }
-
-      KickStrategy::Action resultAction;
-      // XXX: We suppose that the possible orientations are dispatched evenly
-      resultAction.tolerance = std::max<double>(0, (possibleOrientations.size() - 1) * angleAccuracy * M_PI / 180.0);
-      resultAction.orientation = action.orientation;
-      resultAction.score = bestScore;
-
-      if (possibleKicks.count("classic") && possibleKicks.count("lateral"))
-      {
-        resultAction.kick = "opportunist";
-      }
-      else
-      {
-        resultAction.kick = action.kick;
-      }
-
-      strategy.setAction(X, Y, resultAction);
+      strategy.setAction(X, Y, bestAction(state));
     }
   }
 
   return strategy;
+}
+
+KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* state)
+{
+  Action action;
+  double bestScore = -1000;
+  double bestLength = -1;
+  std::set<int> possibleOrientations;
+  std::set<std::string> possibleKicks;
+  std::map<std::string, double> kickLength;
+  for (auto& kickName : getKickNames())
+  {
+    auto& kickModel = kicks.getKickModel(kickName);
+    auto tmp = kickModel.applyKick(Eigen::Vector2d(0, 0), 0);
+    kickLength[kickName] = tmp[0];
+  }
+
+  for (auto& entry : state->models)
+  {
+    double actionScore = 0;
+    auto tmpAction = entry.first;
+
+    // Estimating the score of this action
+    for (auto& possibility : entry.second)
+    {
+      actionScore += possibility.first * (rewardFor(state, possibility.second) + possibility.second->score);
+    }
+
+    // If the action is withing our time tolerance
+    if (fabs(actionScore - state->score) < tolerance)
+    {
+      possibleKicks.insert(tmpAction.kick);
+      possibleOrientations.insert(round(tmpAction.orientation * 1000));
+      auto length = kickLength[tmpAction.kick];
+
+      if (bestScore < actionScore || bestLength < 0 || bestLength < length)
+      {
+        bestLength = length;
+        action = tmpAction;
+        bestScore = actionScore;
+      }
+
+      if (dump)
+      {
+        // Debug draw of the kick arrows
+        double R = 0.1;
+        double kickX = state->fieldX + cos(tmpAction.orientation) * R;
+        double kickY = state->fieldY + sin(tmpAction.orientation) * R;
+
+        std::cout << state->fieldX << " " << state->fieldY << " " << actionScore << std::endl;
+        std::cout << kickX << " " << kickY << " " << actionScore << std::endl;
+        std::cout << std::endl << std::endl;
+      }
+    }
+  }
+
+  KickStrategy::Action resultAction;
+  // XXX: We suppose that the possible orientations are dispatched evenly
+  resultAction.tolerance = std::max<double>(0, (possibleOrientations.size() - 1) * angleAccuracy * M_PI / 180.0);
+  resultAction.orientation = action.orientation;
+  resultAction.score = bestScore;
+
+  if (possibleKicks.count("classic") && possibleKicks.count("lateral"))
+  {
+    resultAction.kick = "opportunist";
+  }
+  else
+  {
+    resultAction.kick = action.kick;
+  }
+  return resultAction;
 }
 
 void KickValueIteration::generateStates()
@@ -201,6 +155,8 @@ void KickValueIteration::generateStates()
       State state;
       state.x = x;
       state.y = y;
+      state.fieldX = x * accuracy;
+      state.fieldY = y * accuracy;
       state.score = -1000;
       states[x][y] = state;
     }
@@ -282,18 +238,7 @@ void KickValueIteration::generateModels()
               yIntersect -= Constants::field.field_width / 2;
 
               // Goal
-              if (fabs(yIntersect) < goalieWidth / 2.0)
-              {
-                double goalProbability = 0.25;
-
-                auto goalFeet =
-                    stateFor(Constants::field.field_length - 0.1, Constants::field.field_width / 2 + yIntersect);
-
-                count[goalFeet] += p * goalProbability;
-
-                count[&successState] += p * (1 - goalProbability);
-              }
-              else if (fabs(yIntersect) < (Constants::field.goal_width * 0.95) / 2)
+              if (fabs(yIntersect) < (Constants::field.goal_width * 0.95) / 2)
               {
                 count[&successState] += p;
               }
