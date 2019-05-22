@@ -102,6 +102,10 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D*
   pose->add_translation(src_in_dst(2));
 }
 
+CameraState::CameraState() : has_camera_field_transform(false), clock_offset(0)
+{
+}
+
 CameraState::CameraState(MoveScheduler* moveScheduler) : has_camera_field_transform(false), clock_offset(0)
 {
   _moveScheduler = moveScheduler;
@@ -114,6 +118,11 @@ CameraState::CameraState(const hl_monitoring::IntrinsicParameters& camera_parame
 {
   importFromProtobuf(camera_parameters);
   importFromProtobuf(frame_entry);
+}
+
+cv::Size CameraState::getImgSize() const
+{
+  return getCameraModel().getImgSize();
 }
 
 void CameraState::importFromProtobuf(const hl_monitoring::IntrinsicParameters& camera_parameters)

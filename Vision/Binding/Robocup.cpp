@@ -65,17 +65,21 @@ using Vision::Filters::TagsDetector;
 using Vision::Utils::CameraState;
 using Vision::Utils::ImageLogger;
 
+/**
+ * Capping image memory to 20 minutes at 40 fps
+ */
+static int max_images = 20 * 60 * 40;
+
 namespace Vision
 {
 Robocup::Robocup(MoveScheduler* scheduler)
   : Application()
   , imageDelay(0)
-  , manual_logger("manual_logs", true, 10000)
-  , moving_ball_logger("moving_ball_logs", false, 1000)
+  , manual_logger("manual_logs", false, max_images)
+  , moving_ball_logger("moving_ball_logs", false, 30 * 40)  // Less images memory for moving balls
   , autologMovingBall(false)
-  , game_logger("game_logs", false, 15 * 60 * 40)
-  ,  // Allows 15 minutes at 40 fps ->
-  autolog_games(false)
+  , game_logger("game_logs", false, max_images)
+  , autolog_games(false)
   , logBallExtraTime(2.0)
   , writeBallStatus(false)
   , _scheduler(scheduler)
@@ -123,12 +127,11 @@ Robocup::Robocup(MoveScheduler* scheduler)
 
 Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
   : imageDelay(0)
-  , manual_logger("manual_logs", true, 10000)
-  , moving_ball_logger("moving_ball_logs", false, 1000)
+  , manual_logger("manual_logs", false, max_images)
+  , moving_ball_logger("moving_ball_logs", false, 30 * 40)  // Less images memory for moving balls
   , autologMovingBall(false)
-  , game_logger("game_logs", true, 15 * 60 * 40)
-  ,  // Allows 15 minutes at 40 fps
-  autolog_games(false)
+  , game_logger("game_logs", false, max_images)
+  , autolog_games(false)
   , logBallExtraTime(2.0)
   , writeBallStatus(false)
   , benchmark(false)
@@ -186,7 +189,7 @@ void Robocup::startLogging(unsigned int timeMS, const std::string& logDir)
 {
   // If logDir is empty a name session is generated automatically in manual_logger
   logMutex.lock();
-  manual_logger.initSession(logDir);
+  manual_logger.initSession(*cs, logDir);
   startLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
   endLog = TimeStamp(getNowTS() + milliseconds(timeMS));
   logMutex.unlock();
@@ -766,8 +769,11 @@ void Robocup::loggingStep()
   RefereeService* referee = _scheduler->getServices()->referee;
 
   // Capture src_filter and throws a std::runtime_error if required
-  const Filter& src_filter = pipeline.get("source");
-  ImageLogger::Entry entry(pipeline.getTimestamp(), *(src_filter.getImg()));
+  const Filter& src_filter = pipeline.get("human");
+  ImageLogger::Entry entry;
+  entry.img = *(src_filter.getImg());
+  entry.time_stamp = (uint64_t)(pipeline.getTimestamp().getTimeSec() * std::pow(10, 6));
+  entry.cs = *cs;
 
   logMutex.lock();
   // Handling manual logs
@@ -805,7 +811,7 @@ void Robocup::loggingStep()
   // Starting autoLog
   if (startAutoLog)
   {
-    moving_ball_logger.initSession();
+    moving_ball_logger.initSession(*cs);
     out.log("Starting a session at '%s'", moving_ball_logger.getSessionPath().c_str());
     std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
     startLoggingLowLevel(lowLevelPath);
@@ -831,7 +837,7 @@ void Robocup::loggingStep()
   bool stopGameLog = gameLogActive && !useGameLogEntry;
   if (startGameLog)
   {
-    game_logger.initSession();
+    game_logger.initSession(*cs);
     out.log("Starting a session at '%s'", game_logger.getSessionPath().c_str());
     std::string lowLevelPath = game_logger.getSessionPath() + "/lowLevel.log";
     startLoggingLowLevel(lowLevelPath);
