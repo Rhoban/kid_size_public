@@ -128,12 +128,17 @@ void KickStrategy::gnuplot()
       double kickX = cos(yEntry.second.orientation) * accuracy * 0.5;
       double kickY = sin(yEntry.second.orientation) * accuracy * 0.5;
       double kick = 0;
-      if (yEntry.second.kick == "lateral")
-        kick = 2;
+
       if (yEntry.second.kick == "classic")
+        kick = 0;
+      else if (yEntry.second.kick == "lateral")
+        kick = 2;
+      else if (yEntry.second.kick == "small")
         kick = 3;
-      if (yEntry.second.kick == "opportunist")
+      else if (yEntry.second.kick == "opportunist")
         kick = 1;
+      else
+        std::cerr << "Unknown kick [" << yEntry.second.kick << "]" << std::endl;
 
       std::cout << X << " " << Y << " " << kick << std::endl;
       std::cout << X + kickX << " " << Y + kickY << " " << kick << std::endl;
