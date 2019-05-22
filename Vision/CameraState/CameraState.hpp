@@ -39,9 +39,12 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D*
 class CameraState
 {
 public:
+  CameraState();
   CameraState(MoveScheduler* moveScheduler);
   CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters,
               const hl_monitoring::FrameEntry& frame_entry);
+
+  cv::Size getImgSize() const;
 
   void importFromProtobuf(const hl_monitoring::IntrinsicParameters& camera_parameters);
   void importFromProtobuf(const hl_monitoring::FrameEntry& src);
