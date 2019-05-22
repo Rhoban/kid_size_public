@@ -18,7 +18,8 @@ KickValueIteration::KickValueIteration(std::string kickFiles, double accuracy, d
   kicks.setGrassConeOffset(grassOffset);
 }
 
-double KickValueIteration::rewardFor(State* from, State* state)
+double KickValueIteration::rewardFor(State* from, State* state,
+                                     std::function<double(rhoban_geometry::Point, rhoban_geometry::Point)> travelFunc)
 {
   if (state == &successState)
   {
@@ -31,9 +32,19 @@ double KickValueIteration::rewardFor(State* from, State* state)
   }
 
   // Distance we have to walk
-  double dist = sqrt(pow(from->fieldX - state->fieldX, 2) + pow(from->fieldY - state->fieldY, 2));
+  rhoban_geometry::Point fromPos =
+      Point(from->fieldX - Constants::field.field_length / 2.0, from->fieldY - Constants::field.field_width / 2.0);
+  rhoban_geometry::Point toPos =
+      Point(state->fieldX - Constants::field.field_length / 2.0, state->fieldY - Constants::field.field_width / 2.0);
 
-  return -(10 + dist / 0.15);
+  return travelFunc(fromPos, toPos);
+}
+
+double KickValueIteration::rewardFor(State* from, State* state)
+{
+  return rewardFor(from, state, [](rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos) -> double {
+    return -(10 + (fromPos - toPos).getLength() / 0.15);
+  });
 }
 
 KickStrategy KickValueIteration::generate()
