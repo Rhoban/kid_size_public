@@ -1,7 +1,7 @@
 #include <iostream>
 #include <tclap/CmdLine.h>
 #include <kick_model/kick_model_collection.h>
-#include "KickQLearning.hpp"
+#include "KickValueIteration.hpp"
 
 using namespace std;
 
@@ -29,9 +29,9 @@ int main(int argc, char* argv[])
   cmd.parse(argc, argv);
 
   KickStrategy strategy;
-  KickQLearning kickQLearning(json.getValue(), accuracy.getValue(), angleAccuracy.getValue(), goalie.getValue(),
-                              excentric.getValue(), dump.getValue(), tol.getValue(), grassOffset.getValue(),
-                              penalty.getValue(), corridorPath.getValue());
+  KickValueIteration kickValueIteration(json.getValue(), accuracy.getValue(), angleAccuracy.getValue(),
+                                        goalie.getValue(), excentric.getValue(), dump.getValue(), tol.getValue(),
+                                        grassOffset.getValue(), penalty.getValue(), corridorPath.getValue());
 
   if (load.getValue() != "")
   {
@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
   }
   else
   {
-    strategy = kickQLearning.generate();
+    strategy = kickValueIteration.generate();
   }
 
   if (gnuplot.getValue())

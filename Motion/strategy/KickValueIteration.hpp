@@ -7,13 +7,13 @@
 #include "CorridorProfile.hpp"
 #include <kick_model/kick_model_collection.h>
 
-class KickQLearning
+class KickValueIteration
 {
 public:
   // TODO: This class should be parsed instead of having so many parameters
-  KickQLearning(std::string kicksFile, double accuracy = 0.2, double angleAccuracy = 5, double goalieWidth = 0.5,
-                bool enableExcentric = false, bool dump = false, double tolerance = 5, double grassOffset = 180,
-                double penaltyMultiplier = 1, std::string corridorProfilePath = "");
+  KickValueIteration(std::string kicksFile, double accuracy = 0.2, double angleAccuracy = 5, double goalieWidth = 0.5,
+                     bool enableExcentric = false, bool dump = false, double tolerance = 5, double grassOffset = 180,
+                     double penaltyMultiplier = 1, std::string corridorProfilePath = "");
 
   // Actions are discrete ints
   struct Action
@@ -91,4 +91,7 @@ protected:
 
   // State for a given x/y
   State* stateFor(double x, double y);
+
+  // Allowed kick names
+  std::vector<std::string> getKickNames();
 };

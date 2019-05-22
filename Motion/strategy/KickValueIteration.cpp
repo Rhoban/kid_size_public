@@ -2,7 +2,7 @@
 #include <random>
 #include <iostream>
 #include <cmath>
-#include "KickQLearning.hpp"
+#include "KickValueIteration.hpp"
 #include <robocup_referee/constants.h>
 #include <rhoban_geometry/segment.h>
 #include <rhoban_geometry/circle.h>
@@ -10,9 +10,9 @@
 using namespace robocup_referee;
 using namespace rhoban_geometry;
 
-KickQLearning::KickQLearning(std::string kickFiles, double accuracy, double angleAccuracy, double goalieWidth,
-                             bool enableExcentric, bool dump, double tolerance, double grassOffset,
-                             double penaltyMultiplier, std::string corridorProfilePath)
+KickValueIteration::KickValueIteration(std::string kickFiles, double accuracy, double angleAccuracy, double goalieWidth,
+                                       bool enableExcentric, bool dump, double tolerance, double grassOffset,
+                                       double penaltyMultiplier, std::string corridorProfilePath)
   : accuracy(accuracy)
   , angleAccuracy(angleAccuracy)
   , goalieWidth(goalieWidth)
@@ -29,7 +29,7 @@ KickQLearning::KickQLearning(std::string kickFiles, double accuracy, double angl
   }
 }
 
-double KickQLearning::rewardFor(State* from, State* state)
+double KickValueIteration::rewardFor(State* from, State* state)
 {
   if (state == &successState)
   {
@@ -38,7 +38,7 @@ double KickQLearning::rewardFor(State* from, State* state)
 
   if (state == &failState)
   {
-    return -1000;
+    return -300;
   }
 
   // double fX = accuracy*from->x;
@@ -83,10 +83,10 @@ double KickQLearning::rewardFor(State* from, State* state)
   double dist =
       sqrt(pow(from->x * accuracy - state->x * accuracy, 2) + pow(from->y * accuracy - state->y * accuracy, 2));
 
-  return -multiplier * (15 + dist / 0.15);
+  return -multiplier * (5 + dist / 0.15);
 }
 
-KickStrategy KickQLearning::generate()
+KickStrategy KickValueIteration::generate()
 {
   KickStrategy strategy(accuracy);
 
@@ -116,7 +116,7 @@ KickStrategy KickQLearning::generate()
       std::set<int> possibleOrientations;
       std::set<std::string> possibleKicks;
       std::map<std::string, double> kickLength;
-      for (auto& kickName : kicks.getKickNames())
+      for (auto& kickName : getKickNames())
       {
         auto& kickModel = kicks.getKickModel(kickName);
         auto tmp = kickModel.applyKick(Eigen::Vector2d(0, 0), 0);
@@ -185,7 +185,7 @@ KickStrategy KickQLearning::generate()
   return strategy;
 }
 
-void KickQLearning::generateStates()
+void KickValueIteration::generateStates()
 {
   xSteps = 1 + Constants::field.field_length / (accuracy);
   ySteps = 1 + Constants::field.field_width / (accuracy);
@@ -207,7 +207,7 @@ void KickQLearning::generateStates()
   }
 }
 
-void KickQLearning::generateTemplate()
+void KickValueIteration::generateTemplate()
 {
   std::default_random_engine generator;
   std::normal_distribution<double> posNoise(0, 0.3);
@@ -216,7 +216,7 @@ void KickQLearning::generateTemplate()
 
   for (int a = 0; a < aSteps; a++)
   {
-    for (auto& kickName : kicks.getKickNames())
+    for (auto& kickName : getKickNames())
     {
       auto& kickModel = kicks.getKickModel(kickName);
       Action action;
@@ -244,7 +244,7 @@ void KickQLearning::generateTemplate()
   }
 }
 
-void KickQLearning::generateModels()
+void KickValueIteration::generateModels()
 {
   std::default_random_engine generator;
   std::normal_distribution<double> rnd(0, 1);
@@ -320,7 +320,7 @@ void KickQLearning::generateModels()
   }
 }
 
-bool KickQLearning::iterate()
+bool KickValueIteration::iterate()
 {
   bool changed = false;
 
@@ -354,7 +354,7 @@ bool KickQLearning::iterate()
   return changed;
 }
 
-KickQLearning::State* KickQLearning::stateFor(double x, double y)
+KickValueIteration::State* KickValueIteration::stateFor(double x, double y)
 {
   int X = round(x / accuracy);
   int Y = round(y / accuracy);
@@ -368,4 +368,9 @@ KickQLearning::State* KickQLearning::stateFor(double x, double y)
   }
 
   return NULL;
+}
+
+std::vector<std::string> KickValueIteration::getKickNames()
+{
+  return { "lateral", "classic" };
 }
