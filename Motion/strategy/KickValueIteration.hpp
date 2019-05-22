@@ -11,8 +11,8 @@ class KickValueIteration
 {
 public:
   // TODO: This class should be parsed instead of having so many parameters
-  KickValueIteration(std::string kicksFile, double accuracy = 0.2, double angleAccuracy = 5,
-                     bool dump = false, double tolerance = 5, double grassOffset = 180);
+  KickValueIteration(std::string kicksFile, double accuracy = 0.2, double angleAccuracy = 5, bool dump = false,
+                     double tolerance = 5, double grassOffset = 180);
 
   // Actions are discrete ints
   struct Action
@@ -58,10 +58,10 @@ public:
 
   KickStrategy generate();
 
-  KickStrategy::Action bestAction(State *state);
+  KickStrategy::Action bestAction(State* state);
 
-  void loadScores(KickStrategy &strategy);
-  void populateStrategy(KickStrategy &strategy);
+  void loadScores(KickStrategy& strategy);
+  void populateStrategy(KickStrategy& strategy);
 
 protected:
   csa_mdp::KickModelCollection kicks;
@@ -87,6 +87,8 @@ protected:
 
   // Reward function from a state to another one
   double rewardFor(State* from, State* state);
+  double rewardFor(State* from, State* state,
+                   std::function<double(rhoban_geometry::Point, rhoban_geometry::Point)> travelFunc);
 
   // State for a given x/y
   State* stateFor(double x, double y);
