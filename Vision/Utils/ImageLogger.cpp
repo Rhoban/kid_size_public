@@ -1,6 +1,7 @@
 #include <iostream>
 #include "ImageLogger.h"
 
+#include <hl_communication/utils.h>
 #include <rhoban_utils/util.h>
 
 #include <opencv2/highgui/highgui.hpp>
@@ -9,8 +10,8 @@ namespace Vision
 {
 namespace Utils
 {
-ImageLogger::ImageLogger(const std::string& logger_prefix, bool store_images, int max_img)
-  : logger_prefix(logger_prefix), store_images(store_images), max_img(max_img)
+ImageLogger::ImageLogger(const std::string& logger_prefix, bool store_images_, int max_img)
+  : logger_prefix(logger_prefix), store_images(store_images_), max_img(max_img)
 {
 }
 
@@ -24,16 +25,19 @@ void ImageLogger::pushEntry(const ImageLogger::Entry& cst_entry)
   // Start session if required
   if (!isActive())
   {
-    initSession();
+    initSession(cst_entry.cs);
   }
   // If too much images have been written, throw a SizeLimitException
   if (img_index >= max_img)
   {
     throw SizeLimitException(DEBUG_INFO + " max images reached");
   }
+  // Duplicate img data (avoid corruption)
+  Entry entry;
+  entry.img = cst_entry.img.clone();
+  entry.time_stamp = cst_entry.time_stamp;
+  entry.cs = cst_entry.cs;
   // Store or write imaged depending on mode
-  Entry entry(cst_entry.first, cst_entry.second.clone());
-
   if (store_images)
   {
     entries_map[img_index] = entry;
@@ -54,13 +58,20 @@ void ImageLogger::endSession()
       writeEntry(pair.first, pair.second);
     }
   }
-  description_file.close();
+  video_writer.release();
+  // Can only be written in the end because delimited writing of messages is not supported in protobuf 3.0.0
+  for (auto& entry : metadata)
+  {
+    std::string log_path = session_path + "/" + entry.first + ".pb";
+    hl_communication::writeToFile(log_path, entry.second);
+  }
+  metadata.clear();
   session_path = "";
   entries_map.clear();
   img_index = 0;
 }
 
-void ImageLogger::initSession(const std::string& session_local_path)
+void ImageLogger::initSession(const CameraState& cs, const std::string& session_local_path)
 {
   if (session_local_path != "")
   {
@@ -76,14 +87,21 @@ void ImageLogger::initSession(const std::string& session_local_path)
   {
     throw std::runtime_error(DEBUG_INFO + "Failed to create dir: '" + session_path + "'");
   }
-  std::string file_path = session_path + "/images.csv";
-  description_file.open(file_path);
-  if (!description_file.good())
+  std::string filename = session_path + "/video.avi";
+  double framerate = 30;
+  bool use_color = true;
+  video_writer.open(filename, cv::VideoWriter::fourcc('X', 'V', 'I', 'D'), framerate, cs.getImgSize(), use_color);
+  if (!video_writer.isOpened())
   {
-    throw std::runtime_error(DEBUG_INFO + "Failed to open file: '" + file_path + "'");
+    throw std::runtime_error(DEBUG_INFO + "Failed to open video");
   }
-  int64_t clock_offset = rhoban_utils::getSteadyClockOffset();
-  description_file << "clock_offset:" << clock_offset << std::endl;
+  hl_monitoring::VideoMetaInformation meta_information;
+  cs.exportToProtobuf(meta_information.mutable_camera_parameters());
+  meta_information.set_time_offset(rhoban_utils::getSteadyClockOffset());
+  for (const std::string& log_name : { "camera_from_world", "camera_from_field" })
+  {
+    metadata[log_name] = meta_information;
+  }
 }
 
 const std::string& ImageLogger::getSessionPath()
@@ -93,24 +111,19 @@ const std::string& ImageLogger::getSessionPath()
 
 void ImageLogger::writeEntry(int idx, const Entry& e)
 {
-  // Building image name
-  int nb_digits = std::log10(max_img);
-  int currentDigits = 1;
-  if (idx > 0)
-  {
-    currentDigits = std::log10(idx);
-  }
-  std::ostringstream image_path_oss;
-  for (int i = 0; i < nb_digits - currentDigits; i++)
-  {
-    image_path_oss << "0";
-  }
-  image_path_oss << idx << ".png";
-  std::string img_name = image_path_oss.str();
+  std::cout << "Writing entry" << std::endl;
   // Writing image
-  cv::imwrite(session_path + "/" + img_name, e.second);
-  // Writing couple timestamp_path to file
-  description_file << (unsigned long)e.first.getTimeMS() << "," << img_name << std::endl;
+  video_writer.write(e.img);
+  // Adding entry_properties to metadata (cannot write in file before end of session)
+  hl_monitoring::FrameEntry* entry = metadata["camera_from_world"].add_frames();
+  entry->set_time_stamp(e.time_stamp);
+  setProtobufFromAffine(e.cs.worldToCamera, entry->mutable_pose());
+  if (e.cs.has_camera_field_transform)
+  {
+    hl_monitoring::FrameEntry* entry = metadata["camera_from_field"].add_frames();
+    entry->set_time_stamp(e.time_stamp);
+    setProtobufFromAffine(e.cs.camera_from_field, entry->mutable_pose());
+  }
 }
 
 }  // namespace Utils

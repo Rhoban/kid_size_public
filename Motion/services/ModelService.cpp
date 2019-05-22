@@ -99,9 +99,10 @@ bool ModelService::tick(double elapsed)
     LocalisationService* localisation = getServices()->localisation;
     if (localisation->isReplay)
     {
-      Eigen::Affine3d fieldToWorld = histories.pose("field")->interpolate(replayTimestamp);
-      localisation->setPosSelf(fieldToWorld.translation(), rhoban::frameYaw(fieldToWorld.rotation()), 1, 1, false,
-                               true);
+      Eigen::Affine3d fieldToSelf =
+          model.selfToWorld().inverse() * histories.pose("field")->interpolate(replayTimestamp).inverse();
+
+      localisation->setPosSelf(fieldToSelf.translation(), -rhoban::frameYaw(fieldToSelf.rotation()), 1, 1, false, true);
     }
   }
   else

@@ -27,7 +27,7 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 {
   Move::initializeBinding();
   swingGainStart = 0.04;
-  trunkPitch = 10;
+  trunkPitch = 12;
   bootstrapSteps = 3;
   shouldBootstrap = false;
 
@@ -40,10 +40,10 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("walkTurn", walkTurn, RhIO::Bind::PullOnly)->comment("Walk control Turn [deg/step]")->defaultValue(0.0);
 
   // Walk limits (to inform other moves about limits)
-  bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(20);
-  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.1);
+  bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(15);
+  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.08);
   bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(0.04);
-  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(0.05);
+  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(0.04);
 
   // Walk engine parameters
   bind->bindNew("trunkXOffset", engine.trunkXOffset, RhIO::Bind::PullOnly)->defaultValue(engine.trunkXOffset);
@@ -65,13 +65,13 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(0.02)
+      ->defaultValue(0.035)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDLatByCycle", maxDLatByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(0.02)
+      ->defaultValue(0.03)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(10)
+      ->defaultValue(7)
       ->comment("Maximal difference between two steps [deg/step^2]");
 
   // Security parameters

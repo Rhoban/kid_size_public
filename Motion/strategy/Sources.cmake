@@ -1,6 +1,6 @@
 set (SOURCES
     CorridorProfile.cpp
-    KickQLearning.cpp
+    KickValueIteration.cpp
     KickStrategy.cpp
     PlacementOptimizer.cpp
 )
