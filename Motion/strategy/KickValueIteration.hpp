@@ -60,7 +60,8 @@ public:
 
   KickStrategy::Action bestAction(State *state);
 
-  Json::Value toJson();
+  void loadScores(KickStrategy &strategy);
+  void populateStrategy(KickStrategy &strategy);
 
 protected:
   csa_mdp::KickModelCollection kicks;

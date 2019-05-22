@@ -53,6 +53,14 @@ KickStrategy KickValueIteration::generate()
   while (iterate())
     ;
 
+  // Write the best actions in given strategy
+  populateStrategy(strategy);
+
+  return strategy;
+}
+
+void KickValueIteration::populateStrategy(KickStrategy& strategy)
+{
   for (int y = 0; y < ySteps; y++)
   {
     for (int x = 0; x < xSteps; x++)
@@ -64,8 +72,6 @@ KickStrategy KickValueIteration::generate()
       strategy.setAction(X, Y, bestAction(state));
     }
   }
-
-  return strategy;
 }
 
 KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* state)
@@ -317,4 +323,25 @@ KickValueIteration::State* KickValueIteration::stateFor(double x, double y)
 std::vector<std::string> KickValueIteration::getKickNames()
 {
   return { "lateral", "classic", "small" };
+}
+
+void KickValueIteration::loadScores(KickStrategy& strategy)
+{
+  // Generate the states
+  generateStates();
+
+  // Genrate kick templates
+  generateTemplate();
+
+  // Generate the model of actions for each state
+  generateModels();
+
+  for (int y = 0; y < ySteps; y++)
+  {
+    for (int x = 0; x < xSteps; x++)
+    {
+      states[x][y].score = strategy.scoreFor(states[x][y].fieldX - Constants::field.field_length / 2.0,
+                                             states[x][y].fieldY - Constants::field.field_width / 2.0);
+    }
+  }
 }
