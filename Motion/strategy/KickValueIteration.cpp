@@ -83,7 +83,7 @@ double KickValueIteration::rewardFor(State* from, State* state)
   double dist =
       sqrt(pow(from->x * accuracy - state->x * accuracy, 2) + pow(from->y * accuracy - state->y * accuracy, 2));
 
-  return -multiplier * (5 + dist / 0.15);
+  return -multiplier * (10 + dist / 0.15);
 }
 
 KickStrategy KickValueIteration::generate()
@@ -372,5 +372,5 @@ KickValueIteration::State* KickValueIteration::stateFor(double x, double y)
 
 std::vector<std::string> KickValueIteration::getKickNames()
 {
-  return { "lateral", "classic" };
+  return { "lateral", "classic", "small" };
 }
