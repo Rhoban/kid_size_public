@@ -347,7 +347,7 @@ void Filter::initRhIO(const std::string& path)
   {
     node.newFloat("monitor_scale")->defaultValue(monitor_scale)->minimum(0.01)->maximum(10);
     // Advertise format
-    node.newFrame("out", "Output frame of the filter '" + getName() + "'", RhIO::FrameFormat::BGR);
+    node.newFrame("out", "Output frame of the filter '" + getName() + "'");
   }
 }
 
@@ -407,8 +407,7 @@ void Filter::publishToRhIO(const std::string& path)
     // Resize image if necessary
     cv::Mat tmp_img2(monitor_height, monitor_width, CV_8UC3);
     cv::resize(tmp_img1, tmp_img2, cv::Size(monitor_width, monitor_height));
-    size_t size = 3 * monitor_height * monitor_width;
-    node.framePush("out", monitor_width, monitor_height, tmp_img2.data, size);
+    node.framePush("out", tmp_img2);
   }
 
   // Publish parameters to RhIO if they have never been published

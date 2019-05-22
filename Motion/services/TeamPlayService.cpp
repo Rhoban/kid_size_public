@@ -6,7 +6,7 @@
 #include "CaptainService.h"
 #include "DecisionService.h"
 #include "LocalisationService.h"
-#include "RobotModelService.h"
+#include "ModelService.h"
 #include "Services.h"
 #include "RefereeService.h"
 #include "StrategyService.h"
@@ -291,7 +291,7 @@ void TeamPlayService::updateTeamPlay(RobotMsg* msg)
 void TeamPlayService::updateMiscExtra(RobotMsg* msg)
 {
   StrategyService* strategy = getServices()->strategy;
-  RobotModelService* model = getServices()->robotModel;
+  ModelService* model = getServices()->model;
 
   MiscExtra extra;
   extra.set_time_since_last_kick(strategy->getTimeSinceLastKick());

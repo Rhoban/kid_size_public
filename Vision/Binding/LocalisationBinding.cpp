@@ -16,7 +16,7 @@
 #include "scheduler/MoveScheduler.h"
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
-#include "services/RobotModelService.h"
+#include "services/ModelService.h"
 #include "services/RefereeService.h"
 
 #include "unistd.h"
@@ -241,7 +241,7 @@ void LocalisationBinding::initRhIO()
       ->defaultValue(1)
       ->comment("Verbosity level for Localisation: 0 -> silent");
 
-  RhIO::Root.newFrame("localisation/TopView", "", RhIO::FrameFormat::BGR);
+  RhIO::Root.newFrame("localisation/TopView", "Top view");
 
   // Binding Localisation items
   RobotController::bindWithRhIO();
@@ -271,7 +271,7 @@ void LocalisationBinding::publishToRhIO()
     int width = 1040;
     int height = 740;
     cv::Mat topView = getTopView(width, height);
-    RhIO::Root.framePush("/localisation/TopView", width, height, topView.data, width * height * 3);
+    RhIO::Root.framePush("/localisation/TopView", topView);
   }
 }
 
@@ -540,7 +540,7 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
 void LocalisationBinding::updateFilter(
     const std::vector<rhoban_unsorted::Observation<Localisation::FieldPosition>*>& obs)
 {
-  RobotModelService* model_service = scheduler->getServices()->robotModel;
+  ModelService* model_service = scheduler->getServices()->model;
 
   // Check if base has been updated since last tick:
   bool isWalkEnabled = model_service->wasOdometryUpdated();

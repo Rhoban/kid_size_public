@@ -1,6 +1,6 @@
 #include "Head.h"
 
-#include "services/RobotModelService.h"
+#include "services/ModelService.h"
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
 
@@ -157,8 +157,8 @@ void Head::step(float elapsed)
   LocalisationService* loc = getServices()->localisation;
 
   // Use Model and camera parameters to determine position
-  rhoban::HumanoidModel* model = &getServices()->robotModel->model;
-  const rhoban::CameraModel& camera_model = getServices()->robotModel->cameraModel;
+  rhoban::HumanoidModel* model = &getServices()->model->model;
+  const rhoban::CameraModel& camera_model = getServices()->model->cameraModel;
 
   Eigen::Vector3d target_in_self;
   if (disabled)
@@ -350,7 +350,7 @@ Eigen::Vector3d Head::getBallTarget(rhoban::HumanoidModel* model, const rhoban::
 
 void Head::updateScanners()
 {
-  const rhoban::CameraModel& camera_model = getServices()->robotModel->cameraModel;
+  const rhoban::CameraModel& camera_model = getServices()->model->cameraModel;
   double fovx = camera_model.getFOVX().getSignedValue();
   double fovy = camera_model.getFOVY().getSignedValue();
   // Update default scanner
