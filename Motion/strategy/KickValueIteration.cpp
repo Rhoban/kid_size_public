@@ -59,7 +59,7 @@ KickStrategy KickValueIteration::generate()
     {
       double X = accuracy * x;
       double Y = accuracy * y;
-      State* state = &states[x][y];
+      KickValueIteration::State* state = &states[x][y];
 
       strategy.setAction(X, Y, bestAction(state));
     }
@@ -70,43 +70,41 @@ KickStrategy KickValueIteration::generate()
 
 KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* state)
 {
-  Action action;
+  Action bestAction;
   double bestScore = -1000;
-  double bestLength = -1;
   std::set<int> possibleOrientations;
   std::set<std::string> possibleKicks;
-  std::map<std::string, double> kickLength;
-  for (auto& kickName : getKickNames())
-  {
-    auto& kickModel = kicks.getKickModel(kickName);
-    auto tmp = kickModel.applyKick(Eigen::Vector2d(0, 0), 0);
-    kickLength[kickName] = tmp[0];
-  }
 
+  // Collecting action scores
+  std::map<Action, double> actionScores;
   for (auto& entry : state->models)
   {
     double actionScore = 0;
-    auto tmpAction = entry.first;
-
-    // Estimating the score of this action
     for (auto& possibility : entry.second)
     {
       actionScore += possibility.first * (rewardFor(state, possibility.second) + possibility.second->score);
     }
 
+    // Storing action score
+    actionScores[entry.first] = actionScore;
+
+    if (actionScore > bestScore)
+    {
+      bestAction = entry.first;
+      bestScore = actionScore;
+    }
+  }
+
+  for (auto& entry : state->models)
+  {
+    auto tmpAction = entry.first;
+    double actionScore = actionScores[tmpAction];
+
     // If the action is withing our time tolerance
-    if (fabs(actionScore - state->score) < tolerance)
+    if (fabs(actionScore - bestScore) < tolerance)
     {
       possibleKicks.insert(tmpAction.kick);
       possibleOrientations.insert(round(tmpAction.orientation * 1000));
-      auto length = kickLength[tmpAction.kick];
-
-      if (bestScore < actionScore || bestLength < 0 || bestLength < length)
-      {
-        bestLength = length;
-        action = tmpAction;
-        bestScore = actionScore;
-      }
 
       if (dump)
       {
@@ -125,7 +123,7 @@ KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* s
   KickStrategy::Action resultAction;
   // XXX: We suppose that the possible orientations are dispatched evenly
   resultAction.tolerance = std::max<double>(0, (possibleOrientations.size() - 1) * angleAccuracy * M_PI / 180.0);
-  resultAction.orientation = action.orientation;
+  resultAction.orientation = bestAction.orientation;
   resultAction.score = bestScore;
 
   if (possibleKicks.count("classic") && possibleKicks.count("lateral"))
@@ -134,8 +132,9 @@ KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* s
   }
   else
   {
-    resultAction.kick = action.kick;
+    resultAction.kick = bestAction.kick;
   }
+
   return resultAction;
 }
 
