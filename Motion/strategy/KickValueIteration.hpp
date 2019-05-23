@@ -63,6 +63,9 @@ public:
   // For each action, the probabilities (sum=1) to reach a set of targets
   std::map<Action, std::vector<PossibilityTemplate>> kickTemplate;
 
+  // Average length for each kick
+  std::map<std::string, double> kickLengths;
+
   KickStrategy generate();
 
   KickStrategy::Action bestAction(State* state);
@@ -94,8 +97,8 @@ protected:
   bool iterate();
 
   // Reward function from a state to another one
-  double rewardFor(State* from, State* state);
-  double rewardFor(State* from, State* state,
+  double rewardFor(State* from, State* state, double kickLength);
+  double rewardFor(State* from, State* state, double kickLength,
                    std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc);
 
   // State for a given x/y

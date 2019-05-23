@@ -18,26 +18,47 @@ KickValueIteration::KickValueIteration(std::string kickFiles, double accuracy, d
   kicks.setGrassConeOffset(grassOffset);
 }
 
-double KickValueIteration::rewardFor(
-    State* from, State* state, std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc)
+double
+KickValueIteration::rewardFor(State* from, State* state, double kickLength,
+                              std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc)
 {
   if (state == &failState)
   {
     return -300;
   }
 
-  // Distance we have to walk
+  // Source box gives the starting point on the field (where the ball is kicked)
   Point fromPos =
       Point(from->fieldX - Constants::field.field_length / 2.0, from->fieldY - Constants::field.field_width / 2.0);
-  Point toPos =
-      Point(state->fieldX - Constants::field.field_length / 2.0, state->fieldY - Constants::field.field_width / 2.0);
+
+  Point toPos;
+  if (state->isSuccess)
+  {
+    // Estimating the kick arrival after a goal
+    // XXX: We don't know kickLength here, we use an exagerated 10m kick since the goal is mainly to have a
+    // good orientation and allow the final user of travelFunc to check if its kick intersects an opponetn for eg.
+    Point kick(cos(state->lastKickOrientation) * kickLength, sin(state->lastKickOrientation) * kickLength);
+    toPos = fromPos + kick;
+
+    // std::cout << kickLength << std::endl;
+    // std::cout << state->lastKickOrientation << std::endl;
+    // std::cout << fromPos << std::endl;
+    // std::cout << toPos << std::endl;
+    // exit(0);
+  }
+  else
+  {
+    // Using the target box to estimate target position on floor
+    toPos =
+        Point(state->fieldX - Constants::field.field_length / 2.0, state->fieldY - Constants::field.field_width / 2.0);
+  }
 
   return travelFunc(fromPos, toPos, state->isSuccess);
 }
 
-double KickValueIteration::rewardFor(State* from, State* state)
+double KickValueIteration::rewardFor(State* from, State* state, double kickLength)
 {
-  return rewardFor(from, state,
+  return rewardFor(from, state, kickLength,
                    [](rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos, bool success) -> double {
                      if (success)
                      {
@@ -100,7 +121,8 @@ KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* s
     double actionScore = 0;
     for (auto& possibility : entry.second)
     {
-      actionScore += possibility.first * (rewardFor(state, possibility.second) + possibility.second->score);
+      actionScore += possibility.first *
+                     (rewardFor(state, possibility.second, kickLengths[entry.first.kick]) + possibility.second->score);
     }
 
     // Storing action score
@@ -162,6 +184,14 @@ KickValueIteration::State::State() : isSuccess(false)
 
 void KickValueIteration::generateStates()
 {
+  for (auto& kickName : getKickNames())
+  {
+    auto& kickModel = kicks.getKickModel(kickName);
+    Eigen::Vector2d kickTarget = kickModel.applyKick(Eigen::Vector2d(0, 0), 0);
+
+    kickLengths[kickName] = kickTarget.norm();
+  }
+
   xSteps = 1 + Constants::field.field_length / (accuracy);
   ySteps = 1 + Constants::field.field_width / (accuracy);
   aSteps = 360 / angleAccuracy;
@@ -266,7 +296,12 @@ void KickValueIteration::generateModels()
               if (fabs(yIntersect) < (Constants::field.goal_width * 0.95) / 2)
               {
                 // Assigning the success state keeping in memory the kick orientation
-                double kickOrientation = (atan2(kickY - Y, kickX - X) + M_PI) * 180.0 / M_PI;
+                double kickOrientation = atan2(kickY - Y, kickX - X);
+                if (kickOrientation < 0)
+                {
+                  kickOrientation += 2 * M_PI;
+                }
+                kickOrientation = kickOrientation * 180.0 / M_PI;
                 State* successState = &successStates[floor(kickOrientation / angleAccuracy)];
 
                 count[successState] += p;
@@ -308,7 +343,9 @@ bool KickValueIteration::iterate()
         double actionScore = 0;
         for (auto& possibility : entry.second)
         {
-          actionScore += possibility.first * (rewardFor(&states[x][y], possibility.second) + possibility.second->score);
+          actionScore +=
+              possibility.first *
+              (rewardFor(&states[x][y], possibility.second, kickLengths[entry.first.kick]) + possibility.second->score);
         }
 
         if (actionScore > score)
