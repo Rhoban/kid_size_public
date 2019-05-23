@@ -157,8 +157,8 @@ Point GoalKeeper::alignBallPos()
 
   if (ball.x < loc->getOurGoalPosField().x)
   {
-    // 0.1 to avoid the goal pole
-    return Point(loc->getOurGoalPosField().x - 0.1, ySign * yPos);
+    // 0.3 to avoid the goal pole
+    return Point(loc->getOurGoalPosField().x - 0.3, ySign * yPos);
   }
   // if ball is near
 
