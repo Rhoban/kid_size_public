@@ -1,5 +1,6 @@
 #pragma once
 
+#include <thread>
 #include "moves/KickController.h"
 #include <rhoban_utils/control/control.h>
 #include <services/TeamPlayService.h>
@@ -8,6 +9,7 @@
 #include "rhoban_geometry/point.h"
 #include "rhoban_utils/angle.h"
 #include <strategy/KickStrategy.hpp>
+#include <strategy/KickValueIteration.hpp>
 
 class Walk;
 
@@ -19,13 +21,17 @@ public:
 
   void onStart();
   void onStop();
+  void execute();
 
   void step(float elapsed);
 
+  KickValueIteration kickValueIteration;
+  
 protected:
   KickStrategy strategy;
   std::string strategyFile;
   KickStrategy::Action action;
+  std::thread* thread;
 
   bool forceUpdate;
   rhoban_geometry::Point lastUpdateBall;
@@ -40,4 +46,6 @@ protected:
   void updateAction();
 
   std::string cmdReloadStrategy();
+
+  bool shouldReload;
 };

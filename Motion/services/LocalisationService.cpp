@@ -77,7 +77,7 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   bind.bindNew("opponents", opponents, RhIO::Bind::PushOnly)->comment("Opponent field position as string [m]");
   bind.bindNew("opponentsRadius", opponentsRadius, RhIO::Bind::PullOnly)
       ->comment("Opponent radius [m]")
-      ->defaultValue(0.65);
+      ->defaultValue(0.3);
 
   bind.bindNew("teamMatesRadius", teamMatesRadius, RhIO::Bind::PullOnly)
       ->comment("TeamMates radius [m]")

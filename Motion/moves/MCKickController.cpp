@@ -4,8 +4,10 @@
 #include <rhoban_geometry/circle.h>
 #include <services/LocalisationService.h>
 #include <robocup_referee/constants.h>
+#include <rhoban_geometry/circle.h>
 #include "rhoban_utils/logging/logger.h"
 #include "MCKickController.h"
+#include "services/StrategyService.h"
 
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
@@ -41,6 +43,103 @@ MCKickController::MCKickController()
 
   // Load available kicks
   kmc.loadFile();
+
+  shouldReload = true;
+  thread = new std::thread([this] { this->execute(); });
+}
+
+void MCKickController::execute()
+{
+  double grassOffset = 0;
+  StrategyService* strategyService = getServices()->strategy;
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  while (true)
+  {
+    // We should reload the scores for the kick strategy
+    if (shouldReload || strategyService->getGrassOffset() != grassOffset)
+    {
+      logger.log("Reloading kickValueIteration (%d, %f, %f)", shouldReload, strategyService->getGrassOffset(),
+                 grassOffset);
+      shouldReload = false;
+      grassOffset = strategyService->getGrassOffset();
+      kickValueIteration = KickValueIteration("", 0.2, 5, 0, 10, grassOffset);
+      kickValueIteration.loadScores(strategy);
+    }
+
+    // Updating the kicking strategy if the move is running
+    if (isRunning())
+    {
+      LocalisationService* localisation = getServices()->localisation;
+      Point ball = localisation->getBallPosField();
+
+      auto rewardFunc = [this, localisation, &ball](Point fromPos, Point toPos, bool success) -> double {
+        double penalty = 0;
+
+        // We can't kick a ball through the opponents
+        Segment kick(fromPos, toPos);
+        for (auto& opponent : localisation->getOpponentsField())
+        {
+          Point ballToOpponent = opponent - fromPos;
+          if (ballToOpponent.getLength() < localisation->opponentsRadius * 1.25)
+          {
+            ballToOpponent.normalize(localisation->opponentsRadius * 1.25);
+          }
+          Circle opponentCircle(fromPos + ballToOpponent, localisation->opponentsRadius);
+
+          if (kick.intersects(opponentCircle))
+          {
+            if (success)
+            {
+              penalty = -30;
+            }
+            else
+            {
+              penalty = -60;
+            }
+            break;
+          }
+        }
+
+        // Changing fromPos to be the closer ally to the ball after kick instead of the ball
+        // before kick (i.e the robot that is kicking)
+        for (auto& entry : localisation->getTeamMatesField())
+        {
+          Point matePos(entry.second.x(), entry.second.y());
+          if ((matePos - toPos).getLength() < (fromPos - toPos).getLength())
+          {
+            fromPos = matePos;
+          }
+        }
+
+        return kickValueIteration.travelReward(fromPos, toPos, success) + penalty;
+      };
+
+      auto action = kickValueIteration.bestAction(kickValueIteration.stateForFieldPos(ball.x, ball.y), rewardFunc);
+      tolerance = rad2deg(action.tolerance) / 2;
+
+      if (action.kick == "")
+      {
+        return;
+      }
+
+      allowed_kicks.clear();
+      if (action.kick == "opportunist")
+      {
+        allowed_kicks.push_back("classic");
+        allowed_kicks.push_back("lateral");
+      }
+      else
+      {
+        allowed_kicks.push_back(action.kick);
+      }
+
+      kick_dir = rad2deg(action.orientation);
+    }
+
+    // Sleeping 10ms
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 }
 
 std::string MCKickController::cmdReloadStrategy()
@@ -57,6 +156,7 @@ std::string MCKickController::cmdReloadStrategy()
     ss << "Strategy " << strategyFile << " loaded.";
   }
 
+  shouldReload = true;
   return ss.str();
 }
 
@@ -73,32 +173,6 @@ void MCKickController::onStart()
 
 void MCKickController::onStop()
 {
-}
-
-void MCKickController::updateAction()
-{
-  // auto loc = getServices()->localisation;
-  // Point ball = loc->getBallPosField();
-  // action = strategy.actionFor(ball.x, ball.y);
-  // tolerance = rad2deg(action.tolerance) / 2;
-
-  // if (action.kick == "")
-  // {
-  //   return;
-  // }
-
-  // allowed_kicks.clear();
-  // if (action.kick == "opportunist")
-  // {
-  //   allowed_kicks.push_back("classic");
-  //   allowed_kicks.push_back("lateral");
-  // }
-  // else
-  // {
-  //   allowed_kicks.push_back(action.kick);
-  // }
-
-  // kick_dir = rad2deg(action.orientation);
 }
 
 void MCKickController::step(float elapsed)

@@ -10,12 +10,28 @@
 using namespace robocup_referee;
 using namespace rhoban_geometry;
 
-KickValueIteration::KickValueIteration(std::string kickFiles, double accuracy, double angleAccuracy, bool dump,
+KickValueIteration::KickValueIteration(std::string kicksFile, double accuracy, double angleAccuracy, bool dump,
                                        double tolerance, double grassOffset)
   : accuracy(accuracy), angleAccuracy(angleAccuracy), dump(dump), tolerance(tolerance)
 {
-  kicks.loadFile(kickFiles);
+  if (kicksFile == "")
+  {
+    kicks.loadFile();
+  }
+  else
+  {
+    kicks.loadFile(kicksFile);
+  }
   kicks.setGrassConeOffset(grassOffset);
+
+  travelReward = [](rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos, bool success) -> double {
+    if (success)
+    {
+      return 0;
+    }
+
+    return -(10 + (fromPos - toPos).getLength() / 0.15);
+  };
 }
 
 double
@@ -24,7 +40,7 @@ KickValueIteration::rewardFor(State* from, State* state, double kickLength,
 {
   if (state == &failState)
   {
-    return -300;
+    return -200;
   }
 
   // Source box gives the starting point on the field (where the ball is kicked)
@@ -58,15 +74,7 @@ KickValueIteration::rewardFor(State* from, State* state, double kickLength,
 
 double KickValueIteration::rewardFor(State* from, State* state, double kickLength)
 {
-  return rewardFor(from, state, kickLength,
-                   [](rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos, bool success) -> double {
-                     if (success)
-                     {
-                       return 0;
-                     }
-
-                     return -(10 + (fromPos - toPos).getLength() / 0.15);
-                   });
+  return rewardFor(from, state, kickLength, travelReward);
 }
 
 KickStrategy KickValueIteration::generate()
@@ -109,6 +117,13 @@ void KickValueIteration::populateStrategy(KickStrategy& strategy)
 
 KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* state)
 {
+  return bestAction(state, travelReward);
+}
+
+KickStrategy::Action
+KickValueIteration::bestAction(KickValueIteration::State* state,
+                               std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc)
+{
   Action bestAction;
   double bestScore = -1000;
   std::set<int> possibleOrientations;
@@ -121,8 +136,9 @@ KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* s
     double actionScore = 0;
     for (auto& possibility : entry.second)
     {
-      actionScore += possibility.first *
-                     (rewardFor(state, possibility.second, kickLengths[entry.first.kick]) + possibility.second->score);
+      actionScore +=
+          possibility.first *
+          (rewardFor(state, possibility.second, kickLengths[entry.first.kick], travelFunc) + possibility.second->score);
     }
 
     // Storing action score
@@ -161,8 +177,11 @@ KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* s
   }
 
   KickStrategy::Action resultAction;
+
   // XXX: We suppose that the possible orientations are dispatched evenly
-  resultAction.tolerance = std::max<double>(0, (possibleOrientations.size() - 1) * angleAccuracy * M_PI / 180.0);
+  // resultAction.tolerance = std::max<double>(0, (possibleOrientations.size() - 1) * angleAccuracy * M_PI / 180.0);
+  resultAction.tolerance = 0;
+
   resultAction.orientation = bestAction.orientation;
   resultAction.score = bestScore;
 
@@ -192,8 +211,8 @@ void KickValueIteration::generateStates()
     kickLengths[kickName] = kickTarget.norm();
   }
 
-  xSteps = 1 + Constants::field.field_length / (accuracy);
-  ySteps = 1 + Constants::field.field_width / (accuracy);
+  xSteps = 1 + Constants::field.field_length / accuracy;
+  ySteps = 1 + Constants::field.field_width / accuracy;
   aSteps = 360 / angleAccuracy;
 
   successStates.clear();
@@ -225,6 +244,7 @@ void KickValueIteration::generateStates()
 void KickValueIteration::generateTemplate()
 {
   std::default_random_engine generator;
+  std::normal_distribution<double> posNoise(0, accuracy);
 
 #define SAMPLES 10000
 
@@ -244,8 +264,8 @@ void KickValueIteration::generateTemplate()
         auto result = kickModel.applyKick(Eigen::Vector2d(0, 0), action.orientation, &generator);
         auto sample = Point(result[0], result[1]);
 
-        int dX = round(sample.x / accuracy);
-        int dY = round(sample.y / accuracy);
+        int dX = round((sample.x + posNoise(generator)) / accuracy);
+        int dY = round((sample.y + posNoise(generator)) / accuracy);
 
         count[std::pair<int, int>(dX, dY)] += 1;
       }
@@ -286,6 +306,8 @@ void KickValueIteration::generateModels()
           }
           else
           {
+            // Target state is NULL, we are out of field, try to check if we scored a goal
+
             if (kickX > Constants::field.field_length)
             {
               double dY = (kickY - Y) / (kickX - X);
@@ -363,6 +385,24 @@ bool KickValueIteration::iterate()
   }
 
   return changed;
+}
+
+KickValueIteration::State* KickValueIteration::stateForFieldPos(double x, double y)
+{
+  // Capping the position in the field
+  x += Constants::field.field_length / 2.0;
+  y += Constants::field.field_width / 2.0;
+
+  if (x < 0)
+    x = 0;
+  if (x > Constants::field.field_length)
+    x = Constants::field.field_length;
+  if (y < 0)
+    y = 0;
+  if (y > Constants::field.field_width)
+    y = Constants::field.field_width;
+
+  return stateFor(x, y);
 }
 
 KickValueIteration::State* KickValueIteration::stateFor(double x, double y)
