@@ -1,14 +1,13 @@
 #include "CameraState.hpp"
 #include <iostream>
 
-#include "camera_state.pb.h"
-
 #include "Utils/HomogeneousTransform.hpp"
 #include "services/DecisionService.h"
 #include "services/ModelService.h"
 #include "services/LocalisationService.h"
 #include "services/ViveService.h"
 
+#include <hl_monitoring/camera.pb.h>
 #include <rhoban_utils/util.h>
 #include <rhoban_utils/logging/logger.h>
 
