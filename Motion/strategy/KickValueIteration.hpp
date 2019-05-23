@@ -45,9 +45,15 @@ public:
   // A state and the model of the actions from this state
   struct State
   {
+    State();
+
     double score;
     int x, y;
     double fieldX, fieldY;
+
+    bool isSuccess;
+    double lastKickOrientation;
+
     std::map<Action, Model> models;
   };
 
@@ -72,7 +78,8 @@ protected:
   double tolerance;
 
   // Fail & success states
-  State failState, successState;
+  State failState;
+  std::vector<State> successStates;
 
   // Discrete steps for x, y and alpha
   int xSteps, ySteps, aSteps;
@@ -89,7 +96,7 @@ protected:
   // Reward function from a state to another one
   double rewardFor(State* from, State* state);
   double rewardFor(State* from, State* state,
-                   std::function<double(rhoban_geometry::Point, rhoban_geometry::Point)> travelFunc);
+                   std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc);
 
   // State for a given x/y
   State* stateFor(double x, double y);

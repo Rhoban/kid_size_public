@@ -18,33 +18,34 @@ KickValueIteration::KickValueIteration(std::string kickFiles, double accuracy, d
   kicks.setGrassConeOffset(grassOffset);
 }
 
-double KickValueIteration::rewardFor(State* from, State* state,
-                                     std::function<double(rhoban_geometry::Point, rhoban_geometry::Point)> travelFunc)
+double KickValueIteration::rewardFor(
+    State* from, State* state, std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc)
 {
-  if (state == &successState)
-  {
-    return 0;
-  }
-
   if (state == &failState)
   {
     return -300;
   }
 
   // Distance we have to walk
-  rhoban_geometry::Point fromPos =
+  Point fromPos =
       Point(from->fieldX - Constants::field.field_length / 2.0, from->fieldY - Constants::field.field_width / 2.0);
-  rhoban_geometry::Point toPos =
+  Point toPos =
       Point(state->fieldX - Constants::field.field_length / 2.0, state->fieldY - Constants::field.field_width / 2.0);
 
-  return travelFunc(fromPos, toPos);
+  return travelFunc(fromPos, toPos, state->isSuccess);
 }
 
 double KickValueIteration::rewardFor(State* from, State* state)
 {
-  return rewardFor(from, state, [](rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos) -> double {
-    return -(10 + (fromPos - toPos).getLength() / 0.15);
-  });
+  return rewardFor(from, state,
+                   [](rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos, bool success) -> double {
+                     if (success)
+                     {
+                       return 0;
+                     }
+
+                     return -(10 + (fromPos - toPos).getLength() / 0.15);
+                   });
 }
 
 KickStrategy KickValueIteration::generate()
@@ -155,13 +156,25 @@ KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* s
   return resultAction;
 }
 
+KickValueIteration::State::State() : isSuccess(false)
+{
+}
+
 void KickValueIteration::generateStates()
 {
   xSteps = 1 + Constants::field.field_length / (accuracy);
   ySteps = 1 + Constants::field.field_width / (accuracy);
   aSteps = 360 / angleAccuracy;
 
-  successState.score = 0;
+  successStates.clear();
+  for (int a = 0; a < aSteps; a++)
+  {
+    State state;
+    state.score = 0;
+    state.lastKickOrientation = a * angleAccuracy * M_PI / 180.0;
+    state.isSuccess = true;
+    successStates.push_back(state);
+  }
   failState.score = 0;
 
   for (int x = 0; x < xSteps; x++)
@@ -256,7 +269,11 @@ void KickValueIteration::generateModels()
               // Goal
               if (fabs(yIntersect) < (Constants::field.goal_width * 0.95) / 2)
               {
-                count[&successState] += p;
+                // Assigning the success state keeping in memory the kick orientation
+                double kickOrientation = (atan2(kickY - Y, kickX - X) + M_PI) * 180.0 / M_PI;
+                State* successState = &successStates[floor(kickOrientation / angleAccuracy)];
+
+                count[successState] += p;
               }
               else
               {
