@@ -102,11 +102,24 @@ void MCKickController::execute()
           }
         }
 
+        // Distance we suppose ally can walk during our kick
+        double walkDistance = 2;
+
         // Changing fromPos to be the closer ally to the ball after kick instead of the ball
         // before kick (i.e the robot that is kicking)
         for (auto& entry : localisation->getTeamMatesField())
         {
           Point matePos(entry.second.x(), entry.second.y());
+          Point matePosToBall = toPos - matePos;
+          if (matePosToBall.getLength() < walkDistance)
+          {
+            matePos = toPos;
+          }
+          else
+          {
+            matePos = matePos + matePosToBall.normalize(walkDistance);
+          }
+
           if ((matePos - toPos).getLength() < (fromPos - toPos).getLength())
           {
             fromPos = matePos;
