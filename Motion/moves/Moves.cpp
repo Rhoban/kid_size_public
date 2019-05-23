@@ -19,7 +19,7 @@
 
 #include "ReactiveKicker.h"
 
-#include "QKickController.h"
+#include "MCKickController.h"
 #include "ClearingKickController.h"
 #include "PenaltyKickController.h"
 #include "policies/expert_approach.h"
@@ -73,7 +73,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
 
   // Requires additionnal dependencies
 
-  add(new QKickController());
+  add(new MCKickController());
   add(new ClearingKickController());
   auto penaltyController = new PenaltyKickController();
   add(penaltyController);

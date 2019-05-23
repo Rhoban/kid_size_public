@@ -27,13 +27,9 @@ StrategyService::StrategyService()
 
   // Bind members
   // Default and active moves for approach and kick controler
-  bind.bindNew("defaultApproach", default_approach, RhIO::Bind::PullOnly)
-      ->defaultValue("approach_potential")
-      ->persisted(true);
+  bind.bindNew("defaultApproach", default_approach, RhIO::Bind::PullOnly)->defaultValue("approach_potential");
   bind.bindNew("activeApproach", active_approach, RhIO::Bind::PushOnly)->defaultValue("none");
-  bind.bindNew("defaultKickController", default_kick_controler, RhIO::Bind::PullOnly)
-      ->defaultValue("q_kick_controler")
-      ->persisted(true);
+  bind.bindNew("defaultKickController", default_kick_controler, RhIO::Bind::PullOnly)->defaultValue("mc_kick_controler");
   bind.bindNew("grassOffset", grass_offset, RhIO::Bind::PullOnly)->defaultValue(180)->persisted(true);
   bind.bindNew("activeKickController", active_kick_controler, RhIO::Bind::PushOnly)->defaultValue("none");
   // Kick target
@@ -190,7 +186,7 @@ double StrategyService::getTimeSinceLastKick() const
 {
   return diffSec(lastKick, TimeStamp::now());
 }
-  
+
 Eigen::Vector2d StrategyService::getKickTarget() const
 {
   return Eigen::Vector2d(kick_target_x, kick_target_y);
