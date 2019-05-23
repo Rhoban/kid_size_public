@@ -211,7 +211,7 @@ void Walk::setShouldBootstrap(bool bootstrap)
 void Walk::step(float elapsed)
 {
   ArmsState lastTickArmsState = armsState;
-  auto robotModel = getServices()->robotModel;
+  auto modelService = getServices()->model;
 
   bind->pull();
   if (lastTickArmsState != armsState)
