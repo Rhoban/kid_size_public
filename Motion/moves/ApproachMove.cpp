@@ -94,11 +94,11 @@ const KickController* ApproachMove::getKickController() const
 std::vector<std::string> ApproachMove::getAllowedKicks()
 {
   auto decision = getServices()->decision;
-  if (decision->nextKickIsThrowIn)
-    {
-      return { "throwin" };
-    }
-  
+  if (decision->throwInEnable && decision->nextKickIsThrowIn)
+  {
+    return { "throwin" };
+  }
+
   if (useKickController())
   {
     return getKickController()->getAllowedKicks();

@@ -132,6 +132,10 @@ DecisionService::DecisionService() : isBallMoving(false), bind("decision")
       ->comment("Is a throw in running ?")
       ->defaultValue(false);
 
+  bind.bindNew("throwInEnable", throwInEnable, RhIO::Bind::PullOnly)
+      ->comment("Is throw in enabled ?")
+      ->defaultValue(false);
+
   selfAttackingT = 0;
   handledT = 0;
 

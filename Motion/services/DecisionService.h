@@ -105,8 +105,13 @@ public:
   /**
    * Is a throwIn running ?
    **/
-  bool isThrowInRunning;  
-  
+  bool isThrowInRunning;
+
+  /**
+   * Is throwIn enabled ?
+   **/
+  bool throwInEnable;
+
   /**
    * Should we fake team decisons?
    */
@@ -177,7 +182,7 @@ protected:
    * Counting time from free kick
    */
   double freeKickT;
-  
+
   /// When has ball been flagged as moving for the last time
   rhoban_utils::TimeStamp lastBallMoving;
 
