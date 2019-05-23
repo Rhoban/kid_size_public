@@ -20,7 +20,6 @@ public:
   // Control the robot using [mm] and [deg]
   void control(bool enable, double step = 0, double lateral = 0, double turn = 0);
 
-  
   enum ArmsState : int
   {
     ArmsDisabled = 0,
@@ -34,8 +33,7 @@ public:
     double shoulder_pitch;
     double shoulder_roll;
   };
-  
-  
+
   // Enabling/disabling arms
   // force = true should only be used internally
   void setArms(ArmsState armsState, bool force = false);
@@ -94,8 +92,8 @@ public:
   // Maximum lateral [mm/step]
   float maxLateral;
 
-  //arms movements
- 
+  // arms movements
+
 protected:
   // Walk engine
   rhoban::WalkEngine engine;
@@ -114,7 +112,7 @@ protected:
     WalkBootstrapingSteps,
     Walking,
     WalkStopping
-  };    
+  };
 
   // Should the move be bootstraped ?
   bool shouldBootstrap;
@@ -141,7 +139,6 @@ protected:
   ArmsState lastArmsState;
   armsAngle actualAngle;
   armsAngle lastAngle;
-  
 
   // Arms parameters
   double armsRoll, maintenanceArmsRoll, disabledArmsRoll;

@@ -28,7 +28,7 @@ public:
 
   void onStart();
   void onStop();
-  void step(float elapsed);  
+  void step(float elapsed);
 
 protected:
   // Servoing gains

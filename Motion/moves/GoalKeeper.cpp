@@ -149,37 +149,6 @@ Point GoalKeeper::alignBallPos()
   if (ball.y < 0.0)
     ySign = -1;
 
-  // if ball align with goals, align the ball
-  /* if (fabs(ball.y) < (Constants::field.goal_width / 2.0))
-  {
-    coeffa = (homeY - fabs(ball.y)) / (homeX - (homeX + xIgnoreBall));
-    return Point(homeX, ball.y + y_sign * (loc->getOurGoalPosField().x - ball.x) * coeffa);
-  }
-  else
-  {
-    // move to the ball proportionnaly with distance x from the goal
-    coeffa = (homeY - (Constants::field.goal_width / 2.0)) / (homeX - (homeX + xIgnoreBall));
-
-    // if ball behind our x limit
-    if (ball.x < loc->getOurGoalPosField().x)
-    {
-      return Point(loc->getOurGoalPosField().x,
-                   y_sign * (Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa));
-    }
-    // if ball is near
-
-    if (ball.x < homeX)
-    {
-      return Point(ball.x,
-                   y_sign * (Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa));
-    }
-    else
-    {
-      return Point(homeX,
-                   y_sign * (Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa));
-       }
-       }*/
-
   float xGoal = loc->getOurGoalPosField().x - Constants::field.goal_depth;
   coeffa = (homeY - fabs(ball.y)) / (xGoal - ball.x);
   coeffb = homeY - coeffa * xGoal;
@@ -395,20 +364,6 @@ void GoalKeeper::enterState(std::string state)
       placer->setDirectMode(true);
     startMove("placer", 0.0);
   }
-
-  else if (state == STATE_STOP)
-  {
-    /*setAngle("left_hip_pitch", -30);
-    setAngle("right_hip_pitch", -30);
-    setAngle("left_knee", 50);
-    setAngle("right_knee", 50);
-    setAngle("left_ankle_pitch", -25);
-    setAngle("right_ankle_pitch", -25);
-    setAngle("left_shoulder_roll", 15);
-    setAngle("right_shoulder_roll", -15);
-    setAngle("left_elbow", 0);
-    setAngle("right_elbow", 0);*/
-  }
 }
 
 void GoalKeeper::exitState(std::string state)
@@ -438,9 +393,6 @@ void GoalKeeper::exitState(std::string state)
   {
     stopMove("placer", 0.0);
     placer->setDirectMode(true);
-  }
-  else if (state == STATE_STOP)
-  {
   }
   else if (state == STATE_ATTACK)
   {
