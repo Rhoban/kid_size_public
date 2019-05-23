@@ -47,7 +47,9 @@ GoalKeeper::GoalKeeper(Walk* walk, Placer* placer) : walk(walk), placer(placer)
 {
   initializeBinding();
 
-  bind->bindNew("homeX", homeX, RhIO::Bind::PullOnly)->comment("")->defaultValue(-4.0);
+  bind->bindNew("state", STM::state, RhIO::Bind::PushOnly)->comment("State of the GoalKeeper STM");
+
+  bind->bindNew("homeX", homeX, RhIO::Bind::PullOnly)->comment("in front of cages")->defaultValue(-4.0);
   bind->bindNew("homeY", homeY, RhIO::Bind::PullOnly)->comment("by default middle of field")->defaultValue(0.0);
 
   bind->bindNew("xAttack", xAttack, RhIO::Bind::PullOnly)
@@ -64,7 +66,7 @@ GoalKeeper::GoalKeeper(Walk* walk, Placer* placer) : walk(walk), placer(placer)
       ->comment("Distance x between goal line and limit to attack hysteresis")
       ->defaultValue(1.75);
   bind->bindNew("yAttackHys", yAttackHys, RhIO::Bind::PullOnly)
-      ->comment("Distance x between home and limit to attack hysteresis")
+      ->comment("Distance y between home and limit to attack hysteresis")
       ->defaultValue(1.75);
 
   bind->bindNew("xIgnoreBall", xIgnoreBall, RhIO::Bind::PullOnly)
@@ -75,7 +77,7 @@ GoalKeeper::GoalKeeper(Walk* walk, Placer* placer) : walk(walk), placer(placer)
       ->comment("Acceptable distance x between good position and goal position")
       ->defaultValue(0.1);
   bind->bindNew("yApprox", yApprox, RhIO::Bind::PullOnly)
-      ->comment("Acceptable distance x between good position and goal position")
+      ->comment("Acceptable distance y between good position and goal position")
       ->defaultValue(0.1);
 
   bind->bindNew("t", t, RhIO::Bind::PushOnly)->comment("Duration of the current state");
@@ -143,16 +145,15 @@ Point GoalKeeper::alignBallPos()
 {
   auto loc = getServices()->localisation;
   auto ball = loc->getBallPosField();
+  ySign = 1;
+  if (ball.y < 0.0)
+    ySign = -1;
 
-  // if ball align with goals, move in front of the ball
-  if (fabs(ball.y) < (Constants::field.goal_width / 2.0))
+  // if ball align with goals, align the ball
+  /* if (fabs(ball.y) < (Constants::field.goal_width / 2.0))
   {
     coeffa = (homeY - fabs(ball.y)) / (homeX - (homeX + xIgnoreBall));
-
-    if (ball.y < 0.0)
-      return Point(homeX, ball.y - (loc->getOurGoalPosField().x - ball.x) * coeffa);
-    else
-      return Point(homeX, ball.y + (loc->getOurGoalPosField().x - ball.x) * coeffa);
+    return Point(homeX, ball.y + y_sign * (loc->getOurGoalPosField().x - ball.x) * coeffa);
   }
   else
   {
@@ -160,35 +161,45 @@ Point GoalKeeper::alignBallPos()
     coeffa = (homeY - (Constants::field.goal_width / 2.0)) / (homeX - (homeX + xIgnoreBall));
 
     // if ball behind our x limit
-
     if (ball.x < loc->getOurGoalPosField().x)
     {
-      if (ball.y < 0)
-        return Point(loc->getOurGoalPosField().x,
-                     -(Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa));
-
-      else
-        return Point(loc->getOurGoalPosField().x,
-                     Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa);
+      return Point(loc->getOurGoalPosField().x,
+                   y_sign * (Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa));
     }
     // if ball is near
 
     if (ball.x < homeX)
     {
-      if (ball.y < 0)
-        return Point(ball.x, -(Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa));
-
-      else
-        return Point(ball.x, Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa);
+      return Point(ball.x,
+                   y_sign * (Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa));
     }
     else
     {
-      if (ball.y < 0)
-        return Point(homeX, -(Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa));
+      return Point(homeX,
+                   y_sign * (Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa));
+       }
+       }*/
 
-      else
-        return Point(homeX, Constants::field.goal_width / 2.0 + (loc->getOurGoalPosField().x - ball.x) * coeffa);
-    }
+  float xGoal = loc->getOurGoalPosField().x - Constants::field.goal_depth;
+  coeffa = (homeY - fabs(ball.y)) / (xGoal - ball.x);
+  coeffb = homeY - coeffa * xGoal;
+
+  yPos = std::min(homeX * coeffa + coeffb, (float)(Constants::field.goal_width / 2.0));
+
+  if (ball.x < loc->getOurGoalPosField().x)
+  {
+    // 0.1 to avoid the goal pole
+    return Point(loc->getOurGoalPosField().x - 0.1, ySign * yPos);
+  }
+  // if ball is near
+
+  if (ball.x < homeX)
+  {
+    return Point(ball.x, ySign * yPos);
+  }
+  else
+  {
+    return Point(homeX, ySign * yPos);
   }
 }
 
@@ -267,6 +278,17 @@ void GoalKeeper::step(float elapsed)
           setState(STATE_GOHOME);
           logger.log("state : ball is far, going back home : GO_HOME");
         }
+        else  // if STATE_WAIT
+        {
+          if (loc->fieldQ < 0.5)  // look around for better location
+          {
+            placer->goTo(homeX, homeY, 90);
+          }
+          else
+          {
+            placer->goTo(homeX, homeY, 0);
+          }
+        }
       }
     }
 
@@ -288,6 +310,12 @@ void GoalKeeper::step(float elapsed)
         setState(STATE_ALIGNBALL);
         placer->goTo(needed_pos.x, needed_pos.y, getAngle());
         logger.log("state : we are too far from optimized pos : ALIGN");
+      }
+      else if (fabs(rad2deg(normalizeRad(loc->getFieldOrientation())) - getAngle()) > 10)
+      {
+        setState(STATE_ALIGNBALL);
+        placer->goTo(pos.x, pos.y, getAngle());
+        logger.log("state : we are too far from optimized angle : ALIGN");
       }
     }
 

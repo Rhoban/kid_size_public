@@ -48,13 +48,16 @@ class GoalKeeper : public STM
   float distanceAttack;
   float xApprox, yApprox;
   rhoban_geometry::Point needed_pos;
+  double needed_angle;
   float timeSinceStop;
+  int ySign;
   float coeffa;
+  float coeffb;
+  float yPos;
   float distX, distY;
   //init values
-  float init_left_hip_pitch;
-  
-  /*float init_right_hip_pitch;
+  /*  float init_left_hip_pitch;
+ float init_right_hip_pitch;
   float init_left_knee;
   float init_right_knee;
   float ini_left_ankle_pitch;
