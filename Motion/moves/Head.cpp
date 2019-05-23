@@ -43,7 +43,7 @@ Head::Head()
       ->defaultValue(90);
   bind->bindNew("maxPan", max_pan, RhIO::Bind::PullOnly)
       ->comment("Maximum pan wished for an image point")
-      ->defaultValue(135);
+      ->defaultValue(110);
   bind->bindNew("minOverlap", min_overlap, RhIO::Bind::PullOnly)
       ->comment("Minimal overlap between control points [degrees]")
       ->defaultValue(15);
@@ -56,7 +56,7 @@ Head::Head()
       ->defaultValue(60);
   bind->bindNew("localizeMaxPan", localize_max_pan, RhIO::Bind::PullOnly)
       ->comment("Maximum pan wished for an image point")
-      ->defaultValue(150);
+      ->defaultValue(160);
   bind->bindNew("localizeMinOverlap", localize_min_overlap, RhIO::Bind::PullOnly)
       ->comment("Minimal overlap between control points [degrees]")
       ->defaultValue(5);
@@ -158,7 +158,7 @@ void Head::step(float elapsed)
 
   updateTimers(elapsed);
 
-  LocalisationService* loc = getServices()->localisation;
+  DecisionService* decision = getServices()->decision;
 
   // Use Model and camera parameters to determine position
   rhoban::HumanoidModel* model = &getServices()->model->model;
@@ -181,8 +181,16 @@ void Head::step(float elapsed)
   }
   else
   {
-    // TODO: Should also use scanTarget if ball target has maxPan to high (use hysteresis)
-    target_in_self = getScanTarget(model, scanner);
+    // If ball is properly localized, use the localization scanner rather than
+    // the default scanner
+    if (decision->isBallQualityGood)
+    {
+      target_in_self = getScanTarget(model, localize_scanner);
+    }
+    else
+    {
+      target_in_self = getScanTarget(model, scanner);
+    }
     is_tracking = false;
   }
 
@@ -266,14 +274,13 @@ bool Head::shouldTrackBall()
     return false;
   // Otherwise: tracking depends on loc and history
   LocalisationService* loc = getServices()->localisation;
+  DecisionService* decision = getServices()->decision;
   double ball_dist = loc->getBallPosSelf().getLength();
   // Never track ball if quality is too low
-  if (loc->ballQ < 0.1)
+  if (!decision->isBallQualityGood)
     return false;
   // For some cases, tracking is forced to stay active
-  if (force_track || ball_dist < force_track_dist ||
-      // Currently disabled because there are too much false positives!
-      getServices()->decision->isBallMoving || getServices()->decision->isMateKicking)
+  if (force_track || ball_dist < force_track_dist || decision->isBallMoving || decision->isMateKicking)
   {
     return true;
   }
