@@ -195,7 +195,6 @@ void KickValueIteration::generateStates()
 void KickValueIteration::generateTemplate()
 {
   std::default_random_engine generator;
-  std::normal_distribution<double> posNoise(0, 0.3);
 
 #define SAMPLES 10000
 
@@ -215,8 +214,8 @@ void KickValueIteration::generateTemplate()
         auto result = kickModel.applyKick(Eigen::Vector2d(0, 0), action.orientation, &generator);
         auto sample = Point(result[0], result[1]);
 
-        int dX = round(sample.x / accuracy) + posNoise(generator);
-        int dY = round(sample.y / accuracy) + posNoise(generator);
+        int dX = round(sample.x / accuracy);
+        int dY = round(sample.y / accuracy);
 
         count[std::pair<int, int>(dX, dY)] += 1;
       }
@@ -231,9 +230,6 @@ void KickValueIteration::generateTemplate()
 
 void KickValueIteration::generateModels()
 {
-  std::default_random_engine generator;
-  std::normal_distribution<double> rnd(0, 1);
-
   for (int x = 0; x < xSteps; x++)
   {
     for (int y = 0; y < ySteps; y++)
