@@ -57,6 +57,7 @@ void MCKickController::execute()
   while (true)
   {
     // We should reload the scores for the kick strategy
+    // This process re-generates the kick templates and model and can take ~10s to complete
     if (shouldReload || strategyService->getGrassOffset() != grassOffset)
     {
       logger.log("Reloading kickValueIteration (%d, %f, %f)", shouldReload, strategyService->getGrassOffset(),
