@@ -493,12 +493,6 @@ void LocalisationService::penaltyGoalReset()
 
 void LocalisationService::goalReset()
 {
-  if (NULL != locBinding)
-  {
-    RhIO::Root.setFloat("/Localisation/Field/RobotController/angleExploration", 0.5);
-    RhIO::Root.setFloat("/Localisation/Field/RobotController/posExploration", 0.5);
-  }
-
   customFieldReset(-Constants::field.field_length / 2, 0, 0.01, 0, 1);
 
   if (NULL != robocup)
