@@ -209,6 +209,7 @@ void Walk::setShouldBootstrap(bool bootstrap)
 
 void Walk::step(float elapsed)
 {
+  ArmsState lastTickArmsState = armsState;
   ModelService* modelService = getServices()->model;
 
   bind->pull();
