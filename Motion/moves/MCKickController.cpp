@@ -27,7 +27,7 @@ MCKickController::MCKickController()
 
   // Should we avoid opponents
   bind->bindNew("avoidOpponents", avoidOpponents, RhIO::Bind::PullOnly)
-      ->defaultValue(false)
+      ->defaultValue(true)
       ->comment("Avoid the opponents?");
 
   // Reload strategy file
@@ -92,27 +92,30 @@ void MCKickController::execute()
         double penalty = 0;
 
         // We can't kick a ball through the opponents
-        Segment kick(fromPos, toPos);
-        for (auto& opponent : opponentsField)
+        if (avoidOpponents)
         {
-          Point ballToOpponent = opponent - fromPos;
-          if (ballToOpponent.getLength() < opponentsRadius * 1.25)
+          Segment kick(fromPos, toPos);
+          for (auto& opponent : opponentsField)
           {
-            ballToOpponent.normalize(opponentsRadius * 1.25);
-          }
-          Circle opponentCircle(fromPos + ballToOpponent, opponentsRadius);
+            Point ballToOpponent = opponent - fromPos;
+            if (ballToOpponent.getLength() < opponentsRadius * 2)
+            {
+              ballToOpponent.normalize(opponentsRadius * 2);
+            }
+            Circle opponentCircle(fromPos + ballToOpponent, opponentsRadius);
 
-          if (kick.intersects(opponentCircle))
-          {
-            if (success)
+            if (kick.intersects(opponentCircle))
             {
-              penalty = -30;
+              if (success)
+              {
+                penalty = -30;
+              }
+              else
+              {
+                penalty = -60;
+              }
+              break;
             }
-            else
-            {
-              penalty = -60;
-            }
-            break;
           }
         }
 

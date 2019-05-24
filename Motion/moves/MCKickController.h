@@ -28,6 +28,9 @@ public:
 
   KickValueIteration kickValueIteration;
   
+  // Avoid the opponents ?
+  bool avoidOpponents;
+  
 protected:
   KickStrategy strategy;
   std::string strategyFile;
@@ -37,8 +40,6 @@ protected:
   bool forceUpdate;
   rhoban_geometry::Point lastUpdateBall;
 
-  // Avoid the opponents ?
-  bool avoidOpponents;
 
   // The collection of available kicks
   csa_mdp::KickModelCollection kmc;
