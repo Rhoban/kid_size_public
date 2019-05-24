@@ -84,10 +84,11 @@ void MCKickController::execute()
       auto opponentsField = _opponentsField;
       auto opponentsRadius = _opponentsRadius;
       auto ball = _ballField;
+      auto robotPos = _robotField;
       mutex.unlock();
 
-      auto rewardFunc = [this, &ball, &teamMatesField, &opponentsField, &opponentsRadius](Point fromPos, Point toPos,
-                                                                                          bool success) -> double {
+      auto rewardFunc = [this, &ball, &robotPos, &teamMatesField, &opponentsField,
+                         &opponentsRadius](Point fromPos, Point toPos, bool success) -> double {
         double penalty = 0;
 
         // We can't kick a ball through the opponents
@@ -115,8 +116,8 @@ void MCKickController::execute()
           }
         }
 
-        // Distance we suppose ally can walk during our kick
-        double walkDistance = 2;
+        // We suppose that allies will be able to walk 0.5m more than us before we kick the ball
+        double walkDistance = (robotPos - ball).getLength() + 0.5;
 
         // Changing fromPos to be the closer ally to the ball after kick instead of the ball
         // before kick (i.e the robot that is kicking)
@@ -143,29 +144,16 @@ void MCKickController::execute()
       };
 
       auto action = kickValueIteration.bestAction(kickValueIteration.stateForFieldPos(ball.x, ball.y), rewardFunc);
-      tolerance = rad2deg(action.tolerance) / 2;
 
-      if (action.kick == "")
-      {
-        return;
-      }
-
-      allowed_kicks.clear();
-      if (action.kick == "opportunist")
-      {
-        allowed_kicks.push_back("classic");
-        allowed_kicks.push_back("lateral");
-      }
-      else
-      {
-        allowed_kicks.push_back(action.kick);
-      }
+      mutex.lock();
+      _bestAction = action;
+      mutex.unlock();
 
       kick_dir = rad2deg(action.orientation);
     }
 
     // Sleeping 10ms
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
 
@@ -207,10 +195,29 @@ void MCKickController::step(float elapsed)
   bind->pull();
 
   mutex.lock();
+  // Populating fields for the thread from the localisation service
   LocalisationService* localisation = getServices()->localisation;
   _ballField = localisation->getBallPosField();
+  _robotField = localisation->getFieldPos();
   _teamMatesField = localisation->getTeamMatesField();
   _opponentsField = localisation->getOpponentsField();
   _opponentsRadius = localisation->opponentsRadius;
+
+  // Collecting the best action produced by the thread
+  if (_bestAction.kick != "")
+  {
+    tolerance = _bestAction.tolerance / 2.0;
+
+    allowed_kicks.clear();
+    if (_bestAction.kick == "opportunist")
+    {
+      allowed_kicks.push_back("classic");
+      allowed_kicks.push_back("lateral");
+    }
+    else
+    {
+      allowed_kicks.push_back(_bestAction.kick);
+    }
+  }
   mutex.unlock();
 }
