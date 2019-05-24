@@ -738,6 +738,14 @@ void Robocup::getUpdatedCameraStateFromPipeline()
   // Backup values
   lastTS = sourceTS;
 
+  // EXPERIMENTAL:
+  //
+  // modification linked to the possibility that 'Source' filter provides the
+  // cameraState (from SourceVideoProtobuf)
+  cs = pipeline.getCameraState();
+  ballStackFilter->updateCS(cs);
+  robotFilter->updateCS(cs);
+
   sourceTS = cs->getTimeStamp();
 
   // TODO: identify if this part is only debug
@@ -749,14 +757,6 @@ void Robocup::getUpdatedCameraStateFromPipeline()
       out.warning("Suspicious elapsed time: %f [s]", timeSinceLastFrame);
     }
   }
-
-  // EXPERIMENTAL:
-  //
-  // modification linked to the possibility that 'Source' filter provides the
-  // cameraState (from SourceVideoProtobuf)
-  cs = pipeline.getCameraState();
-  ballStackFilter->updateCS(cs);
-  robotFilter->updateCS(cs);
 
   csMutex.unlock();
 }

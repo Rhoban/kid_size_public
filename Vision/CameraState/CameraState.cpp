@@ -1,14 +1,13 @@
 #include "CameraState.hpp"
 #include <iostream>
 
-#include "camera_state.pb.h"
-
 #include "Utils/HomogeneousTransform.hpp"
 #include "services/DecisionService.h"
 #include "services/ModelService.h"
 #include "services/LocalisationService.h"
 #include "services/ViveService.h"
 
+#include <hl_monitoring/camera.pb.h>
 #include <rhoban_utils/util.h>
 #include <rhoban_utils/logging/logger.h>
 
@@ -102,11 +101,12 @@ void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D*
   pose->add_translation(src_in_dst(2));
 }
 
-CameraState::CameraState() : has_camera_field_transform(false), clock_offset(0)
+CameraState::CameraState()
+  : has_camera_field_transform(false), clock_offset(0), _timeStamp(0.0), _moveScheduler(nullptr)
 {
 }
 
-CameraState::CameraState(MoveScheduler* moveScheduler) : has_camera_field_transform(false), clock_offset(0)
+CameraState::CameraState(MoveScheduler* moveScheduler) : CameraState()
 {
   _moveScheduler = moveScheduler;
   _cameraModel = _moveScheduler->getServices()->model->cameraModel;
@@ -114,7 +114,7 @@ CameraState::CameraState(MoveScheduler* moveScheduler) : has_camera_field_transf
 
 CameraState::CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters,
                          const hl_monitoring::FrameEntry& frame_entry)
-  : _moveScheduler(nullptr), has_camera_field_transform(false), clock_offset(0)
+  : CameraState()
 {
   importFromProtobuf(camera_parameters);
   importFromProtobuf(frame_entry);
@@ -145,6 +145,7 @@ void CameraState::importFromProtobuf(const hl_monitoring::IntrinsicParameters& c
 void CameraState::importFromProtobuf(const hl_monitoring::FrameEntry& src)
 {
   _timeStamp = ((double)src.time_stamp()) / std::pow(10, 6);
+  std::cout << "imported timestamp: " << _timeStamp << std::endl;
   worldToCamera = getAffineFromProtobuf(src.pose());
   cameraToWorld = worldToCamera.inverse();
   selfToWorld = Eigen::Affine3d::Identity();  // Protobuf does not store the position of the robot
