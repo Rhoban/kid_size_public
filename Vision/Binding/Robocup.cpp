@@ -830,9 +830,9 @@ void Robocup::loggingStep()
   }
 
   // Status of game_logs
-  bool is_playing = referee->isPlaying();
+  bool is_log_allowed = !referee->isInitialPhase() && !referee->isFinishedPhase() && !referee->isPenalized();
   bool gameLogActive = game_logger.isActive();
-  bool useGameLogEntry = autolog_games && is_playing;
+  bool useGameLogEntry = autolog_games && is_log_allowed;
   bool startGameLog = !gameLogActive && useGameLogEntry;
   bool stopGameLog = gameLogActive && !useGameLogEntry;
   if (startGameLog)
