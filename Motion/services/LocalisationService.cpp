@@ -102,7 +102,7 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
       ->comment("Robot orientation in the field referential [deg]")
       ->defaultValue(0);
 
-  bind.bindNew("replayLocalisation", isReplay, RhIO::Bind::PullOnly)->defaultValue(isReplay = false);
+  bind.bindNew("replayLocalisation", isReplay, RhIO::Bind::PullOnly)->defaultValue(isReplay);
 
   bind.bindNew("block", block, RhIO::Bind::PullOnly)->comment("Block")->defaultValue(false);
 }
@@ -431,22 +431,12 @@ void LocalisationService::setPosSelf(const Eigen::Vector3d& center_in_self, floa
 
 void LocalisationService::applyKick(float x_, float y_)
 {
-  if (NULL != robocup)
-  {
-    /// Currently has no effect on ballStackFilter
-    robocup->applyKick(x_, y_);
-  }
-
   if (Helpers::isFakeMode() && !Helpers::isPython)
   {
     double yaw = rhoban::frameYaw(getServices()->model->model.selfToWorld().rotation());
-    ;
     std::random_device rd;
     std::default_random_engine engine(rd());
     std::uniform_real_distribution<double> unif(-0.1, 0.1);
-
-    x_ *= 0.01;
-    y_ *= 0.01;
 
     double x = cos(yaw) * x_ - sin(yaw) * y_ + unif(engine);
     double y = sin(yaw) * x_ + cos(yaw) * y_ + unif(engine);
