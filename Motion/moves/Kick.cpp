@@ -283,7 +283,7 @@ void Kick::apply()
   logger.log("Applying kick x=%f, y=%f", distX, distY);
 
   auto loc = getServices()->localisation;
-  loc->applyKick(100 * distX, 100 * distY);
+  loc->applyKick(distX, distY);
 }
 
 void Kick::step(float elapsed)

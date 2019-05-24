@@ -205,11 +205,6 @@ void Robocup::endLogging()
   logMutex.unlock();
 }
 
-void Robocup::applyKick(double x, double y)
-{
-  // ballStackFilter->applyKick(x / 100.0, y / 100.0);
-}
-
 cv::Mat Robocup::getImg(const std::string& name, int wishedWidth, int wishedHeight, bool gray)
 {
   cv::Mat original, scaled, final;
