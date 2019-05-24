@@ -44,6 +44,7 @@ MCKickController::MCKickController()
   // Load available kicks
   kmc.loadFile();
 
+  available = false;
   shouldReload = true;
   thread = new std::thread([this] { this->execute(); });
 }
@@ -67,12 +68,14 @@ void MCKickController::execute()
     // This process re-generates the kick templates and model and can take ~10s to complete
     if (shouldReload || strategyService->getGrassOffset() != grassOffset)
     {
+      available = false;
       logger.log("Reloading kickValueIteration (%d, %f, %f)", shouldReload, strategyService->getGrassOffset(),
                  grassOffset);
       shouldReload = false;
       grassOffset = strategyService->getGrassOffset();
       kickValueIteration = KickValueIteration("", 0.2, 5, 0, 10, grassOffset);
       kickValueIteration.loadScores(strategy);
+      available = true;
     }
 
     // Updating the kicking strategy if the move is running
@@ -151,8 +154,6 @@ void MCKickController::execute()
       mutex.lock();
       _bestAction = action;
       mutex.unlock();
-
-      kick_dir = rad2deg(action.orientation);
     }
 
     // Sleeping 10ms
@@ -206,6 +207,11 @@ void MCKickController::step(float elapsed)
   _opponentsField = localisation->getOpponentsField();
   _opponentsRadius = localisation->opponentsRadius;
 
+  if (!available)
+  {
+    _bestAction = strategy.actionFor(_ballField.x, _ballField.y);
+  }
+
   // Collecting the best action produced by the thread
   if (_bestAction.kick != "")
   {
@@ -222,5 +228,7 @@ void MCKickController::step(float elapsed)
       allowed_kicks.push_back(_bestAction.kick);
     }
   }
+
+  kick_dir = rad2deg(_bestAction.orientation);
   mutex.unlock();
 }

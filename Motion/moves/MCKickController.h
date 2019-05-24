@@ -27,10 +27,10 @@ public:
   void step(float elapsed);
 
   KickValueIteration kickValueIteration;
-  
+
   // Avoid the opponents ?
   bool avoidOpponents;
-  
+
 protected:
   KickStrategy strategy;
   std::string strategyFile;
@@ -39,7 +39,6 @@ protected:
 
   bool forceUpdate;
   rhoban_geometry::Point lastUpdateBall;
-
 
   // The collection of available kicks
   csa_mdp::KickModelCollection kmc;
@@ -61,4 +60,6 @@ protected:
   double _opponentsRadius;
 
   KickStrategy::Action _bestAction;
+
+  bool available;
 };
