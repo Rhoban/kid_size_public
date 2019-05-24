@@ -52,17 +52,24 @@ static void signal_handler(int sig, siginfo_t* siginfo, void* context)
   return;
 }
 
-static void signal_abort(int x)
+static void signal_abort(int sig)
 {
   void* array[10];
   size_t size;
 
   fclose(stdout);
-  std::cerr << std::endl << "[!] Received ABORTING signal, backtrace: " << std::endl;
+  if (sig == SIGFPE)
+  {
+    std::cerr << std::endl << "[!] Received SIGFPE signal, backtrace: " << std::endl;
+  }
+  else
+  {
+    std::cerr << std::endl << "[!] Received ABORTING signa, backtrace: " << std::endl;
+  }
   // get void*'s for all entries on the stack
   std::cerr << backtrace() << std::endl;
 
-  return;
+  exit(1);
 }
 
 /**
@@ -107,6 +114,7 @@ int main(int argc, char** argv)
   // Enabling exception, for pedantic debugging
   feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
   signal(SIGABRT, &signal_abort);
+  signal(SIGFPE, &signal_abort);
 
   try
   {
@@ -119,6 +127,7 @@ int main(int argc, char** argv)
     // Initializing RhIO from config directory
     std::cout << "Loading RhIO config" << std::endl;
     RhIO::Root.load("rhio");
+
     // Initialize move scheduler
     moveScheduler = new MoveScheduler();
     std::cout << "Move scheduler initilized." << std::endl;
