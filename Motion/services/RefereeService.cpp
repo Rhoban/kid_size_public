@@ -54,6 +54,7 @@ RefereeService::RefereeService()
   bind->bindNew("alive", alive, RhIO::Bind::PullOnly)->comment("Referee alive status")->defaultValue(2);
 
   bind->bindFunc("infoPlaying", "Are we playing?", &RefereeService::cmdPlaying, *this);
+  bind->bindNew("throwIn", throwIn, RhIO::Bind::PushOnly)->defaultValue(false);
 
   bind->pull();
 
@@ -194,7 +195,8 @@ bool RefereeService::myTeamGameInterruption()
 
 bool RefereeService::isThrowIn()
 {
-  return lastGameInterruptionType == Constants::STATE2_THROW_IN;
+  throwIn = lastGameInterruptionType == Constants::STATE2_THROW_IN;
+  return throwIn;
 }
 
 bool RefereeService::isPenalized()
@@ -449,6 +451,10 @@ void RefereeService::setTextualState()
   else if (isPenalized(id))
   {
     _state = "Penalized ";
+  }
+  else if (isThrowIn())
+  {
+    _state = "ThrowIn";
   }
   else
   {

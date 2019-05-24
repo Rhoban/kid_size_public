@@ -2,7 +2,6 @@
 
 #include "STM.h"
 
-#include <services/TeamPlayService.h>
 #include <rhoban_geometry/point.h>
 
 class Walk;
@@ -25,38 +24,32 @@ protected:
   Walk* walk;
   Placer* placer;
 
-  bool ballInZone(float xd, float yd);
-  bool ballInAttackZone();
-  bool ballInAttackZoneHysteresis();
-  bool ignoreBall();
-  bool ignoreBallHys();
-  bool isNearHome();
-  bool isNearHomeHys();
-  rhoban_geometry::Point getAlignPoint(const rhoban_geometry::Point&, float&);
   rhoban_geometry::Point home();
-  bool isAligned();
-  rhoban_geometry::Point shootLineCenter();
-  void bufferedSetState(const std::string&);
 
-  bool stopPosture;
+  bool ballInZone(float xd, float yd);
+  bool ballInDangerZone();
+  bool ballInAttackZone();
+  bool ballInAttackHysZone();
+  bool isBallSafe();
+  rhoban_geometry::Point alignBallPos();
+  float getAngle();
+  bool goodEnoughPos(rhoban_geometry::Point pos, rhoban_geometry::Point needed_pos);
+
   float t;
-  float targetX, targetY;
+  float homeX, homeY;
   float xAttack, yAttack;
   float xAttackHys, yAttackHys;
-  float xIgnoreBall, xIgnoreBallHys;
-  float homeX, maxHomeDistance, maxHomeDistanceHys;
-  float alignTolerance;
-  float maxShootDist;
-  int nextStateSize;
-  std::vector<std::string> nextState;
-  int nextStateIndice;
-  // bool isPlacing;
-  bool neverWalked;
+  float xIgnoreBall;
+  float distanceAttack;
+  float xApprox, yApprox;
+  rhoban_geometry::Point needed_pos;
+  double needed_angle;
+
+  int ySign;
+  float coeffa;
+  float coeffb;
+  float yPos;
+  float distX, distY;
+
   bool placedByHand;
-  float initElbowOffsetValue;
-  float initArmsRollValue;
-  float initTrunkZOffsetValue;
-  float stopMoveTime;
-  bool opponentWithGrass;
-  float againstGrassRatio, grassRatio;
 };

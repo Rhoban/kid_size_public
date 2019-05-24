@@ -111,6 +111,7 @@ public:
    */
   bool isThrowIn();
 
+  
   /**
    * Secondary time
    */
@@ -135,6 +136,8 @@ public:
   bool playing;
   bool gamePlaying;
 
+  bool throwIn;
+  
   bool wasPenalized;
 
   bool dumpGameState;
