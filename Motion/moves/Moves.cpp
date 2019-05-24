@@ -42,15 +42,17 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   }
 
   // Loading all Moves
-  Kick* kick = new Kick;
+  Head* head = new Head;
+  Kick* kick = new Kick(head);
+  Walk* walk = new Walk(kick);
+  kick->setWalk(walk);
+
   add(kick);
   // Forcing generation of kick motions at kick creation
   kick->cmdKickGen();
 
-  Walk* walk = new Walk(kick);
-  Head* head = new Head;
   Placer* placer = new Placer(walk);
-  StandUp* standup = new StandUp;
+  StandUp* standup = new StandUp(walk);
   add(standup);
   add(head);
   add(new Search(walk, placer));

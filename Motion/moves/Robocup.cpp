@@ -237,17 +237,6 @@ void Robocup::step(float elapsed)
   }
   Head* head = (Head*)getMoves()->getMove("head");
 
-  if (decision->isThrowInRunning)
-  {
-    walk->setArms(Walk::ArmsState::ArmsDisabled);
-    head->setDisabled(true);
-  }
-  else
-  {
-    walk->setArms(Walk::ArmsState::ArmsEnabled);
-    head->setDisabled(false);
-  }
-
   t += elapsed;
   auto referee = getServices()->referee;
   bool isPlaying = referee->isPlaying();
@@ -412,13 +401,11 @@ void Robocup::enterState(std::string state)
   if (state == STATE_STANDUP)
   {
     standup->setLayDown(false);
-    walk->setArms(Walk::ArmsState::ArmsDisabled);
     startMove("standup", 0.0);
     standup->trying = standup_try;
   }
   else
   {
-    walk->setArms(Walk::ArmsState::ArmsEnabled);
     walk->control(false);
   }
 

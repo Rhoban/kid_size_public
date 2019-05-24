@@ -5,10 +5,11 @@
 #include <iostream>
 #include <string>
 
+class Walk;
 class StandUp : public Move
 {
 public:
-  StandUp();
+  StandUp(Walk* walk_);
   ~StandUp();
   std::string getName();
 
@@ -35,4 +36,5 @@ protected:
 
   std::string currentSpline;
   bool reloadSpline;
+  Walk* walk;
 };

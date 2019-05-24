@@ -5,6 +5,8 @@
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/util.h>
 #include "Kick.h"
+#include "Head.h"
+#include "Walk.h"
 
 #include <set>
 
@@ -19,7 +21,7 @@ static std::vector<std::string> dofs = { "right_hip_yaw",       "right_hip_pitch
                                          "left_knee",           "left_ankle_pitch",     "left_ankle_roll",
                                          "left_shoulder_roll",  "left_shoulder_pitch",  "left_elbow" };
 
-Kick::Kick()
+Kick::Kick(Head* _head) : walk(nullptr), head(_head)
 {
   initializeBinding();
 
@@ -50,6 +52,11 @@ Kick::Kick()
 
   // Load available kicks
   kmc.loadFile();
+}
+
+void Kick::setWalk(Walk* walk_)
+{
+  walk = walk_;
 }
 
 void Kick::set(bool left, const std::string& newKickName)
@@ -195,6 +202,13 @@ void Kick::onStart()
   generated = false;
   bind->pull();
 
+  if (kickName == "throwin")
+  {
+    headWasDisabled = head->isDisabled();
+    head->setDisabled(true);
+    walk->setArms(Walk::ArmsState::ArmsDisabled);
+  }
+
   if (live)
   {
     if (left && file_exists(getPath(kickName, true)))
@@ -245,6 +259,15 @@ void Kick::onStart()
 
   // Announce that a kick has been performed (information is shared to other robots)
   getServices()->strategy->announceKick();
+}
+
+void Kick::onStop()
+{
+  if (kickName == "throwin")
+  {
+    head->setDisabled(headWasDisabled);
+    walk->setArms(Walk::ArmsState::ArmsEnabled);
+  }
 }
 
 void Kick::apply()

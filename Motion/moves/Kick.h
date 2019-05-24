@@ -5,13 +5,18 @@
 
 #include "kick_model/kick_model_collection.h"
 
+class Walk;
+class Head;
 class Kick : public Move
 {
 public:
-  Kick();
+  Kick(Head* head_);
+  void setWalk(Walk* walk_);
+
   std::string getName();
 
   void onStart();
+  void onStop();
   void step(float elapsed);
   bool over;
   bool live;
@@ -50,4 +55,8 @@ protected:
   csa_mdp::KickModelCollection kmc;
 
   void apply();
+
+  Head* head;
+  Walk* walk;
+  bool headWasDisabled;
 };

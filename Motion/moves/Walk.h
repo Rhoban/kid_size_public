@@ -36,7 +36,7 @@ public:
 
   // Enabling/disabling arms
   // force = true should only be used internally
-  void setArms(ArmsState armsState, bool force = false);
+  void setArms(ArmsState armsState, bool force = false, bool init = false);
   /**
    * Boundaries for orders and deltaOrders (step, lateral, turn)
    * units are: [m/step], [rad/step], [m/step^2] and [rad/step^2]
@@ -136,7 +136,6 @@ protected:
   double swingGainStart;
 
   ArmsState armsState;
-  ArmsState lastArmsState;
   armsAngle actualAngle;
   armsAngle lastAngle;
 

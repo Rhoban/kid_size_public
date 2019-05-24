@@ -252,6 +252,10 @@ void Head::setDisabled(bool value)
 {
   bind->node().setBool("disabled", value);
 }
+bool Head::isDisabled()
+{
+  return disabled;
+}
 
 void Head::updateTimers(float elapsed)
 {

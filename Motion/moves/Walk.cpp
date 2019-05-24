@@ -132,6 +132,8 @@ std::string Walk::getName()
 
 void Walk::onStart()
 {
+  bind->pull();
+
   // Ensuring safety of head
   Move* head = getScheduler()->getMove("head");
   if (!head->isRunning())
@@ -162,8 +164,10 @@ void Walk::onStart()
 
   state = WalkNotWalking;
   kickState = KickNotKicking;
-  armsState = ArmsDisabled;
   smoothingArms = 0;
+
+  armsState = ArmsDisabled;
+  setArms(ArmsEnabled, true, true);
 }
 
 void Walk::onStop()
@@ -213,8 +217,11 @@ void Walk::step(float elapsed)
   ModelService* modelService = getServices()->model;
 
   bind->pull();
+
   if (lastTickArmsState != armsState)
+  {
     setArms(armsState, true);
+  }
 
   engine.trunkPitch = deg2rad(trunkPitch);
 
@@ -358,7 +365,6 @@ void Walk::step(float elapsed)
   }
 
   // Update arms
-
   stepArms(elapsed);
 
   bind->push();
@@ -428,7 +434,7 @@ void Walk::stepKick(float elapsed)
   }
 }
 
-void Walk::setArms(ArmsState newArmsState, bool force)
+void Walk::setArms(ArmsState newArmsState, bool force, bool init)
 {
   if (armsState == newArmsState && !force)
   {
@@ -462,10 +468,14 @@ void Walk::setArms(ArmsState newArmsState, bool force)
     }
   }
 
-  lastArmsState = armsState;
   armsState = newArmsState;
   bind->node().setInt("armsState", armsState);
   smoothingArms = 0;
+
+  if (init)
+  {
+    lastAngle = actualAngle;
+  }
 }
 
 void Walk::stepArms(double elapsed)

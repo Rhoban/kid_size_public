@@ -2,12 +2,13 @@
 
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/serialization/json_serializable.h>
+#include "Walk.h"
 
 using rhoban_utils::Function;
 
 static rhoban_utils::Logger logger("StandUp");
 
-StandUp::StandUp()
+StandUp::StandUp(Walk* walk_) : walk(walk_)
 {
   Move::initializeBinding();
   time = 0.0;
@@ -66,6 +67,8 @@ void StandUp::onStart()
   setTorqueLimit("right_shoulder_pitch", 1.0);
   setTorqueLimit("left_shoulder_roll", 1.0);
   setTorqueLimit("right_shoulder_roll", 1.0);
+
+  walk->setArms(Walk::ArmsState::ArmsDisabled);
 }
 
 void StandUp::onStop()
@@ -75,6 +78,8 @@ void StandUp::onStop()
   setTorqueLimit("right_shoulder_pitch", 0.2);
   setTorqueLimit("left_shoulder_roll", 0.2);
   setTorqueLimit("right_shoulder_roll", 0.2);
+
+  walk->setArms(Walk::ArmsState::ArmsEnabled);
 }
 
 void StandUp::setLayDown(bool value)
