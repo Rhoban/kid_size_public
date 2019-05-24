@@ -17,6 +17,9 @@
 
 #include <Binding/Robocup.hpp>
 #include <Binding/LocalisationBinding.hpp>
+#include "rhoban_utils/logging/logger.h"
+
+rhoban_utils::Logger logger("main");
 
 using namespace std;
 
@@ -38,7 +41,7 @@ static void signal_handler(int sig, siginfo_t* siginfo, void* context)
   (void)siginfo;
   (void)context;
   // Exit
-  cout << endl << "Quit Requested. Exiting..." << endl;
+  logger.error("Quit requested, exiting");
   if (moveScheduler != nullptr)
   {
     moveScheduler->askQuit();
@@ -60,11 +63,11 @@ static void signal_abort(int sig)
   fclose(stdout);
   if (sig == SIGFPE)
   {
-    std::cerr << std::endl << "[!] Received SIGFPE signal, backtrace: " << std::endl;
+    logger.error("[!] Received SIGFPE signal, backtrace:");
   }
   else
   {
-    std::cerr << std::endl << "[!] Received ABORTING signa, backtrace: " << std::endl;
+    logger.error("[!] Received ABORTING signal, backtrace:");
   }
   // get void*'s for all entries on the stack
   std::cerr << backtrace() << std::endl;
@@ -100,12 +103,12 @@ int main(int argc, char** argv)
 
   if (RhIO::started())
   {
-    std::cout << "WARNING: RhIO already started, can't change the port, if you" << std::endl;
-    std::cout << "         want to do it, recompile with RHIO_SERVER_AUTOSTART to OFF" << std::endl;
+    logger.warning("RhIO already started, can't change the port, if you want to do it, recompile with "
+                   "RHIO_SERVER_AUTOSTART to OFF");
   }
   else
   {
-    std::cout << "Starting RhIO with port " << port.getValue() << std::endl;
+    logger.log("Starting RhIO with port %d", port.getValue());
     RhIO::start(port.getValue());
   }
 
@@ -125,21 +128,21 @@ int main(int argc, char** argv)
     RhIO::Root.newChild("server");
     RhIO::Root.newStr("server/hostname")->defaultValue(buffer);
     // Initializing RhIO from config directory
-    std::cout << "Loading RhIO config" << std::endl;
+    logger.log("Loading RhIO config");
     RhIO::Root.load("rhio");
 
     // Initialize move scheduler
     moveScheduler = new MoveScheduler();
-    std::cout << "Move scheduler initilized." << std::endl;
+    logger.log("Move scheduler initialized");
     // Initialize and start Vision
     if (hasVision)
     {
-      std::cout << "Initializing Vision" << std::endl;
+      logger.log("Initializing Vision");
       visionRobocup = new Vision::Robocup(moveScheduler);
-      std::cout << "Vision initialized." << std::endl;
-      std::cout << "Initializing LocalisationBinding" << std::endl;
+      logger.log("Vision initialized.");
+      logger.log("Initializing LocalisationBinding");
       locBinding = new Vision::LocalisationBinding(moveScheduler, visionRobocup);
-      std::cout << "LocalisationBinding initialized." << std::endl;
+      logger.log("LocalisationBinding initialized.");
     }
     // Handle quit signal
     signal_attach();
@@ -156,20 +159,24 @@ int main(int argc, char** argv)
         // delete visionRobocup;
       }
     }
-    std::cout << "Done." << std::endl;
+    logger.log("Done.");
     // return 0;
   }
   catch (const std::runtime_error& exc)
   {
-    cout << "ERROR: Server died with runtime exception " << endl << exc.what() << endl;
+    ostringstream oss;
+    oss << exc.what();
+    logger.error("ERROR: Server died with runtime exception: %s", oss.str().c_str());
   }
   catch (const std::logic_error& exc)
   {
-    cout << "ERROR: Server died with logic exception " << endl << exc.what() << endl;
+    ostringstream oss;
+    oss << exc.what();
+    logger.error("ERROR: Server died with logic exception: %s", oss.str().c_str());
   }
   catch (const std::string& exc)
   {
-    cout << "ERROR: Server died with string exception " << endl << exc << endl;
+    logger.error("ERROR: Server died with string exception: %s", exc.c_str());
   }
 
   if (visionRobocup != nullptr)
