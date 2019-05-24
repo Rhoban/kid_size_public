@@ -107,8 +107,17 @@ void StandUp::step(float elapsed)
       {
         if (layDown)
         {
-          splines = Function::fromFile("lay_down.json");
-          speed = 1.5;
+          splines = Function::fromFile("standup_front.json");
+          layDownEnd = 0;
+          for (layDownEnd = 0; layDownEnd < 10; layDownEnd += 0.1)
+          {
+            if (splines["over"].get(layDownEnd) > 0.5)
+            {
+              break;
+            }
+          }
+          layDownEnd += 1;
+          speed = 1;
         }
         else
         {
@@ -144,7 +153,7 @@ void StandUp::step(float elapsed)
       if (finalSpeed < 0.5)
         finalSpeed = 0.5;
       double remap = splines["remap"].get(time);
-      std::cout << "Remap=" << remap << ", speed=" << finalSpeed << ", elapsed: " << elapsed << std::endl;
+      // std::cout << "Remap=" << remap << ", speed=" << finalSpeed << ", elapsed: " << elapsed << std::endl;
       time += elapsed * remap * finalSpeed;
       if (useManualT)
       {
@@ -155,19 +164,33 @@ void StandUp::step(float elapsed)
         manualT = time;
       }
 
+      double playTime = time;
+      if (layDown)
+      {
+        // Playing the spline backward to lay down
+        playTime = layDownEnd - playTime;
+      }
+
       setAngle("left_shoulder_roll", armsRoll);
       setAngle("right_shoulder_roll", -armsRoll);
-      setAngle("left_shoulder_pitch", splines["shoulder_pitch"].get(time));
-      setAngle("right_shoulder_pitch", splines["shoulder_pitch"].get(time));
-      setAngle("left_elbow", splines["elbow"].get(time));
-      setAngle("right_elbow", splines["elbow"].get(time));
-      setAngle("left_hip_pitch", splines["hip_pitch"].get(time));
-      setAngle("right_hip_pitch", splines["hip_pitch"].get(time));
-      setAngle("left_knee", splines["knee"].get(time));
-      setAngle("right_knee", splines["knee"].get(time));
-      setAngle("left_ankle_pitch", splines["ankle_pitch"].get(time));
-      setAngle("right_ankle_pitch", splines["ankle_pitch"].get(time));
-      over = splines["over"].get(time) > 0.5;
+      setAngle("left_shoulder_pitch", splines["shoulder_pitch"].get(playTime));
+      setAngle("right_shoulder_pitch", splines["shoulder_pitch"].get(playTime));
+      setAngle("left_elbow", splines["elbow"].get(playTime));
+      setAngle("right_elbow", splines["elbow"].get(playTime));
+      setAngle("left_hip_pitch", splines["hip_pitch"].get(playTime));
+      setAngle("right_hip_pitch", splines["hip_pitch"].get(playTime));
+      setAngle("left_knee", splines["knee"].get(playTime));
+      setAngle("right_knee", splines["knee"].get(playTime));
+      setAngle("left_ankle_pitch", splines["ankle_pitch"].get(playTime));
+      setAngle("right_ankle_pitch", splines["ankle_pitch"].get(playTime));
+      if (layDown)
+      {
+        over = playTime < 0;
+      }
+      else
+      {
+        over = splines["over"].get(playTime) > 0.5;
+      }
 
       if (useManualT)
       {

@@ -31,6 +31,7 @@ protected:
   bool enable, waiting;
   bool useManualT;
   bool layDown;  // If true we use the give up motion
+  double layDownEnd;
   double manualT;
   double delayBefore;
 

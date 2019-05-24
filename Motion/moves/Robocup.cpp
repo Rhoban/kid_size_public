@@ -217,19 +217,6 @@ void Robocup::step(float elapsed)
   auto& decision = getServices()->decision;
   bind->pull();
 
-  // We gave up, just die
-  if (state == STATE_GIVE_UP)
-  {
-    if (standup->over)
-    {
-      stopMove("standup", 0.0);
-      stopMove("head", 0.0);
-      stopMove("walk", 0.0);
-      getScheduler()->releaseServos();
-    }
-    return;
-  }
-
   // Detect if the robot is being handled
   if (decision->handled)
   {
@@ -243,6 +230,20 @@ void Robocup::step(float elapsed)
   bool isPenalized = referee->isPenalized();
   // If robot is handled, it can't be serving penalty
   bool isServingPenalty = referee->isServingPenalty() && !decision->handled;
+
+  // We gave up, only going to penalized or initial
+  if (state == STATE_GIVE_UP)
+  {
+    if (!decision->handled || (!referee->isPenalized() && !referee->isInitialPhase()))
+    {
+      // Waiting to go back to either penalized or initial phase
+      return;
+    }
+    else
+    {
+      stopMove("standup", 0.0);
+    }
+  }
 
   /// Let standup finish if it started, otherwise go to penalized state if
   /// referee asks to
@@ -413,7 +414,6 @@ void Robocup::enterState(std::string state)
   {
     standup->setLayDown(true);
     walk->control(false);
-    stopMove("walk", 0.3);
     startMove("standup", 0.0);
   }
 
