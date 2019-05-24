@@ -105,6 +105,11 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   bind.bindNew("replayLocalisation", isReplay, RhIO::Bind::PullOnly)->defaultValue(isReplay = false);
 
   bind.bindNew("block", block, RhIO::Bind::PullOnly)->comment("Block")->defaultValue(false);
+
+  // XXX: Injecting a fake opponent on the field
+  opponentsAreFake = true;
+  opponentsWorld.push_back(Eigen::Vector3d(1, 0, 0));
+  updateOpponentsPos();
 }
 
 Point LocalisationService::getBallSpeedSelf()
@@ -307,12 +312,14 @@ void LocalisationService::updateOpponentsPos()
 
 void LocalisationService::setOpponentsWorld(const std::vector<Eigen::Vector3d>& pos)
 {
-  mutex.lock();
-  opponentsAreFake = false;
-  opponentsWorld = pos;
-  mutex.unlock();
+  if (!opponentsAreFake)
+  {
+    mutex.lock();
+    opponentsWorld = pos;
+    mutex.unlock();
 
-  updateOpponentsPos();
+    updateOpponentsPos();
+  }
 }
 //
 // void LocalisationService::updateMatesPos()
