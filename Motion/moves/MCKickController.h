@@ -1,6 +1,7 @@
 #pragma once
 
 #include <thread>
+#include <mutex>
 #include "moves/KickController.h"
 #include <rhoban_utils/control/control.h>
 #include <services/TeamPlayService.h>
@@ -48,4 +49,10 @@ protected:
   std::string cmdReloadStrategy();
 
   bool shouldReload;
+
+  std::mutex mutex;
+  std::vector<rhoban_geometry::Point> _opponentsField;
+  std::map<int, Eigen::Vector3d> _teamMatesField;
+  rhoban_geometry::Point _ballField;
+  double _opponentsRadius;
 };

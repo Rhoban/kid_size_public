@@ -51,9 +51,16 @@ MCKickController::MCKickController()
 void MCKickController::execute()
 {
   double grassOffset = 0;
-  StrategyService* strategyService = getServices()->strategy;
+  StrategyService* strategyService;
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Waiting for scheduler to be referenced
+  while (getScheduler() == nullptr)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  strategyService = getServices()->strategy;
+
   while (true)
   {
     // We should reload the scores for the kick strategy
@@ -71,22 +78,28 @@ void MCKickController::execute()
     // Updating the kicking strategy if the move is running
     if (isRunning())
     {
-      LocalisationService* localisation = getServices()->localisation;
-      Point ball = localisation->getBallPosField();
+      mutex.lock();
+      auto ballField = _ballField;
+      auto teamMatesField = _teamMatesField;
+      auto opponentsField = _opponentsField;
+      auto opponentsRadius = _opponentsRadius;
+      auto ball = _ballField;
+      mutex.unlock();
 
-      auto rewardFunc = [this, localisation, &ball](Point fromPos, Point toPos, bool success) -> double {
+      auto rewardFunc = [this, &ball, &teamMatesField, &opponentsField, &opponentsRadius](Point fromPos, Point toPos,
+                                                                                          bool success) -> double {
         double penalty = 0;
 
         // We can't kick a ball through the opponents
         Segment kick(fromPos, toPos);
-        for (auto& opponent : localisation->getOpponentsField())
+        for (auto& opponent : opponentsField)
         {
           Point ballToOpponent = opponent - fromPos;
-          if (ballToOpponent.getLength() < localisation->opponentsRadius * 1.25)
+          if (ballToOpponent.getLength() < opponentsRadius * 1.25)
           {
-            ballToOpponent.normalize(localisation->opponentsRadius * 1.25);
+            ballToOpponent.normalize(opponentsRadius * 1.25);
           }
-          Circle opponentCircle(fromPos + ballToOpponent, localisation->opponentsRadius);
+          Circle opponentCircle(fromPos + ballToOpponent, opponentsRadius);
 
           if (kick.intersects(opponentCircle))
           {
@@ -107,7 +120,7 @@ void MCKickController::execute()
 
         // Changing fromPos to be the closer ally to the ball after kick instead of the ball
         // before kick (i.e the robot that is kicking)
-        for (auto& entry : localisation->getTeamMatesField())
+        for (auto& entry : teamMatesField)
         {
           Point matePos(entry.second.x(), entry.second.y());
           Point matePosToBall = toPos - matePos;
@@ -192,4 +205,12 @@ void MCKickController::onStop()
 void MCKickController::step(float elapsed)
 {
   bind->pull();
+
+  mutex.lock();
+  LocalisationService* localisation = getServices()->localisation;
+  _ballField = localisation->getBallPosField();
+  _teamMatesField = localisation->getTeamMatesField();
+  _opponentsField = localisation->getOpponentsField();
+  _opponentsRadius = localisation->opponentsRadius;
+  mutex.unlock();
 }
