@@ -90,7 +90,6 @@ void PlayingMove::step(float elapsed)
 {
   bind->pull();
 
-  auto loc = getServices()->localisation;
   auto decision = getServices()->decision;
   auto captain = getServices()->captain;
   StrategyOrder order = captain->getMyOrder();
@@ -186,7 +185,7 @@ void PlayingMove::step(float elapsed)
   }
 
   // When field quality is low go to state localize
-  if (!decision->isFieldQualityGood)
+  if (state != STATE_LOCALIZE && !decision->isFieldQualityGood)
   {
     logger.log("Requiring more field observations, going to localize");
     setState(STATE_LOCALIZE);
@@ -199,7 +198,6 @@ void PlayingMove::localizeStep(float elapsed)
 {
   auto referee = getServices()->referee;
   auto decision = getServices()->decision;
-  auto loc = getServices()->localisation;
 
   // Walk forward when the robot enter the field
   if (referee->getTimeSincePlaying() < localizeWalkDuration)
