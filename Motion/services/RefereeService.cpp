@@ -204,29 +204,41 @@ bool RefereeService::isPenalized()
 
 bool RefereeService::isPenalized(int id)
 {
-  auto gameState = getGameState();
+  return getRemainingPenaltyTime(id) >= 0;
+}
+
+int RefereeService::getRemainingPenaltyTime(int id)
+{
+  const GameState& gameState = getGameState();
   for (int k = 0; k < gameState.getNbTeam(); k++)
   {
-    auto team = gameState.getTeam(k);
+    const Team& team = gameState.getTeam(k);
     if (team.getTeamNumber() == teamId)
     {
       int idz = id - 1;
       if (idz >= 0 && idz < team.getNbRobots())
       {
         auto robot = team.getRobot(idz);
-        if (robot.getPenalty() != 0)
+        int penalty = robot.getPenalty();
+        if (robot.getRedCardCount() > 0 || penalty == Constants::PENALTY_SUBSTITUTE)
         {
-          return true;
+          return std::numeric_limits<int>::max();
         }
-        if (robot.getRedCardCount() > 0)
+        if (penalty != 0)
         {
-          return true;
+          return robot.getSecsTillUnpenalised();
         }
       }
     }
   }
 
-  return false;
+  return -1;
+}
+
+bool RefereeService::isServingPenalty()
+{
+  int secs_remaining = getRemainingPenaltyTime(id);
+  return secs_remaining >= 0 && secs_remaining < 30;
 }
 
 bool RefereeService::isOpponentKickOffStart()
