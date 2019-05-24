@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <fenv.h>
 #include <tclap/CmdLine.h>
+#include "backtrace.h"
 
 #include <RhAL.hpp>
 #include <RhIO.hpp>
@@ -51,6 +52,19 @@ static void signal_handler(int sig, siginfo_t* siginfo, void* context)
   return;
 }
 
+static void signal_abort(int x)
+{
+  void* array[10];
+  size_t size;
+
+  fclose(stdout);
+  std::cerr << std::endl << "[!] Received ABORTING signal, backtrace: " << std::endl;
+  // get void*'s for all entries on the stack
+  std::cerr << backtrace() << std::endl;
+
+  return;
+}
+
 /**
  * Define signal handler for quit signal
  */
@@ -92,6 +106,8 @@ int main(int argc, char** argv)
 
   // Enabling exception, for pedantic debugging
   feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+  signal(SIGABRT, &signal_abort);
+
   try
   {
     buildinfos_print();
@@ -107,7 +123,8 @@ int main(int argc, char** argv)
     moveScheduler = new MoveScheduler();
     std::cout << "Move scheduler initilized." << std::endl;
     // Initialize and start Vision
-    if (hasVision) {
+    if (hasVision)
+    {
       std::cout << "Initializing Vision" << std::endl;
       visionRobocup = new Vision::Robocup(moveScheduler);
       std::cout << "Vision initialized." << std::endl;
@@ -122,7 +139,8 @@ int main(int argc, char** argv)
     // Stop low level thrread and quit
     moveScheduler->askQuit();
     delete moveScheduler;
-    if (hasVision) {
+    if (hasVision)
+    {
       if (visionRobocup != nullptr)
       {
         visionRobocup->closeCamera();
