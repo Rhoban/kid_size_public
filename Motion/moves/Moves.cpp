@@ -72,7 +72,6 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new GoalKick());
 
   // Requires additionnal dependencies
-
   add(new QKickController());
   add(new ClearingKickController());
   auto penaltyController = new PenaltyKickController();

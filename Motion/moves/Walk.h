@@ -20,12 +20,23 @@ public:
   // Control the robot using [mm] and [deg]
   void control(bool enable, double step = 0, double lateral = 0, double turn = 0);
 
+  enum ArmsState : int
+  {
+    ArmsDisabled = 0,
+    ArmsEnabled = 1,
+    ArmsMaintenance = 2
+  };
+
+  struct armsAngle
+  {
+    double elbow;
+    double shoulder_pitch;
+    double shoulder_roll;
+  };
+
   // Enabling/disabling arms
-  void enableArms(bool enabled);
-
-  // Enabling/disabling the additional roll of the arms to access the hotswap
-  void enableSafeArmsRoll(bool enabled);
-
+  // force = true should only be used internally
+  void setArms(ArmsState armsState, bool force = false);
   /**
    * Boundaries for orders and deltaOrders (step, lateral, turn)
    * units are: [m/step], [rad/step], [m/step^2] and [rad/step^2]
@@ -81,6 +92,8 @@ public:
   // Maximum lateral [mm/step]
   float maxLateral;
 
+  // arms movements
+
 protected:
   // Walk engine
   rhoban::WalkEngine engine;
@@ -122,11 +135,17 @@ protected:
   // Swing gain on starting steps
   double swingGainStart;
 
+  ArmsState armsState;
+  ArmsState lastArmsState;
+  armsAngle actualAngle;
+  armsAngle lastAngle;
+
   // Arms parameters
-  double armsRoll, safeArmsRoll, elbowOffset;
+  double armsRoll, maintenanceArmsRoll, disabledArmsRoll;
+  double elbowOffset, maintenanceElbowOffset, disabledElbowOffset;
   double smoothingArms;
   bool armsEnabled;
-  bool safeArmsRollEnabled;
+  bool maintenanceArmsEnabled;
   void stepArms(double elapsed);
 
   // Security parameters

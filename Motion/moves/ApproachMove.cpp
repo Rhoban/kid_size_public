@@ -9,6 +9,7 @@
 #include <services/LocalisationService.h>
 #include <services/TeamPlayService.h>
 #include <services/StrategyService.h>
+#include <services/DecisionService.h>
 
 #include <iostream>
 
@@ -92,6 +93,12 @@ const KickController* ApproachMove::getKickController() const
 
 std::vector<std::string> ApproachMove::getAllowedKicks()
 {
+  auto decision = getServices()->decision;
+  if (decision->throwInEnable && decision->nextKickIsThrowIn)
+  {
+    return { "throwin" };
+  }
+
   if (useKickController())
   {
     return getKickController()->getAllowedKicks();
