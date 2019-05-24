@@ -4,11 +4,10 @@
 #include "engines/walk_engine.h"
 #include "rhoban_geometry/point.h"
 
-class Kick;
 class Walk : public Move
 {
 public:
-  Walk(Kick*);
+  Walk();
   std::string getName();
 
   void onStart();
@@ -19,6 +18,9 @@ public:
 
   // Control the robot using [mm] and [deg]
   void control(bool enable, double step = 0, double lateral = 0, double turn = 0);
+
+  // Is the walk currently moving
+  bool isWalking();
 
   enum ArmsState : int
   {
@@ -70,12 +72,6 @@ public:
    * params: step[m], lat[m], rot [rad]
    */
   void setRawOrder(const Eigen::Vector3d& params, bool enabled);
-
-  // Starts a kick
-  void kick(bool rightFoot, const std::string& kickName);
-
-  // Is the walk currently kicking ?
-  bool isKicking();
 
   // Will the new step be a new step ?
   bool isNewStep(double elapsed);
@@ -150,27 +146,4 @@ protected:
   // Security parameters
   double securityThreshold;
   double securityPhase;
-
-  // Kicking
-  Kick* kickMove;
-  bool kickPending;
-  bool kickLeftPending;
-  bool kickRightPending;
-  bool kickLeftFoot;
-  double kickWarmup;
-  double kickCooldown;
-  double kickT;
-  std::string kickName;
-
-  enum KickState
-  {
-    KickNotKicking = 0,
-    KickWaitingWalkToStop,
-    KickWarmup,
-    KickKicking,
-    KickCooldown
-  };
-
-  KickState kickState;
-  void stepKick(float elapsed);
 };

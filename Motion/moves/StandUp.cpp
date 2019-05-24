@@ -18,12 +18,12 @@ StandUp::StandUp(Walk* walk_) : walk(walk_)
   speed = 0.0;
 
   bind->bindNew("speed_front", speed_front, RhIO::Bind::PullOnly)
-      ->defaultValue(speed_front = 1.5)
+      ->defaultValue(1.5)
       ->minimum(0.0)
       ->maximum(20.0)
       ->comment("Speed factor for standing up if the robot is laying on the front.");
   bind->bindNew("speed_back", speed_back, RhIO::Bind::PullOnly)
-      ->defaultValue(speed_back = 1.5)
+      ->defaultValue(1.5)
       ->minimum(0.0)
       ->maximum(20.0)
       ->comment("Speed factor for standing up if the robot is laying on the back.");
@@ -67,8 +67,6 @@ void StandUp::onStart()
   setTorqueLimit("right_shoulder_pitch", 1.0);
   setTorqueLimit("left_shoulder_roll", 1.0);
   setTorqueLimit("right_shoulder_roll", 1.0);
-
-  walk->setArms(Walk::ArmsState::ArmsDisabled);
 }
 
 void StandUp::onStop()
@@ -90,6 +88,9 @@ void StandUp::setLayDown(bool value)
 void StandUp::step(float elapsed)
 {
   bind->pull();
+
+  // Be sure walk arms are disabled
+  walk->setArms(Walk::ArmsState::ArmsDisabled);
 
   if (reloadSpline)
   {

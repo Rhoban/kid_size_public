@@ -4,6 +4,7 @@
 #include <rhoban_utils/control/control.h>
 #include <services/TeamPlayService.h>
 
+class Kick;
 class Walk;
 class KickController;
 class ApproachPotential : public ApproachMove
@@ -23,7 +24,7 @@ public:
 
   virtual rhoban_utils::Angle getKickCap();
 
-  ApproachPotential(Walk* walk);
+  ApproachPotential(Walk* walk, Kick* kick);
   std::string getName();
 
   void onStart();

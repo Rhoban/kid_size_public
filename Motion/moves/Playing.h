@@ -5,6 +5,7 @@
 #include "STM.h"
 
 class Walk;
+class Kick;
 class Head;
 class Placer;
 class PlayingMove : public STM
@@ -17,7 +18,7 @@ public:
     rhoban_utils::Angle orientation;
   };
 
-  PlayingMove(Walk* walk);
+  PlayingMove(Walk* walk, Kick* kick);
   std::string getName();
 
   void onStart();
@@ -44,6 +45,7 @@ protected:
   double walkBallDistance;
 
   Walk* walk;
+  Kick* kick;
   Head* head;
   Placer* placer;
 };

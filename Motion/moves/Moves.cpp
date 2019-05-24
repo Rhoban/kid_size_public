@@ -43,9 +43,8 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
 
   // Loading all Moves
   Head* head = new Head;
-  Kick* kick = new Kick(head);
-  Walk* walk = new Walk(kick);
-  kick->setWalk(walk);
+  Walk* walk = new Walk();
+  Kick* kick = new Kick(head, walk);
 
   add(kick);
   // Forcing generation of kick motions at kick creation
@@ -56,13 +55,13 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(standup);
   add(head);
   add(new Search(walk, placer));
-  add(new ApproachPotential(walk));
+  add(new ApproachPotential(walk, kick));
   add(placer);
   // add(lateralStep);
 
   add(new GoalKeeper(walk, placer));
   add(new Robocup(walk, standup, placer));
-  add(new PlayingMove(walk));
+  add(new PlayingMove(walk, kick));
 
   // Dev moves
   add(new IMUTest);
@@ -80,7 +79,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(penaltyController);
   add(new Penalty(penaltyController));
 
-  add(new ReactiveKicker(walk));
+  add(new ReactiveKicker(walk, kick));
   add(new AutonomousPlaying(walk, standup));
   add(walk);
 

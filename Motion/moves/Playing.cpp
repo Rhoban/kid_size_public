@@ -11,6 +11,7 @@
 #include "Placer.h"
 #include "Playing.h"
 #include "Walk.h"
+#include "Kick.h"
 #include "rhoban_utils/logging/logger.h"
 
 #define STATE_APPROACH "approach"
@@ -29,7 +30,7 @@ using namespace rhoban_utils;
 using namespace rhoban_team_play;
 using namespace robocup_referee;
 
-PlayingMove::PlayingMove(Walk* walk) : walk(walk)
+PlayingMove::PlayingMove(Walk* walk, Kick* kick) : walk(walk), kick(kick)
 {
   initializeBinding();
 
@@ -255,15 +256,19 @@ void PlayingMove::approachStep(float elapsed)
   auto loc = getServices()->localisation;
   auto ball = loc->getBallPosSelf();
   auto dist = ball.getLength();
-  if (!decision->isBallQualityGood)
+
+  if (!kick->isRunning())  // We don't want to stop approach if there is an ongoing kick
   {
-    logger.log("Ball has been lost while in 'approach', going to 'backward'");
-    setState(STATE_BACKWARD);
-  }
-  else if (dist > walkBallDistance * 1.1)
-  {
-    logger.log("Ball is now too far, going to 'walkBall'");
-    setState(STATE_WALKBALL);
+    if (!decision->isBallQualityGood)
+    {
+      logger.log("Ball has been lost while in 'approach', going to 'backward'");
+      setState(STATE_BACKWARD);
+    }
+    else if (dist > walkBallDistance * 1.1)
+    {
+      logger.log("Ball is now too far, going to 'walkBall'");
+      setState(STATE_WALKBALL);
+    }
   }
 }
 

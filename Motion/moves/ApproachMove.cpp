@@ -4,6 +4,7 @@
 
 #include "KickController.h"
 #include "Walk.h"
+#include "Kick.h"
 #include "scheduler/MoveScheduler.h"
 
 #include <services/LocalisationService.h>
@@ -20,7 +21,7 @@ using namespace rhoban_team_play;
 
 static rhoban_utils::Logger logger("ApproachMove");
 
-ApproachMove::ApproachMove(Walk* walk_) : walk(walk_), expectedKick("classic")
+ApproachMove::ApproachMove(Walk* walk_, Kick* kick_) : walk(walk_), kick(kick_), expectedKick("classic")
 {
   kmc.loadFile();
 }
@@ -132,7 +133,8 @@ void ApproachMove::requestKick()
   oss << "Kick in '" << getName() << "': " << expectedKick << " with " << (kickRight ? "right" : "left") << " foot";
   logger.log("%s", oss.str().c_str());
   // Sending kick order to walk
-  walk->kick(kickRight, expectedKick);
+  kick->set(!kickRight, expectedKick);
+  startMove("kick", 0.0);
 }
 
 bool ApproachMove::useKickController() const
