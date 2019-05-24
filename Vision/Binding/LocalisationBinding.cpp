@@ -48,9 +48,9 @@ LocalisationBinding::LocalisationBinding(MoveScheduler* scheduler_, Robocup* vis
   , isGoalKeeper(false)
   , consistencyEnabled(true)
   , consistencyScore(1)
-  , consistencyStepCost(0.01)
+  , consistencyStepCost(0.005)
   , consistencyBadObsCost(0.02)
-  , consistencyGoodObsGain(0.05)
+  , consistencyGoodObsGain(0.1)
   , consistencyResetInterval(30)
   , consistencyMaxNoise(5.0)
   , cs(new CameraState(scheduler_))
@@ -406,7 +406,7 @@ std::vector<FeatureObservation*> LocalisationBinding::extractFeatureObservations
     Field::POIType poiType = entry.first;
     for (const cv::Point3f& feature_pos_in_world : entry.second)
     {
-      //TODO: consider possible case of 3d features
+      // TODO: consider possible case of 3d features
       cv::Point2f pos_in_self = cs->getPosInSelf(cv::Point2f(feature_pos_in_world.x, feature_pos_in_world.y));
       double robotHeight = cs->getHeight();
 
