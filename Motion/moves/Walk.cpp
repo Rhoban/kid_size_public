@@ -26,12 +26,9 @@ static double bound(double value, double min, double max)
 Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 {
   Move::initializeBinding();
-  swingGainStart = 0.04;
-  trunkPitch = 12;
-  bootstrapSteps = 3;
-  shouldBootstrap = false;
 
   // Enables or disables the walk
+  walkEnable = true;
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
   bind->bindNew("walkStep", walkStep, RhIO::Bind::PullOnly)->comment("Walk control Step [mm/step]")->defaultValue(0.0);
   bind->bindNew("walkLateral", walkLateral, RhIO::Bind::PullOnly)
@@ -40,10 +37,10 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("walkTurn", walkTurn, RhIO::Bind::PullOnly)->comment("Walk control Turn [deg/step]")->defaultValue(0.0);
 
   // Walk limits (to inform other moves about limits)
-  bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(maxRotation = 15);
-  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(maxStep = 0.08);
-  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(maxStepBackward = 0.04);
-  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(maxLateral = 0.04);
+  bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(maxRotation);
+  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(maxStep);
+  bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(maxStepBackward);
+  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(maxLateral);
 
   // Walk engine parameters
   bind->bindNew("trunkXOffset", engine.trunkXOffset, RhIO::Bind::PullOnly)->defaultValue(engine.trunkXOffset);
@@ -53,15 +50,15 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("riseGain", engine.riseGain, RhIO::Bind::PullOnly)->defaultValue(engine.riseGain);
   bind->bindNew("riseDuration", engine.riseDuration, RhIO::Bind::PullOnly)->defaultValue(engine.riseDuration);
   bind->bindNew("swingGain", engine.swingGain, RhIO::Bind::PullOnly)->defaultValue(engine.swingGain);
-  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(swingGainStart);
+  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(0.04);
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
   bind->bindNew("footYOffsetPerStepSizeY", engine.footYOffsetPerStepSizeY, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerStepSizeY);
-  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch);
+  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(12);
 
   // XXX: This feature can be deleted later if it is of no use
-  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps);
-  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(shouldBootstrap);
+  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(3);
+  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(false);
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
