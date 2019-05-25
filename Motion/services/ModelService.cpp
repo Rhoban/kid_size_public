@@ -30,8 +30,8 @@ ModelService::ModelService()
   odometryYawOffset = 0;
   bind.bindFunc("odometryReset", "Resets the robot odometry", &ModelService::cmdOdometryReset, *this);
 
-  bind.bindNew("publish", publish, RhIO::Bind::PullOnly)->defaultValue(publish = false);
-  bind.bindNew("publishField", publishField, RhIO::Bind::PullOnly)->defaultValue(publishField = true);
+  bind.bindNew("publish", publish, RhIO::Bind::PullOnly)->defaultValue(false);
+  bind.bindNew("publishField", publishField, RhIO::Bind::PullOnly)->defaultValue(true);
 
   bind.bindNew("supportRatioThreshold", supportRatioThreshold, RhIO::Bind::PullOnly)
       ->defaultValue(supportRatioThreshold = 0.8);

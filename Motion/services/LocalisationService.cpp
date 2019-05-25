@@ -77,7 +77,7 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   bind.bindNew("opponents", opponents, RhIO::Bind::PushOnly)->comment("Opponent field position as string [m]");
   bind.bindNew("opponentsRadius", opponentsRadius, RhIO::Bind::PullOnly)
       ->comment("Opponent radius [m]")
-      ->defaultValue(0.65);
+      ->defaultValue(0.3);
 
   bind.bindNew("teamMatesRadius", teamMatesRadius, RhIO::Bind::PullOnly)
       ->comment("TeamMates radius [m]")
@@ -105,6 +105,11 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   bind.bindNew("replayLocalisation", isReplay, RhIO::Bind::PullOnly)->defaultValue(isReplay);
 
   bind.bindNew("block", block, RhIO::Bind::PullOnly)->comment("Block")->defaultValue(false);
+
+  // XXX: Injecting a fake opponent on the field
+  opponentsAreFake = true;
+  opponentsWorld.push_back(Eigen::Vector3d(1, 0, 0));
+  updateOpponentsPos();
 }
 
 Point LocalisationService::getBallSpeedSelf()
@@ -307,12 +312,14 @@ void LocalisationService::updateOpponentsPos()
 
 void LocalisationService::setOpponentsWorld(const std::vector<Eigen::Vector3d>& pos)
 {
-  mutex.lock();
-  opponentsAreFake = false;
-  opponentsWorld = pos;
-  mutex.unlock();
+  if (!opponentsAreFake)
+  {
+    mutex.lock();
+    opponentsWorld = pos;
+    mutex.unlock();
 
-  updateOpponentsPos();
+    updateOpponentsPos();
+  }
 }
 //
 // void LocalisationService::updateMatesPos()
@@ -476,12 +483,6 @@ void LocalisationService::penaltyGoalReset()
 
 void LocalisationService::goalReset()
 {
-  if (NULL != locBinding)
-  {
-    RhIO::Root.setFloat("/Localisation/Field/RobotController/angleExploration", 0.5);
-    RhIO::Root.setFloat("/Localisation/Field/RobotController/posExploration", 0.5);
-  }
-
   customFieldReset(-Constants::field.field_length / 2, 0, 0.01, 0, 1);
 
   if (NULL != robocup)

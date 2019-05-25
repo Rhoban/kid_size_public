@@ -33,6 +33,8 @@ int main(int argc, char* argv[])
   if (load.getValue() != "")
   {
     strategy.fromJson(load.getValue());
+    // kickValueIteration.loadScores(strategy);
+    // kickValueIteration.populateStrategy(strategy);
   }
   else
   {

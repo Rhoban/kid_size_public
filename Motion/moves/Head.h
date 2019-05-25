@@ -27,6 +27,7 @@ public:
 
   void setForceLocalize(bool value);
   void setDisabled(bool value);
+  bool isDisabled();
   void setLocalizeMaxPan(double maxPan);
 
 private:

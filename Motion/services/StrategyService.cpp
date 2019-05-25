@@ -24,16 +24,14 @@ StrategyService::StrategyService()
   , lastKick(TimeStamp::fromMS(0))
 {
   kmc.loadFile();
+  grass_offset = 180;
 
   // Bind members
   // Default and active moves for approach and kick controler
-  bind.bindNew("defaultApproach", default_approach, RhIO::Bind::PullOnly)
-      ->defaultValue("approach_potential")
-      ->persisted(true);
+  bind.bindNew("defaultApproach", default_approach, RhIO::Bind::PullOnly)->defaultValue("approach_potential");
   bind.bindNew("activeApproach", active_approach, RhIO::Bind::PushOnly)->defaultValue("none");
   bind.bindNew("defaultKickController", default_kick_controler, RhIO::Bind::PullOnly)
-      ->defaultValue("q_kick_controler")
-      ->persisted(true);
+      ->defaultValue("mc_kick_controler");
   bind.bindNew("grassOffset", grass_offset, RhIO::Bind::PullOnly)->defaultValue(180)->persisted(true);
   bind.bindNew("activeKickController", active_kick_controler, RhIO::Bind::PushOnly)->defaultValue("none");
   // Kick target
@@ -108,7 +106,7 @@ bool StrategyService::tick(double elapsed)
   // XXX: Todo share the ball target X
 
   static std::vector<std::string> approach_candidates = { "approach_potential" };
-  static std::vector<std::string> kick_controler_candidates = { "q_kick_controler", "clearing_kick_controler",
+  static std::vector<std::string> kick_controler_candidates = { "mc_kick_controler", "clearing_kick_controler",
                                                                 "penalty_kick_controler" };
 
   bind.pull();
@@ -190,8 +188,13 @@ double StrategyService::getTimeSinceLastKick() const
 {
   return diffSec(lastKick, TimeStamp::now());
 }
-  
+
 Eigen::Vector2d StrategyService::getKickTarget() const
 {
   return Eigen::Vector2d(kick_target_x, kick_target_y);
+}
+
+double StrategyService::getGrassOffset() const
+{
+  return grass_offset;
 }

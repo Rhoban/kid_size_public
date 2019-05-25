@@ -9,7 +9,7 @@ class Walk;
 class ReactiveKicker : public ApproachMove
 {
 public:
-  ReactiveKicker(Walk* walk);
+  ReactiveKicker(Walk* walk, Kick* kick);
 
   /// Implement Move
   virtual std::string getName() override;

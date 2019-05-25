@@ -5,10 +5,11 @@
 #include <iostream>
 #include <string>
 
+class Walk;
 class StandUp : public Move
 {
 public:
-  StandUp();
+  StandUp(Walk* walk_);
   ~StandUp();
   std::string getName();
 
@@ -30,9 +31,11 @@ protected:
   bool enable, waiting;
   bool useManualT;
   bool layDown;  // If true we use the give up motion
+  double layDownEnd;
   double manualT;
   double delayBefore;
 
   std::string currentSpline;
   bool reloadSpline;
+  Walk* walk;
 };

@@ -19,8 +19,6 @@ Services::Services(MoveScheduler* scheduler) : _scheduler(scheduler)
   }
 
   // Services instanciation
-  // model = new ModelService;
-  // add("model", model);
   model = new ModelService;
   add("model", model);
   referee = new RefereeService;

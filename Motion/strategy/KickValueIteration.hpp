@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <json/json.h>
+#include "rhoban_geometry/point.h"
 #include "KickStrategy.hpp"
 #include "CorridorProfile.hpp"
 #include <kick_model/kick_model_collection.h>
@@ -11,8 +12,8 @@ class KickValueIteration
 {
 public:
   // TODO: This class should be parsed instead of having so many parameters
-  KickValueIteration(std::string kicksFile, double accuracy = 0.2, double angleAccuracy = 5,
-                     bool dump = false, double tolerance = 5, double grassOffset = 180);
+  KickValueIteration(std::string kicksFile = "", double accuracy = 0.2, double angleAccuracy = 5, bool dump = false,
+                     double tolerance = 5, double grassOffset = 180);
 
   // Actions are discrete ints
   struct Action
@@ -44,9 +45,15 @@ public:
   // A state and the model of the actions from this state
   struct State
   {
+    State();
+
     double score;
     int x, y;
     double fieldX, fieldY;
+
+    bool isSuccess;
+    double lastKickOrientation;
+
     std::map<Action, Model> models;
   };
 
@@ -56,11 +63,25 @@ public:
   // For each action, the probabilities (sum=1) to reach a set of targets
   std::map<Action, std::vector<PossibilityTemplate>> kickTemplate;
 
+  // Average length for each kick
+  std::map<std::string, double> kickLengths;
+
   KickStrategy generate();
 
-  KickStrategy::Action bestAction(State *state);
+  KickStrategy::Action bestAction(State* state);
+  KickStrategy::Action bestAction(State* state,
+                                  std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)>);
 
-  Json::Value toJson();
+  void loadScores(KickStrategy& strategy);
+  void populateStrategy(KickStrategy& strategy);
+
+  // State for a given x/y
+  State* stateFor(double x, double y);
+
+  // State for a given x/y, in field (center is 0,0)
+  State* stateForFieldPos(double x, double y);
+
+  std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelReward;
 
 protected:
   csa_mdp::KickModelCollection kicks;
@@ -70,7 +91,8 @@ protected:
   double tolerance;
 
   // Fail & success states
-  State failState, successState;
+  State failState;
+  std::vector<State> successStates;
 
   // Discrete steps for x, y and alpha
   int xSteps, ySteps, aSteps;
@@ -85,10 +107,9 @@ protected:
   bool iterate();
 
   // Reward function from a state to another one
-  double rewardFor(State* from, State* state);
-
-  // State for a given x/y
-  State* stateFor(double x, double y);
+  double rewardFor(State* from, State* state, double kickLength);
+  double rewardFor(State* from, State* state, double kickLength,
+                   std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc);
 
   // Allowed kick names
   std::vector<std::string> getKickNames();
