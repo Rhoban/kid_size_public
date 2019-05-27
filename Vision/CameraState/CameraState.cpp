@@ -8,6 +8,7 @@
 #include "services/ViveService.h"
 
 #include <hl_monitoring/camera.pb.h>
+#include <hl_monitoring/utils.h>
 #include <rhoban_utils/util.h>
 #include <rhoban_utils/logging/logger.h>
 
@@ -26,6 +27,7 @@
 
 #include <string>
 
+using namespace hl_monitoring;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 using namespace robocup_referee;
@@ -36,71 +38,6 @@ namespace Vision
 {
 namespace Utils
 {
-Eigen::Affine3d getAffineFromProtobuf(const hl_monitoring::Pose3D& pose)
-{
-  Eigen::Matrix3d rotation = Eigen::Matrix3d::Identity();
-  Eigen::Vector3d src_in_dst = Eigen::Vector3d::Zero();
-  switch (pose.rotation_size())
-  {
-    case 0:
-      break;
-    case 3:
-    {
-      // Rodrigues vector case
-      Eigen::Vector3d rotation_axis(pose.rotation(0), pose.rotation(1), pose.rotation(2));
-      double angle = 0;
-      if (rotation_axis.norm() > std::pow(10, -6))
-      {
-        angle = rotation_axis.norm();
-        rotation_axis.normalize();
-      }
-      else
-      {
-        rotation_axis = Eigen::Vector3d::UnitZ();
-      }
-      rotation = Eigen::AngleAxisd(angle, rotation_axis);
-      break;
-    }
-    case 4:
-    {
-      Eigen::Quaterniond q(pose.rotation(0), pose.rotation(1), pose.rotation(2), pose.rotation(3));
-      rotation = Eigen::Matrix3d(q);
-      break;
-    }
-    default:
-      throw std::runtime_error(DEBUG_INFO + " invalid size for rotation: " + std::to_string(pose.rotation_size()));
-  }
-  switch (pose.translation_size())
-  {
-    case 0:
-      break;
-    case 3:
-      for (int dim = 0; dim < 3; dim++)
-      {
-        src_in_dst(dim) = pose.translation(dim);
-      }
-      break;
-    default:
-      throw std::runtime_error(DEBUG_INFO + " invalid size for src_in_dst: " + std::to_string(pose.translation_size()));
-  }
-  return Eigen::Translation3d(src_in_dst) * Eigen::Affine3d(rotation);
-}
-
-void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D* pose)
-{
-  Eigen::Vector3d src_in_dst = affine * Eigen::Vector3d::Zero();
-  pose->clear_rotation();
-  pose->clear_translation();
-  Eigen::Quaterniond q(affine.linear());
-  pose->add_rotation(q.w());
-  pose->add_rotation(q.x());
-  pose->add_rotation(q.y());
-  pose->add_rotation(q.z());
-  pose->add_translation(src_in_dst(0));
-  pose->add_translation(src_in_dst(1));
-  pose->add_translation(src_in_dst(2));
-}
-
 CameraState::CameraState()
   : has_camera_field_transform(false), clock_offset(0), _timeStamp(0.0), _moveScheduler(nullptr)
 {

@@ -2,9 +2,12 @@
 #include "ImageLogger.h"
 
 #include <hl_communication/utils.h>
+#include <hl_monitoring/utils.h>
 #include <rhoban_utils/util.h>
 
 #include <opencv2/highgui/highgui.hpp>
+
+using namespace hl_monitoring;
 
 namespace Vision
 {
@@ -98,7 +101,7 @@ void ImageLogger::initSession(const CameraState& cs, const std::string& session_
   hl_monitoring::VideoMetaInformation meta_information;
   cs.exportToProtobuf(meta_information.mutable_camera_parameters());
   meta_information.set_time_offset(rhoban_utils::getSteadyClockOffset());
-  for (const std::string& log_name : { "camera_from_world", "camera_from_field" })
+  for (const std::string& log_name : { "camera_from_world", "camera_from_field", "camera_from_self" })
   {
     metadata[log_name] = meta_information;
   }
@@ -111,16 +114,18 @@ const std::string& ImageLogger::getSessionPath()
 
 void ImageLogger::writeEntry(int idx, const Entry& e)
 {
-  std::cout << "Writing entry" << std::endl;
   // Writing image
   video_writer.write(e.img);
   // Adding entry_properties to metadata (cannot write in file before end of session)
   hl_monitoring::FrameEntry* entry = metadata["camera_from_world"].add_frames();
   entry->set_time_stamp(e.time_stamp);
   setProtobufFromAffine(e.cs.worldToCamera, entry->mutable_pose());
+  entry = metadata["camera_from_self"].add_frames();
+  entry->set_time_stamp(e.time_stamp);
+  setProtobufFromAffine(e.cs.worldToCamera * e.cs.selfToWorld, entry->mutable_pose());
   if (e.cs.has_camera_field_transform)
   {
-    hl_monitoring::FrameEntry* entry = metadata["camera_from_field"].add_frames();
+    entry = metadata["camera_from_field"].add_frames();
     entry->set_time_stamp(e.time_stamp);
     setProtobufFromAffine(e.cs.camera_from_field, entry->mutable_pose());
   }

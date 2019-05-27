@@ -18,12 +18,6 @@ namespace Vision
 {
 namespace Utils
 {
-/// Convert a protobuf Pose3D to an Affine3D transform
-Eigen::Affine3d getAffineFromProtobuf(const hl_monitoring::Pose3D& pose);
-
-/// Export the given Affine3D transform to a pose
-void setProtobufFromAffine(const Eigen::Affine3d& affine, hl_monitoring::Pose3D* pose);
-
 /// Relevant basis:
 /// - World: fixed reference in which the camera is evolving
 /// - Self: A basis centered on the robot
