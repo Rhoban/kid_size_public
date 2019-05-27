@@ -8,6 +8,7 @@
 #include <robocup_referee/constants.h>
 
 #include <opencv2/imgproc.hpp>
+#include <opencv2/ml.hpp>
 #include <vector>
 #include <map>
 #include <sstream>
@@ -244,9 +245,11 @@ void FieldPF::resetOnLines(int side)
   std::uniform_real_distribution<double> xDistribution(-borderNoise, borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta, borderNoiseTheta);
   std::uniform_int_distribution<int> sideDistribution(0, 1);
+  int nb = 0;
+
   for (auto& p : particles)
   {
-    double x = xOffset + xDistribution(generator);
+    /*double x = xOffset + xDistribution(generator);
     int currSide;
     // 0 * 2 - 1 = -1 and 1 * 2 - 1 = 1
     if (side > 0)
@@ -264,7 +267,30 @@ void FieldPF::resetOnLines(int side)
     }
     double y = currSide * (Constants::field.field_width / 2 + borderExtraDist);
     double dirNoise = dirNoiseDistribution(generator);
-    double dir = -currSide * 90;
+    double dir = -currSide * 90;*/
+    double x, y, dir;
+    double dirNoise = dirNoiseDistribution(generator);
+
+    if (nb < 500)
+    {
+      x = -2 + xDistribution(generator);
+      y = -2 + xDistribution(generator);
+      dir = 35;
+    }
+
+    else if (nb < 1000)
+    {
+      x = 2 + xDistribution(generator);
+      y = 2 + xDistribution(generator);
+      dir = 75;
+    }
+    else
+    {
+      x = -4 + xDistribution(generator);
+      y = 0 + xDistribution(generator);
+      dir = 125;
+    }
+    nb++;
     p.first = FieldPosition(x, y, Angle(dir + dirNoise).getSignedValue());
   }
   logger.log("Reset particles on borders");
@@ -351,8 +377,37 @@ void FieldPF::updateRepresentativeQuality()
   representativeQuality = nbGoodParticles / (double)particles.size();
 }
 
+cv::Mat FieldPF::positionsFromParticles()
+{
+  cv::Mat samples;
+  Eigen::VectorXd M;
+  cv::Mat tmp;
+  int nbParticles = particles.size();
+
+  for (int i = 0; i < nbParticles; i++)
+  {
+    M = particles[i].first.toVector();
+    tmp = cv::Mat(1, 2, CV_64F, (void*)&M[0]).clone();
+    samples.push_back(tmp);
+  }
+  return samples;
+}
+
+std::vector<Angle> FieldPF::anglesFromParticles()
+{
+  std::vector<Angle> M;
+  int nbParticles = particles.size();
+
+  for (int i = 0; i < nbParticles; i++)
+  {
+    M.push_back(particles[i].first.getOrientation());
+  }
+  return M;
+}
+
 void FieldPF::updateRepresentativeParticle()
 {
+  /*
   int N = particles.size();
   Eigen::VectorXd M = particles[0].first.toVector();
   // Better way of calculating avg angle exists but this one should be
@@ -363,10 +418,30 @@ void FieldPF::updateRepresentativeParticle()
     M = M + particles[i].first.toVector();
     x += cos(particles[i].first.getOrientation());
     y += sin(particles[i].first.getOrientation());
+    std::cout << rad2deg(atan2(cos(particles[i].first.getOrientation()), sin(particles[i].first.getOrientation())))
+              << std::endl;
   }
   M = (1.0 / (double)N) * M;
   M(2) = rad2deg(atan2(y, x));
   representativeParticle.setFromVector(M);
+*/
+  int nbParticles = particles.size();
+
+  cv::Mat pos = positionsFromParticles();
+  std::vector<Angle> angle = anglesFromParticles();
+
+  std::vector<FieldDistribution::Distribution> M =
+      fieldDistribution.updateRepresentativeParticleEM(pos, angle, nbParticles);
+  std::cout << "vector recieved" << std::endl;
+
+  FieldDistribution::Distribution d = M[0];
+  Point p = d.position.first;
+  float dir = d.angle;
+  Eigen::VectorXd result(3);
+
+  result << p.getX(), p.getY(), dir;
+
+  representativeParticle.setFromVector(result);
 }
 
 void FieldPF::updateInternalValues()

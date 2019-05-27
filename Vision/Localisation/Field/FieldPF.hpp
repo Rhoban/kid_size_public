@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FieldPosition.hpp"
+#include "FieldDistribution.hpp"
 
 #include "rhoban_unsorted/particle_filter/particle_filter.h"
 
@@ -42,6 +43,8 @@ private:
 protected:
   virtual void updateRepresentativeQuality();
   virtual void updateRepresentativeParticle();
+  cv::Mat positionsFromParticles();
+  std::vector<rhoban_utils::Angle> anglesFromParticles();
 
 public:
   FieldPF();
@@ -78,6 +81,8 @@ public:
   static std::string getName(ResetType t);
 
   void initializeAtUniformRandom(unsigned int particlesNb);
+
+  FieldDistribution fieldDistribution;
 
   double resamplingRatio;
 
