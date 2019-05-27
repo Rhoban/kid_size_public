@@ -7,7 +7,6 @@
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/control/variation_bound.h>
-#include "Kick.h"
 #include "Arms.h"
 
 static rhoban_utils::Logger walkLogger("Walk");
@@ -24,15 +23,12 @@ static double bound(double value, double min, double max)
   return value;
 }
 
-Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
+Walk::Walk()
 {
   Move::initializeBinding();
-  swingGainStart = 0.04;
-  trunkPitch = 12;
-  bootstrapSteps = 3;
-  shouldBootstrap = false;
 
   // Enables or disables the walk
+  walkEnable = true;
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
   bind->bindNew("walkStep", walkStep, RhIO::Bind::PullOnly)->comment("Walk control Step [mm/step]")->defaultValue(0.0);
   bind->bindNew("walkLateral", walkLateral, RhIO::Bind::PullOnly)
@@ -54,15 +50,15 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("riseGain", engine.riseGain, RhIO::Bind::PullOnly)->defaultValue(engine.riseGain);
   bind->bindNew("riseDuration", engine.riseDuration, RhIO::Bind::PullOnly)->defaultValue(engine.riseDuration);
   bind->bindNew("swingGain", engine.swingGain, RhIO::Bind::PullOnly)->defaultValue(engine.swingGain);
-  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(swingGainStart);
+  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(0.04);
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
   bind->bindNew("footYOffsetPerStepSizeY", engine.footYOffsetPerStepSizeY, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerStepSizeY);
-  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch);
+  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(12);
 
   // XXX: This feature can be deleted later if it is of no use
-  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps);
-  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(shouldBootstrap);
+  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(3);
+  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(false);
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
@@ -82,19 +78,6 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
       ->maximum(1.0);
   bind->bindNew("securityPhase", securityPhase, RhIO::Bind::PullOnly)->defaultValue(0.05);
 
-  // Kick parameters
-  bind->bindNew("kickPending", kickPending, RhIO::Bind::PullOnly)->defaultValue(false);
-  bind->bindNew("kickLeftPending", kickLeftPending, RhIO::Bind::PushAndPull)->defaultValue(false);
-  bind->bindNew("kickRightPending", kickRightPending, RhIO::Bind::PushAndPull)->defaultValue(false);
-  bind->bindNew("kickLeftFoot", kickLeftFoot, RhIO::Bind::PullOnly)->defaultValue(false);
-  bind->bindNew("kickName", kickName, RhIO::Bind::PullOnly)->defaultValue("classic");
-  bind->bindNew("kickCooldown", kickCooldown, RhIO::Bind::PullOnly)
-      ->defaultValue(0.5)
-      ->comment("Cooldown duration [s]");
-  bind->bindNew("kickWarmup", kickWarmup, RhIO::Bind::PullOnly)->defaultValue(0.75)->comment("Warmup [s]");
-
-  state = WalkNotWalking;
-  kickState = KickNotKicking;
   timeSinceLastStep = 0;
 }
 
@@ -105,6 +88,8 @@ std::string Walk::getName()
 
 void Walk::onStart()
 {
+  bind->pull();
+
   // Ensuring safety of head
   Move* head = getScheduler()->getMove("head");
   if (!head->isRunning())
@@ -133,13 +118,7 @@ void Walk::onStart()
   bind->node().setFloat("walkLateral", 0.0);
   bind->node().setFloat("walkTurn", 0.0);
 
-  // Cancelling eventual previous pending kicks
-  bind->node().setBool("kickPending", false);
-  bind->node().setBool("kickLeftPending", false);
-  bind->node().setBool("kickRightPending", false);
-
   state = WalkNotWalking;
-  kickState = KickNotKicking;
 }
 
 void Walk::onStop()
@@ -148,7 +127,6 @@ void Walk::onStop()
   arms->setArms(Arms::ArmsState::ArmsDisabled);
   getServices()->model->enableOdometry(false);
   state = WalkNotWalking;
-  kickState = KickNotKicking;
 }
 
 void Walk::control(bool enable, double step, double lateral, double turn)
@@ -166,18 +144,9 @@ void Walk::control(bool enable, double step, double lateral, double turn)
   }
 }
 
-void Walk::kick(bool rightFoot, const std::string& kickName)
+bool Walk::isWalking()
 {
-  walkLogger.log("Kick \"%s\" requested", kickName.c_str());
-
-  bind->node().setBool("kickPending", true);
-  bind->node().setBool("kickLeftFoot", !rightFoot);
-  bind->node().setStr("kickName", kickName);
-}
-
-bool Walk::isKicking()
-{
-  return kickState != KickNotKicking;
+  return state != WalkNotWalking;
 }
 
 void Walk::setShouldBootstrap(bool bootstrap)
@@ -192,9 +161,6 @@ void Walk::step(float elapsed)
   bind->pull();
 
   engine.trunkPitch = deg2rad(trunkPitch);
-
-  stepKick(elapsed);
-
   modelService->enableOdometry(state != WalkNotWalking);
 
   if (state == WalkNotWalking)
@@ -330,72 +296,6 @@ void Walk::step(float elapsed)
   for (auto& entry : angles)
   {
     setAngle(entry.first, rad2deg(entry.second));
-  }
-
-  bind->push();
-}
-
-void Walk::stepKick(float elapsed)
-{
-  if (kickLeftPending)
-  {
-    bind->node().setBool("kickLeftFoot", true);
-    kickLeftFoot = true;
-    kickPending = true;
-    kickLeftPending = false;
-  }
-
-  if (kickRightPending)
-  {
-    bind->node().setBool("kickLeftFoot", false);
-    kickLeftFoot = false;
-    kickPending = true;
-    kickRightPending = false;
-  }
-
-  if (kickPending)
-  {
-    // Enter the kick STM
-    bind->node().setBool("kickPending", false);
-    kickState = KickWaitingWalkToStop;
-  }
-
-  if (kickState != KickNotKicking)
-  {
-    // While kicking, walk is forced isabled
-    walkEnable = false;
-    kickT += elapsed;
-
-    if (kickState == KickWaitingWalkToStop && state == WalkNotWalking)
-    {
-      // Forcing support foot in the model
-      getServices()->model->model.setSupportFoot(
-          kickLeftFoot ? rhoban::HumanoidModel::Right : rhoban::HumanoidModel::Left, true);
-
-      // Walk is over, go to warmup state
-      kickState = KickWarmup;
-      kickT = 0;
-    }
-    DecisionService* decision = getServices()->decision;
-
-    if (kickState == KickWarmup && kickT >= kickWarmup && !decision->freezeKick)
-    {
-      // Warmup over, start the kick move
-      kickState = KickKicking;
-      kickMove->set(kickLeftFoot, kickName);
-      startMove("kick", 0.0);
-    }
-    if (kickState == KickKicking && kickMove->over)
-    {
-      // Kick is over, enter the coolDown sequence
-      kickState = KickCooldown;
-      kickT = 0;
-    }
-    if (kickState == KickCooldown && kickT >= kickCooldown)
-    {
-      // Cooldown is over, quitting kicking state
-      kickState = KickNotKicking;
-    }
   }
 }
 

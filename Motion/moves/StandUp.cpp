@@ -18,12 +18,12 @@ StandUp::StandUp()
   speed = 0.0;
 
   bind->bindNew("speed_front", speed_front, RhIO::Bind::PullOnly)
-      ->defaultValue(speed_front = 1.5)
+      ->defaultValue(1.5)
       ->minimum(0.0)
       ->maximum(20.0)
       ->comment("Speed factor for standing up if the robot is laying on the front.");
   bind->bindNew("speed_back", speed_back, RhIO::Bind::PullOnly)
-      ->defaultValue(speed_back = 1.5)
+      ->defaultValue(1.5)
       ->minimum(0.0)
       ->maximum(20.0)
       ->comment("Speed factor for standing up if the robot is laying on the back.");
@@ -75,7 +75,7 @@ void StandUp::onStart()
 void StandUp::onStop()
 {
   Arms* arms = (Arms*)getMoves()->getMove("arms");
-  arms->setArms(Arms::ArmsState::ArmsDisabled);
+  arms->setArms(Arms::ArmsState::ArmsEnabled);
   // security for arms. TODO should be a init command.
   setTorqueLimit("left_shoulder_pitch", 0.2);
   setTorqueLimit("right_shoulder_pitch", 0.2);
@@ -92,6 +92,8 @@ void StandUp::step(float elapsed)
 {
   bind->pull();
 
+  // Be sure walk arms are disabled
+
   if (reloadSpline)
   {
     splines = Function::fromFile(currentSpline);
@@ -107,8 +109,17 @@ void StandUp::step(float elapsed)
       {
         if (layDown)
         {
-          splines = Function::fromFile("lay_down.json");
-          speed = 1.5;
+          splines = Function::fromFile("standup_front.json");
+          layDownEnd = 0;
+          for (layDownEnd = 0; layDownEnd < 10; layDownEnd += 0.1)
+          {
+            if (splines["over"].get(layDownEnd) > 0.5)
+            {
+              break;
+            }
+          }
+          layDownEnd += 1;
+          speed = 1;
         }
         else
         {
@@ -144,7 +155,7 @@ void StandUp::step(float elapsed)
       if (finalSpeed < 0.5)
         finalSpeed = 0.5;
       double remap = splines["remap"].get(time);
-      std::cout << "Remap=" << remap << ", speed=" << finalSpeed << ", elapsed: " << elapsed << std::endl;
+      // std::cout << "Remap=" << remap << ", speed=" << finalSpeed << ", elapsed: " << elapsed << std::endl;
       time += elapsed * remap * finalSpeed;
       if (useManualT)
       {
@@ -155,19 +166,33 @@ void StandUp::step(float elapsed)
         manualT = time;
       }
 
+      double playTime = time;
+      if (layDown)
+      {
+        // Playing the spline backward to lay down
+        playTime = layDownEnd - playTime;
+      }
+
       setAngle("left_shoulder_roll", armsRoll);
       setAngle("right_shoulder_roll", -armsRoll);
-      setAngle("left_shoulder_pitch", splines["shoulder_pitch"].get(time));
-      setAngle("right_shoulder_pitch", splines["shoulder_pitch"].get(time));
-      setAngle("left_elbow", splines["elbow"].get(time));
-      setAngle("right_elbow", splines["elbow"].get(time));
-      setAngle("left_hip_pitch", splines["hip_pitch"].get(time));
-      setAngle("right_hip_pitch", splines["hip_pitch"].get(time));
-      setAngle("left_knee", splines["knee"].get(time));
-      setAngle("right_knee", splines["knee"].get(time));
-      setAngle("left_ankle_pitch", splines["ankle_pitch"].get(time));
-      setAngle("right_ankle_pitch", splines["ankle_pitch"].get(time));
-      over = splines["over"].get(time) > 0.5;
+      setAngle("left_shoulder_pitch", splines["shoulder_pitch"].get(playTime));
+      setAngle("right_shoulder_pitch", splines["shoulder_pitch"].get(playTime));
+      setAngle("left_elbow", splines["elbow"].get(playTime));
+      setAngle("right_elbow", splines["elbow"].get(playTime));
+      setAngle("left_hip_pitch", splines["hip_pitch"].get(playTime));
+      setAngle("right_hip_pitch", splines["hip_pitch"].get(playTime));
+      setAngle("left_knee", splines["knee"].get(playTime));
+      setAngle("right_knee", splines["knee"].get(playTime));
+      setAngle("left_ankle_pitch", splines["ankle_pitch"].get(playTime));
+      setAngle("right_ankle_pitch", splines["ankle_pitch"].get(playTime));
+      if (layDown)
+      {
+        over = playTime < 0;
+      }
+      else
+      {
+        over = splines["over"].get(playTime) > 0.5;
+      }
 
       if (useManualT)
       {

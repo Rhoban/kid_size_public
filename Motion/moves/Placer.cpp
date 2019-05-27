@@ -81,7 +81,7 @@ Placer::Placer(Walk* walk) : walk(walk)
       ->comment("Under this threshold, rushDistOk becomes false [m]");
 
   bind->bindNew("avoidOpponents", avoidOpponents, RhIO::Bind::PullOnly)
-      ->defaultValue(true)
+      ->defaultValue(false)
       ->comment("Avoid the opponents?");
   bind->bindNew("avoidMates", avoidMates, RhIO::Bind::PullOnly)
       ->defaultValue(true)

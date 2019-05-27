@@ -10,6 +10,7 @@
 #include "rhoban_utils/logging/logger.h"
 #include "moves/ApproachPotential.h"
 #include "moves/Walk.h"
+#include "moves/Kick.h"
 
 // Uncomment this to force using right foot with classic kick (for debugging purpose)
 // #define DEBUG_FORCE_KICK_RIGHT_CLASSIC
@@ -33,7 +34,7 @@ ApproachPotential::Target::Target(Point position, Angle yaw, bool rightKick, std
 {
 }
 
-ApproachPotential::ApproachPotential(Walk* walk) : ApproachMove(walk), currentTolerance(0)
+ApproachPotential::ApproachPotential(Walk* walk, Kick* kick) : ApproachMove(walk, kick), currentTolerance(0)
 {
   Move::initializeBinding();
   initBindings();
@@ -169,7 +170,8 @@ void ApproachPotential::step(float elapsed)
 
   if (state == STATE_SHOOT)
   {
-    if (!walk->isKicking())
+    // Waiting for the kick to finish
+    if (!kick->isRunning())
     {
       setState(STATE_PLACE);
     }

@@ -5,14 +5,21 @@
 
 #include "kick_model/kick_model_collection.h"
 
+class Walk;
+class Head;
+class Arms;
+
 class Kick : public Move
 {
 public:
-  Kick();
+  Kick(Head* head_, Walk* walk_, Arms* arms);
+
   std::string getName();
 
   void onStart();
   void onStop();
+
+  void stepSpline(float elapsed);
 
   void step(float elapsed);
   bool over;
@@ -35,6 +42,21 @@ protected:
   double dt;
   double applyKickRatio;
 
+  // Warmup and cooldown
+  double warmup;
+  double cooldown;
+
+  enum KickState
+  {
+    KickNotKicking = 0,
+    KickWaitingWalkToStop,
+    KickWarmup,
+    KickKicking,
+    KickCooldown
+  };
+
+  KickState kickState;
+
   // Kick mode
   bool left, generated;
 
@@ -52,4 +74,10 @@ protected:
   csa_mdp::KickModelCollection kmc;
 
   void apply();
+
+  Head* head;
+  Walk* walk;
+  Arms* arms;
+
+  bool headWasDisabled;
 };

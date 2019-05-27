@@ -78,7 +78,7 @@ include_directories(${INCLUDED_DIRECTORIES} ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${OpenCV_INCLUDE_DIRS})
 #Linked dependency external Libraries
 set (LINKED_LIBRARIES
-    pthread
+    pthread dl
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
 )
@@ -171,7 +171,7 @@ set_source_files_properties (
 add_custom_target(date ALL COMMAND touch ${CMAKE_CURRENT_SOURCE_DIR}/KidSize/buildinfos.c)
 
 #Build the main kid_size binary
-add_executable (KidSize KidSize/main.cpp KidSize/buildinfos.c)
+add_executable (KidSize KidSize/main.cpp KidSize/buildinfos.c KidSize/backtrace.cpp)
 target_link_libraries (KidSize ${LINKED_LIBRARIES} kid_size)
 add_dependencies(KidSize date)
 

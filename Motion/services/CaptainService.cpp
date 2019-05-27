@@ -116,13 +116,13 @@ CaptainService::CaptainService() : bind("captain"), frequency(5.0), recentlyKick
       ->comment("Radius [m] to avoid colliding the ball while placing");
 
   bind.bindNew("minAggressivity", minAggressivity, RhIO::Bind::PullOnly)
-      ->defaultValue(0.5)
+      ->defaultValue(0.75)
       ->minimum(0.0)
       ->maximum(1.0)
       ->comment("Is the placing aggressive ore defensive?");
 
   bind.bindNew("maxAggressivity", maxAggressivity, RhIO::Bind::PullOnly)
-      ->defaultValue(0.5)
+      ->defaultValue(0.75)
       ->minimum(0.0)
       ->maximum(1.0)
       ->comment("Is the placing aggressive ore defensive?");

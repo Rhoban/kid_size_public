@@ -31,7 +31,8 @@ if (csa_mdp_experiments_FOUND)
     KickController.cpp
 #    LearnedApproach.cpp
 #    MDPKickController.cpp
-    QKickController.cpp
+    # QKickController.cpp
+    MCKickController.cpp
     ClearingKickController.cpp
     PenaltyKickController.cpp
     )

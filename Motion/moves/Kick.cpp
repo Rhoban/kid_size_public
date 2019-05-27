@@ -7,6 +7,9 @@
 #include "Kick.h"
 #include "Head.h"
 #include "Arms.h"
+#include "Walk.h"
+#include "services/DecisionService.h"
+#include "services/ModelService.h"
 
 #include <set>
 
@@ -21,7 +24,7 @@ static std::vector<std::string> dofs = { "right_hip_yaw",       "right_hip_pitch
                                          "left_knee",           "left_ankle_pitch",     "left_ankle_roll",
                                          "left_shoulder_roll",  "left_shoulder_pitch",  "left_elbow" };
 
-Kick::Kick()
+Kick::Kick(Head* _head, Walk* _walk, Arms* _arms) : head(_head), walk(_walk), arms(_arms)
 {
   initializeBinding();
 
@@ -49,6 +52,10 @@ Kick::Kick()
       ->persisted(true);
 
   bind->bindNew("t", t, RhIO::Bind::PushOnly)->defaultValue(0.0);
+
+  // Cooldown and warmup
+  bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)->defaultValue(0.5)->comment("Cooldown duration [s]");
+  bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)->defaultValue(0.75)->comment("Warmup [s]");
 
   // Load available kicks
   kmc.loadFile();
@@ -197,6 +204,13 @@ void Kick::onStart()
   generated = false;
   bind->pull();
 
+  if (kickName == "throwin")
+  {
+    headWasDisabled = head->isDisabled();
+    head->setDisabled(true);
+    arms->setArms(Arms::ArmsState::ArmsDisabled);
+  }
+
   if (live)
   {
     if (left && file_exists(getPath(kickName, true)))
@@ -239,14 +253,6 @@ void Kick::onStart()
     }
   }
 
-  if (kickName == "throwin")
-  {
-    Head* head = (Head*)getMoves()->getMove("head");
-    Arms* arms = (Arms*)getMoves()->getMove("arms");
-    arms->setArms(Arms::ArmsState::ArmsDisabled);
-    head->setDisabled(true);
-  }
-
   logger.log("Starting kick '%s', tMax=%f", kickName.c_str(), tMax);
   t = 0;
   over = false;
@@ -255,14 +261,17 @@ void Kick::onStart()
 
   // Announce that a kick has been performed (information is shared to other robots)
   getServices()->strategy->announceKick();
+
+  kickState = KickWaitingWalkToStop;
 }
 
 void Kick::onStop()
 {
-  Head* head = (Head*)getMoves()->getMove("head");
-  Arms* arms = (Arms*)getMoves()->getMove("arms");
-  arms->setArms(Arms::ArmsState::ArmsEnabled);
-  head->setDisabled(false);
+  if (kickName == "throwin")
+  {
+    head->setDisabled(headWasDisabled);
+    arms->setArms(Arms::ArmsState::ArmsEnabled);
+  }
 }
 
 void Kick::apply()
@@ -283,12 +292,59 @@ void Kick::apply()
 
 void Kick::step(float elapsed)
 {
+  bind->pull();
+
+  // While kicking, walk is force disabled
+  walk->control(false);
+
+  if (kickState == KickWarmup || kickState == KickCooldown)
+  {
+    t += elapsed;
+  }
+
+  if (kickState == KickWaitingWalkToStop && !walk->isWalking())
+  {
+    // Forcing support foot in the model
+    getServices()->model->model.setSupportFoot(left ? rhoban::HumanoidModel::Right : rhoban::HumanoidModel::Left, true);
+
+    // Walk is over, go to warmup state
+    kickState = KickWarmup;
+    t = 0;
+  }
+  DecisionService* decision = getServices()->decision;
+
+  if (kickState == KickWarmup && t >= warmup && !decision->freezeKick)
+  {
+    // Warmup over, start the kick move
+    kickState = KickKicking;
+    t = 0;
+  }
+  if (kickState == KickKicking)
+  {
+    // Reading the actual kick spline
+    stepSpline(elapsed);
+
+    if (over)
+    {
+      // Kick is over, enter the coolDown sequence
+      kickState = KickCooldown;
+      t = 0;
+    }
+  }
+  if (kickState == KickCooldown && t >= cooldown)
+  {
+    logger.log("Cooldown finished (%f > %f)", t, cooldown);
+    // Cooldown is over, stopping the kick
+    this->Move::stop();
+  }
+}
+
+void Kick::stepSpline(float elapsed)
+{
   if (!generated)
   {
     return;
   }
-
-  bind->pull();
 
   if (t > tMax * applyKickRatio && !applied)
   {
@@ -302,7 +358,6 @@ void Kick::step(float elapsed)
     {
       logger.log("Kick is over");
       over = true;
-      this->Move::stop();
     }
   }
   else

@@ -5,12 +5,15 @@
 #include <unistd.h>
 
 #include "scheduler/MoveScheduler.h"
+#include "rhoban_utils/logging/logger.h"
 #include <rhoban_utils/timing/time_stamp.h>
 #include <Devices/PressureSensor.hpp>
 #include "Helpers.h"
 
 using namespace std;
 using namespace rhoban_utils;
+
+static rhoban_utils::Logger logger("MoveScheduler");
 
 // TODO: Remove this (could be an attribute of the scheduler), this
 // was done to avoid a big re-compile
@@ -37,7 +40,7 @@ MoveScheduler::MoveScheduler()
   , _bind(nullptr)
   , _manualClock(0.0)
 {
-  std::cout << "Initializing MoveScheduler" << std::endl;
+  logger.log("Initializing move scheduler");
 
   // Helper
   helper.setScheduler(this);
@@ -48,11 +51,11 @@ MoveScheduler::MoveScheduler()
   _moves = new Moves(this);
 
   // Initializing RhAL
-  std::cout << "Reading RhAL config" << std::endl;
+  logger.log("Reading RhAL config");
   _manager.readConfig("rhal.json");
   _manager.setScheduleMode(true);
   // Initial scan
-  std::cout << "Scanning the bus" << std::endl;
+  logger.log("Scanning the bus...");
   _manager.scan();
   // Look for missing devices
   const auto& devs = _manager.devContainer();
@@ -60,14 +63,14 @@ MoveScheduler::MoveScheduler()
   {
     if (!it.second->isPresent())
     {
-      std::cout << "!!!!!!!!!!!! WARNING: Missing " << it.first << std::endl;
+      logger.error("!!!!!!!!!!!! WARNING: Missing %s", it.first.c_str());
     }
   }
   // Initialize RhIO RhAL Binding
-  std::cout << "Starting RhIO binding" << std::endl;
+  logger.log("Starting RhIO binding");
   _binding = new RhAL::RhIOBinding(_manager);
   // Start Low level thread
-  std::cout << "Starting RhAL Manager thread" << std::endl;
+  logger.log("Starting RhAL Manager thread");
   _manager.startManagerThread();
   _manager.enableCooperativeThread();
 
@@ -78,7 +81,7 @@ MoveScheduler::MoveScheduler()
     device.second->PGain().writeValue(30);
   }
 
-  std::cout << "Initializing scheduler binding" << std::endl;
+  logger.log("Initializing move scheduler bindings");
   // Binding move commands
   _bind = new RhIO::Bind("moves");
   _bind->bindFunc("moves", "List moves and states", &MoveScheduler::cmdMoves, *this);
@@ -94,11 +97,11 @@ MoveScheduler::MoveScheduler()
 
 MoveScheduler::~MoveScheduler()
 {
-  std::cout << "Stopping RhIO Binding" << std::endl;
+  logger.log("Stopping RhIO binding");
   delete _binding;
-  std::cout << "Stopping Scheduler thread" << std::endl;
+  logger.log("Stopping scheduler thread");
   _manager.disableCooperativeThread();
-  std::cout << "Stopping RhAL Manager thread" << std::endl;
+  logger.log("Stopping RhAL manager thread");
   _manager.stopManagerThread();
   delete _bind;
   delete _services;
@@ -147,7 +150,7 @@ void MoveScheduler::setManualClock(double value)
 
 void MoveScheduler::execute(bool manualClock)
 {
-  std::cout << "Starting main scheduler loop" << std::endl;
+  logger.log("Starting main scheduler loop");
   bool initStats = true;
   TimeStamp startLoop = TimeStamp::now();
   TimeStamp stopLoop = TimeStamp::now();
@@ -260,7 +263,7 @@ void MoveScheduler::execute(bool manualClock)
     stopLoop = TimeStamp::now();
     durationLoop = diffMs(startLoop, stopLoop);
   }
-  std::cout << "Stopping main scheduler loop" << std::endl;
+  logger.log("Stopping main scheduler loop");
 }
 
 Services* MoveScheduler::getServices()

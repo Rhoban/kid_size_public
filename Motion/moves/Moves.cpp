@@ -20,7 +20,7 @@
 
 #include "ReactiveKicker.h"
 
-#include "QKickController.h"
+#include "MCKickController.h"
 #include "ClearingKickController.h"
 #include "PenaltyKickController.h"
 #include "policies/expert_approach.h"
@@ -46,26 +46,27 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   Arms* arms = new Arms;
   add(arms);
 
-  Kick* kick = new Kick();
+  Head* head = new Head;
+  Walk* walk = new Walk();
+  Kick* kick = new Kick(head, walk, arms);
   add(kick);
   // Forcing generation of kick motions at kick creation
   kick->cmdKickGen();
 
-  Walk* walk = new Walk(kick);
-  Head* head = new Head;
   Placer* placer = new Placer(walk);
+
   StandUp* standup = new StandUp();
 
   add(standup);
   add(head);
   add(new Search(walk, placer));
-  add(new ApproachPotential(walk));
+  add(new ApproachPotential(walk, kick));
   add(placer);
   // add(lateralStep);
 
   add(new GoalKeeper(walk, placer));
   add(new Robocup(walk, standup, placer));
-  add(new PlayingMove(walk));
+  add(new PlayingMove(walk, kick));
 
   // Dev moves
   add(new IMUTest);
@@ -77,14 +78,15 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new GoalKick());
 
   // Requires additionnal dependencies
-  add(new QKickController());
+  add(new MCKickController());
   add(new ClearingKickController());
   auto penaltyController = new PenaltyKickController();
   add(penaltyController);
   add(new Penalty(penaltyController));
 
-  add(new ReactiveKicker(walk));
   add(new AutonomousPlaying(walk, standup, arms));
+  add(new ReactiveKicker(walk, kick));
+
   add(walk);
 
   //    csa_mdp::PolicyFactory::registerExtraBuilder("ExpertApproach", []() {return std::unique_ptr<csa_mdp::Policy>(new

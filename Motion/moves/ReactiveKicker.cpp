@@ -1,12 +1,13 @@
 #include "ReactiveKicker.h"
 
 #include "Walk.h"
+#include "Kick.h"
 #include <services/LocalisationService.h>
 
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 
-ReactiveKicker::ReactiveKicker(Walk* walk) : ApproachMove(walk)
+ReactiveKicker::ReactiveKicker(Walk* walk, Kick* kick) : ApproachMove(walk, kick)
 {
   Move::initializeBinding();
   ApproachMove::initBindings();
@@ -48,7 +49,7 @@ void ReactiveKicker::step(float elapsed)
   if (is_kicking)
   {
     // Wait until walk has started and finished kicking
-    if (time > 0.25 && !walk->isKicking())
+    if (time > 0.25 && !kick->isRunning())
     {
       is_kicking = false;
     }

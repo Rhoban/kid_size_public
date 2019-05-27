@@ -162,7 +162,15 @@ float Helpers::getAngle(const std::string& servo)
   }
   else
   {
-    return _scheduler->getManager()->dev<RhAL::DXL>(servo).position().readValue().value;
+    if (_scheduler->getManager()->dev<RhAL::DXL>(servo).dontRead())
+    {
+      // The servo is never read, we assume goal value
+      return getGoalAngle(servo);
+    }
+    else
+    {
+      return _scheduler->getManager()->dev<RhAL::DXL>(servo).position().readValue().value;
+    }
   }
 }
 

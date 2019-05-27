@@ -7,13 +7,14 @@
 #include <rhoban_geometry/point.h>
 #include <rhoban_utils/angle.h>
 
+class Kick;
 class Walk;
 class KickController;
 
 class ApproachMove : public STM
 {
 public:
-  ApproachMove(Walk* walk);
+  ApproachMove(Walk* walk, Kick* kick);
 
   /// Should be called after Move::initializeBinding() in child classes
   /// (class_name is virtual only in ApproachMove constructor)
@@ -59,6 +60,9 @@ protected:
 
   /// Link to the walk move
   Walk* walk;
+
+  /// Link to the kick move
+  Kick* kick;
 
   /// Current expectation of the kick
   std::string expectedKick;
