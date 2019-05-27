@@ -7,16 +7,20 @@
 
 class Walk;
 class Head;
+class Arms;
+
 class Kick : public Move
 {
 public:
-  Kick(Head* head_, Walk* walk_);
+  Kick(Head* head_, Walk* walk_, Arms* arms);
 
   std::string getName();
 
   void onStart();
   void onStop();
+
   void stepSpline(float elapsed);
+
   void step(float elapsed);
   bool over;
   bool live;
@@ -73,5 +77,7 @@ protected:
 
   Head* head;
   Walk* walk;
+  Arms* arms;
+
   bool headWasDisabled;
 };

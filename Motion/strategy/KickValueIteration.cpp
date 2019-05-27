@@ -23,20 +23,20 @@ KickValueIteration::KickValueIteration(std::string kicksFile, double accuracy, d
     kicks.loadFile(kicksFile);
   }
   kicks.setGrassConeOffset(grassOffset);
-
-  travelReward = [](rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos, bool success) -> double {
-    if (success)
-    {
-      return 0;
-    }
-
-    return -(10 + (fromPos - toPos).getLength() / 0.15);
-  };
 }
 
-double
-KickValueIteration::rewardFor(State* from, State* state, double kickLength,
-                              std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc)
+double KickValueIteration::travelRewardDefault(rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos,
+                                               bool success)
+{
+  if (success)
+  {
+    return 0;
+  }
+
+  return -(10 + (fromPos - toPos).getLength() / 0.15);
+}
+
+double KickValueIteration::rewardFor(State* from, State* state, double kickLength, travelRewardFunc travelFunc)
 {
   if (state == &failState)
   {
@@ -69,12 +69,14 @@ KickValueIteration::rewardFor(State* from, State* state, double kickLength,
         Point(state->fieldX - Constants::field.field_length / 2.0, state->fieldY - Constants::field.field_width / 2.0);
   }
 
-  return travelFunc(fromPos, toPos, state->isSuccess);
-}
-
-double KickValueIteration::rewardFor(State* from, State* state, double kickLength)
-{
-  return rewardFor(from, state, kickLength, travelReward);
+  if (travelFunc)
+  {
+    return travelFunc(fromPos, toPos, state->isSuccess);
+  }
+  else
+  {
+    return travelRewardDefault(fromPos, toPos, state->isSuccess);
+  }
 }
 
 KickStrategy KickValueIteration::generate()
@@ -115,14 +117,7 @@ void KickValueIteration::populateStrategy(KickStrategy& strategy)
   }
 }
 
-KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* state)
-{
-  return bestAction(state, travelReward);
-}
-
-KickStrategy::Action
-KickValueIteration::bestAction(KickValueIteration::State* state,
-                               std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc)
+KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* state, travelRewardFunc travelFunc)
 {
   Action bestAction;
   double bestScore = -1000;
@@ -244,7 +239,7 @@ void KickValueIteration::generateStates()
 void KickValueIteration::generateTemplate()
 {
   std::default_random_engine generator;
-  std::normal_distribution<double> posNoise(0, accuracy);
+  // std::normal_distribution<double> posNoise(0, accuracy);
 
 #define SAMPLES 10000
 
@@ -264,8 +259,8 @@ void KickValueIteration::generateTemplate()
         auto result = kickModel.applyKick(Eigen::Vector2d(0, 0), action.orientation, &generator);
         auto sample = Point(result[0], result[1]);
 
-        int dX = round((sample.x + posNoise(generator)) / accuracy);
-        int dY = round((sample.y + posNoise(generator)) / accuracy);
+        int dX = round((sample.x) / accuracy);
+        int dY = round((sample.y) / accuracy);
 
         count[std::pair<int, int>(dX, dY)] += 1;
       }

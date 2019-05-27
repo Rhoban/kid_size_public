@@ -10,6 +10,7 @@
 #include "StandUp.h"
 #include "Head.h"
 #include "Walk.h"
+#include "Arms.h"
 
 #include <rhoban_utils/logging/logger.h>
 
@@ -30,7 +31,8 @@ using namespace hl_communication;
 using namespace rhoban_geometry;
 using namespace rhoban_team_play;
 
-Robocup::Robocup(Walk* walk, StandUp* standup, Placer* placer) : walk(walk), standup(standup), placer(placer)
+Robocup::Robocup(Walk* walk, StandUp* standup, Placer* placer, Arms* arms)
+  : walk(walk), standup(standup), placer(placer), arms(arms)
 {
   initializeBinding();
   // State
@@ -222,7 +224,6 @@ void Robocup::step(float elapsed)
   {
     wasHandled = true;
   }
-  Head* head = (Head*)getMoves()->getMove("head");
 
   t += elapsed;
   auto referee = getServices()->referee;
@@ -392,11 +393,11 @@ void Robocup::enterState(std::string state)
   // Starts or stops the safe arms roll used for accessing the hotswap
   if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
   {
-    walk->setArms(Walk::ArmsState::ArmsMaintenance);
+    arms->setArms(Arms::ArmsState::ArmsMaintenance);
   }
   else
   {
-    walk->setArms(Walk::ArmsState::ArmsEnabled);
+    arms->setArms(Arms::ArmsState::ArmsEnabled);
   }
 
   if (state == STATE_STANDUP)

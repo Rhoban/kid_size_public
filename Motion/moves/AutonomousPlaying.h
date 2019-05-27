@@ -7,10 +7,12 @@
 /// Just use automated standup and stop playing when handled
 class StandUp;
 class Walk;
+class Arms;
+
 class AutonomousPlaying : public STM
 {
 public:
-  AutonomousPlaying(Walk* walk, StandUp* standup);
+  AutonomousPlaying(Walk* walk, StandUp* standup, Arms* Arms);
   std::string getName();
   void onStart();
   void onStop();
@@ -21,6 +23,7 @@ public:
 protected:
   Walk* walk;
   StandUp* standup;
+  Arms* arms;
 
   float t;
   int standup_try;

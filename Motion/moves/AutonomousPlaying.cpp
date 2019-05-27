@@ -3,6 +3,7 @@
 #include "moves/Head.h"
 #include "moves/StandUp.h"
 #include "moves/Walk.h"
+#include "moves/Arms.h"
 
 #include <services/DecisionService.h>
 #include <services/LocalisationService.h>
@@ -16,7 +17,7 @@
 
 static rhoban_utils::Logger logger("AutonomousPlaying");
 
-AutonomousPlaying::AutonomousPlaying(Walk* walk, StandUp* standup) : walk(walk), standup(standup)
+AutonomousPlaying::AutonomousPlaying(Walk* walk, StandUp* standup, Arms* arms) : walk(walk), standup(standup)
 {
   initializeBinding();
   // State
@@ -114,14 +115,14 @@ void AutonomousPlaying::enterState(std::string state)
   // Handling StandUp related stuff
   if (state == STATE_STANDUP)
   {
-    walk->setArms(Walk::ArmsState::ArmsDisabled);
+    arms->setArms(Arms::ArmsState::ArmsDisabled);
     standup->setLayDown(false);
     startMove("standup", 0.0);
     standup->trying = standup_try;
   }
   else
   {
-    walk->setArms(Walk::ArmsState::ArmsEnabled);
+    arms->setArms(Arms::ArmsState::ArmsEnabled);
     walk->control(false);
   }
 

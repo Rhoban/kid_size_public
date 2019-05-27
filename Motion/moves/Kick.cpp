@@ -6,6 +6,7 @@
 #include <rhoban_utils/util.h>
 #include "Kick.h"
 #include "Head.h"
+#include "Arms.h"
 #include "Walk.h"
 #include "services/DecisionService.h"
 #include "services/ModelService.h"
@@ -23,7 +24,7 @@ static std::vector<std::string> dofs = { "right_hip_yaw",       "right_hip_pitch
                                          "left_knee",           "left_ankle_pitch",     "left_ankle_roll",
                                          "left_shoulder_roll",  "left_shoulder_pitch",  "left_elbow" };
 
-Kick::Kick(Head* _head, Walk* _walk) : head(_head), walk(_walk)
+Kick::Kick(Head* _head, Walk* _walk, Arms* _arms) : head(_head), walk(_walk), arms(_arms)
 {
   initializeBinding();
 
@@ -207,7 +208,7 @@ void Kick::onStart()
   {
     headWasDisabled = head->isDisabled();
     head->setDisabled(true);
-    walk->setArms(Walk::ArmsState::ArmsDisabled);
+    arms->setArms(Arms::ArmsState::ArmsDisabled);
   }
 
   if (live)
@@ -269,7 +270,7 @@ void Kick::onStop()
   if (kickName == "throwin")
   {
     head->setDisabled(headWasDisabled);
-    walk->setArms(Walk::ArmsState::ArmsEnabled);
+    arms->setArms(Arms::ArmsState::ArmsEnabled);
   }
 }
 
