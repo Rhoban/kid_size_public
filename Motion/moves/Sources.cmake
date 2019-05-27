@@ -17,6 +17,7 @@ set (SOURCES
     GoalKeeper.cpp
     Placer.cpp
     Kick.cpp
+    Arms.cpp
     
     # LogMachine.cpp
     

@@ -10,6 +10,7 @@
 #include "StandUp.h"
 #include "Head.h"
 #include "Walk.h"
+#include "Arms.h"
 
 #include <rhoban_utils/logging/logger.h>
 
@@ -235,18 +236,6 @@ void Robocup::step(float elapsed)
   {
     wasHandled = true;
   }
-  Head* head = (Head*)getMoves()->getMove("head");
-
-  if (decision->isThrowInRunning)
-  {
-    walk->setArms(Walk::ArmsState::ArmsDisabled);
-    head->setDisabled(true);
-  }
-  else
-  {
-    walk->setArms(Walk::ArmsState::ArmsEnabled);
-    head->setDisabled(false);
-  }
 
   t += elapsed;
   auto referee = getServices()->referee;
@@ -399,26 +388,26 @@ void Robocup::enterState(std::string state)
     head->setDisabled(false);
   }
 
+  Arms* arms = (Arms*)getMoves()->getMove("arms");
+
   // Starts or stops the safe arms roll used for accessing the hotswap
   if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
   {
-    walk->setArms(Walk::ArmsState::ArmsMaintenance);
+    arms->setArms(Arms::ArmsState::ArmsMaintenance);
   }
   else
   {
-    walk->setArms(Walk::ArmsState::ArmsEnabled);
+    arms->setArms(Arms::ArmsState::ArmsEnabled);
   }
 
   if (state == STATE_STANDUP)
   {
     standup->setLayDown(false);
-    walk->setArms(Walk::ArmsState::ArmsDisabled);
     startMove("standup", 0.0);
     standup->trying = standup_try;
   }
   else
   {
-    walk->setArms(Walk::ArmsState::ArmsEnabled);
     walk->control(false);
   }
 

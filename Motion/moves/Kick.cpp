@@ -5,6 +5,8 @@
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/util.h>
 #include "Kick.h"
+#include "Head.h"
+#include "Arms.h"
 
 #include <set>
 
@@ -237,6 +239,14 @@ void Kick::onStart()
     }
   }
 
+  if (kickName == "throwin")
+  {
+    Head* head = (Head*)getMoves()->getMove("head");
+    Arms* arms = (Arms*)getMoves()->getMove("arms");
+    arms->setArms(Arms::ArmsState::ArmsDisabled);
+    head->setDisabled(true);
+  }
+
   logger.log("Starting kick '%s', tMax=%f", kickName.c_str(), tMax);
   t = 0;
   over = false;
@@ -245,6 +255,14 @@ void Kick::onStart()
 
   // Announce that a kick has been performed (information is shared to other robots)
   getServices()->strategy->announceKick();
+}
+
+void Kick::onStop()
+{
+  Head* head = (Head*)getMoves()->getMove("head");
+  Arms* arms = (Arms*)getMoves()->getMove("arms");
+  arms->setArms(Arms::ArmsState::ArmsEnabled);
+  head->setDisabled(false);
 }
 
 void Kick::apply()
@@ -260,7 +278,7 @@ void Kick::apply()
   logger.log("Applying kick x=%f, y=%f", distX, distY);
 
   auto loc = getServices()->localisation;
-  loc->applyKick(100 * distX, 100 * distY);
+  loc->applyKick(distX, distY);
 }
 
 void Kick::step(float elapsed)

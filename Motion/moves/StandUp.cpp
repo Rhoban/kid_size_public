@@ -1,4 +1,5 @@
 #include "StandUp.h"
+#include "Arms.h"
 
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/serialization/json_serializable.h>
@@ -60,6 +61,9 @@ void StandUp::onStart()
   manualT = 0.0;
   over = false;
   waiting = true;
+  Arms* arms = (Arms*)getMoves()->getMove("arms");
+
+  arms->setArms(Arms::ArmsState::ArmsDisabled);
 
   // get the arms back
   setTorqueLimit("left_shoulder_pitch", 1.0);
@@ -70,6 +74,8 @@ void StandUp::onStart()
 
 void StandUp::onStop()
 {
+  Arms* arms = (Arms*)getMoves()->getMove("arms");
+  arms->setArms(Arms::ArmsState::ArmsDisabled);
   // security for arms. TODO should be a init command.
   setTorqueLimit("left_shoulder_pitch", 0.2);
   setTorqueLimit("right_shoulder_pitch", 0.2);

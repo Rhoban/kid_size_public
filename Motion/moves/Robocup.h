@@ -7,6 +7,7 @@
 class Placer;
 class StandUp;
 class Walk;
+
 class Robocup : public STM
 {
 public:

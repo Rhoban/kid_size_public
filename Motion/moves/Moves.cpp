@@ -12,6 +12,7 @@
 #include "Search.h"
 #include "GoalKeeper.h"
 #include "Placer.h"
+#include "Arms.h"
 #include "ApproachPotential.h"
 // #include "LogMachine.hpp"
 #include "GoalKick.hpp"
@@ -42,7 +43,10 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   }
 
   // Loading all Moves
-  Kick* kick = new Kick;
+  Arms* arms = new Arms;
+  add(arms);
+
+  Kick* kick = new Kick();
   add(kick);
   // Forcing generation of kick motions at kick creation
   kick->cmdKickGen();
@@ -50,7 +54,8 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   Walk* walk = new Walk(kick);
   Head* head = new Head;
   Placer* placer = new Placer(walk);
-  StandUp* standup = new StandUp;
+  StandUp* standup = new StandUp();
+
   add(standup);
   add(head);
   add(new Search(walk, placer));
@@ -79,7 +84,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new Penalty(penaltyController));
 
   add(new ReactiveKicker(walk));
-  add(new AutonomousPlaying(walk, standup));
+  add(new AutonomousPlaying(walk, standup, arms));
   add(walk);
 
   //    csa_mdp::PolicyFactory::registerExtraBuilder("ExpertApproach", []() {return std::unique_ptr<csa_mdp::Policy>(new

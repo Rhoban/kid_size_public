@@ -12,6 +12,8 @@ public:
   std::string getName();
 
   void onStart();
+  void onStop();
+
   void step(float elapsed);
   bool over;
   bool live;
