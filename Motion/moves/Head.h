@@ -132,6 +132,9 @@ private:
   /// Is the robot supposed to perform a pure localization
   bool force_localize;
 
+  /// Is the robot supposed to keep searching for the ball
+  bool force_scan_ball;
+
   /// When Head is disabled, it looks at a fixed position and uses only
   /// safety
   bool disabled;
