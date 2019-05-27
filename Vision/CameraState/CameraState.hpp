@@ -194,6 +194,8 @@ public:
    * Offset between steady_clock and system clock for the given camera state
    */
   int64_t clock_offset;
+
+  hl_monitoring::FrameStatus frame_status;
 };
 }  // namespace Utils
 }  // namespace Vision

@@ -39,7 +39,11 @@ namespace Vision
 namespace Utils
 {
 CameraState::CameraState()
-  : has_camera_field_transform(false), clock_offset(0), _timeStamp(0.0), _moveScheduler(nullptr)
+  : _moveScheduler(nullptr)
+  , _timeStamp(0.0)
+  , has_camera_field_transform(false)
+  , clock_offset(0)
+  , frame_status(FrameStatus::UNKNOWN_FRAME_STATUS)
 {
 }
 
@@ -87,6 +91,14 @@ void CameraState::importFromProtobuf(const hl_monitoring::FrameEntry& src)
   cameraToWorld = worldToCamera.inverse();
   selfToWorld = Eigen::Affine3d::Identity();  // Protobuf does not store the position of the robot
   worldToSelf = selfToWorld.inverse();
+  if (src.has_status())
+  {
+    frame_status = src.status();
+  }
+  else
+  {
+    frame_status = FrameStatus::UNKNOWN_FRAME_STATUS;
+  }
 }
 
 void CameraState::exportToProtobuf(hl_monitoring::IntrinsicParameters* dst) const
@@ -109,6 +121,7 @@ void CameraState::exportToProtobuf(hl_monitoring::FrameEntry* dst) const
 {
   dst->set_time_stamp((uint64_t)(_timeStamp * std::pow(10, 6)));
   setProtobufFromAffine(worldToCamera, dst->mutable_pose());
+  dst->set_status(frame_status);
 }
 
 const rhoban::CameraModel& CameraState::getCameraModel() const
@@ -124,18 +137,19 @@ void CameraState::updateInternalModel(double timeStamp)
   if (_moveScheduler != nullptr)
   {
     ModelService* modelService = _moveScheduler->getServices()->model;
+    ViveService* vive = _moveScheduler->getServices()->vive;
+    DecisionService* decision = _moveScheduler->getServices()->decision;
 
     selfToWorld = modelService->selfToWorld(timeStamp);
     worldToCamera = modelService->cameraToWorld(timeStamp).inverse();
     _cameraModel = modelService->cameraModel;
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
+    frame_status = decision->camera_status;
     // Update camera/field transform based on (by order of priority)
     // 1. Vive
     // 2. LocalisationService if field quality is good
     // 3. If nothing is available set info to false
-    ViveService* vive = _moveScheduler->getServices()->vive;
-    DecisionService* decision = _moveScheduler->getServices()->decision;
     vive_balls_in_field.clear();
     vive_trackers_in_field.clear();
     if (vive->isActive())

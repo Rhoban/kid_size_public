@@ -4,6 +4,7 @@
 #include <map>
 #include <RhAL.hpp>
 #include "services/Service.h"
+#include <hl_monitoring/camera.pb.h>
 #include <rhoban_utils/history/history.h>
 
 class Move;
@@ -132,6 +133,8 @@ public:
   FallDirection fallDirection;
   /// Filtered status of the fall
   FallStatus fallStatus;
+
+  hl_monitoring::FrameStatus camera_status;
 
 protected:
   RhIO::Bind bind;
