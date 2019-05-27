@@ -25,10 +25,16 @@ public:
   virtual void onStart() override;
   virtual void step(float elapsed) override;
 
+  void setForceScanBall(bool value);
   void setForceLocalize(bool value);
   void setDisabled(bool value);
   bool isDisabled();
   void setLocalizeMaxPan(double maxPan);
+
+  /**
+   * Return the duration of a default head scan [s]
+   */
+  double getScanPeriod() const;
 
 private:
   /// Synchronize local parameters with 'scanner'

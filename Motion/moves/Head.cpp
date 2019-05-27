@@ -140,6 +140,11 @@ void Head::setLocalizeMaxPan(double maxPan)
   bind->node().setFloat("localizeMaxPan", maxPan);
 }
 
+double Head::getScanPeriod() const
+{
+  return scan_period;
+}
+
 std::string Head::getName()
 {
   return "head";
@@ -245,6 +250,11 @@ void Head::step(float elapsed)
   }
 
   bind->push();
+}
+
+void Head::setForceScanBall(bool value)
+{
+  bind->node().setBool("forceScanBall", value);
 }
 
 void Head::setForceLocalize(bool value)
