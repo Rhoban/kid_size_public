@@ -172,6 +172,14 @@ private:
 
   /// Locking access
   std::mutex filterMutex;
+
+  /**
+   * When enabled:
+   * - exploration is strongly reduced
+   * - observations are not taken in account
+   * - consistency is set to 1
+   */
+  bool odometryMode;
 };
 
 }  // namespace Vision
