@@ -396,9 +396,16 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
   Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ball_radius;
 
   // Getting pixel for ballSide
-  cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
-
-  return (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
+  try
+  {
+    cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
+    return (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
+  }
+  catch (const std::runtime_error& exc)
+  {
+    // If fails to retrive ball side in img, just return -1
+    return -1;
+  }
 }
 
 Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f& pos) const

@@ -68,9 +68,9 @@ public:
 
   KickStrategy generate();
 
-  KickStrategy::Action bestAction(State* state);
-  KickStrategy::Action bestAction(State* state,
-                                  std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)>);
+  typedef std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelRewardFunc;
+
+  KickStrategy::Action bestAction(State* state, travelRewardFunc func = travelRewardFunc());
 
   void loadScores(KickStrategy& strategy);
   void populateStrategy(KickStrategy& strategy);
@@ -81,6 +81,7 @@ public:
   // State for a given x/y, in field (center is 0,0)
   State* stateForFieldPos(double x, double y);
 
+  double travelRewardDefault(rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos, bool success);
   std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelReward;
 
 protected:
@@ -107,9 +108,7 @@ protected:
   bool iterate();
 
   // Reward function from a state to another one
-  double rewardFor(State* from, State* state, double kickLength);
-  double rewardFor(State* from, State* state, double kickLength,
-                   std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelFunc);
+  double rewardFor(State* from, State* state, double kickLength, travelRewardFunc travelFunc = travelRewardFunc());
 
   // Allowed kick names
   std::vector<std::string> getKickNames();

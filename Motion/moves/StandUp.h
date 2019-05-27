@@ -6,10 +6,12 @@
 #include <string>
 
 class Walk;
+class Arms;
+
 class StandUp : public Move
 {
 public:
-  StandUp(Walk* walk_);
+  StandUp(Arms* arms);
   ~StandUp();
   std::string getName();
 
@@ -22,6 +24,8 @@ public:
   int trying;
 
 protected:
+  Arms* arms;
+
   float armsRoll;
   float time;
   float speed_front;
@@ -37,5 +41,4 @@ protected:
 
   std::string currentSpline;
   bool reloadSpline;
-  Walk* walk;
 };

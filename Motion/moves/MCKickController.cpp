@@ -146,7 +146,7 @@ void MCKickController::execute()
           }
         }
 
-        return kickValueIteration.travelReward(fromPos, toPos, success) + penalty;
+        return kickValueIteration.travelRewardDefault(fromPos, toPos, success) + penalty;
       };
 
       auto action = kickValueIteration.bestAction(kickValueIteration.stateForFieldPos(ball.x, ball.y), rewardFunc);
