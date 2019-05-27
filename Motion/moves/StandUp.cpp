@@ -8,7 +8,7 @@ using rhoban_utils::Function;
 
 static rhoban_utils::Logger logger("StandUp");
 
-StandUp::StandUp()
+StandUp::StandUp(Arms* arms) : arms(arms)
 {
   Move::initializeBinding();
   time = 0.0;
@@ -61,7 +61,6 @@ void StandUp::onStart()
   manualT = 0.0;
   over = false;
   waiting = true;
-  Arms* arms = (Arms*)getMoves()->getMove("arms");
 
   arms->setArms(Arms::ArmsState::ArmsDisabled);
 

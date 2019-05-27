@@ -60,11 +60,9 @@ std::string Arms::getName()
 
 void Arms::onStart()
 {
+  bind->pull();
   logger.log("Arms: Starting Move");
 
-  actualAngle.elbow = elbowOffset;
-  actualAngle.shoulder_roll = armsRoll;
-  actualAngle.shoulder_pitch = rad2deg(getPitch());
   armsState = ArmsEnabled;
   smoothingArms = 0;
 }
@@ -85,7 +83,7 @@ void Arms::step(float elapsed)
   bind->push();
 }
 
-void Arms::setArms(ArmsState newArmsState, bool force)
+void Arms::setArms(ArmsState newArmsState, bool force, bool init)
 {
   if (armsState == newArmsState && !force)
   {
@@ -118,6 +116,9 @@ void Arms::setArms(ArmsState newArmsState, bool force)
       break;
     }
   }
+
+  if (init)
+    lastAngle = actualAngle;
 
   armsState = newArmsState;
   bind->node().setInt("armsState", armsState);

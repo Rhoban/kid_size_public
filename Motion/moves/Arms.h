@@ -28,7 +28,7 @@ public:
 
   // Enabling/disabling arms
   // force = true should only be used internally
-  void setArms(ArmsState armsState, bool force = false);
+  void setArms(ArmsState armsState, bool force = false, bool init = false);
 
   ArmsState armsState;
   armsAngle actualAngle;

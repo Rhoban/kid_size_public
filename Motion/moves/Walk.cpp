@@ -23,7 +23,7 @@ static double bound(double value, double min, double max)
   return value;
 }
 
-Walk::Walk()
+Walk::Walk(Arms* arms) : arms(arms)
 {
   Move::initializeBinding();
 
@@ -103,10 +103,9 @@ void Walk::onStart()
     }
     tmp->setDisabled(true);
   }
-  Arms* arms = (Arms*)getMoves()->getMove("arms");
-  startMove("arms");
+  startMove("arms", 0.5);
 
-  arms->setArms(Arms::ArmsState::ArmsEnabled);
+  arms->setArms(Arms::ArmsState::ArmsEnabled, true, true);
 
   auto model = getServices()->model;
   engine.initByModel(model->model);

@@ -31,7 +31,8 @@ using namespace hl_communication;
 using namespace rhoban_geometry;
 using namespace rhoban_team_play;
 
-Robocup::Robocup(Walk* walk, StandUp* standup, Placer* placer) : walk(walk), standup(standup), placer(placer)
+Robocup::Robocup(Walk* walk, StandUp* standup, Placer* placer, Arms* arms)
+  : walk(walk), standup(standup), placer(placer), arms(arms)
 {
   initializeBinding();
   // State
@@ -388,8 +389,6 @@ void Robocup::enterState(std::string state)
   {
     head->setDisabled(false);
   }
-
-  Arms* arms = (Arms*)getMoves()->getMove("arms");
 
   // Starts or stops the safe arms roll used for accessing the hotswap
   if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
