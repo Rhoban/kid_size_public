@@ -34,7 +34,7 @@
 
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
-#include "services/RobotModelService.h"
+#include "services/ModelService.h"
 #include "services/RefereeService.h"
 #include "services/ViveService.h"
 #include <cmath>
@@ -65,17 +65,21 @@ using Vision::Filters::TagsDetector;
 using Vision::Utils::CameraState;
 using Vision::Utils::ImageLogger;
 
+/**
+ * Capping image memory to 20 minutes at 40 fps
+ */
+static int max_images = 20 * 60 * 40;
+
 namespace Vision
 {
 Robocup::Robocup(MoveScheduler* scheduler)
   : Application()
   , imageDelay(0)
-  , manual_logger("manual_logs", true, 10000)
-  , moving_ball_logger("moving_ball_logs", false, 1000)
+  , manual_logger("manual_logs", false, max_images)
+  , moving_ball_logger("moving_ball_logs", false, 30 * 40)  // Less images memory for moving balls
   , autologMovingBall(false)
-  , game_logger("game_logs", false, 15 * 60 * 40)
-  ,  // Allows 15 minutes at 40 fps ->
-  autolog_games(false)
+  , game_logger("game_logs", false, max_images)
+  , autolog_games(false)
   , logBallExtraTime(2.0)
   , writeBallStatus(false)
   , _scheduler(scheduler)
@@ -125,12 +129,11 @@ Robocup::Robocup(MoveScheduler* scheduler)
 
 Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
   : imageDelay(0)
-  , manual_logger("manual_logs", true, 10000)
-  , moving_ball_logger("moving_ball_logs", false, 1000)
+  , manual_logger("manual_logs", false, max_images)
+  , moving_ball_logger("moving_ball_logs", false, 30 * 40)  // Less images memory for moving balls
   , autologMovingBall(false)
-  , game_logger("game_logs", true, 15 * 60 * 40)
-  ,  // Allows 15 minutes at 40 fps
-  autolog_games(false)
+  , game_logger("game_logs", false, max_images)
+  , autolog_games(false)
   , logBallExtraTime(2.0)
   , writeBallStatus(false)
   , benchmark(false)
@@ -190,7 +193,7 @@ void Robocup::startLogging(unsigned int timeMS, const std::string& logDir)
 {
   // If logDir is empty a name session is generated automatically in manual_logger
   logMutex.lock();
-  manual_logger.initSession(logDir);
+  manual_logger.initSession(*cs, logDir);
   startLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
   endLog = TimeStamp(getNowTS() + milliseconds(timeMS));
   logMutex.unlock();
@@ -204,11 +207,6 @@ void Robocup::endLogging()
   manual_logger.endSession();
   // TODO: examine if logMutex can be closed earlier
   logMutex.unlock();
-}
-
-void Robocup::applyKick(double x, double y)
-{
-  // ballStackFilter->applyKick(x / 100.0, y / 100.0);
 }
 
 cv::Mat Robocup::getImg(const std::string& name, int wishedWidth, int wishedHeight, bool gray)
@@ -393,7 +391,7 @@ void Robocup::initRhIO()
   {
     std::string prefix = "Vision/" + sih.name;
     RhIO::Root.newFloat(prefix + "_scale")->defaultValue(1.0)->comment("");
-    RhIO::Root.newFrame(prefix, "", RhIO::FrameFormat::BGR);
+    RhIO::Root.newFrame(prefix, "");
   }
   RhIO::Root.newStr("/Vision/taggedKickName")->defaultValue("classic");
 
@@ -564,7 +562,7 @@ void Robocup::step()
     if (sih.display)
       cv::imshow(sih.name, sih.lastImg);
     if (isStreaming)
-      RhIO::Root.framePush(prefix, img_width, img_height, sih.lastImg.data, sih.getSize());
+      RhIO::Root.framePush(prefix, sih.lastImg);
     Benchmark::close(sih.name.c_str());
   }
 
@@ -584,7 +582,7 @@ void Robocup::step()
   if (isFakeMode())
   {
     double ts = pipeline.getTimestamp().getTimeMS();
-    _scheduler->getServices()->robotModel->setReplayTimestamp(ts / 1000.0);
+    _scheduler->getServices()->model->setReplayTimestamp(ts / 1000.0);
   }
 }
 
@@ -643,8 +641,8 @@ void Robocup::readPipeline()
       std::vector<cv::Point2f> balls_in_img = provider.getBalls();
       for (const cv::Point2f& ball_in_img : balls_in_img)
       {
-        cv::Point2f world_pos = cs->worldPosFromImg(ball_in_img.x, ball_in_img.y);
-        detectedBalls->push_back(cv::Point3f(world_pos.x, world_pos.y, Constants::field.ball_radius));
+        Eigen::Vector3d ball_pos = cs->ballInWorldFromPixel(ball_in_img);
+        detectedBalls->push_back(eigen2CV(ball_pos));
       }
       // POI update
       std::map<Field::POIType, std::vector<cv::Point2f>> pois_in_img = provider.getPOIs();
@@ -741,6 +739,14 @@ void Robocup::getUpdatedCameraStateFromPipeline()
   // Backup values
   lastTS = sourceTS;
 
+  // EXPERIMENTAL:
+  //
+  // modification linked to the possibility that 'Source' filter provides the
+  // cameraState (from SourceVideoProtobuf)
+  cs = pipeline.getCameraState();
+  ballStackFilter->updateCS(cs);
+  robotFilter->updateCS(cs);
+
   sourceTS = cs->getTimeStamp();
 
   // TODO: identify if this part is only debug
@@ -753,14 +759,6 @@ void Robocup::getUpdatedCameraStateFromPipeline()
     }
   }
 
-  // EXPERIMENTAL:
-  //
-  // modification linked to the possibility that 'Source' filter provides the
-  // cameraState (from SourceVideoProtobuf)
-  cs = pipeline.getCameraState();
-  ballStackFilter->updateCS(cs);
-  robotFilter->updateCS(cs);
-
   csMutex.unlock();
 }
 
@@ -772,8 +770,11 @@ void Robocup::loggingStep()
   RefereeService* referee = _scheduler->getServices()->referee;
 
   // Capture src_filter and throws a std::runtime_error if required
-  const Filter& src_filter = pipeline.get("source");
-  ImageLogger::Entry entry(pipeline.getTimestamp(), *(src_filter.getImg()));
+  const Filter& src_filter = pipeline.get("human");
+  ImageLogger::Entry entry;
+  entry.img = *(src_filter.getImg());
+  entry.time_stamp = (uint64_t)(pipeline.getTimestamp().getTimeSec() * std::pow(10, 6));
+  entry.cs = *cs;
 
   logMutex.lock();
   // Handling manual logs
@@ -811,7 +812,7 @@ void Robocup::loggingStep()
   // Starting autoLog
   if (startAutoLog)
   {
-    moving_ball_logger.initSession();
+    moving_ball_logger.initSession(*cs);
     out.log("Starting a session at '%s'", moving_ball_logger.getSessionPath().c_str());
     std::string lowLevelPath = moving_ball_logger.getSessionPath() + "/lowLevel.log";
     startLoggingLowLevel(lowLevelPath);
@@ -830,14 +831,14 @@ void Robocup::loggingStep()
   }
 
   // Status of game_logs
-  bool is_playing = referee->isPlaying();
+  bool is_log_allowed = !referee->isInitialPhase() && !referee->isFinishedPhase() && !referee->isPenalized();
   bool gameLogActive = game_logger.isActive();
-  bool useGameLogEntry = autolog_games && is_playing;
+  bool useGameLogEntry = autolog_games && is_log_allowed;
   bool startGameLog = !gameLogActive && useGameLogEntry;
   bool stopGameLog = gameLogActive && !useGameLogEntry;
   if (startGameLog)
   {
-    game_logger.initSession();
+    game_logger.initSession(*cs);
     out.log("Starting a session at '%s'", game_logger.getSessionPath().c_str());
     std::string lowLevelPath = game_logger.getSessionPath() + "/lowLevel.log";
     startLoggingLowLevel(lowLevelPath);
@@ -1367,9 +1368,7 @@ void Robocup::closeCamera()
 {
   if (pipeline.isFilterPresent("source"))
   {
-    std::cerr << "Someone asked to close camera in Robocup, not implemented "
-                 "for PtGrey"
-              << std::endl;
+    std::cerr << "Someone asked to close camera in Robocup, not implemented for PtGrey" << std::endl;
   }
   else
   {
@@ -1388,7 +1387,7 @@ TimeStamp Robocup::getNowTS() const
 
 bool Robocup::isFakeMode() const
 {
-  return _scheduler->getServices()->robotModel->isFakeMode();
+  return _scheduler->getServices()->model->isFakeMode();
 }
 
 void Robocup::ballClear()
@@ -1408,7 +1407,7 @@ void Robocup::ballReset(float x, float y)
 
 void Robocup::setLogMode(const std::string& path)
 {
-  _scheduler->getServices()->robotModel->loadReplay(path);
+  _scheduler->getServices()->model->loadReplay(path);
 
   std::cout << "Loaded replay" << std::endl;
 }
@@ -1421,14 +1420,14 @@ void Robocup::setViveLog(const std::string& path)
 void Robocup::startLoggingLowLevel(const std::string& path)
 {
   std::cout << DEBUG_INFO << ": " << path << std::endl;
-  _scheduler->getServices()->robotModel->startLogging(path);
+  _scheduler->getServices()->model->startLogging(path);
 }
 
 void Robocup::stopLoggingLowLevel(const std::string& path)
 {
   out.log("Saving lowlevel log to: %s", path.c_str());
   TimeStamp start_save = TimeStamp::now();
-  _scheduler->getServices()->robotModel->stopLogging(path);
+  _scheduler->getServices()->model->stopLogging(path);
   TimeStamp end_save = TimeStamp::now();
   out.log("Lowlevel logs saved in %f seconds", diffSec(start_save, end_save));
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <CameraState/CameraState.hpp>
+
 #include <rhoban_utils/timing/time_stamp.h>
 
 #include <opencv2/core/core.hpp>
@@ -27,7 +29,21 @@ namespace Utils
 class ImageLogger
 {
 public:
-  typedef std::pair<rhoban_utils::TimeStamp, cv::Mat> Entry;
+  struct Entry
+  {
+    /**
+     * The image captured
+     */
+    cv::Mat img;
+    /**
+     * Micro-seconds time_stamp of the image acquisition based on steady clock
+     */
+    uint64_t time_stamp;
+    /**
+     * The camera state corresponding image
+     */
+    CameraState cs;
+  };
 
   /// Create a Logger
   /// @param logger_prefix The prefix for all sessions using this ImageLogger
@@ -41,7 +57,7 @@ public:
   /// Start a session at "logger_prefix/session_local_path"
   /// Create the directory if necessary
   /// If session_local_path is an empty string, then generates a name based on current time
-  void initSession(const std::string& session_local_path = "");
+  void initSession(const CameraState& cs, const std::string& session_local_path = "");
 
   /// Push the entry in the log, if there is no active session, open a new session
   /// @throws a SizeLimitException if the maximal number of images per session has been reached
@@ -76,8 +92,8 @@ private:
   /// Number of images allowed per log session
   /// Active session path
   std::string session_path;
-  /// Logs also produce a file mapping images ids to timestamps
-  std::ofstream description_file;
+  std::map<std::string, hl_monitoring::VideoMetaInformation> metadata;
+  cv::VideoWriter video_writer;
 
   /// Write a line in the csv file associating file names with timestamps and a
   /// png image for the given file

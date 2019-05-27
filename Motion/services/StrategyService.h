@@ -37,6 +37,11 @@ public:
    */
   Eigen::Vector2d getKickTarget() const;
 
+  /**
+   * Returns the grass offset [deg]
+   */
+  double getGrassOffset() const;
+
 protected:
   RhIO::Bind bind;
 

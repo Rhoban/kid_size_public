@@ -185,9 +185,6 @@ public:
                  std::vector<std::pair<float, float>>& centers,
                  std::vector<std::pair<float, float>>& undistorded_centers, double* timestamp);
 
-  // Apply a kick on the ball stack filter
-  void applyKick(double x, double y);
-
   cv::Mat getRobotView(int width = 600, int height = 600);
   cv::Mat getTaggedImg();
   cv::Mat getTaggedImg(int width, int height);

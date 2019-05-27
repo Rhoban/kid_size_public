@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(kid_size)
 
-include(FindProtobuf)
-find_package(Protobuf REQUIRED)
-
 set(OpenCV_DIR "/usr/local/include/")
 find_package(OpenCV 3.2.0 REQUIRED)
 
@@ -81,9 +78,8 @@ include_directories(${INCLUDED_DIRECTORIES} ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${OpenCV_INCLUDE_DIRS})
 #Linked dependency external Libraries
 set (LINKED_LIBRARIES
-    pthread
+    pthread dl
     ${catkin_LIBRARIES}
-    ${PROTOBUF_LIBRARIES}
     ${OpenCV_LIBS}
 )
 
@@ -136,17 +132,6 @@ set (SOURCES_DIRECTORIES
   Vision/Utils
   )
 
-#TODO: use a scheme similar to the one used for sources if 
-set (PROTOBUF_MESSAGES
-  Vision/Protobuf/camera_state.proto
-  Vision/Protobuf/video.proto
-  )
-
-include_directories(${PROTOBUF_INCLUDE_DIR})
-protobuf_generate_cpp(PROTO_SOURCES PROTO_HEADERS ${PROTOBUF_MESSAGES})
-
-set (ALL_SOURCES ${PROTO_SOURCES})
-
 #Include Sources sub sources
 foreach (DIRECTORY ${SOURCES_DIRECTORIES})
     message(STATUS "-- Sources: Adding ${DIRECTORY}/")
@@ -186,7 +171,7 @@ set_source_files_properties (
 add_custom_target(date ALL COMMAND touch ${CMAKE_CURRENT_SOURCE_DIR}/KidSize/buildinfos.c)
 
 #Build the main kid_size binary
-add_executable (KidSize KidSize/main.cpp KidSize/buildinfos.c)
+add_executable (KidSize KidSize/main.cpp KidSize/buildinfos.c KidSize/backtrace.cpp)
 target_link_libraries (KidSize ${LINKED_LIBRARIES} kid_size)
 add_dependencies(KidSize date)
 

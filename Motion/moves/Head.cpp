@@ -1,6 +1,6 @@
 #include "Head.h"
 
-#include "services/RobotModelService.h"
+#include "services/ModelService.h"
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
 
@@ -43,7 +43,7 @@ Head::Head()
       ->defaultValue(90);
   bind->bindNew("maxPan", max_pan, RhIO::Bind::PullOnly)
       ->comment("Maximum pan wished for an image point")
-      ->defaultValue(135);
+      ->defaultValue(110);
   bind->bindNew("minOverlap", min_overlap, RhIO::Bind::PullOnly)
       ->comment("Minimal overlap between control points [degrees]")
       ->defaultValue(15);
@@ -56,7 +56,7 @@ Head::Head()
       ->defaultValue(60);
   bind->bindNew("localizeMaxPan", localize_max_pan, RhIO::Bind::PullOnly)
       ->comment("Maximum pan wished for an image point")
-      ->defaultValue(150);
+      ->defaultValue(160);
   bind->bindNew("localizeMinOverlap", localize_min_overlap, RhIO::Bind::PullOnly)
       ->comment("Minimal overlap between control points [degrees]")
       ->defaultValue(5);
@@ -110,6 +110,10 @@ Head::Head()
   bind->bindNew("wishedDist", wished_dist, RhIO::Bind::PushOnly)
       ->comment("Distance of the point provided by the scanner [m]");
 
+  bind->bindNew("predictedBallTimeOffset", predicted_ball_time_offset, RhIO::Bind::PullOnly)
+      ->comment("Predicted ball in future [ms]")
+      ->defaultValue(200.0);
+
   bind->bindNew("smoothing", smoothing, RhIO::Bind::PullOnly)
       ->comment("smoothing of the orders applied for both scan and track")
       ->defaultValue(0.9);
@@ -154,11 +158,11 @@ void Head::step(float elapsed)
 
   updateTimers(elapsed);
 
-  LocalisationService* loc = getServices()->localisation;
+  DecisionService* decision = getServices()->decision;
 
   // Use Model and camera parameters to determine position
-  rhoban::HumanoidModel* model = &getServices()->robotModel->model;
-  const rhoban::CameraModel& camera_model = getServices()->robotModel->cameraModel;
+  rhoban::HumanoidModel* model = &getServices()->model->model;
+  const rhoban::CameraModel& camera_model = getServices()->model->cameraModel;
 
   Eigen::Vector3d target_in_self;
   if (disabled)
@@ -177,8 +181,16 @@ void Head::step(float elapsed)
   }
   else
   {
-    // TODO: Should also use scanTarget if ball target has maxPan to high (use hysteresis)
-    target_in_self = getScanTarget(model, scanner);
+    // If ball is properly localized, use the localization scanner rather than
+    // the default scanner
+    if (decision->isBallQualityGood)
+    {
+      target_in_self = getScanTarget(model, localize_scanner);
+    }
+    else
+    {
+      target_in_self = getScanTarget(model, scanner);
+    }
     is_tracking = false;
   }
 
@@ -240,6 +252,10 @@ void Head::setDisabled(bool value)
 {
   bind->node().setBool("disabled", value);
 }
+bool Head::isDisabled()
+{
+  return disabled;
+}
 
 void Head::updateTimers(float elapsed)
 {
@@ -262,15 +278,13 @@ bool Head::shouldTrackBall()
     return false;
   // Otherwise: tracking depends on loc and history
   LocalisationService* loc = getServices()->localisation;
+  DecisionService* decision = getServices()->decision;
   double ball_dist = loc->getBallPosSelf().getLength();
   // Never track ball if quality is too low
-  if (loc->ballQ < 0.1)
+  if (!decision->isBallQualityGood)
     return false;
   // For some cases, tracking is forced to stay active
-  if (force_track || ball_dist < force_track_dist ||
-      // Currently disabled because there are too much false positives!
-      //      getServices()->decision->isBallMoving||
-      getServices()->decision->isMateKicking)
+  if (force_track || ball_dist < force_track_dist || decision->isBallMoving || decision->isMateKicking)
   {
     return true;
   }
@@ -330,7 +344,8 @@ Eigen::Vector3d Head::getBallTarget(rhoban::HumanoidModel* model, const rhoban::
   double robotHeight = model->position("camera", "support_foot").z();  //[m]
 
   LocalisationService* loc = getServices()->localisation;
-  auto point = loc->getPredictedBallSelf();
+  double futureTimestampMS = rhoban_utils::TimeStamp::now().getTimeMS() + predicted_ball_time_offset;
+  auto point = loc->getPredictedBallSelf(rhoban_utils::TimeStamp::fromMS(futureTimestampMS));
 
   // Getting limits angle
   double max_tilt_value = max_tilt_track;
@@ -350,7 +365,7 @@ Eigen::Vector3d Head::getBallTarget(rhoban::HumanoidModel* model, const rhoban::
 
 void Head::updateScanners()
 {
-  const rhoban::CameraModel& camera_model = getServices()->robotModel->cameraModel;
+  const rhoban::CameraModel& camera_model = getServices()->model->cameraModel;
   double fovx = camera_model.getFOVX().getSignedValue();
   double fovy = camera_model.getFOVY().getSignedValue();
   // Update default scanner

@@ -8,7 +8,7 @@
 #include "RefereeService.h"
 #include "TeamPlayService.h"
 #include "LocalisationService.h"
-#include "RobotModelService.h"
+#include "ModelService.h"
 #include <moves/Walk.h>
 #include <moves/Moves.h>
 #include <robocup_referee/constants.h>
@@ -37,6 +37,8 @@ static rhoban_utils::Logger out("localisation_service");
 LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL), locBinding(NULL)
 {
   lastKick = rhoban_utils::TimeStamp::now();
+  isReplay = false;
+
   // Ball
   ballPosX = ballPosY = 0;
   ballPosWorld = Eigen::Vector3d(0, 0, 0);
@@ -75,7 +77,7 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   bind.bindNew("opponents", opponents, RhIO::Bind::PushOnly)->comment("Opponent field position as string [m]");
   bind.bindNew("opponentsRadius", opponentsRadius, RhIO::Bind::PullOnly)
       ->comment("Opponent radius [m]")
-      ->defaultValue(0.65);
+      ->defaultValue(0.3);
 
   bind.bindNew("teamMatesRadius", teamMatesRadius, RhIO::Bind::PullOnly)
       ->comment("TeamMates radius [m]")
@@ -87,8 +89,6 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   bind.bindNew("worldBallY", ballPosWorld.y(), RhIO::Bind::PushOnly);
   bind.bindNew("worldFieldX", fieldCenterWorld.x(), RhIO::Bind::PushOnly);
   bind.bindNew("worldFieldY", fieldCenterWorld.y(), RhIO::Bind::PushOnly);
-
-  bind.bindNew("simulateWalk", simulateWalk, RhIO::Bind::PullOnly)->defaultValue(false)->comment("Simulate walking");
 
   bind.bindNew("fieldQ", fieldQ, RhIO::Bind::PushOnly)->comment("Field quality");
   bind.bindNew("fieldConsistency", fieldConsistency, RhIO::Bind::PushOnly)->comment("Field consistency");
@@ -102,7 +102,14 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
       ->comment("Robot orientation in the field referential [deg]")
       ->defaultValue(0);
 
+  bind.bindNew("replayLocalisation", isReplay, RhIO::Bind::PullOnly)->defaultValue(isReplay);
+
   bind.bindNew("block", block, RhIO::Bind::PullOnly)->comment("Block")->defaultValue(false);
+
+  // XXX: Injecting a fake opponent on the field
+  opponentsAreFake = true;
+  opponentsWorld.push_back(Eigen::Vector3d(1, 0, 0));
+  updateOpponentsPos();
 }
 
 Point LocalisationService::getBallSpeedSelf()
@@ -305,12 +312,14 @@ void LocalisationService::updateOpponentsPos()
 
 void LocalisationService::setOpponentsWorld(const std::vector<Eigen::Vector3d>& pos)
 {
-  mutex.lock();
-  opponentsAreFake = false;
-  opponentsWorld = pos;
-  mutex.unlock();
+  if (!opponentsAreFake)
+  {
+    mutex.lock();
+    opponentsWorld = pos;
+    mutex.unlock();
 
-  updateOpponentsPos();
+    updateOpponentsPos();
+  }
 }
 //
 // void LocalisationService::updateMatesPos()
@@ -404,8 +413,13 @@ void LocalisationService::updatePosSelf()
 }
 
 void LocalisationService::setPosSelf(const Eigen::Vector3d& center_in_self, float orientation, float quality,
-                                     float consistency, bool consistencyEnabled_)
+                                     float consistency, bool consistencyEnabled_, bool replayValue)
 {
+  if (isReplay != replayValue)
+  {
+    return;
+  }
+
   bind.pull();
 
   fieldQ = quality;
@@ -424,22 +438,12 @@ void LocalisationService::setPosSelf(const Eigen::Vector3d& center_in_self, floa
 
 void LocalisationService::applyKick(float x_, float y_)
 {
-  if (NULL != robocup)
-  {
-    /// Currently has no effect on ballStackFilter
-    robocup->applyKick(x_, y_);
-  }
-
   if (Helpers::isFakeMode() && !Helpers::isPython)
   {
-    double yaw = rhoban::frameYaw(getServices()->robotModel->model.selfToWorld().rotation());
-    ;
+    double yaw = rhoban::frameYaw(getServices()->model->model.selfToWorld().rotation());
     std::random_device rd;
     std::default_random_engine engine(rd());
     std::uniform_real_distribution<double> unif(-0.1, 0.1);
-
-    x_ *= 0.01;
-    y_ *= 0.01;
 
     double x = cos(yaw) * x_ - sin(yaw) * y_ + unif(engine);
     double y = sin(yaw) * x_ + cos(yaw) * y_ + unif(engine);
@@ -479,12 +483,6 @@ void LocalisationService::penaltyGoalReset()
 
 void LocalisationService::goalReset()
 {
-  if (NULL != locBinding)
-  {
-    RhIO::Root.setFloat("/Localisation/Field/RobotController/angleExploration", 0.5);
-    RhIO::Root.setFloat("/Localisation/Field/RobotController/posExploration", 0.5);
-  }
-
   customFieldReset(-Constants::field.field_length / 2, 0, 0.01, 0, 1);
 
   if (NULL != robocup)
@@ -654,7 +652,7 @@ std::string LocalisationService::cmdMoveOnField(double x, double y, double yaw)
   selfToWorld.linear() = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()).toRotationMatrix();
 
   // Updating supportToWorld accordingly
-  rhoban::HumanoidModel& model = getServices()->robotModel->model;
+  rhoban::HumanoidModel& model = getServices()->model->model;
   Eigen::Affine3d supportToSelf = model.selfToWorld().inverse() * model.supportToWorld;
   model.supportToWorld = selfToWorld * supportToSelf;
 
@@ -739,7 +737,7 @@ void LocalisationService::updateFieldWorldTransforms()
 
 void LocalisationService::updateSelfWorldTransforms()
 {
-  world_from_self = getServices()->robotModel->model.selfToWorld();
+  world_from_self = getServices()->model->model.selfToWorld();
   self_from_world = world_from_self.inverse();
 }
 

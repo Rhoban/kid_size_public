@@ -2,12 +2,11 @@
 #include "Walk.h"
 #include "Head.h"
 #include "services/DecisionService.h"
-#include "services/RobotModelService.h"
+#include "services/ModelService.h"
 #include <scheduler/MoveScheduler.h>
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/control/variation_bound.h>
-#include "Kick.h"
 
 static rhoban_utils::Logger walkLogger("Walk");
 
@@ -23,18 +22,12 @@ static double bound(double value, double min, double max)
   return value;
 }
 
-Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
+Walk::Walk()
 {
   Move::initializeBinding();
-  swingGainStart = 0.04;
-  trunkPitch = 13;
-  bootstrapSteps = 3;
-  safeArmsRoll = 40;
-  shouldBootstrap = false;
-  armsEnabled = true;
-  safeArmsRollEnabled = false;
 
   // Enables or disables the walk
+  walkEnable = true;
   bind->bindNew("walkEnable", walkEnable, RhIO::Bind::PullOnly)->defaultValue(false);
   bind->bindNew("walkStep", walkStep, RhIO::Bind::PullOnly)->comment("Walk control Step [mm/step]")->defaultValue(0.0);
   bind->bindNew("walkLateral", walkLateral, RhIO::Bind::PullOnly)
@@ -44,9 +37,9 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
 
   // Walk limits (to inform other moves about limits)
   bind->bindNew("maxRotation", maxRotation, RhIO::Bind::PullOnly)->defaultValue(15);
-  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.1);
+  bind->bindNew("maxStep", maxStep, RhIO::Bind::PullOnly)->defaultValue(0.08);
   bind->bindNew("maxStepBackward", maxStepBackward, RhIO::Bind::PullOnly)->defaultValue(0.04);
-  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(0.030);
+  bind->bindNew("maxLateral", maxLateral, RhIO::Bind::PullOnly)->defaultValue(0.04);
 
   // Walk engine parameters
   bind->bindNew("trunkXOffset", engine.trunkXOffset, RhIO::Bind::PullOnly)->defaultValue(engine.trunkXOffset);
@@ -56,26 +49,25 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
   bind->bindNew("riseGain", engine.riseGain, RhIO::Bind::PullOnly)->defaultValue(engine.riseGain);
   bind->bindNew("riseDuration", engine.riseDuration, RhIO::Bind::PullOnly)->defaultValue(engine.riseDuration);
   bind->bindNew("swingGain", engine.swingGain, RhIO::Bind::PullOnly)->defaultValue(engine.swingGain);
-  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(swingGainStart);
+  bind->bindNew("swingGainStart", swingGainStart, RhIO::Bind::PullOnly)->defaultValue(0.04);
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
   bind->bindNew("footYOffsetPerStepSizeY", engine.footYOffsetPerStepSizeY, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerStepSizeY);
-  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(trunkPitch);
-  bind->bindNew("speedInflexion", engine.speedInflexion, RhIO::Bind::PullOnly)->defaultValue(engine.speedInflexion);
+  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(12);
 
   // XXX: This feature can be deleted later if it is of no use
-  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(bootstrapSteps);
-  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(shouldBootstrap);
+  bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(3);
+  bind->bindNew("shouldBootstrap", shouldBootstrap, RhIO::Bind::PullOnly)->defaultValue(false);
 
   // Acceleration limits
   bind->bindNew("maxDStepByCycle", maxDStepByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(0.02)
+      ->defaultValue(0.035)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDLatByCycle", maxDLatByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(0.02)
+      ->defaultValue(0.03)
       ->comment("Maximal difference between two steps [mm/step^2]");
   bind->bindNew("maxDTurnByCycle", maxDTurnByCycle, RhIO::Bind::PullOnly)
-      ->defaultValue(10)
+      ->defaultValue(7)
       ->comment("Maximal difference between two steps [deg/step^2]");
 
   // Security parameters
@@ -85,27 +77,35 @@ Walk::Walk(Kick* _kickMove) : kickMove(_kickMove)
       ->maximum(1.0);
   bind->bindNew("securityPhase", securityPhase, RhIO::Bind::PullOnly)->defaultValue(0.05);
 
-  // Kick parameters
-  bind->bindNew("kickPending", kickPending, RhIO::Bind::PullOnly)->defaultValue(false);
-  bind->bindNew("kickLeftFoot", kickLeftFoot, RhIO::Bind::PullOnly)->defaultValue(false);
-  bind->bindNew("kickName", kickName, RhIO::Bind::PullOnly)->defaultValue("classic");
-  bind->bindNew("kickCooldown", kickCooldown, RhIO::Bind::PullOnly)
-      ->defaultValue(0.5)
-      ->comment("Cooldown duration [s]");
-  bind->bindNew("kickWarmup", kickWarmup, RhIO::Bind::PullOnly)->defaultValue(0.75)->comment("Warmup [s]");
-
   // Arms
   bind->bindNew("armsRoll", armsRoll, RhIO::Bind::PullOnly)->defaultValue(-5.0)->minimum(-20.0)->maximum(150.0);
-  bind->bindNew("safeArmsRoll", safeArmsRoll, RhIO::Bind::PullOnly)
-      ->defaultValue(safeArmsRoll)
+  bind->bindNew("maintenanceArmsRoll", maintenanceArmsRoll, RhIO::Bind::PullOnly)
+      ->defaultValue(40)
       ->minimum(-20.0)
       ->maximum(150.0);
-  bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-165.0)->minimum(-200.0)->maximum(30.0);
-  bind->bindNew("armsEnabled", armsEnabled, RhIO::Bind::PullOnly)->defaultValue(armsEnabled);
-  bind->bindNew("safeArmsRollEnabled", safeArmsRollEnabled, RhIO::Bind::PullOnly)->defaultValue(safeArmsRollEnabled);
+  bind->bindNew("disabledArmsRoll", disabledArmsRoll, RhIO::Bind::PullOnly)
+      ->defaultValue(5.0)
+      ->minimum(-20.0)
+      ->maximum(150.0);
+
+  bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-160.0)->minimum(-200.0)->maximum(30.0);
+  bind->bindNew("maintenanceElbowOffset", maintenanceElbowOffset, RhIO::Bind::PullOnly)
+      ->defaultValue(-120.0)
+      ->minimum(-200.0)
+      ->maximum(30.0);
+  bind->bindNew("disabledElbowOffset", disabledElbowOffset, RhIO::Bind::PullOnly)
+      ->defaultValue(0.0)
+      ->minimum(-200.0)
+      ->maximum(30.0);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+  bind->bindNew("armsState", (int&)armsState, RhIO::Bind::PullOnly)->defaultValue(0);
+#pragma GCC diagnostic pop
+
+  bind->bindNew("smoothingArms", smoothingArms, RhIO::Bind::PushOnly)->defaultValue(0);
 
   state = WalkNotWalking;
-  kickState = KickNotKicking;
+  armsState = ArmsDisabled;
   timeSinceLastStep = 0;
 }
 
@@ -116,6 +116,8 @@ std::string Walk::getName()
 
 void Walk::onStart()
 {
+  bind->pull();
+
   // Ensuring safety of head
   Move* head = getScheduler()->getMove("head");
   if (!head->isRunning())
@@ -129,9 +131,8 @@ void Walk::onStart()
     }
     tmp->setDisabled(true);
   }
-
-  auto robotModel = getServices()->robotModel;
-  engine.initByModel(robotModel->model);
+  auto model = getServices()->model;
+  engine.initByModel(model->model);
 
   bind->node().setBool("walkEnable", false);
 
@@ -140,20 +141,17 @@ void Walk::onStart()
   bind->node().setFloat("walkLateral", 0.0);
   bind->node().setFloat("walkTurn", 0.0);
 
-  // Cancelling eventual previous pending kicks
-  bind->node().setBool("kickPending", false);
-
   state = WalkNotWalking;
-  kickState = KickNotKicking;
-  bind->node().setBool("armsEnabled", true);
   smoothingArms = 0;
+
+  armsState = ArmsDisabled;
+  setArms(ArmsEnabled, true, true);
 }
 
 void Walk::onStop()
 {
-  getServices()->robotModel->enableOdometry(false);
+  getServices()->model->enableOdometry(false);
   state = WalkNotWalking;
-  kickState = KickNotKicking;
 }
 
 void Walk::control(bool enable, double step, double lateral, double turn)
@@ -164,31 +162,16 @@ void Walk::control(bool enable, double step, double lateral, double turn)
     lateral = bound(lateral, -maxLateral, maxLateral);
     turn = bound(turn, -maxRotation, maxRotation);
 
-    double magnitude = fabs(step) / maxStep + fabs(turn) / maxRotation + fabs(lateral) / maxLateral;
-    if (magnitude < 1)
-    {
-      magnitude = 1;
-    }
-
     bind->node().setBool("walkEnable", enable);
-    bind->node().setFloat("walkStep", step / magnitude);
-    bind->node().setFloat("walkLateral", lateral / magnitude);
-    bind->node().setFloat("walkTurn", turn / magnitude);
+    bind->node().setFloat("walkStep", step);
+    bind->node().setFloat("walkLateral", lateral);
+    bind->node().setFloat("walkTurn", turn);
   }
 }
 
-void Walk::kick(bool rightFoot, const std::string& kickName)
+bool Walk::isWalking()
 {
-  walkLogger.log("Kick \"%s\" requested", kickName.c_str());
-
-  bind->node().setBool("kickPending", true);
-  bind->node().setBool("kickLeftFoot", !rightFoot);
-  bind->node().setStr("kickName", kickName);
-}
-
-bool Walk::isKicking()
-{
-  return kickState != KickNotKicking;
+  return state != WalkNotWalking;
 }
 
 void Walk::setShouldBootstrap(bool bootstrap)
@@ -198,14 +181,18 @@ void Walk::setShouldBootstrap(bool bootstrap)
 
 void Walk::step(float elapsed)
 {
-  auto robotModel = getServices()->robotModel;
+  ArmsState lastTickArmsState = armsState;
+  ModelService* modelService = getServices()->model;
 
   bind->pull();
+
+  if (lastTickArmsState != armsState)
+  {
+    setArms(armsState, true);
+  }
+
   engine.trunkPitch = deg2rad(trunkPitch);
-
-  stepKick(elapsed);
-
-  getServices()->robotModel->enableOdometry(state != WalkNotWalking);
+  modelService->enableOdometry(state != WalkNotWalking);
 
   if (state == WalkNotWalking)
   {
@@ -254,7 +241,10 @@ void Walk::step(float elapsed)
       // New step condition
       if (timeSinceLastStep > engine.stepDuration || state == WalkStarting)
       {
-        timeSinceLastStep -= engine.stepDuration;
+        if (state != WalkStarting)
+        {
+          timeSinceLastStep -= engine.stepDuration;
+        }
         stepCount += 1;
 
         if (stepCount <= 2)
@@ -325,7 +315,7 @@ void Walk::step(float elapsed)
 
         if (Helpers::isFakeMode())
         {
-          getServices()->robotModel->model.setSupportFoot(
+          modelService->model.setSupportFoot(
               engine.isLeftSupport ? rhoban::HumanoidModel::Left : rhoban::HumanoidModel::Right, true);
         }
       }
@@ -333,7 +323,7 @@ void Walk::step(float elapsed)
   }
 
   // Assigning to robot
-  std::map<std::string, double> angles = engine.computeAngles(robotModel->model, timeSinceLastStep);
+  std::map<std::string, double> angles = engine.computeAngles(modelService->model, timeSinceLastStep);
   for (auto& entry : angles)
   {
     setAngle(entry.first, rad2deg(entry.second));
@@ -345,90 +335,70 @@ void Walk::step(float elapsed)
   bind->push();
 }
 
-void Walk::stepKick(float elapsed)
+void Walk::setArms(ArmsState newArmsState, bool force, bool init)
 {
-  if (kickPending)
+  if (armsState == newArmsState && !force)
   {
-    // Enter the kick STM
-    bind->node().setBool("kickPending", false);
-    kickState = KickWaitingWalkToStop;
+    return;
   }
 
-  if (kickState != KickNotKicking)
+  lastAngle = actualAngle;
+
+  switch (newArmsState)
   {
-    // While kicking, walk is forced isabled
-    walkEnable = false;
-    kickT += elapsed;
-
-    if (kickState == KickWaitingWalkToStop && state == WalkNotWalking)
+    case ArmsEnabled:
     {
-      // Forcing support foot in the model
-      auto robotModel = getServices()->robotModel;
-      getServices()->robotModel->model.setSupportFoot(
-          kickLeftFoot ? rhoban::HumanoidModel::Right : rhoban::HumanoidModel::Left, true);
-
-      // Walk is over, go to warmup state
-      kickState = KickWarmup;
-      kickT = 0;
+      actualAngle.elbow = elbowOffset;
+      actualAngle.shoulder_roll = armsRoll;
+      actualAngle.shoulder_pitch = rad2deg(getPitch());
+      break;
     }
-    DecisionService* decision = getServices()->decision;
-
-    if (kickState == KickWarmup && kickT >= kickWarmup && !decision->freezeKick)
+    case ArmsMaintenance:
     {
-      // Warmup over, start the kick move
-      kickState = KickKicking;
-      kickMove->set(kickLeftFoot, kickName);
-      startMove("kick", 0.0);
+      actualAngle.elbow = maintenanceElbowOffset;
+      actualAngle.shoulder_roll = maintenanceArmsRoll;
+      actualAngle.shoulder_pitch = 0;
+      break;
     }
-    if (kickState == KickKicking && kickMove->over)
+    case ArmsDisabled:
     {
-      // Kick is over, enter the coolDown sequence
-      kickState = KickCooldown;
-      kickT = 0;
-    }
-    if (kickState == KickCooldown && kickT >= kickCooldown)
-    {
-      // Cooldown is over, quitting kicking state
-      kickState = KickNotKicking;
+      actualAngle.elbow = disabledElbowOffset;
+      actualAngle.shoulder_roll = disabledArmsRoll;
+      actualAngle.shoulder_pitch = 0;
+      break;
     }
   }
-}
 
-void Walk::enableArms(bool enabled)
-{
-  bind->node().setBool("armsEnabled", enabled);
-}
+  armsState = newArmsState;
+  bind->node().setInt("armsState", armsState);
+  smoothingArms = 0;
 
-void Walk::enableSafeArmsRoll(bool enabled)
-{
-  bind->node().setBool("safeArmsRollEnabled", enabled);
+  if (init)
+  {
+    lastAngle = actualAngle;
+  }
 }
 
 void Walk::stepArms(double elapsed)
 {
-  smoothingArms = bound(smoothingArms + elapsed * (armsEnabled ? 3 : -3), 0, 1);
+  smoothingArms = bound(smoothingArms + elapsed * 3, 0, 1);
 
   // IMU Pitch to arms
-  float imuPitch = rad2deg(getPitch());
-  setAngle("left_shoulder_pitch", imuPitch * smoothingArms);
-  setAngle("right_shoulder_pitch", imuPitch * smoothingArms);
+  if (armsState == ArmsEnabled)
+    actualAngle.shoulder_pitch = rad2deg(getPitch());
 
-  // Rolls to arms
-  double roll;
-  if (safeArmsRollEnabled)
-  {
-    roll = safeArmsRoll;
-  }
-  else
-  {
-    roll = armsRoll;
-  }
-  setAngle("left_shoulder_roll", roll * smoothingArms);
-  setAngle("right_shoulder_roll", -roll * smoothingArms);
+  setAngle("left_shoulder_pitch",
+           lastAngle.shoulder_pitch * (1 - smoothingArms) + actualAngle.shoulder_pitch * smoothingArms);
+  setAngle("right_shoulder_pitch",
+           lastAngle.shoulder_pitch * (1 - smoothingArms) + actualAngle.shoulder_pitch * smoothingArms);
 
-  // Elbows
-  setAngle("left_elbow", elbowOffset * smoothingArms);
-  setAngle("right_elbow", elbowOffset * smoothingArms);
+  setAngle("left_shoulder_roll",
+           lastAngle.shoulder_roll * (1 - smoothingArms) + actualAngle.shoulder_roll * smoothingArms);
+  setAngle("right_shoulder_roll",
+           -(lastAngle.shoulder_roll * (1 - smoothingArms) + actualAngle.shoulder_roll * smoothingArms));
+
+  setAngle("left_elbow", lastAngle.elbow * (1 - smoothingArms) + actualAngle.elbow * smoothingArms);
+  setAngle("right_elbow", lastAngle.elbow * (1 - smoothingArms) + actualAngle.elbow * smoothingArms);
 }
 
 bool Walk::isNewStep(double elapsed)

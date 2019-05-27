@@ -93,6 +93,7 @@ void Application::step()
     if (exit_on_stream_end)
     {
       end = true;
+      pipeline.finish();
     }
     else
     {

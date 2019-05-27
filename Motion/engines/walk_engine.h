@@ -48,11 +48,14 @@ public:
 
   // Walk engine left and right feet position
   struct Foot left, right;
+  rhoban_utils::PolySpline swingSpline;
 
   // Support and flying foot
   bool isLeftSupport;
   struct Foot& supportFoot();
   struct Foot& flyingFoot();
+
+  bool enableCircular;
 
   // Walk engine parameters
   double trunkXOffset;
@@ -67,7 +70,6 @@ public:
   double footDistance;
   double footYOffsetPerStepSizeY;
   double trunkPitch;
-  double speedInflexion;
 
   // Dynamics orders
   double stepSizeX, stepSizeY, stepSizeYaw;

@@ -26,6 +26,11 @@ std::string MovieRecorder::getClassName() const
   return "MovieRecorder";
 }
 
+void MovieRecorder::finish()
+{
+  closeStream();
+}
+
 void MovieRecorder::setParameters()
 {
   enabled = ParamInt(0, 0, 1);
@@ -40,7 +45,8 @@ void MovieRecorder::startStream(const cv::Size& size)
   {
     throw std::logic_error(DEBUG_INFO + "A video is already being written to " + videoPath);
   }
-  videoPath = rhoban_utils::getFormattedTime();
+  // videoPath = rhoban_utils::getFormattedTime();
+  videoPath = "movie_recorder_output";
   std::string filename = videoPath + ".avi";
   bool useColor = true;  // TODO: add as parameter
   // TODO: add quality and fourcc as parameter
@@ -52,7 +58,7 @@ void MovieRecorder::startStream(const cv::Size& size)
   }
 
   // Setting intrinsic parameters
-  rhoban_vision_proto::IntrinsicParameters* intrinsic = videoMetaInformation.mutable_camera_parameters();
+  hl_monitoring::IntrinsicParameters* intrinsic = videoMetaInformation.mutable_camera_parameters();
   getCS().exportToProtobuf(intrinsic);
   if (intrinsic->img_width() != (size_t)size.width || intrinsic->img_height() != (size_t)size.height)
   {
@@ -65,15 +71,15 @@ void MovieRecorder::pushEntry()
 {
   videoWriter.write(img());
   const Utils::CameraState& cs = getCS();
-  rhoban_vision_proto::CameraState* new_cs = videoMetaInformation.add_camera_states();
-  cs.exportToProtobuf(new_cs);
+  hl_monitoring::FrameEntry* new_fe = videoMetaInformation.add_frames();
+  cs.exportToProtobuf(new_fe);
 }
 
 void MovieRecorder::closeStream()
 {
   videoWriter.release();
 
-  std::string metadataPath = videoPath + "_metadata.bin";
+  std::string metadataPath = videoPath + "_metadata.pb";
   std::ofstream out(metadataPath);
   if (!out.good())
   {
@@ -87,7 +93,7 @@ void MovieRecorder::closeStream()
 
   // Clearing existing meta informations
   videoMetaInformation.clear_camera_parameters();
-  videoMetaInformation.clear_camera_states();
+  videoMetaInformation.clear_frames();
 
   videoPath.clear();
 }

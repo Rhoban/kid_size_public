@@ -122,7 +122,7 @@ void SpeedEstimator::initBinding()
       ->maximum(50);
   bind->bindNew("min_dt", min_dt, RhIO::Bind::PullOnly)
       ->comment("Minimal time difference between to entries to compute their speed [s]")
-      ->defaultValue(0.15)
+      ->defaultValue(0.1)
       ->minimum(0.01)
       ->maximum(0.5);
   bind->bindNew("max_dt", max_dt, RhIO::Bind::PullOnly)
@@ -138,7 +138,7 @@ void SpeedEstimator::initBinding()
   bind->bindNew("max_speed_dev", max_speed_dev, RhIO::Bind::PullOnly)
       ->comment("Maximal standard error on speed before usable_speed "
                 "reaches 0 [m/s]")
-      ->defaultValue(0.5)
+      ->defaultValue(2)
       ->minimum(0)
       ->maximum(2);
   bind->bindNew("max_speed", max_speed, RhIO::Bind::PullOnly)

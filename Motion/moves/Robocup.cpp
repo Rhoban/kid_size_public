@@ -20,6 +20,7 @@
 #define STATE_STOPPING "stopping"
 #define STATE_PLACING "placing"
 #define STATE_PENALIZED "penalized"
+#define STATE_SERVING_PENALTY "serving_penalty"
 #define STATE_GIVE_UP "give_up"
 #define STATE_FINISHED "finished"
 
@@ -158,31 +159,13 @@ void Robocup::applyGameState()
       {
         logger.log("End of free kick freeze phase, going back to play");
       }
-      // If player was penalized before
-      else if (referee->wasPenalized)
-      {
-        if (wasHandled)
-        {
-          // We was penalized and handled, resetting the filter to the borders of
-          // the field
-          logger.log("Playing from bordersReset (penalized)");
-          loc->bordersReset();
-        }
-        else
-        {
-          // Maybe the referee misclicked us, if we was not handled we should not
-          // reset the filters to the border
-          logger.log("I am unpenalized but I was not handled, not resetting filters");
-        }
-      }
       // If autoKickOff and not goalie, do not reset and start playing
       else if (autoKickOff)
       {
         logger.log("Playing with autoKickOff");
         if (wasHandled)
         {
-          // We was handled, so we suppose that we was not placed correctly and
-          // resetting the filters on the game start
+          // We was handled, so we suppose that we was not placed correctly and resetting the filters on the game start
           if (goalKeeper)
           {
             logger.log("I was handled during the placing phase, reseting the filters in the goals");
@@ -208,7 +191,7 @@ void Robocup::applyGameState()
         loc->goalReset();
       }
       // Classic start
-      else
+      else if (!referee->wasPenalized)
       {
         logger.log("Starting classical game");
         loc->gameStartReset();
@@ -234,38 +217,47 @@ void Robocup::step(float elapsed)
   auto& decision = getServices()->decision;
   bind->pull();
 
-  // We gave up, just die
-  if (state == STATE_GIVE_UP)
-  {
-    if (standup->over)
-    {
-      stopMove("standup", 0.0);
-      stopMove("head", 0.0);
-      stopMove("walk", 0.0);
-      getScheduler()->releaseServos();
-    }
-    return;
-  }
-
   // Detect if the robot is being handled
   if (decision->handled)
   {
     wasHandled = true;
   }
+  Head* head = (Head*)getMoves()->getMove("head");
 
   t += elapsed;
-  auto& referee = getServices()->referee;
+  auto referee = getServices()->referee;
   bool isPlaying = referee->isPlaying();
   bool isPenalized = referee->isPenalized();
+  // If robot is handled, it can't be serving penalty
+  bool isServingPenalty = referee->isServingPenalty() && !decision->handled;
+
+  // We gave up, only going to penalized or initial
+  if (state == STATE_GIVE_UP)
+  {
+    if (!decision->handled || (!referee->isPenalized() && !referee->isInitialPhase()))
+    {
+      // Waiting to go back to either penalized or initial phase
+      return;
+    }
+    else
+    {
+      stopMove("standup", 0.0);
+    }
+  }
 
   /// Let standup finish if it started, otherwise go to penalized state if
   /// referee asks to
-  if (state != STATE_STANDUP && state != STATE_PENALIZED && isPenalized)
+  if (state != STATE_STANDUP && state != STATE_PENALIZED && isPenalized && !isServingPenalty)
   {
     setState(STATE_PENALIZED);
   }
-  /// Go through state Waiting if we were penalized and we are not penalized anymore
-  if (state == STATE_PENALIZED && !isPenalized)
+  // Transition from penalized to serving_penalty waits both, stopping handle + referee signal
+  if (state == STATE_PENALIZED && isServingPenalty)
+  {
+    setState(STATE_SERVING_PENALTY);
+  }
+  /// Automatically going through WAITING when exiting penalized or serving_penalty
+  if ((state == STATE_PENALIZED || state == STATE_SERVING_PENALTY) && !isPenalized && !decision->handled)
   {
     setState(STATE_WAITING);
   }
@@ -368,15 +360,12 @@ void Robocup::step(float elapsed)
   lastRefereePlaying = isPlaying && !isPenalized;
 
   bool handled = decision->handled;
-  if (!handled && isHandled)
+  if (!handled && isHandled && state == STATE_INITIAL)
   {
-    if (state == STATE_INITIAL)
-    {
-      logger.log("Putting me on the floor in initial state");
-      double locationNoise = 0.3;
-      double azimuthNoise = 10;
-      loc->customFieldReset(autoStartX, autoStartY, locationNoise, autoStartAzimuth, azimuthNoise);
-    }
+    logger.log("Putting me on the floor in initial state");
+    double locationNoise = 0.3;
+    double azimuthNoise = 10;
+    loc->customFieldReset(autoStartX, autoStartY, locationNoise, autoStartAzimuth, azimuthNoise);
   }
   isHandled = handled;
 
@@ -386,11 +375,11 @@ void Robocup::step(float elapsed)
 void Robocup::enterState(std::string state)
 {
   logger.log("Entering state %s", state.c_str());
-
+  auto decision = getServices()->decision;
   t = 0;
 
   Head* head = (Head*)getMoves()->getMove("head");
-  // Not scanningm only if the robot is penalized
+  // Not scanning only if the robot is penalized or game finished
   if (state == STATE_PENALIZED || state == STATE_FINISHED)
   {
     head->setDisabled(true);
@@ -403,23 +392,21 @@ void Robocup::enterState(std::string state)
   // Starts or stops the safe arms roll used for accessing the hotswap
   if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
   {
-    walk->enableSafeArmsRoll(true);
+    walk->setArms(Walk::ArmsState::ArmsMaintenance);
   }
   else
   {
-    walk->enableSafeArmsRoll(false);
+    walk->setArms(Walk::ArmsState::ArmsEnabled);
   }
 
   if (state == STATE_STANDUP)
   {
     standup->setLayDown(false);
-    walk->enableArms(false);
     startMove("standup", 0.0);
     standup->trying = standup_try;
   }
   else
   {
-    walk->enableArms(true);
     walk->control(false);
   }
 
@@ -427,7 +414,6 @@ void Robocup::enterState(std::string state)
   {
     standup->setLayDown(true);
     walk->control(false);
-    stopMove("walk", 0.3);
     startMove("standup", 0.0);
   }
 
@@ -457,6 +443,7 @@ void Robocup::exitState(std::string state)
   logger.log("Exiting state %s", state.c_str());
 
   auto& decision = getServices()->decision;
+  LocalisationService* loc = getServices()->localisation;
 
   // After standing up:
   // - Apply a fallReset on filters
@@ -474,6 +461,21 @@ void Robocup::exitState(std::string state)
     else
     {
       standup_try = 0;
+    }
+  }
+
+  if (state == STATE_PENALIZED)
+  {
+    if (wasHandled)
+    {
+      // Robot was penalized and handled, resetting the filter to the borders of the field
+      logger.log("Playing from bordersReset (penalized)");
+      loc->bordersReset();
+    }
+    else
+    {
+      // Maybe the referee misclicked us, if we was not handled we should not reset the filters to the border
+      logger.log("I am unpenalized but I was not handled, not resetting filters");
     }
   }
 

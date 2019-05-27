@@ -93,6 +93,26 @@ public:
   bool freezeKick;
 
   /**
+   * Can we throwin next move ?
+   **/
+  bool nextKickIsThrowIn;
+
+  /**
+   * Is a kick running ?
+   **/
+  bool isKickRunning;
+
+  /**
+   * Is a throwIn running ?
+   **/
+  bool isThrowInRunning;
+
+  /**
+   * Is throwIn enabled ?
+   **/
+  bool throwInEnable;
+
+  /**
    * Should we fake team decisons?
    */
   bool fakeTeamDecisions;
@@ -157,6 +177,11 @@ protected:
    * Self attack detection
    */
   float selfAttackingT;
+
+  /**
+   * Counting time from free kick
+   */
+  double freeKickT;
 
   /// When has ball been flagged as moving for the last time
   rhoban_utils::TimeStamp lastBallMoving;

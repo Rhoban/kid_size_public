@@ -5,7 +5,7 @@
 #include "StrategyService.h"
 #include "rhoban_utils/logging/logger.h"
 #include "robocup_referee/constants.h"
-
+#include "moves/Move.h"
 #include <hl_communication/wrapper.pb.h>
 
 using namespace hl_communication;
@@ -30,7 +30,7 @@ DecisionService::DecisionService() : isBallMoving(false), bind("decision")
   bind.bindNew("isBallMoving", isBallMoving, RhIO::Bind::PushOnly)
       ->comment("Is the ball moving significantly according to one of the robot of the team")
       ->defaultValue(false);
-  bind.bindNew("isMateKicking", isMateKicking, RhIO::Bind::PushOnly)
+  bind.bindNew("isMSateKicking", isMateKicking, RhIO::Bind::PushOnly)
       ->comment("True if one of the robot of the team has performed a kick recently")
       ->defaultValue(false);
 
@@ -120,6 +120,22 @@ DecisionService::DecisionService() : isBallMoving(false), bind("decision")
   // Who is the goal ?
   bind.bindNew("goalId", goalId, RhIO::Bind::PullOnly)->comment("Id of the goal")->defaultValue(2);
 
+  bind.bindNew("nextKickIsThrowIn", nextKickIsThrowIn, RhIO::Bind::PushOnly)
+      ->comment("Is next kick a throw in ?")
+      ->defaultValue(false);
+
+  bind.bindNew("isKickRunning", isKickRunning, RhIO::Bind::PushOnly)
+      ->comment("Is a kick running ?")
+      ->defaultValue(false);
+
+  bind.bindNew("isThrowInRunning", isThrowInRunning, RhIO::Bind::PushOnly)
+      ->comment("Is a throw in running ?")
+      ->defaultValue(false);
+
+  bind.bindNew("throwInEnable", throwInEnable, RhIO::Bind::PullOnly)
+      ->comment("Is throw in enabled ?")
+      ->defaultValue(false);
+
   selfAttackingT = 0;
   handledT = 0;
 
@@ -153,11 +169,18 @@ bool DecisionService::tick(double elapsed)
   }
 
   freezeKick = false;
+
+  nextKickIsThrowIn = false;
+
   if (referee->isGameInterruption())
   {
     if (referee->myTeamGameInterruption())
     {
       freezeKick = true;
+      if (referee->isThrowIn())
+      {
+        nextKickIsThrowIn = true;
+      }
     }
     else
     {
@@ -223,7 +246,7 @@ bool DecisionService::tick(double elapsed)
             float X = fieldX + cos(a) * ballX - sin(a) * ballY;
             float Y = fieldY + sin(a) * ballX + cos(a) * ballY;
 
-            const PositionDistribution&  kickTarget = info.intention().kick().target();
+            const PositionDistribution& kickTarget = info.intention().kick().target();
             ballTargetX = kickTarget.x();
             ballTargetY = kickTarget.y();
 
@@ -279,9 +302,12 @@ bool DecisionService::tick(double elapsed)
 
     double threshold_falling = 45;
     double threshold_fallen = 60;
-    isFallen = max_imu_angle > threshold_falling;
+    isKickRunning = getMoves()->getMove("kick")->isRunning();
+    isThrowInRunning = isKickRunning && referee->isThrowIn();
 
-    if (max_imu_angle < threshold_falling)
+    isFallen = !isKickRunning && max_imu_angle > threshold_falling;
+
+    if (max_imu_angle < threshold_falling || isKickRunning)
     {
       fallStatus = FallStatus::Ok;
       fallDirection = FallDirection::None;

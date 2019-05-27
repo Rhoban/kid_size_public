@@ -42,7 +42,7 @@ WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0)
 }
 
 WalkEngine::WalkEngine()
-  : trunkXOffset(0.0)
+  : trunkXOffset(0.005)
   , trunkZOffset(0.02)
   , footYOffset(0.03)
   , riseGain(0.04)
@@ -50,12 +50,12 @@ WalkEngine::WalkEngine()
   , frequency(1.5)
   , swingGain(0.02)
   , swingPhase(0.0)
-  , footYOffsetPerStepSizeY(0.1)
+  , footYOffsetPerStepSizeY(0.2)
   , trunkPitch(0)
-  , speedInflexion(100)
   , stepSizeX(0)
   , stepSizeY(0)
   , stepSizeYaw(0)
+  , enableCircular(false)
 {
 }
 
@@ -82,8 +82,7 @@ std::map<std::string, double> WalkEngine::computeAngles(rhoban::HumanoidModel& m
   FootPose leftPose = left.getPosition(timeSinceLastStep);
   FootPose rightPose = right.getPosition(timeSinceLastStep);
 
-  // XXX: This could be done with a spline with more possible adjustements
-  // Adding swing with a sine
+  // double swing = swingSpline.get(timeSinceLastStep);
   double swingP = isLeftSupport ? M_PI : 0;
   swingP += M_PI * 2 * swingPhase;
   double swing = _swingGain * sin(M_PI * timeSinceLastStep / stepDuration + swingP);
@@ -145,6 +144,8 @@ void WalkEngine::newStep()
   // Changing support foot
   isLeftSupport = !isLeftSupport;
 
+  double swingAmplitude = (isLeftSupport ? -swingGain : swingGain);
+
   // Support foot is on the ground
   supportFoot().zSpline.addPoint(0, 0, 0);
   supportFoot().zSpline.addPoint(stepDuration, 0, 0);
@@ -162,7 +163,7 @@ void WalkEngine::newStep()
   }
   flyingFoot().zSpline.addPoint(stepDuration, 0, 0);
 
-  if (fabs(stepSizeYaw) > 0.01)
+  if (fabs(stepSizeYaw) > 0.01 && enableCircular)
   {
     // Speed vector
     Point speed(stepSizeX, stepSizeY);
@@ -171,33 +172,27 @@ void WalkEngine::newStep()
 
     // For both feet, computing the new position in the
     Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
-    sFoot = (sFoot - center).rotation(rad2deg(-stepSizeYaw / 2.0)) + center;
     Point sFootSpeed = -speed.rotation(rad2deg(-stepSizeYaw / 2.0));
-    supportFoot().xSpline.addPoint(stepDuration, sFoot.x, sFootSpeed.x / (stepDuration * speedInflexion));
-    supportFoot().ySpline.addPoint(stepDuration, sFoot.y, sFootSpeed.y / (stepDuration * speedInflexion));
+    supportFoot().xSpline.addPoint(stepDuration, sFoot.x, 0);
+    supportFoot().ySpline.addPoint(stepDuration, sFoot.y, 0);
 
     Point fFoot(trunkXOffset, flyingFoot().trunkYOffset);
     fFoot = (fFoot - center).rotation(rad2deg(stepSizeYaw / 2.0)) + center;
-    Point fFootSpeed = -speed.rotation(rad2deg(stepSizeYaw / 2.0));
-    flyingFoot().xSpline.addPoint(stepDuration, fFoot.x, fFootSpeed.x / (stepDuration * speedInflexion));
-    flyingFoot().ySpline.addPoint(stepDuration, fFoot.y, fFootSpeed.y / (stepDuration * speedInflexion));
+    flyingFoot().xSpline.addPoint(stepDuration, fFoot.x, 0);
+    flyingFoot().ySpline.addPoint(stepDuration, fFoot.y, 0);
   }
   else
   {
-    supportFoot().xSpline.addPoint(stepDuration, trunkXOffset - stepSizeX / 2.0,
-                                   -stepSizeX / (stepDuration * speedInflexion));
-    supportFoot().ySpline.addPoint(stepDuration, supportFoot().trunkYOffset - stepSizeY / 2.0,
-                                   -stepSizeY / (stepDuration * speedInflexion));
+    supportFoot().xSpline.addPoint(stepDuration, trunkXOffset - stepSizeX / 2.0, 0);
+    supportFoot().ySpline.addPoint(stepDuration, supportFoot().trunkYOffset - stepSizeY / 2.0, 0);
 
-    flyingFoot().xSpline.addPoint(stepDuration, trunkXOffset + stepSizeX / 2.0,
-                                  -stepSizeX / (stepDuration * speedInflexion));
-    flyingFoot().ySpline.addPoint(stepDuration, flyingFoot().trunkYOffset + stepSizeY / 2.0,
-                                  -stepSizeY / (stepDuration * speedInflexion));
+    flyingFoot().xSpline.addPoint(stepDuration, trunkXOffset + stepSizeX / 2.0, 0);
+    flyingFoot().ySpline.addPoint(stepDuration, flyingFoot().trunkYOffset + stepSizeY / 2.0, 0);
   }
 
   // Yaw spline
-  supportFoot().yawSpline.addPoint(stepDuration, -stepSizeYaw / 2, -stepSizeYaw / (stepDuration * speedInflexion));
-  flyingFoot().yawSpline.addPoint(stepDuration, stepSizeYaw / 2, -stepSizeYaw / (stepDuration * speedInflexion));
+  supportFoot().yawSpline.addPoint(stepDuration, -stepSizeYaw / 2, 0);
+  flyingFoot().yawSpline.addPoint(stepDuration, stepSizeYaw / 2, 0);
 }
 
 void WalkEngine::reset()
@@ -210,10 +205,10 @@ void WalkEngine::reset()
   stepDuration = 1.0 / (2 * frequency);
   left.clearSplines();
   right.clearSplines();
-  left.xSpline.addPoint(stepDuration, 0, 0);
+  left.xSpline.addPoint(stepDuration, trunkXOffset, 0);
   left.ySpline.addPoint(stepDuration, left.trunkYOffset, 0);
   left.yawSpline.addPoint(stepDuration, 0, 0);
-  right.xSpline.addPoint(stepDuration, 0, 0);
+  right.xSpline.addPoint(stepDuration, trunkXOffset, 0);
   right.ySpline.addPoint(stepDuration, right.trunkYOffset, 0);
   right.yawSpline.addPoint(stepDuration, 0, 0);
 

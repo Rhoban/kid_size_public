@@ -95,7 +95,7 @@ public:
    * - orientation: orientation of the robot on the field [rad]
    */
   void setPosSelf(const Eigen::Vector3d& center_in_self, float orientation, float quality, float consistency,
-                  bool consistencyEnabled = false);
+                  bool consistencyEnabled = false, bool replayValue = false);
 
   /**
    * Updates transforms between field and world basis and then updates variables monitored by RhIO
@@ -141,6 +141,8 @@ public:
 
   void setRobocup(Vision::Robocup* robocup);
   void setLocBinding(Vision::LocalisationBinding* locBinding);
+
+  bool isReplay;
 
 protected:
   // Mutex to access ball position
@@ -196,9 +198,6 @@ protected:
    * Return the direction of the trunk in world referential
    */
   rhoban_utils::Angle getSelfOrientationInWorld();
-
-private:
-  bool simulateWalk;
 
 public:
   // Conversions between self, field and world referentials

@@ -3,7 +3,7 @@
 #include <rhoban_utils/logging/logger.h>
 #include "services/Services.h"
 #include "scheduler/MoveScheduler.h"
-#include "services/RobotModelService.h"
+#include "services/ModelService.h"
 #include "services/LocalisationService.h"
 #include "Helpers.h"
 #include <Devices/GY85.hpp>
@@ -158,11 +158,19 @@ float Helpers::getAngle(const std::string& servo)
 {
   if (isFakeMode())
   {
-    return getServices()->robotModel->model.getDof(servo);
+    return getServices()->model->model.getDof(servo);
   }
   else
   {
-    return _scheduler->getManager()->dev<RhAL::DXL>(servo).position().readValue().value;
+    if (_scheduler->getManager()->dev<RhAL::DXL>(servo).dontRead())
+    {
+      // The servo is never read, we assume goal value
+      return getGoalAngle(servo);
+    }
+    else
+    {
+      return _scheduler->getManager()->dev<RhAL::DXL>(servo).position().readValue().value;
+    }
   }
 }
 
@@ -178,7 +186,7 @@ double Helpers::getLastReadTimestamp()
   // Compute the max timestamp over
   // all DOF and look for communication error
   RhAL::TimePoint timestamp;
-  for (const std::string& name : getServices()->robotModel->model.getDofNames())
+  for (const std::string& name : getServices()->model->model.getDofNames())
   {
     RhAL::ReadValueFloat value = manager->dev<RhAL::DXL>(name).position().readValue();
     if (timestamp < value.timestamp)
@@ -285,7 +293,7 @@ float Helpers::getGyroYaw()
 
   if (isFakeMode())
   {
-    return rhoban::frameYaw(getServices()->robotModel->model.selfToWorld().rotation());
+    return rhoban::frameYaw(getServices()->model->model.selfToWorld().rotation());
   }
   else
   {
@@ -303,7 +311,7 @@ void Helpers::updatePressure()
 
   if (isFakeMode())
   {
-    if (_scheduler->getServices()->robotModel->model.supportFoot == rhoban::HumanoidModel::Left)
+    if (_scheduler->getServices()->model->model.supportFoot == rhoban::HumanoidModel::Left)
     {
       pressureLeftWeight = 1.0;
       pressureRightWeight = 0.0;

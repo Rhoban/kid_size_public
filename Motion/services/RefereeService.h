@@ -70,6 +70,18 @@ public:
   bool isPenalized(int id);
 
   /**
+   * Returns the remaining penalty time for the given robot.
+   * If robot is not supposed to enter at all, return max value for int,
+   * if robot is not penalized, return -1
+   */
+  int getRemainingPenaltyTime(int id);
+
+  /**
+   * Am I currently waiting to re-enter the field
+   */
+  bool isServingPenalty();
+
+  /**
    * Is our team taking the kickoff?
    */
   bool myTeamKickOff();
@@ -99,6 +111,7 @@ public:
    */
   bool isThrowIn();
 
+  
   /**
    * Secondary time
    */
@@ -123,6 +136,8 @@ public:
   bool playing;
   bool gamePlaying;
 
+  bool throwIn;
+  
   bool wasPenalized;
 
   bool dumpGameState;
