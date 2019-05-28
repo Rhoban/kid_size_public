@@ -266,16 +266,18 @@ void TeamPlayService::updateIntention(RobotMsg* msg)
     target->set_y(target_pos.y());
   }
   // Updating kick intention
-  // TODO: something in Strategy should be done to say if a kick is planned
   LocalisationService* loc = getServices()->localisation;
   StrategyService* strategy = getServices()->strategy;
-  KickIntention* kick = intention->mutable_kick();
-  rhoban_geometry::Point ball_in_field = loc->getBallPosField();
-  Eigen::Vector2d kick_target = strategy->getKickTarget();
-  kick->mutable_start()->set_x(ball_in_field.x);
-  kick->mutable_start()->set_y(ball_in_field.y);
-  kick->mutable_target()->set_x(kick_target.x());
-  kick->mutable_target()->set_y(kick_target.y());
+  if (strategy->getActiveKickController() != nullptr)
+  {
+    KickIntention* kick = intention->mutable_kick();
+    rhoban_geometry::Point ball_in_field = loc->getBallPosField();
+    Eigen::Vector2d kick_target = strategy->getKickTarget();
+    kick->mutable_start()->set_x(ball_in_field.x);
+    kick->mutable_start()->set_y(ball_in_field.y);
+    kick->mutable_target()->set_x(kick_target.x());
+    kick->mutable_target()->set_y(kick_target.y());
+  }
 }
 
 void TeamPlayService::updateTeamPlay(RobotMsg* msg)
