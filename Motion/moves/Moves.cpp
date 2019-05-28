@@ -23,6 +23,7 @@
 #include "MCKickController.h"
 #include "ClearingKickController.h"
 #include "PenaltyKickController.h"
+#include "VisionLogMachine.hpp"
 #include "policies/expert_approach.h"
 #include "problems/extended_problem_factory.h"
 #include "rhoban_csa_mdp/core/policy_factory.h"
@@ -47,7 +48,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(arms);
 
   Head* head = new Head;
-  Walk* walk = new Walk(arms);
+  Walk* walk = new Walk(head, arms);
   Kick* kick = new Kick(head, walk, arms);
   add(kick);
   // Forcing generation of kick motions at kick creation
@@ -86,6 +87,8 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
 
   add(new AutonomousPlaying(walk, standup, arms));
   add(new ReactiveKicker(walk, kick));
+
+  add(new VisionLogMachine(walk, head, placer));
 
   add(walk);
 

@@ -376,7 +376,6 @@ void Robocup::step(float elapsed)
 void Robocup::enterState(std::string state)
 {
   logger.log("Entering state %s", state.c_str());
-  auto decision = getServices()->decision;
   t = 0;
 
   Head* head = (Head*)getMoves()->getMove("head");

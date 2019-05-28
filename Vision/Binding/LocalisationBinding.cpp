@@ -60,6 +60,7 @@ LocalisationBinding::LocalisationBinding(MoveScheduler* scheduler_, Robocup* vis
   , isForbidden(false)
   , bind(nullptr)
   , _runThread(nullptr)
+  , odometryMode(false)
 {
   scheduler->getServices()->localisation->setLocBinding(this);
   field_filter = new Localisation::FieldPF();
@@ -189,6 +190,9 @@ void LocalisationBinding::initRhIO()
   bind->bindNew("field/nbParticles", nb_particles_ff, RhIO::Bind::PullOnly)
       ->defaultValue(nb_particles_ff)
       ->comment("Number of particles in the localisation filter");
+  bind->bindNew("field/odometryMode", odometryMode, RhIO::Bind::PullOnly)
+      ->defaultValue(odometryMode)
+      ->comment("Is the localization based only on odometry?");
   // consistency
   bind->bindNew("consistency/enabled", consistencyEnabled, RhIO::Bind::PullOnly)
       ->defaultValue(consistencyEnabled)
@@ -359,19 +363,19 @@ void LocalisationBinding::step()
 
   // Compute observations if there is no reset pending
   ObservationVector observations;
-  if (!field_filter->isResetPending())
+  if (!field_filter->isResetPending() && !odometryMode)
   {
     observations = extractObservations();
   }
 
   // Update consistency
-  if (consistencyEnabled)
+  if (consistencyEnabled && !odometryMode)
   {
     applyWatcher(observations);
   }
   else
   {
-    consistencyScore = 0;
+    consistencyScore = 1.0;
   }
 
   // Update filter with the provided observations
@@ -575,7 +579,11 @@ void LocalisationBinding::updateFilter(
 
   // Use a boost of noise after an uniformReset
   double noiseGain = 1;
-  if (elapsedSinceUniformReset < noiseBoostDuration)
+  if (odometryMode)
+  {
+    noiseGain = std::pow(10, -6);
+  }
+  else if (elapsedSinceUniformReset < noiseBoostDuration)
   {
     double ratio = elapsedSinceUniformReset / noiseBoostDuration;
     noiseGain = maxNoiseBoost * (1 - ratio) + ratio;
