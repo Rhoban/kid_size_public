@@ -84,7 +84,7 @@ void VisionLogMachine::step(float elapsed)
 
   if (runTime >= runDuration)
   {
-    setState(STATE_ENDED);
+    stop();
   }
 
   if (state == STATE_INITIAL)
