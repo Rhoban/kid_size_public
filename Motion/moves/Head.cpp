@@ -31,6 +31,9 @@ Head::Head()
   bind->bindNew("forceLocalize", force_localize, RhIO::Bind::PullOnly)
       ->comment("Special scanning mode: not looking nearby")
       ->defaultValue(false);
+  bind->bindNew("forceScanBall", force_scan_ball, RhIO::Bind::PullOnly)
+      ->comment("Force ball scanning mode")
+      ->defaultValue(false);
   bind->bindNew("disabled", disabled, RhIO::Bind::PullOnly)
       ->comment("Target a fixed point, but still uses security")
       ->defaultValue(false);
@@ -137,6 +140,11 @@ void Head::setLocalizeMaxPan(double maxPan)
   bind->node().setFloat("localizeMaxPan", maxPan);
 }
 
+double Head::getScanPeriod() const
+{
+  return scan_period;
+}
+
 std::string Head::getName()
 {
   return "head";
@@ -183,7 +191,7 @@ void Head::step(float elapsed)
   {
     // If ball is properly localized, use the localization scanner rather than
     // the default scanner
-    if (decision->isBallQualityGood)
+    if (decision->isBallQualityGood || force_scan_ball)
     {
       target_in_self = getScanTarget(model, localize_scanner);
     }
@@ -244,6 +252,11 @@ void Head::step(float elapsed)
   bind->push();
 }
 
+void Head::setForceScanBall(bool value)
+{
+  bind->node().setBool("forceScanBall", value);
+}
+
 void Head::setForceLocalize(bool value)
 {
   bind->node().setBool("forceLocalize", value);
@@ -274,7 +287,7 @@ void Head::updateTimers(float elapsed)
 bool Head::shouldTrackBall()
 {
   // If tracking_period is 0, never restart
-  if (tracking_period <= 0)
+  if (tracking_period <= 0 || force_scan_ball)
     return false;
   // Otherwise: tracking depends on loc and history
   LocalisationService* loc = getServices()->localisation;

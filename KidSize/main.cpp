@@ -57,9 +57,6 @@ static void signal_handler(int sig, siginfo_t* siginfo, void* context)
 
 static void signal_abort(int sig)
 {
-  void* array[10];
-  size_t size;
-
   fclose(stdout);
   if (sig == SIGFPE)
   {

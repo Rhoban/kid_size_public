@@ -38,10 +38,13 @@ public:
   rhoban_geometry::Point getGoalPosField();
   rhoban_geometry::Point getOurGoalPosField();
   /**
-   * Returns the position of the field in self referential
+   * Returns the position of the robot in field referential [m]
    */
   rhoban_geometry::Point getFieldPos();
-  double getFieldOrientation();  // Return value in [rad]
+  /**
+   * Return the orientation of the robot in field referential [rad]
+   */
+  double getFieldOrientation();
   Eigen::Vector3d fieldCenterWorld;
   rhoban_utils::Angle getOurBallToGoalDirSelf();
 

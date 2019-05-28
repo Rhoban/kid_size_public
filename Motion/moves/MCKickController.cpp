@@ -82,7 +82,6 @@ void MCKickController::execute()
     if (isRunning())
     {
       mutex.lock();
-      auto ballField = _ballField;
       auto teamMatesField = _teamMatesField;
       auto opponentsField = _opponentsField;
       auto opponentsRadius = _opponentsRadius;
