@@ -1,14 +1,14 @@
 #include "StandUp.h"
+#include "Arms.h"
 
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/serialization/json_serializable.h>
-#include "Walk.h"
 
 using rhoban_utils::Function;
 
 static rhoban_utils::Logger logger("StandUp");
 
-StandUp::StandUp(Walk* walk_) : walk(walk_)
+StandUp::StandUp(Arms* arms) : arms(arms)
 {
   Move::initializeBinding();
   time = 0.0;
@@ -62,6 +62,8 @@ void StandUp::onStart()
   over = false;
   waiting = true;
 
+  arms->setArms(Arms::ArmsState::ArmsDisabled);
+
   // get the arms back
   setTorqueLimit("left_shoulder_pitch", 1.0);
   setTorqueLimit("right_shoulder_pitch", 1.0);
@@ -71,13 +73,13 @@ void StandUp::onStart()
 
 void StandUp::onStop()
 {
+  Arms* arms = (Arms*)getMoves()->getMove("arms");
+  arms->setArms(Arms::ArmsState::ArmsEnabled);
   // security for arms. TODO should be a init command.
   setTorqueLimit("left_shoulder_pitch", 0.2);
   setTorqueLimit("right_shoulder_pitch", 0.2);
   setTorqueLimit("left_shoulder_roll", 0.2);
   setTorqueLimit("right_shoulder_roll", 0.2);
-
-  walk->setArms(Walk::ArmsState::ArmsEnabled);
 }
 
 void StandUp::setLayDown(bool value)
@@ -90,7 +92,6 @@ void StandUp::step(float elapsed)
   bind->pull();
 
   // Be sure walk arms are disabled
-  walk->setArms(Walk::ArmsState::ArmsDisabled);
 
   if (reloadSpline)
   {

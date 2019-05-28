@@ -33,8 +33,7 @@ ModelService::ModelService()
   bind.bindNew("publish", publish, RhIO::Bind::PullOnly)->defaultValue(false);
   bind.bindNew("publishField", publishField, RhIO::Bind::PullOnly)->defaultValue(true);
 
-  bind.bindNew("supportRatioThreshold", supportRatioThreshold, RhIO::Bind::PullOnly)
-      ->defaultValue(supportRatioThreshold = 0.8);
+  bind.bindNew("supportRatioThreshold", supportRatioThreshold, RhIO::Bind::PullOnly)->defaultValue(0.8);
 
   // Declaration of history entries
   histories.pose("camera");
@@ -150,7 +149,7 @@ bool ModelService::tick(double elapsed)
 
   // Publishing model to ZMQ
   timeSinceLastPublish += elapsed;
-  if (timeSinceLastPublish > 0.02 && publish)
+  if (timeSinceLastPublish > 0.02 && (publish || Helpers::isFakeMode()))
   {
     timeSinceLastPublish = 0;
     LocalisationService* localisationService = getServices()->localisation;

@@ -7,10 +7,12 @@
 class Placer;
 class StandUp;
 class Walk;
+class Arms;
+
 class Robocup : public STM
 {
 public:
-  Robocup(Walk* walk, StandUp* standup, Placer* placer);
+  Robocup(Walk* walk, StandUp* standup, Placer* placer, Arms* arms);
   std::string getName();
   bool standup_disabled;
   void onStart();
@@ -24,6 +26,7 @@ protected:
   Walk* walk;
   StandUp* standup;
   Placer* placer;
+  Arms* arms;
 
   float t;
   bool isHandled;

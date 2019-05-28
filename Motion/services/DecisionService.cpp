@@ -5,17 +5,21 @@
 #include "StrategyService.h"
 #include "rhoban_utils/logging/logger.h"
 #include "robocup_referee/constants.h"
+#include "moves/Head.h"
 #include "moves/Move.h"
+#include "moves/Walk.h"
 #include <hl_communication/wrapper.pb.h>
 
 using namespace hl_communication;
+using namespace hl_monitoring;
 using namespace rhoban_utils;
 using namespace rhoban_team_play;
 using namespace robocup_referee;
 
 static rhoban_utils::Logger logger("Decision");
 
-DecisionService::DecisionService() : isBallMoving(false), bind("decision")
+DecisionService::DecisionService()
+  : isBallMoving(false), camera_status(FrameStatus::UNKNOWN_FRAME_STATUS), bind("decision")
 {
   // Ball quality
   bind.bindNew("ballQThreshold", ballQThreshold, RhIO::Bind::PullOnly)
@@ -166,6 +170,21 @@ bool DecisionService::tick(double elapsed)
   {
     letPlayRadius = std::max(letPlayRadius, teamPlay->kickOffClearanceDist);
     shouldLetPlay = true;
+  }
+
+  Walk* walk = dynamic_cast<Walk*>(getMoves()->getMove("walk"));
+  Head* head = dynamic_cast<Head*>(getMoves()->getMove("head"));
+  if (walk->isRunning() && walk->isWalking())
+  {
+    camera_status = FrameStatus::SHAKING;
+  }
+  else if (head->isRunning() && !head->isDisabled())
+  {
+    camera_status = FrameStatus::MOVING;
+  }
+  else
+  {
+    camera_status = FrameStatus::STATIC;
   }
 
   freezeKick = false;
