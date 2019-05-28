@@ -180,7 +180,7 @@ void TeamPlayService::updatePerception(RobotMsg* msg)
   self_in_field->mutable_pose()->mutable_position()->set_y(fieldPos.y);
   self_in_field->mutable_pose()->mutable_dir()->set_mean(loc->getFieldOrientation());
   // Adding obstacles to message
-  const std::vector<rhoban_geometry::Point>& opponents = loc->getOpponentsField();
+  const std::vector<Eigen::Vector3d>& opponents = loc->getOpponentsSelf();
   size_t nb_opponents = std::min(opponents.size(), (size_t)_maxObstacles);
   if (opponents.size() > (size_t)_maxObstacles)
   {
@@ -192,8 +192,8 @@ void TeamPlayService::updatePerception(RobotMsg* msg)
     robot->set_probability(1.0);
     PoseDistribution* robot_pose = robot->mutable_robot()->mutable_robot_in_self();
     // TODO: check if opponent robot is not in world_referential
-    robot_pose->mutable_position()->set_x(opponents[opp_idx].getX());
-    robot_pose->mutable_position()->set_y(opponents[opp_idx].getY());
+    robot_pose->mutable_position()->set_x(opponents[opp_idx].x());
+    robot_pose->mutable_position()->set_y(opponents[opp_idx].y());
   }
 
   // Custom information
