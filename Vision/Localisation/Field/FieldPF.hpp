@@ -83,6 +83,7 @@ public:
   void initializeAtUniformRandom(unsigned int particlesNb);
 
   FieldDistribution fieldDistribution;
+  std::vector<FieldDistribution::Distribution> vectorEM;
 
   double resamplingRatio;
 

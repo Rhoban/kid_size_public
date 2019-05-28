@@ -6,6 +6,7 @@
 
 #include <hl_monitoring/top_view_drawer.h>
 #include <robocup_referee/constants.h>
+#include "rhoban_random/multivariate_gaussian.h"
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/ml.hpp>
@@ -20,6 +21,7 @@ static rhoban_utils::Logger logger("FieldDistribution");
 using namespace std;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
+using namespace rhoban_random;
 using namespace rhoban_unsorted;
 using namespace robocup_referee;
 using namespace hl_monitoring;
@@ -34,7 +36,6 @@ FieldDistribution::FieldDistribution() : ParticleFilter()
 
 void FieldDistribution::EMTrainedLabels(int nbCluster)
 {
-  // actualiseSamples();
   cv::Mat probs;
   cv::Mat logLikelihoods;
   cv::Mat samples = positions.reshape(1, 0);
@@ -45,17 +46,14 @@ void FieldDistribution::EMTrainedLabels(int nbCluster)
   em_model->setClustersNumber(nbCluster);
   em_model->setCovarianceMatrixType(cv::ml::EM::COV_MAT_DIAGONAL);
   em_model->setTermCriteria(cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 300, 0.1));
-  if (!samples.empty())
-  {
-    em_model->trainEM(samples, probs, labels, logLikelihoods);
-  }
+  em_model->trainEM(samples, probs, labels, logLikelihoods);
 }
 
 void FieldDistribution::getMostRecurrentLabel()
 {
   labelMax.clear();
 
-  // getting number of repetition of each label
+  // counting number of repetition of each label
   std::map<int, int> clusters;
   for (int i = 0; i < nbParticles; i++)
   {
@@ -74,50 +72,44 @@ void FieldDistribution::getMostRecurrentLabel()
   }
 }
 
-void FieldDistribution::getReccurency()
+void FieldDistribution::printLabel()
 {
-  getMostRecurrentLabel();
-
   for (auto it = oldLabelMax.begin(); it != oldLabelMax.end(); it++)
   {
     std::cout << "label n°" << it->first << " quantity : " << labelMax[it->first] << std::endl;
     Distribution newd;
     newd.position = getPosition(it->first);
     newd.angle = getAngle(it->first);
-    std::cout << "x : " << newd.position.first.x << " y : " << newd.position.first.y << " angle : " << newd.angle
+    std::cout << "x : " << newd.position.first.x << " y : " << newd.position.first.y << " angle : " << newd.angle.first
               << std::endl;
   }
 }
 
-std::vector<FieldDistribution::Distribution> FieldDistribution::updateRepresentativeParticleEM(cv::Mat p,
-                                                                                               std::vector<Angle> a,
-                                                                                               int size)
+std::vector<FieldDistribution::Distribution> FieldDistribution::updateEM(cv::Mat p, std::vector<Angle> a, int size)
 {
   positions = p;
   angles = a;
   nbParticles = size;
   epsilon = 5 / 100 * nbParticles;
 
-  cv::Scalar mean, stddev;
+  lastVar.first = getVariancePosition(-1);
+  lastVar.second = getVarianceDirection(-1);
 
-  lastVar = getVariance(-1);
-
-  std::cout << "first var " << lastVar << std::endl;
+  std::cout << "first variance for position " << lastVar.first << " and direction " << lastVar.second << std::endl;
 
   int nbCluster = 2;
-  float varReduction = 0;
-  while (varReduction < 0.5 && nbCluster <= 5)
+  std::pair<double, double> varReduction(0, 0);
+  while ((varReduction.first < 0.5 || varReduction.second < 0.5) && nbCluster <= 5)
   {
     oldLabels = labels;
     oldLabelMax = labelMax;
     EMTrainedLabels(nbCluster);
     getMostRecurrentLabel();
     varReduction = varianceImprovement();
-    std::cout << "total var " << varReduction << std::endl;
     nbCluster++;
   }
 
-  getReccurency();
+  printLabel();
 
   for (auto it = oldLabelMax.begin(); it != oldLabelMax.end(); it++)
   {
@@ -128,24 +120,19 @@ std::vector<FieldDistribution::Distribution> FieldDistribution::updateRepresenta
     result.push_back(newd);
   }
 
+  // sort from larger to smaller label
   std::sort(result.begin(), result.end(),
             [](const FieldDistribution::Distribution& a, const FieldDistribution ::Distribution& b) {
               return a.nbParticles > b.nbParticles;
             });
-  /*  std::pair<rhoban_geometry::Point, double> pos = getPosition(labelMaximum.first);
-  float dir = getAngle(labelMaximum.first);
 
-  Eigen::VectorXd result(3);
-
-  result << pos.first.getX(), pos.first.getY(), dir;
-  std::cout << result;*/
   return result;
 }
 
-std::pair<Point, double> FieldDistribution::getPosition(int label)
+std::pair<Point, Eigen::MatrixXd> FieldDistribution::getPosition(int label)
 {
   // getting the major group
-  std::vector<rhoban_geometry::Point> cluster;
+  std::vector<Eigen::VectorXd> cluster;
 
   for (int i = 0; i < nbParticles; i++)
   {
@@ -153,20 +140,23 @@ std::pair<Point, double> FieldDistribution::getPosition(int label)
     {
       double x = positions.at<double>(i, 0);
       double y = positions.at<double>(i, 1);
-      cluster.push_back(Point(x, y));
+      cluster.push_back((Point(x, y)).toVector());
     }
   }
 
-  double standardDevation = stdDev(cluster);
-  Point mean = average(cluster);
+  Eigen::VectorXd mean;
+  Eigen::MatrixXd covMat;
 
-  return std::make_pair(mean, (standardDevation * standardDevation));
+  MultivariateGaussian multivariateGaussian(mean, covMat);
+
+  multivariateGaussian.fit(cluster);
+
+  return std::make_pair(Point(multivariateGaussian.getMean()), multivariateGaussian.getCovariance());
 }
 
-float FieldDistribution::getAngle(int label)
+std::pair<double, double> FieldDistribution::getAngle(int label)
 {
-  // getting the major group
-  float x(0), y(0);  // computing avg angle
+  // getting the major label
   std::vector<Angle> anglelabel;
 
   for (int i = 0; i < nbParticles; i++)
@@ -177,13 +167,14 @@ float FieldDistribution::getAngle(int label)
     }
   }
   Angle dir = Angle::mean(anglelabel);
+  double mean = dir.Angle::getSignedValue();
 
-  float mean = (float)(dir.Angle::getSignedValue());
+  double stddev = Angle::stdDev(anglelabel);
 
-  return mean;
+  return std::make_pair(mean, stddev);
 }
 
-float FieldDistribution::getVariance(int label)
+double FieldDistribution::getVariancePosition(int label)
 {
   std::vector<rhoban_geometry::Point> cluster;
 
@@ -199,31 +190,45 @@ float FieldDistribution::getVariance(int label)
 
   double standardDevation = stdDev(cluster);
 
-  std::cout << " var " << standardDevation << std::endl;
-  return (float)(standardDevation * standardDevation);
+  return (standardDevation * standardDevation);
 }
 
-float FieldDistribution::varianceImprovement()
+double FieldDistribution::getVarianceDirection(int label)
 {
-  float variance = 0;
+  std::vector<Angle> cluster;
+
+  for (int i = 0; i < nbParticles; i++)
+  {
+    if (label < 0 || labels.at<int>(i) == label)
+    {
+      cluster.push_back(angles[i]);
+    }
+  }
+
+  double standardDevation = Angle::stdDev(cluster);
+
+  return (standardDevation * standardDevation);
+}
+
+std::pair<double, double> FieldDistribution::varianceImprovement()
+{
+  std::pair<double, double> variance(0, 0);
 
   for (auto it = labelMax.begin(); it != labelMax.end(); it++)
   {
-    variance += getVariance(it->first) * labelMax[it->first];
+    variance.first += getVariancePosition(it->first) * labelMax[it->first];
+    variance.second += getVarianceDirection(it->first) * labelMax[it->first];
   }
 
-  variance = variance / nbParticles;
+  variance.first = variance.first / nbParticles;
+  variance.second = variance.second / nbParticles;
 
-  if (variance > lastVar)
-    return 0.0;
-  else
-  {
-    float improvement = variance / lastVar;
-    lastVar = variance;
-    return improvement;
-  }
+  std::cout << "updated variance for position " << variance.first << " and direcction" << variance.second << std::endl;
+
+  std::pair<double, double> improvement(variance.first / lastVar.first, variance.second / lastVar.second);
+  lastVar = variance;
+  return improvement;
 }
-
 }  // namespace Localisation
 
 }  // namespace Vision

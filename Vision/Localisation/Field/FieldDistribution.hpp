@@ -20,28 +20,25 @@ class FieldDistribution : public rhoban_unsorted::ParticleFilter<FieldPosition>
 public:
   struct Distribution
   {
-    // first is value, second covmat
-    std::pair<rhoban_geometry::Point, double> position;
-    float angle;
+    // first is value, second covMat
+    std::pair<rhoban_geometry::Point, Eigen::MatrixXd> position;
+    // first is value, second stddev
+    std::pair<double, double> angle;
     int nbParticles;
   };
-  std::vector<FieldDistribution::Distribution> updateRepresentativeParticleEM(cv::Mat p,
-                                                                              std::vector<rhoban_utils::Angle> a,
-                                                                              int size);
+  std::vector<FieldDistribution::Distribution> updateEM(cv::Mat p, std::vector<rhoban_utils::Angle> a, int size);
 
 protected:
   void EMTrainedLabels(int nbCluster);
   void getMostRecurrentLabel();
-  std::pair<rhoban_geometry::Point, double> getPosition(int label);
-  float getAngle(int label);
-  float getVariance(int label);
-  /* return the ration newvariance/oldvariance*/
-  float varianceImprovement();
+  std::pair<rhoban_geometry::Point, Eigen::MatrixXd> getPosition(int label);
+  std::pair<double, double> getAngle(int label);
+  double getVariancePosition(int label);
+  double getVarianceDirection(int label);
+  /* return the ratio newvariance/oldvariance*/
+  std::pair<double, double> varianceImprovement();
 
-  // bool compareDistribution(const FieldDistribution::Distribution& a, const FieldDistribution::Distribution& b);
-
-  void positionEM();
-  void getReccurency();
+  void printLabel();
 
 public:
   FieldDistribution();
@@ -59,7 +56,7 @@ public:
 
   int nbParticles;
   double epsilon;
-  float lastVar;
+  std::pair<double, double> lastVar;
 };
 
 }  // namespace Localisation
