@@ -36,6 +36,8 @@ protected:
   double stepP, lateralP, rotationP;
 
   std::vector<Target> targets;
+  Eigen::Vector3d lastTargetInWorld;
+  bool hasLastTarget;
 
   /**
    * Getting the control to send to the walk to reach a given target, knowing

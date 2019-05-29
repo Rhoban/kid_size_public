@@ -9,6 +9,7 @@
 #include "rhoban_geometry/circle.h"
 #include "rhoban_utils/logging/logger.h"
 #include "moves/ApproachPotential.h"
+#include "services/ModelService.h"
 #include "moves/Walk.h"
 #include "moves/Kick.h"
 
@@ -72,6 +73,7 @@ void ApproachPotential::onStart()
   ApproachMove::onStart();
   lastFootChoice = 1e6;
   kick_score = 0;
+  hasLastTarget = false;
   setState(STATE_PLACE);
 }
 
@@ -91,20 +93,30 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   rhoban_geometry::Circle directPlacementCircle(ball + ballToTarget.normalize(placementDistance), placementDistance);
   bool directPlace = directPlacementCircle.contains(Point(0, 0));
 
+  Point targetPosition = target.position;
+
+  // This avoids hesitating between turning left or right to turn around the ball if the target is
+  // on the opposite side by rotating the target around the ball in a defined orientation
+  double theta = (ballToTarget.getTheta() - (-ball).getTheta()).getSignedValue();
+  if (fabs(theta) > 150)
+  {
+    targetPosition = ball + (targetPosition - ball).rotation(30);
+  }
+
   // Magical potential field
   // See Motion/python/potential.py
   double X(0), Y(0);
-  double norm2 = sqrt(pow(target.position.x, 2) + pow(target.position.y, 2));
+  double norm2 = sqrt(pow(targetPosition.x, 2) + pow(targetPosition.y, 2));
   if (norm2 > 0)
   {
     X = ball.x * repulsion * pow(pow(ball.x, 2) + pow(ball.y, 2), -1 / 2 * repulsion) *
-            sqrt(pow(target.position.x, 2) + pow(target.position.y, 2)) / (pow(ball.x, 2) + pow(ball.y, 2)) -
-        target.position.x * pow(pow(ball.x, 2) + pow(ball.y, 2), -1 / 2 * repulsion) /
-            sqrt(pow(target.position.x, 2) + pow(target.position.y, 2));
+            sqrt(pow(targetPosition.x, 2) + pow(targetPosition.y, 2)) / (pow(ball.x, 2) + pow(ball.y, 2)) -
+        targetPosition.x * pow(pow(ball.x, 2) + pow(ball.y, 2), -1 / 2 * repulsion) /
+            sqrt(pow(targetPosition.x, 2) + pow(targetPosition.y, 2));
     Y = ball.y * repulsion * pow(pow(ball.x, 2) + pow(ball.y, 2), -1 / 2 * repulsion) *
-            sqrt(pow(target.position.x, 2) + pow(target.position.y, 2)) / (pow(ball.x, 2) + pow(ball.y, 2)) -
-        target.position.y * pow(pow(ball.x, 2) + pow(ball.y, 2), -1 / 2 * repulsion) /
-            sqrt(pow(target.position.x, 2) + pow(target.position.y, 2));
+            sqrt(pow(targetPosition.x, 2) + pow(targetPosition.y, 2)) / (pow(ball.x, 2) + pow(ball.y, 2)) -
+        targetPosition.y * pow(pow(ball.x, 2) + pow(ball.y, 2), -1 / 2 * repulsion) /
+            sqrt(pow(targetPosition.x, 2) + pow(targetPosition.y, 2));
   }
 
   // XXX: Some below variable should be rhiorized
@@ -112,7 +124,7 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
 
   if (directPlace)
   {
-    control = target.position;
+    control = targetPosition;
   }
 
   // XXX: dist here may be replaced with the distance following the potential fields
@@ -184,7 +196,8 @@ void ApproachPotential::step(float elapsed)
 
     // Ball position
     auto ball = loc->getBallPosWorld();
-    auto ballInFutureSelf = walk->futureSelfToWorld().inverse() * Eigen::Vector3d(ball.x, ball.y, 0);
+    auto futureSelfToWorld = walk->futureSelfToWorld();
+    auto ballInFutureSelf = futureSelfToWorld.inverse() * Eigen::Vector3d(ball.x, ball.y, 0);
     ball.x = ballInFutureSelf.x();
     ball.y = ballInFutureSelf.y();
     ballX = ball.x;  // XXX: To debug
@@ -286,6 +299,16 @@ void ApproachPotential::step(float elapsed)
             score *= 30 * defendError;
           }
         }
+
+        if (hasLastTarget)
+        {
+          auto posInWorld = futureSelfToWorld * Eigen::Vector3d(t.position.x, t.position.y, 0);
+          if ((posInWorld - lastTargetInWorld).norm() > 0.06)
+          {
+            score += 3;
+          }
+        }
+
         // std::cout << "Score for [n: " << t.position.getLength() << ", x: " << t.position.x << ",y: " << t.position.y
         //           << ",t: " << cYaw << " (travel°: " << degsToTravel << ")] " << t.kickName << " / "
         //           << t.yaw.getSignedValue() << " : " << score << std::endl;
@@ -300,6 +323,8 @@ void ApproachPotential::step(float elapsed)
       // std::cout << "Target: " << target.position.x << ", " << target.position.y << ", " <<
       // target.yaw.getSignedValue()
       //           << " (kick: " << target.kickName << ")" << std::endl;
+      hasLastTarget = true;
+      lastTargetInWorld = futureSelfToWorld * Eigen::Vector3d(target.position.x, target.position.y, 0);
 
       // Setting expectedKick
       expectedKick = target.kickName;
