@@ -180,10 +180,9 @@ int CaptainService::findCaptainId()
 {
   auto referee = getServices()->referee;
   auto teamPlay = getServices()->teamPlay;
-  auto& info = teamPlay->allInfo();
   share = true;
 
-  for (const auto& entry : info)
+  for (const auto& entry : teamPlayAllInfo)
   {
     const RobotMsg& robotInfo = entry.second;
     Action action = robotInfo.intention().action_planned();
@@ -325,7 +324,7 @@ void CaptainService::updateCommonBall()
   //    (Clusters have same size and there are no recent kicks)
   // 3. First in list (if other criteria were not applicable)
   double max_dist = 15.0;  // [m]
-  double best_cluster_score = 0;
+  double best_cluster_score = std::numeric_limits<double>::lowest();
   int best_cluster_id = -1;
 
   for (size_t cluster_id = 0; cluster_id < ball_clusters.size(); cluster_id++)
@@ -708,7 +707,9 @@ void CaptainService::compute()
   robots.clear();
   robotIds.clear();
 
-  for (const auto& entry : teamPlay->allInfo())
+  teamPlayAllInfo = getServices()->teamPlay->allInfoSafe();
+
+  for (const auto& entry : teamPlayAllInfo)
   {
     const RobotMsg& info = entry.second;
     Action action = info.intention().action_planned();
@@ -758,6 +759,7 @@ bool CaptainService::tick(double elapsed)
     running = true;
     captainThread.reset(new std::thread([this] { this->execThread(); }));
   }
+
   return true;
 }
 

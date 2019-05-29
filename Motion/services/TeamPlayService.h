@@ -42,6 +42,7 @@ public:
    * Access to the latest message from each player, field referential is in team point of view
    */
   const std::map<int, hl_communication::RobotMsg>& allInfo() const;
+  std::map<int, hl_communication::RobotMsg> allInfoSafe();
 
   /**
    * Read/Write network and update outputs
@@ -137,6 +138,11 @@ private:
    * RhIO team command
    */
   std::string cmdTeam();
+
+  /**
+   * All info thread safety
+   */
+  std::mutex mutex;
 
   void updateIdentifier(hl_communication::RobotMsg* msg);
   void updatePerception(hl_communication::RobotMsg* msg);

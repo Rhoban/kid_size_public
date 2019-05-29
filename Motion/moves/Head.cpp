@@ -67,8 +67,7 @@ Head::Head()
   // WARNING: persisted, because 'Tom' has a different camera requiring a higher shutter
   bind->bindNew("maxSpeed", max_speed, RhIO::Bind::PullOnly)
       ->comment("Maximal angular speed [deg/s]")
-      ->defaultValue(240)
-      ->persisted(true);
+      ->defaultValue(240);
   bind->bindNew("maxAcc", max_acc, RhIO::Bind::PullOnly)->comment("Maximal acceleration [deg/s^2]")->defaultValue(3600);
   // Tracking
   bind->bindNew("maxTiltTrack", max_tilt_track, RhIO::Bind::PullOnly)
@@ -191,7 +190,7 @@ void Head::step(float elapsed)
   {
     // If ball is properly localized, use the localization scanner rather than
     // the default scanner
-    if (decision->isBallQualityGood || force_scan_ball)
+    if (decision->isBallQualityGood && !force_scan_ball)
     {
       target_in_self = getScanTarget(model, localize_scanner);
     }

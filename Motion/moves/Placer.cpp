@@ -36,11 +36,11 @@ Placer::Placer(Walk* walk) : walk(walk)
   bind->bindNew("lateralP", lateraler.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
   bind->bindNew("turnP", turner.k_p, RhIO::Bind::PullOnly)->defaultValue(0.25);
 
-  bind->bindNew("marginX", marginX, RhIO::Bind::PullOnly)->defaultValue(0.5)->comment("[m]");
-  bind->bindNew("marginY", marginY, RhIO::Bind::PullOnly)->defaultValue(0.5)->comment("[m]");
+  bind->bindNew("marginX", marginX, RhIO::Bind::PullOnly)->defaultValue(0.2)->comment("[m]");
+  bind->bindNew("marginY", marginY, RhIO::Bind::PullOnly)->defaultValue(0.2)->comment("[m]");
   bind->bindNew("marginAzimuth", marginAzimuth, RhIO::Bind::PullOnly)->comment("[deg]")->defaultValue(20);
   bind->bindNew("arrived", arrived, RhIO::Bind::PushOnly);
-  bind->bindNew("hysteresis", hysteresis, RhIO::Bind::PullOnly)->defaultValue(1.5);
+  bind->bindNew("hysteresis", hysteresis, RhIO::Bind::PullOnly)->defaultValue(2.0);
 
   bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly);
 

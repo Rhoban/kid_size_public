@@ -74,12 +74,14 @@ void Arms::onStop()
 void Arms::step(float elapsed)
 {
   ArmsState lastTickArmsState = armsState;
+  bind->pull();
+
   if (lastTickArmsState != armsState)
     setArms(armsState, true);
 
   // Update arms
-
   stepArms(elapsed);
+
   bind->push();
 }
 
