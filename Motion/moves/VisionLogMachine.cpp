@@ -114,6 +114,7 @@ void VisionLogMachine::enterState(std::string state)
   stateTime = 0;
   if (state == STATE_SCAN)
   {
+    head->setDisabled(false);
     head->setForceScanBall(true);
   }
   else
