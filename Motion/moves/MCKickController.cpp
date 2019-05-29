@@ -31,6 +31,9 @@ MCKickController::MCKickController()
       ->defaultValue(true)
       ->comment("Avoid the opponents?");
 
+  // Use Monte carlo simulation ?
+  bind->bindNew("useMonteCarlo", useMonteCarlo, RhIO::Bind::PullOnly)->defaultValue(true);
+
   // Reload strategy file
   bind->bindFunc("reloadStrategy", "Reload the strategy file", &MCKickController::cmdReloadStrategy, *this);
 
@@ -202,7 +205,7 @@ void MCKickController::step(float elapsed)
   bind->pull();
 
   // If the generation is not available, falling back to strategy;
-  if (!available)
+  if (!available || !useMonteCarlo)
   {
     LocalisationService* localisation = getServices()->localisation;
     auto ball = localisation->getBallPosField();

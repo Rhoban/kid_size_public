@@ -47,6 +47,7 @@ protected:
 
   std::string cmdReloadStrategy();
 
+  bool useMonteCarlo;
   bool shouldReload;
 
   KickStrategy::Action _bestAction;
