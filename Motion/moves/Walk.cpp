@@ -166,7 +166,7 @@ void Walk::step(float elapsed)
   bind->pull();
 
   engine.trunkPitch = deg2rad(trunkPitch);
-  modelService->enableOdometry(state != WalkNotWalking);
+  modelService->enableOdometry(state != WalkNotWalking || kick->isRunning());
 
   if (state == WalkNotWalking)
   {
