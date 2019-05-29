@@ -325,7 +325,7 @@ void CaptainService::updateCommonBall()
   //    (Clusters have same size and there are no recent kicks)
   // 3. First in list (if other criteria were not applicable)
   double max_dist = 15.0;  // [m]
-  double best_cluster_score = 0;
+  double best_cluster_score = std::numeric_limits<double>::lowest();
   int best_cluster_id = -1;
 
   for (size_t cluster_id = 0; cluster_id < ball_clusters.size(); cluster_id++)
