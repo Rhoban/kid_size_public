@@ -116,65 +116,46 @@ int main(int argc, char** argv)
   signal(SIGABRT, &signal_abort);
   signal(SIGFPE, &signal_abort);
 
-  try
-  {
-    buildinfos_print();
+  buildinfos_print();
 
-    char buffer[1024];
-    gethostname(buffer, 1024);
-    RhIO::Root.newChild("server");
-    RhIO::Root.newStr("server/hostname")->defaultValue(buffer);
-    // Initializing RhIO from config directory
-    logger.log("Loading RhIO config");
-    RhIO::Root.load("rhio");
+  char buffer[1024];
+  gethostname(buffer, 1024);
+  RhIO::Root.newChild("server");
+  RhIO::Root.newStr("server/hostname")->defaultValue(buffer);
+  // Initializing RhIO from config directory
+  logger.log("Loading RhIO config");
+  RhIO::Root.load("rhio");
 
-    // Initialize move scheduler
-    moveScheduler = new MoveScheduler();
-    logger.log("Move scheduler initialized");
-    // Initialize and start Vision
-    if (hasVision)
+  // Initialize move scheduler
+  moveScheduler = new MoveScheduler();
+  logger.log("Move scheduler initialized");
+  // Initialize and start Vision
+  if (hasVision)
+  {
+    logger.log("Initializing Vision");
+    visionRobocup = new Vision::Robocup(moveScheduler);
+    logger.log("Vision initialized.");
+    logger.log("Initializing LocalisationBinding");
+    locBinding = new Vision::LocalisationBinding(moveScheduler, visionRobocup);
+    logger.log("LocalisationBinding initialized.");
+  }
+  // Handle quit signal
+  signal_attach();
+  // Start move scheduler
+  moveScheduler->execute();
+  // Stop low level thrread and quit
+  moveScheduler->askQuit();
+  delete moveScheduler;
+  if (hasVision)
+  {
+    if (visionRobocup != nullptr)
     {
-      logger.log("Initializing Vision");
-      visionRobocup = new Vision::Robocup(moveScheduler);
-      logger.log("Vision initialized.");
-      logger.log("Initializing LocalisationBinding");
-      locBinding = new Vision::LocalisationBinding(moveScheduler, visionRobocup);
-      logger.log("LocalisationBinding initialized.");
+      visionRobocup->closeCamera();
+      // delete visionRobocup;
     }
-    // Handle quit signal
-    signal_attach();
-    // Start move scheduler
-    moveScheduler->execute();
-    // Stop low level thrread and quit
-    moveScheduler->askQuit();
-    delete moveScheduler;
-    if (hasVision)
-    {
-      if (visionRobocup != nullptr)
-      {
-        visionRobocup->closeCamera();
-        // delete visionRobocup;
-      }
-    }
-    logger.log("Done.");
-    // return 0;
   }
-  catch (const std::runtime_error& exc)
-  {
-    ostringstream oss;
-    oss << exc.what();
-    logger.error("ERROR: Server died with runtime exception: %s", oss.str().c_str());
-  }
-  catch (const std::logic_error& exc)
-  {
-    ostringstream oss;
-    oss << exc.what();
-    logger.error("ERROR: Server died with logic exception: %s", oss.str().c_str());
-  }
-  catch (const std::string& exc)
-  {
-    logger.error("ERROR: Server died with string exception: %s", exc.c_str());
-  }
+  logger.log("Done.");
+  // return 0;
 
   if (visionRobocup != nullptr)
   {
