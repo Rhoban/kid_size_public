@@ -42,7 +42,11 @@ public:
    */
   Eigen::Vector4d getOrder() const;
 
-  rhoban_geometry::Point trunkToFlyingFoot(rhoban_geometry::Point point);
+  /**
+   * Compute the estimated future self to world (i.e the self frame that
+   * will be reached if the walk stops at next step)
+   */
+  Eigen::Affine3d futureSelfToWorld();
 
   // rhoban_geometry::Point
 
