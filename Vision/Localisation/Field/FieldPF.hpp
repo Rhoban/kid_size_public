@@ -76,6 +76,8 @@ public:
   rhoban_utils::Angle getOrientation();
   double getQuality();
 
+  std::vector<FieldDistribution::Distribution> getPositionsFromClusters();
+
   bool isResetPending() const;
 
   static std::string getName(ResetType t);

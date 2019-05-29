@@ -6,6 +6,7 @@
 
 #include <hl_monitoring/top_view_drawer.h>
 #include <robocup_referee/constants.h>
+#include <hl_communication/position.pb.h>
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/ml.hpp>
@@ -22,6 +23,7 @@ using namespace rhoban_utils;
 using namespace rhoban_unsorted;
 using namespace robocup_referee;
 using namespace hl_monitoring;
+using namespace hl_communication;
 
 namespace Vision
 {
@@ -268,29 +270,6 @@ void FieldPF::resetOnLines(int side)
     double y = currSide * (Constants::field.field_width / 2 + borderExtraDist);
     double dirNoise = dirNoiseDistribution(generator);
     double dir = -currSide * 90;
-    /*double x, y, dir;
-    double dirNoise = dirNoiseDistribution(generator);
-
-    if (nb < 500)
-    {
-      x = -2 + xDistribution(generator);
-      y = -2 + xDistribution(generator);
-      dir = 35;
-    }
-
-    else if (nb < 1000)
-    {
-      x = 2 + xDistribution(generator);
-      y = 2 + xDistribution(generator);
-      dir = 75;
-    }
-    else
-    {
-      x = -4 + xDistribution(generator);
-      y = 0 + xDistribution(generator);
-      dir = 125;
-    }
-    nb++;*/
     p.first = FieldPosition(x, y, Angle(dir + dirNoise).getSignedValue());
   }
   logger.log("Reset particles on borders");
@@ -412,8 +391,9 @@ void FieldPF::updateRepresentativeParticle()
   cv::Mat pos = positionsFromParticles();
   std::vector<Angle> angle = anglesFromParticles();
 
+  vectorEM.clear();
+
   vectorEM = fieldDistribution.updateEM(pos, angle, nbParticles);
-  std::cout << "vector recieved" << std::endl;
 
   FieldDistribution::Distribution d = vectorEM[0];
   Point p = d.position.first;
@@ -423,6 +403,13 @@ void FieldPF::updateRepresentativeParticle()
   result << p.getX(), p.getY(), dir;
 
   representativeParticle.setFromVector(result);
+}
+
+std::vector<FieldDistribution::Distribution> FieldPF::getPositionsFromClusters()
+{
+  std::cout << "send from pf" << std::endl;
+
+  return vectorEM;
 }
 
 void FieldPF::updateInternalValues()

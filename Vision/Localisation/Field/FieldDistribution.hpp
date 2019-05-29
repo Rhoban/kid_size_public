@@ -3,6 +3,7 @@
 #include "FieldPosition.hpp"
 
 #include "rhoban_unsorted/particle_filter/particle_filter.h"
+#include <hl_communication/perception.pb.h>
 
 #include "RhIO.hpp"
 
@@ -22,11 +23,13 @@ public:
   {
     // first is value, second covMat
     std::pair<rhoban_geometry::Point, Eigen::MatrixXd> position;
-    // first is value, second stddev
+    // first is value in degres, second stddev
     std::pair<double, double> angle;
-    int nbParticles;
+    double probability;
   };
   std::vector<FieldDistribution::Distribution> updateEM(cv::Mat p, std::vector<rhoban_utils::Angle> a, int size);
+
+  hl_communication::WeightedPose* distributionToProto(FieldDistribution::Distribution d);
 
 protected:
   void EMTrainedLabels(int nbCluster);

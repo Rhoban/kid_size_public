@@ -5,6 +5,7 @@
 #include "rhoban_utils/logging/logger.h"
 
 #include <hl_monitoring/top_view_drawer.h>
+#include <hl_communication/perception.pb.h>
 #include <robocup_referee/constants.h>
 #include "rhoban_random/multivariate_gaussian.h"
 
@@ -25,6 +26,7 @@ using namespace rhoban_random;
 using namespace rhoban_unsorted;
 using namespace robocup_referee;
 using namespace hl_monitoring;
+using namespace hl_communication;
 
 namespace Vision
 {
@@ -32,6 +34,27 @@ namespace Localisation
 {
 FieldDistribution::FieldDistribution() : ParticleFilter()
 {
+}
+
+hl_communication::WeightedPose* FieldDistribution::distributionToProto(FieldDistribution::Distribution d)
+{
+  Eigen::MatrixXd m = d.position.second;
+  std::cout << "m recieved " << std::endl;
+
+  hl_communication::WeightedPose* self_in_field;
+  std::cout << " init ok " << std::endl;
+  self_in_field->set_probability(d.probability);
+  std::cout << "pro sent " << std::endl;
+  self_in_field->mutable_pose()->mutable_position()->set_x(d.position.first.getX());
+  self_in_field->mutable_pose()->mutable_position()->set_y(d.position.first.getY());
+  std::cout << "pos sent " << std::endl;
+  self_in_field->mutable_pose()->mutable_dir()->set_mean(deg2rad(d.angle.first));
+  std::cout << "angle sent " << std::endl;
+  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(m(0, 0));
+  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(m(1, 0));
+  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(m(1, 1));
+  std::cout << "uncertainty sent " << std::endl;
+  return self_in_field;
 }
 
 void FieldDistribution::EMTrainedLabels(int nbCluster)
@@ -87,6 +110,9 @@ void FieldDistribution::printLabel()
 
 std::vector<FieldDistribution::Distribution> FieldDistribution::updateEM(cv::Mat p, std::vector<Angle> a, int size)
 {
+  result.clear();
+  labelMax.clear();
+
   positions = p;
   angles = a;
   nbParticles = size;
@@ -103,6 +129,7 @@ std::vector<FieldDistribution::Distribution> FieldDistribution::updateEM(cv::Mat
   {
     oldLabels = labels;
     oldLabelMax = labelMax;
+    labelMax.clear();
     EMTrainedLabels(nbCluster);
     getMostRecurrentLabel();
     varReduction = varianceImprovement();
@@ -111,20 +138,32 @@ std::vector<FieldDistribution::Distribution> FieldDistribution::updateEM(cv::Mat
 
   printLabel();
 
-  for (auto it = oldLabelMax.begin(); it != oldLabelMax.end(); it++)
+  if (oldLabelMax.begin() == oldLabelMax.end())
   {
+    oldLabels = labels;
     Distribution newd;
-    newd.position = getPosition(it->first);
-    newd.angle = getAngle(it->first);
-    newd.nbParticles = labelMax[it->first];
+    newd.position = getPosition(-1);
+    newd.angle = getAngle(-1);
+    newd.probability = 1;
     result.push_back(newd);
   }
+  else
+  {
+    for (auto it = oldLabelMax.begin(); it != oldLabelMax.end(); it++)
+    {
+      Distribution newd;
+      newd.position = getPosition(it->first);
+      newd.angle = getAngle(it->first);
+      newd.probability = labelMax[it->first] / nbParticles;
+      result.push_back(newd);
+    }
 
-  // sort from larger to smaller label
-  std::sort(result.begin(), result.end(),
-            [](const FieldDistribution::Distribution& a, const FieldDistribution ::Distribution& b) {
-              return a.nbParticles > b.nbParticles;
-            });
+    // sort from larger to smaller label
+    std::sort(result.begin(), result.end(),
+              [](const FieldDistribution::Distribution& a, const FieldDistribution ::Distribution& b) {
+                return a.probability > b.probability;
+              });
+  }
 
   return result;
 }
@@ -133,10 +172,9 @@ std::pair<Point, Eigen::MatrixXd> FieldDistribution::getPosition(int label)
 {
   // getting the major group
   std::vector<Eigen::VectorXd> cluster;
-
   for (int i = 0; i < nbParticles; i++)
   {
-    if (oldLabels.at<int>(i) == label)
+    if (oldLabels.at<int>(i) == label || label < 0)
     {
       double x = positions.at<double>(i, 0);
       double y = positions.at<double>(i, 1);
@@ -161,7 +199,7 @@ std::pair<double, double> FieldDistribution::getAngle(int label)
 
   for (int i = 0; i < nbParticles; i++)
   {
-    if (oldLabels.at<int>(i) == label)
+    if (oldLabels.at<int>(i) == label || label < 0)
     {
       anglelabel.push_back(angles[i]);
     }

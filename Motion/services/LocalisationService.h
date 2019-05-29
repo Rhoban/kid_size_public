@@ -6,11 +6,17 @@
 #include <Eigen/Dense>
 #include <rhoban_geometry/point.h>
 #include <rhoban_utils/timing/time_stamp.h>
+#include <Localisation/Field/FieldDistribution.hpp>
 
 namespace Vision
 {
 class Robocup;
 class LocalisationBinding;
+namespace Localisation
+{
+class FieldDistribution;
+}
+
 }  // namespace Vision
 
 /// Unless explicitely stated otherwise, units are SI
@@ -101,6 +107,13 @@ public:
                   bool consistencyEnabled = false, bool replayValue = false);
 
   /**
+   *Updates all possibles position calculated with EM algorithm
+   */
+  void setCluster(std::vector<hl_communication::WeightedPose*> candidates);
+
+  std::vector<hl_communication::WeightedPose*> getPositionInClusters();
+
+  /**
    * Updates transforms between field and world basis and then updates variables monitored by RhIO
    */
   void updatePosSelf();
@@ -182,6 +195,7 @@ protected:
 
   Vision::Robocup* robocup;
   Vision::LocalisationBinding* locBinding;
+  std::vector<hl_communication::WeightedPose*> posFromClusters;
 
   /**
    * Update the basis transforms between field and world based on the following internal information.
