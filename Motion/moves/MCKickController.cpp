@@ -8,6 +8,7 @@
 #include "rhoban_utils/logging/logger.h"
 #include "MCKickController.h"
 #include "services/StrategyService.h"
+#include "scheduler/MoveScheduler.h"
 
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
@@ -81,13 +82,15 @@ void MCKickController::execute()
     // Updating the kicking strategy if the move is running
     if (isRunning())
     {
-      mutex.lock();
-      auto teamMatesField = _teamMatesField;
-      auto opponentsField = _opponentsField;
-      auto opponentsRadius = _opponentsRadius;
-      auto ball = _ballField;
-      auto robotPos = _robotField;
-      mutex.unlock();
+      // Importing data from move scheduler, copying data for local computation
+      getScheduler()->mutex.lock();
+      LocalisationService* localisation = getServices()->localisation;
+      auto ball = localisation->getBallPosField();
+      auto robotPos = localisation->getFieldPos();
+      auto teamMatesField = localisation->getTeamMatesField();
+      auto opponentsField = localisation->getOpponentsField();
+      auto opponentsRadius = localisation->opponentsRadius;
+      getScheduler()->mutex.unlock();
 
       auto rewardFunc = [this, &ball, &robotPos, &teamMatesField, &opponentsField,
                          &opponentsRadius](Point fromPos, Point toPos, bool success) -> double {
@@ -150,9 +153,10 @@ void MCKickController::execute()
 
       auto action = kickValueIteration.bestAction(kickValueIteration.stateForFieldPos(ball.x, ball.y), rewardFunc);
 
-      mutex.lock();
+      // Exporting best action to move scheduler thread
+      getScheduler()->mutex.lock();
       _bestAction = action;
-      mutex.unlock();
+      getScheduler()->mutex.unlock();
     }
 
     // Sleeping 10ms
@@ -197,18 +201,12 @@ void MCKickController::step(float elapsed)
 {
   bind->pull();
 
-  mutex.lock();
-  // Populating fields for the thread from the localisation service
-  LocalisationService* localisation = getServices()->localisation;
-  _ballField = localisation->getBallPosField();
-  _robotField = localisation->getFieldPos();
-  _teamMatesField = localisation->getTeamMatesField();
-  _opponentsField = localisation->getOpponentsField();
-  _opponentsRadius = localisation->opponentsRadius;
-
+  // If the generation is not available, falling back to strategy;
   if (!available)
   {
-    _bestAction = strategy.actionFor(_ballField.x, _ballField.y);
+    LocalisationService* localisation = getServices()->localisation;
+    auto ball = localisation->getBallPosField();
+    _bestAction = strategy.actionFor(ball.x, ball.y);
   }
 
   // Collecting the best action produced by the thread
@@ -229,5 +227,4 @@ void MCKickController::step(float elapsed)
   }
 
   kick_dir = rad2deg(_bestAction.orientation);
-  mutex.unlock();
 }

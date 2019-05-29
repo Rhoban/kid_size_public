@@ -1,7 +1,6 @@
 #pragma once
 
 #include <thread>
-#include <mutex>
 #include "moves/KickController.h"
 #include <rhoban_utils/control/control.h>
 #include <services/TeamPlayService.h>
@@ -49,15 +48,6 @@ protected:
   std::string cmdReloadStrategy();
 
   bool shouldReload;
-
-  std::mutex mutex;
-
-  // Data are copied between thread and tick to avoid ressource access issues
-  std::vector<rhoban_geometry::Point> _opponentsField;
-  std::map<int, Eigen::Vector3d> _teamMatesField;
-  rhoban_geometry::Point _ballField;
-  rhoban_geometry::Point _robotField;
-  double _opponentsRadius;
 
   KickStrategy::Action _bestAction;
 
