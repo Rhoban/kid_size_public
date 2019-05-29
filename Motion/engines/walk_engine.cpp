@@ -37,6 +37,17 @@ void WalkEngine::FootPose::operator=(const FootPose& other)
   yaw = other.yaw;
 }
 
+Eigen::Affine3d WalkEngine::FootPose::footToTrunk()
+{
+  Eigen::Affine3d transformation = Eigen::Affine3d::Identity();
+
+  transformation.translation().x() = x;
+  transformation.translation().y() = y;
+  transformation.linear() = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+  return transformation;
+}
+
 WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0)
 {
 }

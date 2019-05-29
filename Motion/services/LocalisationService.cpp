@@ -215,7 +215,14 @@ std::vector<Eigen::Vector3d> LocalisationService::getOpponentsSelf()
 
   for (const Eigen::Vector3d& opponent : tmp)
   {
-    result.push_back(self_from_world * opponent);
+    if (opponentsAreFake)
+    {
+      result.push_back(self_from_world * world_from_field * opponent);
+    }
+    else
+    {
+      result.push_back(self_from_world * opponent);
+    }
   }
   return result;
 }

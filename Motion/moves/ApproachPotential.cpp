@@ -183,8 +183,10 @@ void ApproachPotential::step(float elapsed)
     auto cap = ApproachMove::getKickCap();
 
     // Ball position
-    auto ball = loc->getBallPosSelf();
-    ball = walk->trunkToFlyingFoot(ball);
+    auto ball = loc->getBallPosWorld();
+    auto ballInFutureSelf = walk->futureSelfToWorld().inverse() * Eigen::Vector3d(ball.x, ball.y, 0);
+    ball.x = ballInFutureSelf.x();
+    ball.y = ballInFutureSelf.y();
     ballX = ball.x;  // XXX: To debug
     ballY = ball.y;
 
