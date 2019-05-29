@@ -6,12 +6,14 @@
 
 class Head;
 class Arms;
+class Kick;
 
 class Walk : public Move
 {
 public:
   Walk(Head* head, Arms* arms);
   std::string getName();
+  void setKick(Kick* kick);
 
   void onStart();
   void onStop();
@@ -83,6 +85,7 @@ public:
 protected:
   Head* head;
   Arms* arms;
+  Kick* kick;
 
   // Walk engine
   rhoban::WalkEngine engine;
