@@ -703,11 +703,16 @@ void CaptainService::compute()
   auto referee = getServices()->referee;
   auto teamPlay = getServices()->teamPlay;
 
+  // Getting a copy of all infos, since team play is executed on different thread
+  teamPlayAllInfo = getServices()->teamPlay->allInfoSafe();
+
+  // Locking the mutex. Note that this can't be done before because team play can also
+  // lock us.
+  std::lock_guard<std::mutex> lock(mutex);
+
   // First collecting robots that are able to play
   robots.clear();
   robotIds.clear();
-
-  teamPlayAllInfo = getServices()->teamPlay->allInfoSafe();
 
   for (const auto& entry : teamPlayAllInfo)
   {
@@ -776,12 +781,10 @@ void CaptainService::execThread()
     captainId = findCaptainId();
     lastTick = rhoban_utils::TimeStamp::now();
     // Updating
-    mutex.lock();
     if (!teamPlay->isEnabled() || IAmCaptain)
     {
       compute();
     }
-    mutex.unlock();
     bind.push();
 
     // Sleepint if needed to fit the given frequency
