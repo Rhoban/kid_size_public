@@ -701,7 +701,6 @@ void CaptainService::computePlayingPositions()
 void CaptainService::compute()
 {
   auto referee = getServices()->referee;
-  auto teamPlay = getServices()->teamPlay;
 
   // Getting a copy of all infos, since team play is executed on different thread
   teamPlayAllInfo = getServices()->teamPlay->allInfoSafe();
