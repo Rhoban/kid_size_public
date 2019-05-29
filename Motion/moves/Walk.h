@@ -4,12 +4,13 @@
 #include "engines/walk_engine.h"
 #include "rhoban_geometry/point.h"
 
+class Head;
 class Arms;
 
 class Walk : public Move
 {
 public:
-  Walk(Arms* arms);
+  Walk(Head* head, Arms* arms);
   std::string getName();
 
   void onStart();
@@ -76,6 +77,7 @@ public:
   // arms movements
 
 protected:
+  Head* head;
   Arms* arms;
 
   // Walk engine

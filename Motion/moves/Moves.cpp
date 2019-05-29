@@ -48,7 +48,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(arms);
 
   Head* head = new Head;
-  Walk* walk = new Walk(arms);
+  Walk* walk = new Walk(head, arms);
   Kick* kick = new Kick(head, walk, arms);
   add(kick);
   // Forcing generation of kick motions at kick creation

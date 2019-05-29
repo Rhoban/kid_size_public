@@ -1,12 +1,12 @@
 #include <math.h>
-#include "Walk.h"
-#include "Head.h"
 #include "services/DecisionService.h"
 #include "services/ModelService.h"
 #include <scheduler/MoveScheduler.h>
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/control/variation_bound.h>
+#include "Walk.h"
+#include "Head.h"
 #include "Arms.h"
 
 static rhoban_utils::Logger walkLogger("Walk");
@@ -23,7 +23,7 @@ static double bound(double value, double min, double max)
   return value;
 }
 
-Walk::Walk(Arms* arms) : arms(arms)
+Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms)
 {
   Move::initializeBinding();
 
@@ -91,17 +91,11 @@ void Walk::onStart()
   bind->pull();
 
   // Ensuring safety of head
-  Move* head = getScheduler()->getMove("head");
   if (!head->isRunning())
   {
     walkLogger.log("Move 'head' is not running, starting it for safety");
     startMove("head", 0.5);
-    Head* tmp = dynamic_cast<Head*>(head);
-    if (tmp == nullptr)
-    {
-      throw std::logic_error("Failed to cast 'head' motion to 'Head' type");
-    }
-    tmp->setDisabled(true);
+    head->setDisabled(true);
   }
   startMove("arms", 0.5);
 

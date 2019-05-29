@@ -2,6 +2,9 @@
 
 #include "SpecialImageHandler.hpp"
 
+#include <kick_model/kick_model_collection.h>
+
+
 #include <thread>
 #include "Filters/Pipeline.hpp"
 #include "Application/Application.hpp"
@@ -300,5 +303,15 @@ private:
    * Log to the vive
    */
   std::string viveLogPath;
+
+  /**
+   * The list of available kicks
+   */
+  csa_mdp::KickModelCollection kmc;
+
+  /**
+   * The name of the kick tagged in TaggedImg, if empty, does not draw kicks
+   */
+  std::string taggedKickName;
 };
 }  // namespace Vision
