@@ -268,7 +268,11 @@ void TeamPlayService::updateIntention(RobotMsg* msg)
   // Updating kick intention
   LocalisationService* loc = getServices()->localisation;
   StrategyService* strategy = getServices()->strategy;
-  if (strategy->getActiveKickController() != nullptr)
+  auto order = getServices()->captain->getMyOrder();
+
+  // We only publish kicking intention if the current captain order is going to kick and if there is
+  // an active kick controller running
+  if (strategy->getActiveKickController() != nullptr && order.action() == Action::GOING_TO_KICK)
   {
     KickIntention* kick = intention->mutable_kick();
     rhoban_geometry::Point ball_in_field = loc->getBallPosField();
