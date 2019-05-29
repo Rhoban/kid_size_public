@@ -73,6 +73,8 @@ void Arms::onStop()
 
 void Arms::step(float elapsed)
 {
+  bind->pull();
+
   ArmsState lastTickArmsState = armsState;
   if (lastTickArmsState != armsState)
     setArms(armsState, true);
