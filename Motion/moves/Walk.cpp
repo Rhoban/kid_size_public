@@ -249,9 +249,20 @@ void Walk::step(float elapsed)
         else
         {
           // Updating engine speed according to acc. limits
-          VariationBound::update(engine.stepSizeX, walkStep, maxDStepByCycle, 1);
-          VariationBound::update(engine.stepSizeY, walkLateral, maxDLatByCycle, 1);
-          VariationBound::update(engine.stepSizeYaw, deg2rad(walkTurn), deg2rad(maxDTurnByCycle), 1);
+          double maxD = maxDStepByCycle;
+          if (fabs(walkStep) * 3 < fabs(engine.stepSizeX))
+            maxD *= 3;
+          VariationBound::update(engine.stepSizeX, walkStep, maxD, 1);
+
+          maxD = maxDLatByCycle;
+          if (fabs(walkLateral) * 3 < fabs(engine.stepSizeY))
+            maxD *= 3;
+          VariationBound::update(engine.stepSizeY, walkLateral, maxD, 1);
+
+          maxD = maxDTurnByCycle;
+          if (fabs(walkTurn) * 3 < fabs(engine.stepSizeYaw))
+            maxD *= 3;
+          VariationBound::update(engine.stepSizeYaw, deg2rad(walkTurn), deg2rad(maxD), 1);
         }
 
         if (state == WalkStarting)
