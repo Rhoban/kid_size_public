@@ -5,6 +5,7 @@
 #include <robocup_referee/constants.h>
 #include <unistd.h>
 #include "CaptainService.h"
+#include "scheduler/MoveScheduler.h"
 
 #include <rhoban_geometry/point_cluster.h>
 #include <rhoban_team_play/team_play.h>
@@ -700,10 +701,18 @@ void CaptainService::computePlayingPositions()
 
 void CaptainService::compute()
 {
+  getScheduler()->mutex.lock();
   auto referee = getServices()->referee;
-
   // Getting a copy of all infos, since team play is executed on different thread
-  teamPlayAllInfo = getServices()->teamPlay->allInfoSafe();
+  teamPlayAllInfo = getServices()->teamPlay->allInfo();
+  bool isPlacingPhase = referee->isPlacingPhase();
+  std::map<int, bool> penalizedRobots;
+  for (auto& entry : teamPlayAllInfo)
+  {
+    int id = entry.second.robot_id().robot_id();
+    penalizedRobots[id] = referee->isPenalized(id);
+  }
+  getScheduler()->mutex.unlock();
 
   // Locking the mutex. Note that this can't be done before because team play can also
   // lock us.
@@ -720,18 +729,17 @@ void CaptainService::compute()
     int robot_id = info.robot_id().robot_id();
     PerceptionExtra extra = extractPerceptionExtra(info.perception());
     bool outdated = isOutdated(info);
-    bool penalized = referee->isPenalized(robot_id);
     bool playing = action != Action::UNDEFINED && action != Action::INACTIVE;
     bool localized = extra.field().valid();
-    if (!outdated && !penalized && playing && localized)
+    if (!outdated && !penalizedRobots[robot_id] && playing && localized)
     {
       robots[robot_id] = info;
       robotIds.push_back(robot_id);
     }
     else
     {
-      logger.log("Ignoring robot entry-> outdated:%d, penalized:%d, playing:%d, localized:%d", outdated, penalized,
-                 playing, localized);
+      logger.log("Ignoring robot entry-> outdated:%d, penalized:%d, playing:%d, localized:%d", outdated,
+                 penalizedRobots[robot_id], playing, localized);
     }
   }
 
@@ -745,7 +753,7 @@ void CaptainService::compute()
   updateCommonBall();
   updateCommonOpponents();
 
-  if (referee->isPlacingPhase())
+  if (isPlacingPhase)
   {
     computeBasePositions();
   }

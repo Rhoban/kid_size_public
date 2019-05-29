@@ -52,7 +52,7 @@ public:
    * Does not return until askQuit() is called.
    * Main motion application loop.
    */
-  void execute(bool manualClock=false);
+  void execute(bool manualClock = false);
 
   /**
    * Set the manual clock value
@@ -92,6 +92,10 @@ public:
    */
   void askQuit();
 
+  /**
+   * This mutex is locked when the moves and services are ticked (atomic)
+   * This mutex can be locked for a few ms during ticking
+   */
   std::mutex mutex;
 
 private:
