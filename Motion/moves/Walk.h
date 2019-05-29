@@ -120,6 +120,9 @@ protected:
   // Swing gain on starting steps
   double swingGainStart;
 
+  // Is security blocking ?
+  bool securityBlock;
+
   // Security parameters
   double securityThreshold;
   double securityPhase;

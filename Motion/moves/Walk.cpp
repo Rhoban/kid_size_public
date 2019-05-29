@@ -77,6 +77,7 @@ Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms)
       ->minimum(0)
       ->maximum(1.0);
   bind->bindNew("securityPhase", securityPhase, RhIO::Bind::PullOnly)->defaultValue(0.05);
+  bind->bindNew("securityBlock", securityBlock, RhIO::Bind::PushOnly);
 
   timeSinceLastStep = 0;
 }
@@ -178,7 +179,7 @@ void Walk::step(float elapsed)
     // Ticking
     double prevPhase = timeSinceLastStep / engine.stepDuration;
     double phase = (timeSinceLastStep + elapsed) / engine.stepDuration;
-    bool securityBlock = false;
+    securityBlock = false;
 
     // Doing security check
     if (prevPhase < securityPhase && phase > securityPhase)
@@ -301,6 +302,8 @@ void Walk::step(float elapsed)
   {
     setAngle(entry.first, rad2deg(entry.second));
   }
+
+  bind->push();
 }
 
 bool Walk::isNewStep(double elapsed)
