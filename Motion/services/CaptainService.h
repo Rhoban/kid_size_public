@@ -87,6 +87,11 @@ protected:
   std::unique_ptr<std::thread> captainThread;
   std::mutex mutex;
 
+  /**
+   * This is a local copy of team play infos made by compute (threaded)
+   */
+  std::map<int, hl_communication::RobotMsg> teamPlayAllInfo;
+
   // Either the info computed or the one grabbed from the captain
   hl_communication::Captain status;
 

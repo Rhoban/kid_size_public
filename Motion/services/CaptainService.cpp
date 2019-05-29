@@ -180,10 +180,9 @@ int CaptainService::findCaptainId()
 {
   auto referee = getServices()->referee;
   auto teamPlay = getServices()->teamPlay;
-  auto& info = teamPlay->allInfo();
   share = true;
 
-  for (const auto& entry : info)
+  for (const auto& entry : teamPlayAllInfo)
   {
     const RobotMsg& robotInfo = entry.second;
     Action action = robotInfo.intention().action_planned();
@@ -708,7 +707,9 @@ void CaptainService::compute()
   robots.clear();
   robotIds.clear();
 
-  for (const auto& entry : teamPlay->allInfo())
+  teamPlayAllInfo = getServices()->teamPlay->allInfoSafe();
+
+  for (const auto& entry : teamPlayAllInfo)
   {
     const RobotMsg& info = entry.second;
     Action action = info.intention().action_planned();
@@ -758,6 +759,7 @@ bool CaptainService::tick(double elapsed)
     running = true;
     captainThread.reset(new std::thread([this] { this->execThread(); }));
   }
+
   return true;
 }
 

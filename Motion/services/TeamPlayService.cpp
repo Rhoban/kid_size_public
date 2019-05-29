@@ -88,9 +88,16 @@ const std::map<int, RobotMsg>& TeamPlayService::allInfo() const
   return _allInfo;
 }
 
+std::map<int, RobotMsg> TeamPlayService::allInfoSafe()
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  return _allInfo;
+}
+
 bool TeamPlayService::tick(double elapsed)
 {
   _bind->pull();
+  std::lock_guard<std::mutex> lock(mutex);
 
   // If team id is available and team id
   int teamId = getServices()->referee->teamId;
@@ -348,6 +355,11 @@ void TeamPlayService::processInfo(const RobotMsg& original_msg)
   if (msg_team_id != getServices()->referee->teamId)
   {
     logger.warning("Received a message from another team: %d", msg_team_id);
+    return;
+  }
+  if (!original_msg.has_perception())
+  {
+    logger.warning("Received a message with no perception");
     return;
   }
 
