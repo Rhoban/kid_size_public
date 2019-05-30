@@ -1,7 +1,9 @@
 #include "BallByII.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "rhoban_utils/logging/logger.h"
 #include "rhoban_utils/timing/benchmark.h"
+#include "rhoban_utils/util.h"
 #include "Utils/OpencvUtils.h"
 #include "Utils/PatchTools.hpp"
 #include "Utils/ROITools.hpp"
@@ -11,6 +13,8 @@
 #include <set>
 
 using rhoban_utils::Benchmark;
+
+static rhoban_utils::Logger logger("BallByII");
 
 namespace Vision
 {
@@ -120,7 +124,17 @@ void BallByII::process()
         continue;
       }
 
-      double score = getCandidateScore(center_x, center_y, radius, yImg, greenImg);
+      double score = 0;
+      try
+      {
+        score = getCandidateScore(center_x, center_y, radius, yImg, greenImg);
+      }
+      catch (const std::runtime_error& exc)
+      {
+        logger.error("%s: Failed to get score for patch at: %d,%d with radius %f: ignoring candidate",
+                     DEBUG_INFO.c_str(), center_x, center_y, radius);
+        continue;
+      }
 
       // Write score in scores map
       if (tagLevel > 0)
@@ -244,11 +258,19 @@ void BallByII::process()
           cv::Rect newPatch = getBoundaryPatch(new_center_x, new_center_y, radius);
           if (!Utils::isContained(newPatch, size))
             continue;
-          double score = getCandidateScore(new_center_x, new_center_y, radius, yImg, greenImg);
-          if (score > bestScore)
+          try
           {
-            bestScore = score;
-            bestPatch = newPatch;
+            double score = getCandidateScore(new_center_x, new_center_y, radius, yImg, greenImg);
+            if (score > bestScore)
+            {
+              bestScore = score;
+              bestPatch = newPatch;
+            }
+          }
+          catch (const std::runtime_error& exc)
+          {
+            logger.error("%s: Failed to get score for patch at: %d,%d with radius %f: ignoring candidate",
+                         DEBUG_INFO.c_str(), new_center_x, new_center_y, radius);
           }
         }
       }

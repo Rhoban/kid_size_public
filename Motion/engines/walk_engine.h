@@ -14,10 +14,13 @@ public:
   struct FootPose
   {
     FootPose();
-    void operator=(const FootPose &other);
+    void operator=(const FootPose& other);
 
     double x, y, z;
     double yaw;
+
+    // Returns a frame from foot to trunk frame (this is actually a 2d matrix)
+    Eigen::Affine3d footToTrunk();
   };
 
   struct Foot
@@ -27,7 +30,7 @@ public:
 
     // Update splines for the foot step
     void clearSplines();
-    
+
     // Splines
     rhoban_utils::PolySpline xSpline, ySpline, zSpline, yawSpline;
 

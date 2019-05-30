@@ -8,6 +8,7 @@
 #include "Walk.h"
 #include "Head.h"
 #include "Arms.h"
+#include "Kick.h"
 
 static rhoban_utils::Logger walkLogger("Walk");
 
@@ -23,7 +24,7 @@ static double bound(double value, double min, double max)
   return value;
 }
 
-Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms)
+Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms), kick(nullptr)
 {
   Move::initializeBinding();
 
@@ -82,6 +83,11 @@ Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms)
   timeSinceLastStep = 0;
 }
 
+void Walk::setKick(Kick* kick_)
+{
+  kick = kick_;
+}
+
 std::string Walk::getName()
 {
   return "walk";
@@ -127,6 +133,11 @@ void Walk::control(bool enable, double step, double lateral, double turn)
 {
   if (isRunning())
   {
+    if (kick != nullptr && kick->isRunning() && enable)
+    {
+      walkLogger.warning("Walk received order while kicking, ignoring");
+      enable = false;
+    }
     step = bound(step, -maxStepBackward, maxStep);
     lateral = bound(lateral, -maxLateral, maxLateral);
     turn = bound(turn, -maxRotation, maxRotation);
@@ -155,7 +166,7 @@ void Walk::step(float elapsed)
   bind->pull();
 
   engine.trunkPitch = deg2rad(trunkPitch);
-  modelService->enableOdometry(state != WalkNotWalking);
+  modelService->enableOdometry(state != WalkNotWalking || kick->isRunning());
 
   if (state == WalkNotWalking)
   {
@@ -376,34 +387,18 @@ void Walk::setRawOrder(const Eigen::Vector3d& params, bool enable)
   setRawOrder(params(0), params(1), params(2), enable);
 }
 
-rhoban_geometry::Point Walk::trunkToFlyingFoot(rhoban_geometry::Point point)
+Eigen::Affine3d Walk::futureSelfToWorld()
 {
-  if (!isRunning())
-  {
-    return point;
-  }
+  // Compute the foot frames in the trunk at the end of the current step
+  auto supportFootToTrunk = engine.supportFoot().getPosition(engine.stepDuration).footToTrunk();
+  auto flyingFootToTrunk = engine.flyingFoot().getPosition(engine.stepDuration).footToTrunk();
 
-  rhoban::WalkEngine::FootPose flyingPose;
-  double deltaY;
+  // Compute the self to flying foot frame
+  auto selfToFlyingFoot = Eigen::Affine3d::Identity();
+  selfToFlyingFoot.translation().y() = -engine.flyingFoot().trunkYOffset;
 
-  if (engine.isLeftSupport)
-  {
-    flyingPose = engine.right.getPosition(timeSinceLastStep);
-    deltaY = engine.right.trunkYOffset;
-  }
-  else
-  {
-    flyingPose = engine.left.getPosition(timeSinceLastStep);
-    deltaY = engine.left.trunkYOffset;
-  }
+  // Self to world frame
+  auto supportToWorld = getServices()->model->model.supportToWorld;
 
-  rhoban_geometry::Point delta(0, -deltaY);
-  delta.rotation(flyingPose.yaw);
-  rhoban_geometry::Point trunkAfterStep(flyingPose.x + delta.x, flyingPose.y + delta.y);
-
-  point.x -= trunkAfterStep.x;
-  point.y -= trunkAfterStep.y;
-  point = point.rotation(-flyingPose.yaw);
-
-  return point;
+  return supportToWorld * supportFootToTrunk.inverse() * flyingFootToTrunk * selfToFlyingFoot;
 }

@@ -581,8 +581,8 @@ void Robocup::step()
   // Set the log timestamp during fake mode
   if (isFakeMode())
   {
-    double ts = pipeline.getTimestamp().getTimeMS();
-    _scheduler->getServices()->model->setReplayTimestamp(ts / 1000.0);
+    double ts = pipeline.getCameraState()->_timeStamp;
+    _scheduler->getServices()->model->setReplayTimestamp(ts);
   }
 }
 
@@ -1010,14 +1010,15 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
   if (taggedKickName != "")
   {
     const csa_mdp::KickZone& kick_zone = kmc.getKickModel(taggedKickName).getKickZone();
-    double alpha = 0.6;// Transparency of the kick zones
-    for (bool is_right_foot : {false, true})
+    double alpha = 0.6;  // Transparency of the kick zones
+    for (bool is_right_foot : { false, true })
     {
       std::vector<Eigen::Vector2d> corners_in_self = kick_zone.getKickAreaCorners(is_right_foot);
       std::vector<cv::Point> corners_in_img;
       for (const Eigen::Vector2d& corner_in_self : corners_in_self)
       {
-        Eigen::Vector3d corner_in_world = cs->getWorldFromSelf(Eigen::Vector3d(corner_in_self.x(), corner_in_self.y(), 0));
+        Eigen::Vector3d corner_in_world =
+            cs->getWorldFromSelf(Eigen::Vector3d(corner_in_self.x(), corner_in_self.y(), 0));
         try
         {
           corners_in_img.push_back(cs->imgXYFromWorldPosition(corner_in_world));
@@ -1032,7 +1033,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
       {
         // TODO: add different color if ball is inside the area
         cv::Mat copy = img.clone();
-        cv::Scalar color = is_right_foot ? cv::Scalar(255,0,0) : cv::Scalar(0,0,255);
+        cv::Scalar color = is_right_foot ? cv::Scalar(255, 0, 0) : cv::Scalar(0, 0, 255);
         cv::fillConvexPoly(copy, corners_in_img, color);
         cv::addWeighted(img, alpha, copy, 1 - alpha, 0, img);
       }
@@ -1160,7 +1161,6 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
   {
     cv::line(img, horizonKeypoints[idx - 1], horizonKeypoints[idx], cv::Scalar(255, 0, 0), 2);
   }
-
 
   // TODO remove it and do something cleaner lates
   if (cs->has_camera_field_transform)

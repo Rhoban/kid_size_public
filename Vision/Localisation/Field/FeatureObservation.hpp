@@ -56,7 +56,10 @@ public:
   FeatureObservation(hl_monitoring::Field::POIType poiType, const rhoban_geometry::PanTilt& panTiltToFeature,
                      double robotHeight, double weight = 1);
 
-  cv::Point3f getSeenDir() const;
+  /**
+   * Return true on success, false if it fails to get seen direction (observation is above horizon)
+   */
+  bool getSeenDir(cv::Point3f* out) const;
 
   virtual double potential(const FieldPosition& p) const override;
 

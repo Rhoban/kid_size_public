@@ -294,8 +294,7 @@ void ModelService::tickCheckLowLevelState()
   std::string cameraState = getCameraState();
   if (cameraState != "")
   {
-    lowLevelState += cameraState;
-    lowLevelState += '\n';
+    lowLevelState += cameraState + "; ";
   }
 
   // Checking for missing devices
@@ -304,7 +303,7 @@ void ModelService::tickCheckLowLevelState()
   {
     if (!it.second->isPresent())
     {
-      lowLevelState += it.first + "\n";
+      lowLevelState += it.first + "; ";
     }
   }
 }
