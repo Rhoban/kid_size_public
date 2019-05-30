@@ -648,18 +648,14 @@ void LocalisationBinding::getPossiblePositions()
 {
   LocalisationService* loc = scheduler->getServices()->localisation;
 
-  std::cout << "recieved binding" << std::endl;
   Localisation::FieldDistribution fieldDistribution;
 
   std::vector<hl_communication::WeightedPose*> candidate;
 
   std::vector<Localisation::FieldDistribution::Distribution> p = field_filter->getPositionsFromClusters();
-  std::cout << "p size : " << p.size() << std::endl;
 
   for (int pos_idx = 0; pos_idx < p.size(); pos_idx++)
     candidate.push_back(fieldDistribution.distributionToProto(p.at(pos_idx)));
-
-  std::cout << "candidate size : " << candidate.size() << std::endl;
 
   loc->setCluster(candidate);
 }

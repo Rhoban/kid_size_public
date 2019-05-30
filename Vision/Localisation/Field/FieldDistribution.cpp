@@ -39,21 +39,18 @@ FieldDistribution::FieldDistribution() : ParticleFilter()
 hl_communication::WeightedPose* FieldDistribution::distributionToProto(FieldDistribution::Distribution d)
 {
   Eigen::MatrixXd m = d.position.second;
-  std::cout << "m recieved " << std::endl;
 
-  hl_communication::WeightedPose* self_in_field;
-  std::cout << " init ok " << std::endl;
+  hl_communication::WeightedPose* self_in_field = new WeightedPose();
   self_in_field->set_probability(d.probability);
-  std::cout << "pro sent " << std::endl;
   self_in_field->mutable_pose()->mutable_position()->set_x(d.position.first.getX());
   self_in_field->mutable_pose()->mutable_position()->set_y(d.position.first.getY());
-  std::cout << "pos sent " << std::endl;
   self_in_field->mutable_pose()->mutable_dir()->set_mean(deg2rad(d.angle.first));
-  std::cout << "angle sent " << std::endl;
+  self_in_field->mutable_pose()->mutable_dir()->set_std_dev(d.angle.second);
   self_in_field->mutable_pose()->mutable_position()->add_uncertainty(m(0, 0));
   self_in_field->mutable_pose()->mutable_position()->add_uncertainty(m(1, 0));
   self_in_field->mutable_pose()->mutable_position()->add_uncertainty(m(1, 1));
-  std::cout << "uncertainty sent " << std::endl;
+  std::cout << "dist  " << d.probability << " vector " << self_in_field->probability() << std::endl;
+
   return self_in_field;
 }
 
