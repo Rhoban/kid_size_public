@@ -14,7 +14,7 @@
 #include "moves/Kick.h"
 
 // Uncomment this to force using right foot with classic kick (for debugging purpose)
-#define DEBUG_FORCE_KICK_RIGHT_CLASSIC
+// #define DEBUG_FORCE_KICK_RIGHT_CLASSIC
 
 static rhoban_utils::Logger logger("ApproachPotential" /*, LoggerDebug*/);
 
