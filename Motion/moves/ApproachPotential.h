@@ -38,12 +38,15 @@ protected:
   std::vector<Target> targets;
   Eigen::Vector3d lastTargetInWorld;
   bool hasLastTarget;
+  bool wasShifted;
+  double shifting;
 
   /**
    * Getting the control to send to the walk to reach a given target, knowing
    * where the ball is
    */
-  void getControl(const Target& target, const rhoban_geometry::Point& ball, double& x, double& y, double& yaw);
+  void getControl(const Target& target, const rhoban_geometry::Point& ball, double& x, double& y, double& yaw,
+                  bool simulation = true);
 
   // Foot choice
   bool left;

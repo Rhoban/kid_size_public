@@ -14,7 +14,7 @@
 #include "moves/Kick.h"
 
 // Uncomment this to force using right foot with classic kick (for debugging purpose)
-// #define DEBUG_FORCE_KICK_RIGHT_CLASSIC
+#define DEBUG_FORCE_KICK_RIGHT_CLASSIC
 
 static rhoban_utils::Logger logger("ApproachPotential" /*, LoggerDebug*/);
 
@@ -74,6 +74,8 @@ void ApproachPotential::onStart()
   lastFootChoice = 1e6;
   kick_score = 0;
   hasLastTarget = false;
+  wasShifted = false;
+  shifting = 0;
   setState(STATE_PLACE);
 }
 
@@ -84,7 +86,8 @@ void ApproachPotential::onStop()
   setState(STATE_STOPPING);
 }
 
-void ApproachPotential::getControl(const Target& target, const Point& ball, double& x, double& y, double& yaw)
+void ApproachPotential::getControl(const Target& target, const Point& ball, double& x, double& y, double& yaw,
+                                   bool simulation)
 {
   double dist = target.position.getLength();
 
@@ -98,9 +101,25 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
   // This avoids hesitating between turning left or right to turn around the ball if the target is
   // on the opposite side by rotating the target around the ball in a defined orientation
   double theta = (ballToTarget.getTheta() - (-ball).getTheta()).getSignedValue();
-  if (fabs(theta) > 150)
+  if (!simulation)
   {
-    targetPosition = ball + (targetPosition - ball).rotation(30);
+    if (wasShifted)
+    {
+      if (fabs(theta) < 150)
+      {
+        wasShifted = false;
+        shifting = 0;
+      }
+    }
+    else
+    {
+      if (fabs(theta) > 160)
+      {
+        wasShifted = true;
+        shifting = (fabs(theta) > 0) ? 30 : -30;
+      }
+    }
+    targetPosition = ball + (targetPosition - ball).rotation(shifting);
   }
 
   // Magical potential field
@@ -343,7 +362,7 @@ void ApproachPotential::step(float elapsed)
       {
         // Applying control
         double controlX, controlY, controlYaw;
-        getControl(target, ball, controlX, controlY, controlYaw);
+        getControl(target, ball, controlX, controlY, controlYaw, false);
 
         walk->control(!dontWalk, controlX, controlY, controlYaw);
       }
