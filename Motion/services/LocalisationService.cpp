@@ -580,14 +580,6 @@ bool LocalisationService::isVisionActive() const
   }
 }
 
-void LocalisationService::enableFieldFilter(bool enable)
-{
-  if (NULL != locBinding)
-  {
-    locBinding->enableFieldFilter = enable;
-  }
-}
-
 void LocalisationService::setGoalKeeper(bool status)
 {
   if (NULL != locBinding)

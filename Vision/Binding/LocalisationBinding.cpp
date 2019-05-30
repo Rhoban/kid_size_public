@@ -44,7 +44,6 @@ LocalisationBinding::LocalisationBinding(MoveScheduler* scheduler_, Robocup* vis
   , scheduler(scheduler_)
   , nb_particles_ff(5000)
   , robotQ(-1)
-  , enableFieldFilter(true)
   , isGoalKeeper(false)
   , consistencyEnabled(true)
   , consistencyScore(1)
@@ -555,14 +554,6 @@ void LocalisationBinding::updateFilter(
 {
   ModelService* model_service = scheduler->getServices()->model;
 
-  // Check if base has been updated since last tick:
-  bool isWalkEnabled = model_service->wasOdometryUpdated();
-
-  if (scheduler->isFakeMode())
-  {
-    isWalkEnabled = true;
-  }
-
   // ComputedOdometry
   double odom_start = lastTS.getTimeMS() / 1000.0;
   double odom_end = currTS.getTimeMS() / 1000.0;
@@ -606,41 +597,15 @@ void LocalisationBinding::updateFilter(
 
   RobotController rc(cv2rg(robotMove), orientationChange, noiseGain);
 
-  // Update the filter if one of the following conditions are met:
-  // - An observation has been found
-  // - Walk was enabled at least once since the last tick
-  // - A reset has been required
-  // - The robot was fallen since last tick
-  DecisionService* decision = scheduler->getServices()->decision;
-  bool isResetPending = field_filter->isResetPending();
-  bool hasFallenRecently = decision->timeSinceFall < elapsed;
-  if (enableFieldFilter && (obs.size() > 0 || isWalkEnabled || isResetPending || hasFallenRecently))
+  double max_step_time = 5;  // Avoiding to have a huge exploration which causes errors
+  if (elapsed > max_step_time)
   {
-    double max_step_time = 5;  // Avoiding to have a huge exploration which causes errors
-    if (elapsed > max_step_time)
-    {
-      fieldLogger.warning("Large time elapsed in fieldFilter: %f [s]", elapsed);
-    }
-    filterMutex.lock();
-    field_filter->resize(nb_particles_ff);
-    field_filter->step(rc, obs, std::min(max_step_time, elapsed));
-    filterMutex.unlock();
+    fieldLogger.warning("Large time elapsed in fieldFilter: %f [s]", elapsed);
   }
-  else if (debugLevel > 0)
-  {
-    std::stringstream oss;
-    oss << "skipping step: ";
-    if (!enableFieldFilter)
-      oss << "field disabled, ";
-    if (!isWalkEnabled)
-      oss << "walk disabled, ";
-    if (!isResetPending)
-      oss << "no reset planned, ";
-    if (!hasFallenRecently)
-      oss << "last Fall: " << decision->timeSinceFall << " [s],";
-    oss << "nbObs: " << obs.size();
-    fieldLogger.log(oss.str().c_str());
-  }
+  filterMutex.lock();
+  field_filter->resize(nb_particles_ff);
+  field_filter->step(rc, obs, std::min(max_step_time, elapsed));
+  filterMutex.unlock();
 
   // If we updated the filter, it is important to update lastTS for next odometry.
   // If we skipped the step, it means that there is no point in using odometry from
