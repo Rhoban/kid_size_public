@@ -90,6 +90,10 @@ private:
   /// 1 -> All collected data are dumped after every image
   ParamInt isWritingData;
 
+  /// 0 -> don't use refine corner sub pix
+  /// 1 -> use refine corner sub pix
+  ParamInt refine;
+
   // Detection parameters
   cv::Ptr<cv::aruco::DetectorParameters> detectorParameters;
 
