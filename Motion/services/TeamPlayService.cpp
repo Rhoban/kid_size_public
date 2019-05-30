@@ -187,10 +187,11 @@ void TeamPlayService::updatePerception(RobotMsg* msg)
   std::vector<hl_communication::WeightedPose*> positions = loc->getPositionInClusters();
   std::cout << "POSITIONS RECIEVED SIZE :" << positions.size() << std::endl;
   for (int pos_idx = 0; pos_idx < positions.size(); pos_idx++)
+
   {
     WeightedPose* self_in_field = perception->add_self_in_field();
-    //  Vision::Localisation::FieldDistribution::Distribution d = positions.at(pos_idx);
-    self_in_field = positions.at(pos_idx);
+
+    self_in_field->CopyFrom(*positions.at(pos_idx));
   }
 
   // Adding obstacles to message
