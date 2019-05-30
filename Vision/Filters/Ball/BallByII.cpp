@@ -1,7 +1,9 @@
 #include "BallByII.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "rhoban_utils/logging/logger.h"
 #include "rhoban_utils/timing/benchmark.h"
+#include "rhoban_utils/util.h"
 #include "Utils/OpencvUtils.h"
 #include "Utils/PatchTools.hpp"
 #include "Utils/ROITools.hpp"
@@ -11,6 +13,8 @@
 #include <set>
 
 using rhoban_utils::Benchmark;
+
+static rhoban_utils::Logger logger("BallByII");
 
 namespace Vision
 {
@@ -127,8 +131,8 @@ void BallByII::process()
       }
       catch (const std::runtime_error& exc)
       {
-        logger.err("%s: Failed to get score for patch at: %d,%d with radius %f: ignoring candidate", HL_DEBUG.c_str(),
-                   new_center_x, new_center_y, radius);
+        logger.error("%s: Failed to get score for patch at: %d,%d with radius %f: ignoring candidate",
+                     DEBUG_INFO.c_str(), center_x, center_y, radius);
         continue;
       }
 
@@ -265,8 +269,8 @@ void BallByII::process()
           }
           catch (const std::runtime_error& exc)
           {
-            logger.err("%s: Failed to get score for patch at: %d,%d with radius %f: ignoring candidate",
-                       HL_DEBUG.c_str(), new_center_x, new_center_y, radius);
+            logger.error("%s: Failed to get score for patch at: %d,%d with radius %f: ignoring candidate",
+                         DEBUG_INFO.c_str(), new_center_x, new_center_y, radius);
           }
         }
       }
