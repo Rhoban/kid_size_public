@@ -787,7 +787,7 @@ bool LocalisationBinding::refereeAllowsToPlay()
 
   RefereeService* referee = scheduler->getServices()->referee;
   bool allowedPhase = referee->isPlacingPhase() || referee->isFreezePhase();
-  bool penalized = referee->isPenalized();
+  bool penalized = referee->isPenalized() && !referee->isServingPenalty();
   return referee->isPlaying() || (allowedPhase && !penalized);
 }
 
