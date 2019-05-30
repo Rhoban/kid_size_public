@@ -120,7 +120,17 @@ void BallByII::process()
         continue;
       }
 
-      double score = getCandidateScore(center_x, center_y, radius, yImg, greenImg);
+      double score = 0;
+      try
+      {
+        score = getCandidateScore(center_x, center_y, radius, yImg, greenImg);
+      }
+      catch (const std::runtime_error& exc)
+      {
+        logger.err("%s: Failed to get score for patch at: %d,%d with radius %f: ignoring candidate", HL_DEBUG.c_str(),
+                   new_center_x, new_center_y, radius);
+        continue;
+      }
 
       // Write score in scores map
       if (tagLevel > 0)
@@ -244,11 +254,19 @@ void BallByII::process()
           cv::Rect newPatch = getBoundaryPatch(new_center_x, new_center_y, radius);
           if (!Utils::isContained(newPatch, size))
             continue;
-          double score = getCandidateScore(new_center_x, new_center_y, radius, yImg, greenImg);
-          if (score > bestScore)
+          try
           {
-            bestScore = score;
-            bestPatch = newPatch;
+            double score = getCandidateScore(new_center_x, new_center_y, radius, yImg, greenImg);
+            if (score > bestScore)
+            {
+              bestScore = score;
+              bestPatch = newPatch;
+            }
+          }
+          catch (const std::runtime_error& exc)
+          {
+            logger.err("%s: Failed to get score for patch at: %d,%d with radius %f: ignoring candidate",
+                       HL_DEBUG.c_str(), new_center_x, new_center_y, radius);
           }
         }
       }
