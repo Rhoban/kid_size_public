@@ -511,10 +511,19 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
     fieldObservations.push_back(obs);
     if (debugLevel > 0)
     {
-      cv::Point3f pos = obs->getSeenDir();
-      fieldLogger.log("Feature %d of type %s -> pan: %lf, tilt: %lf, weight: %1lf, pos: %lf, %lf, %lf", obsId,
-                      obs->getPOITypeName().c_str(), obs->panTilt.pan.getSignedValue(),
-                      obs->panTilt.tilt.getSignedValue(), obs->weight, pos.x, pos.y, pos.z);
+      cv::Point3f pos;
+      if (obs->getSeenDir(&pos))
+      {
+        fieldLogger.log("Feature %d of type %s -> pan: %lf, tilt: %lf, weight: %1lf, pos: %lf, %lf, %lf", obsId,
+                        obs->getPOITypeName().c_str(), obs->panTilt.pan.getSignedValue(),
+                        obs->panTilt.tilt.getSignedValue(), obs->weight, pos.x, pos.y, pos.z);
+      }
+      else
+      {
+        fieldLogger.error("Failed to find score for feature %d of type %s -> pan: %lf, tilt: %lf, weight: %1lf", obsId,
+                          obs->getPOITypeName().c_str(), obs->panTilt.pan.getSignedValue(),
+                          obs->panTilt.tilt.getSignedValue(), obs->weight);
+      }
     }
     obsId++;
   }
