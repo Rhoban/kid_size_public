@@ -8,6 +8,7 @@
 #include "Walk.h"
 #include "Head.h"
 #include "Arms.h"
+#include "Kick.h"
 
 static rhoban_utils::Logger walkLogger("Walk");
 
@@ -23,7 +24,7 @@ static double bound(double value, double min, double max)
   return value;
 }
 
-Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms)
+Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms), kick(nullptr)
 {
   Move::initializeBinding();
 
@@ -82,6 +83,11 @@ Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms)
   timeSinceLastStep = 0;
 }
 
+void Walk::setKick(Kick* kick_)
+{
+  kick = kick_;
+}
+
 std::string Walk::getName()
 {
   return "walk";
@@ -127,6 +133,11 @@ void Walk::control(bool enable, double step, double lateral, double turn)
 {
   if (isRunning())
   {
+    if (kick != nullptr && kick->isRunning() && enable)
+    {
+      walkLogger.warning("Walk received order while kicking, ignoring");
+      enable = false;
+    }
     step = bound(step, -maxStepBackward, maxStep);
     lateral = bound(lateral, -maxLateral, maxLateral);
     turn = bound(turn, -maxRotation, maxRotation);
@@ -155,7 +166,7 @@ void Walk::step(float elapsed)
   bind->pull();
 
   engine.trunkPitch = deg2rad(trunkPitch);
-  modelService->enableOdometry(state != WalkNotWalking);
+  modelService->enableOdometry(state != WalkNotWalking || kick->isRunning());
 
   if (state == WalkNotWalking)
   {
