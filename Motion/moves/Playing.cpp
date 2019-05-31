@@ -323,19 +323,27 @@ void PlayingMove::letPlayStep(float elapsed)
   auto loc = getServices()->localisation;
   auto teamPlay = getServices()->teamPlay;
   auto captain = getServices()->captain;
+  auto referee = getServices()->referee;
   StrategyOrder order = captain->getMyOrder();
+
+  std::vector<rhoban_geometry::Circle> obstacles;
+
+  // We are not allowed to walk in center circle
+  auto ball = loc->getBallPosField();
+  float letPlayRadius = decision->letPlayRadius;
+  if (referee->isOpponentKickOffStart())
+  {
+    obstacles.push_back(rhoban_geometry::Circle(ball, letPlayRadius));
+  }
+
   if (!teamConfidence || order.action() != Action::POSITIONING)
   {
     // Letting play: case 1, robot is not placing or there is no trust in team (typically, during the 10 seconds
     // buffer after game interruptions)
-    auto ball = loc->getBallPosField();
+
     Point goalCenter(-Constants::field.field_length / 2, 0);
-    float letPlayRadius = decision->letPlayRadius;
     Point target = ball + (goalCenter - ball).normalize(letPlayRadius);
     double ballAzimuth = (ball - goalCenter).getTheta().getSignedValue();
-
-    std::vector<rhoban_geometry::Circle> obstacles;
-    obstacles.push_back(rhoban_geometry::Circle(ball, letPlayRadius));
 
     placer->goTo(target.x, target.y, ballAzimuth, obstacles);
   }
@@ -367,7 +375,6 @@ void PlayingMove::letPlayStep(float elapsed)
     const PoseDistribution& target_pose = order.target_pose();
 
     // Avoiding the ball
-    std::vector<Circle> obstacles;
     obstacles.push_back(Circle(ball.x, ball.y, avoidRadius));
 
     // Avoiding the ball trajectory
