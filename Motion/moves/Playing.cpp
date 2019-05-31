@@ -328,49 +328,16 @@ void PlayingMove::letPlayStep(float elapsed)
   {
     // Letting play: case 1, robot is not placing or there is no trust in team (typically, during the 10 seconds
     // buffer after game interruptions)
-
-    // Getting ball distance
-    float letPlayRadius = decision->letPlayRadius;
     auto ball = loc->getBallPosField();
-    auto ballPos = loc->getBallPosSelf();
-    float ballDistance = ballPos.getLength();
-    float ballAzimuth = ballPos.getTheta().getSignedValue();
-
     Point goalCenter(-Constants::field.field_length / 2, 0);
-    double fieldOrientation = rad2deg(loc->getFieldOrientation());
-    float defendAzimuth = (Angle(fieldOrientation) - (ball - goalCenter).getTheta()).getSignedValue();
+    float letPlayRadius = decision->letPlayRadius;
+    Point target = ball + (goalCenter - ball).normalize(letPlayRadius);
+    double ballAzimuth = (ball - goalCenter).getTheta().getSignedValue();
 
-    // Walking to the let play radius
-    Control stepper;
-    stepper.min = -walk->maxStepBackward;
-    stepper.max = walk->maxStep;
-    stepper.k_p = 0.1;
-    stepper.update(ballDistance - letPlayRadius);
+    std::vector<rhoban_geometry::Circle> obstacles;
+    obstacles.push_back(rhoban_geometry::Circle(ball, letPlayRadius));
 
-    // Aligning with the ball
-    Control aligner;
-    aligner.min = -walk->maxRotation;
-    aligner.max = walk->maxRotation;
-    aligner.k_p = 0.2;
-    aligner.update(ballAzimuth);
-
-    // Move to block the goals
-    Control lateraler;
-    lateraler.min = -walk->maxLateral;
-    lateraler.max = walk->maxLateral;
-    lateraler.k_p = 0.01;
-    if (fabs(ballAzimuth) > 15 || fabs(ballDistance - letPlayRadius) > 0.35)
-    {
-      defendAzimuth = 0;
-    }
-    lateraler.update(defendAzimuth);
-
-    walk->control(true, stepper.output, lateraler.output, aligner.output);
-
-    if (placer->isRunning())
-    {
-      placer->stop();
-    }
+    placer->goTo(target.x, target.y, ballAzimuth, obstacles);
   }
   else
   {
@@ -398,10 +365,6 @@ void PlayingMove::letPlayStep(float elapsed)
     }
 
     const PoseDistribution& target_pose = order.target_pose();
-    if (!placer->isRunning())
-    {
-      placer->start();
-    }
 
     // Avoiding the ball
     std::vector<Circle> obstacles;
@@ -468,7 +431,7 @@ void PlayingMove::enterState(std::string state)
     startMove("search", 0.0);
   }
 
-  if (state == STATE_WALKBALL)
+  if (state == STATE_WALKBALL || state == STATE_LET_PLAY)
   {
     startMove("placer", 0.0);
   }
@@ -496,7 +459,7 @@ void PlayingMove::exitState(std::string state)
     walk->control(false);
   }
 
-  if (state == STATE_LET_PLAY || state == STATE_WALKBALL)
+  if (state == STATE_WALKBALL)
   {
     stopMove("placer", 0.0);
   }
