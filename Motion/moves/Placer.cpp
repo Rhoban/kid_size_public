@@ -176,8 +176,6 @@ void Placer::step(float elapsed)
 
   // Error azimuth to the target azimuth
   errorAzimuth = (Angle(targetAzimuth) - cap).getSignedValue();
-  std::cout << "Target: " << targetAzimuth << ", cap: " << cap.getSignedValue() << ", errorAzimuth: " << errorAzimuth
-            << std::endl;
 
   bool goodPosition = fabs(errorX) < marginX && fabs(errorY) < marginY;
   bool goodPositionRestart = fabs(errorX) < marginX * hysteresis && fabs(errorY) < marginY * hysteresis;
