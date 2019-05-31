@@ -459,7 +459,7 @@ void PlayingMove::exitState(std::string state)
     walk->control(false);
   }
 
-  if (state == STATE_WALKBALL)
+  if (state == STATE_WALKBALL || state == STATE_LET_PLAY)
   {
     stopMove("placer", 0.0);
   }
