@@ -2,6 +2,7 @@
 
 #include "CameraState/CameraState.hpp"
 #include "Filters/Pipeline.hpp"
+#include <FrameSource/Exceptions.hpp>
 
 #include "rhoban_utils/util.h"
 #include "rhoban_utils/timing/time_stamp.h"
@@ -62,12 +63,12 @@ void SourceVideoProtobuf::updateImg()
   index = (int)video.get(cv::CAP_PROP_POS_FRAMES);
   if (index < 0)
   {
-    throw std::runtime_error(DEBUG_INFO + " failed to get pos frames");
+    throw Utils::StreamEndException(DEBUG_INFO + " start of stream");
   }
   video.read(img());
   if (img().empty())
   {
-    throw std::runtime_error(DEBUG_INFO + " blank frame read");
+    throw Utils::StreamEndException(DEBUG_INFO + " end of stream");
   }
 }
 
