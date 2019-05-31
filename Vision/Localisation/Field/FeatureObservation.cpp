@@ -54,15 +54,16 @@ FeatureObservation::FeatureObservation(hl_monitoring::Field::POIType poiType_, c
 {
 }
 
-cv::Point3f FeatureObservation::getSeenDir() const
+bool FeatureObservation::getSeenDir(cv::Point3f* out) const
 {
   Eigen::Vector3d dir = panTilt.toViewVector();
-  if (dir.z() > 0)
+  if (dir.z() >= 0)
   {
-    throw std::runtime_error(DEBUG_INFO + " direction z positive or 0 in viewVector");
+    return false;
   }
   double scale = robotHeight / std::fabs(dir.z());
-  return eigen2CV(Eigen::Vector3d(scale * dir));
+  *out = eigen2CV(Eigen::Vector3d(scale * dir));
+  return true;
 }
 
 double FeatureObservation::potential(const FieldPosition& p) const
@@ -73,7 +74,11 @@ double FeatureObservation::potential(const FieldPosition& p) const
 double FeatureObservation::potential(const FieldPosition& p, bool debug) const
 {
   double bestScore = 0;
-  cv::Point3f seenDir = getSeenDir();
+  cv::Point3f seenDir;
+  if (!getSeenDir(&seenDir))
+  {
+    return pError;
+  }
 
   std::ostringstream oss;
   if (debug)
@@ -85,7 +90,7 @@ double FeatureObservation::potential(const FieldPosition& p, bool debug) const
   for (const cv::Point3f& cvFeaturePosInField : Constants::field.getPointsOfInterestByType().at(poiType))
   {
     Point featurePosInField(cvFeaturePosInField.x, cvFeaturePosInField.y);
-    // Getting feature pos in 
+    // Getting feature pos in
     Point featurePosInRobot = (featurePosInField - p.getRobotPosition()).rotation(-p.getOrientation());
     // Rotation of alpha around robotPos
     cv::Point2f expectedPos = rg2cv2f(featurePosInRobot);
@@ -132,9 +137,13 @@ void FeatureObservation::merge(const FeatureObservation& other)
 
 bool FeatureObservation::isSimilar(const FeatureObservation& o1, const FeatureObservation& o2)
 {
-  if (o1.poiType != o2.poiType) return false;
-  cv::Point3f seenDir1 = o1.getSeenDir();
-  cv::Point3f seenDir2 = o2.getSeenDir();
+  if (o1.poiType != o2.poiType)
+    return false;
+  cv::Point3f seenDir1, seenDir2;
+  if (!o1.getSeenDir(&seenDir1) || !o2.getSeenDir(&seenDir2))
+  {
+    return false;
+  }
   Angle aDiff = angleBetween(seenDir1, seenDir2);
   double dx = seenDir1.x - seenDir2.x;
   double dy = seenDir1.y - seenDir2.y;
@@ -247,7 +256,8 @@ std::string FeatureObservation::getPOITypeName() const
 std::string FeatureObservation::toStr() const
 {
   std::ostringstream oss;
-  oss << "[FeatureObservation: poiType=" << getPOITypeName() << " pan=" << panTilt.pan.getSignedValue() << "° tilt=" << panTilt.tilt.getSignedValue() << "°]";
+  oss << "[FeatureObservation: poiType=" << getPOITypeName() << " pan=" << panTilt.pan.getSignedValue()
+      << "° tilt=" << panTilt.tilt.getSignedValue() << "°]";
   return oss.str();
 }
 

@@ -138,7 +138,6 @@ public:
   rhoban_geometry::Point worldToField(const Eigen::Vector3d& pos_in_world);
   Eigen::Vector3d fieldToWorld(const Eigen::Vector3d& pos_in_field);
 
-  void enableFieldFilter(bool enable = true);
   void setGoalKeeper(bool status = false);
 
   void setRobocup(Vision::Robocup* robocup);

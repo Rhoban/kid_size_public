@@ -95,7 +95,6 @@ public:
   Localisation::FieldPosition robot;
   double robotQ;
 
-  bool enableFieldFilter;
   bool isGoalKeeper;
   /// Handling timeStamps
   rhoban_utils::TimeStamp currTS, lastTS, lastFieldReset, lastUniformReset;
