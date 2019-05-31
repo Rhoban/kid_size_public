@@ -40,7 +40,8 @@ cv::Point2f TagsDetector::Marker::getCenter() const
 TagsDetector::TagsDetector()
   : Filter("TagsDetector")
   , detectorParameters(new cv::aruco::DetectorParameters())
-  , markersData({ "imageIdx", "markerId", "centerX", "centerY" }, {})
+  , markersData({ "imageIdx", "markerId", "centerX", "centerY" },
+                { { "imageIdx", {} }, { "markerId", {} }, { "centerX", {} }, { "centerY", {} } })
 {
   periodCounter = 0;
 }
@@ -64,8 +65,10 @@ void TagsDetector::setParameters()
   params()->define<ParamInt>("debugLevel", &debugLevel);
   period = ParamInt(1, 1, 100);
   params()->define<ParamInt>("period", &period);
-  debugLevel = ParamInt(0, 0, 1);
+  isWritingData = ParamInt(0, 0, 1);
   params()->define<ParamInt>("isWritingData", &isWritingData);
+  refine = ParamInt(0, 0, 1);
+  params()->define<ParamInt>("refine", &refine);
 }
 
 void TagsDetector::process()
@@ -88,6 +91,7 @@ void TagsDetector::process()
   detectorParameters->adaptiveThreshWinSizeMin = adaptiveThreshWinSizeMin;
   detectorParameters->adaptiveThreshWinSizeMax = adaptiveThreshWinSizeMax;
   detectorParameters->adaptiveThreshWinSizeStep = adaptiveThreshWinSizeStep;
+  detectorParameters->doCornerRefinement = refine;
 
   // Copying image if necessary
   if (debugLevel > 0)
@@ -99,7 +103,7 @@ void TagsDetector::process()
     img() = srcImg;
   }
   Benchmark::open("Loading dic");
-  cv::Ptr<cv::aruco::Dictionary> dic = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
+  cv::Ptr<cv::aruco::Dictionary> dic = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_100);
   Benchmark::close("Loading dic");
 
   Benchmark::open("Detecting Tags");
@@ -124,12 +128,16 @@ void TagsDetector::process()
 
   if (debugLevel >= 1)
   {
+    out.log("The number of tag is %d", markers.size());
+  }
+  if (debugLevel >= 1)
+  {
     Benchmark::open("Drawing Tags");
     cv::aruco::drawDetectedMarkers(img(), markerCorners, markerIds, cv::Scalar(0, 0, 255));
     Benchmark::close("Drawing Tags");
   }
 
-  if (isWritingData == 0)
+  if (isWritingData == 1)
   {
     Benchmark::open("Writing Tags");
     if (markers.size() > 0)
