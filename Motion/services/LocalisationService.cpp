@@ -506,21 +506,6 @@ void LocalisationService::customFieldReset(double x, double y, double noise, dou
   }
 }
 
-void LocalisationService::gameStartReset()
-{
-  // TODO: Do something for the ball?
-
-  if (NULL != locBinding)
-  {
-    locBinding->fieldReset(FieldPF::ResetType::Borders);
-  }
-
-  if (NULL != robocup)
-  {
-    robocup->robotsClear();
-  }
-}
-
 void LocalisationService::kickOffReset()
 {
   if (NULL != robocup)

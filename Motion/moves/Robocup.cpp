@@ -41,9 +41,6 @@ Robocup::Robocup(Walk* walk, StandUp* standup, Placer* placer, Arms* arms)
   bind->bindNew("freeKicker", freeKicker, RhIO::Bind::PullOnly)
       ->comment("Am I the free kicker performer?")
       ->defaultValue(false);
-  bind->bindNew("autoKickOff", autoKickOff, RhIO::Bind::PullOnly)
-      ->comment("Are the kickOff performed autonomously?")
-      ->defaultValue(true);
   // Initial locations for autoPlacing (Position at which the robot is dropped)
   bind->bindNew("autoStartX", autoStartX, RhIO::Bind::PullOnly)
       ->comment("Start of the robot during ready phase [m]")
@@ -103,9 +100,7 @@ void Robocup::onStop()
 
 void Robocup::applyGameState()
 {
-  auto& decision = getServices()->decision;
   auto referee = getServices()->referee;
-  auto loc = getServices()->localisation;
 
   // If we are at the beginning of the game, jump to state_initial
   if (state != STATE_INITIAL && referee->isInitialPhase())
@@ -118,20 +113,8 @@ void Robocup::applyGameState()
     setState(STATE_FINISHED);
   }
 
-  // If:
-  // - mode is auto
-  // - phase ready just started
-  // Then, try to place autonomously
-  if (autoKickOff && state != STATE_PLACING && referee->isPlacingPhase() && !wasHandled)
+  if (state != STATE_PLACING && referee->isPlacingPhase())
   {
-    // If we were previously in initial state, reset particle filters
-    if (state == STATE_INITIAL)
-    {
-      double locationNoise = 0.3;
-      double azimuthNoise = 10;
-      loc->customFieldReset(autoStartX, autoStartY, locationNoise, autoStartAzimuth, azimuthNoise);
-      logger.log("Initial reset at  x: %f y: %f with theta: %f", autoStartX, autoStartY, autoStartAzimuth);
-    }
     setState(STATE_PLACING);
   }
 
@@ -142,75 +125,9 @@ void Robocup::applyGameState()
   }
 
   // If we are allowed to play while we were not allowed previously
-  bool weCanNowPlay = referee->isPlaying() && !referee->isFreezePhase() && !lastRefereePlaying;
-  if (weCanNowPlay || rememberStart)
-  {
-    if (decision->handled)
-    {
-      // We are handled, waiting to be put on the floor to start playing to
-      // avoid reseting filters on a bad start position, postponing the start
-      rememberStart = true;
-    }
-    else
-    {
-      rememberStart = false;
-      logger.log("Is now playing");
-
-      // There is a free kick pending, just continuing to play normally
-      if (referee->isGameInterruption())
-      {
-        logger.log("End of free kick freeze phase, going back to play");
-      }
-      // If autoKickOff and not goalie, do not reset and start playing
-      else if (autoKickOff)
-      {
-        logger.log("Playing with autoKickOff");
-        if (wasHandled)
-        {
-          // We was handled, so we suppose that we was not placed correctly and resetting the filters on the game start
-          if (goalKeeper)
-          {
-            logger.log("I was handled during the placing phase, reseting the filters in the goals");
-            loc->goalReset();
-          }
-          else
-          {
-            logger.log("I was handled during the placing phase, reseting the filters");
-            loc->gameStartReset();
-          }
-        }
-      }
-      // FreeKicker case
-      else if (freeKicker && referee->myTeamKickOff())
-      {
-        logger.log("Starting manual freeKicker");
-        loc->kickOffReset();
-      }
-      // GoalKeeper case (if no auto kick off)
-      else if (goalKeeper)
-      {
-        logger.log("Starting manual GoalKeeper");
-        loc->goalReset();
-      }
-      // Classic start
-      else if (!referee->wasPenalized)
-      {
-        logger.log("Starting classical game");
-        loc->gameStartReset();
-      }
-      setState(STATE_PLAYING);
-    }
-  }
-
-  // If we are allowed to play while we were not allowed previously
-  if (!rememberStart && !referee->isFreezePhase() && referee->isPlaying() && state == STATE_WAITING)
+  if (!referee->isFreezePhase() && referee->isPlaying() && state == STATE_WAITING)
   {
     setState(STATE_PLAYING);
-  }
-
-  if (!referee->isPlaying() && state == STATE_PLAYING)
-  {
-    setState(STATE_WAITING);
   }
 }
 
@@ -246,6 +163,13 @@ void Robocup::step(float elapsed)
     }
   }
 
+  // We artificially go to penalized when handled in freeze phase so the border reset will
+  // apply when dropped
+  if (state == STATE_WAITING && referee->isFreezePhase() && decision->handled)
+  {
+    setState(STATE_PENALIZED);
+  }
+
   /// Let standup finish if it started, otherwise go to penalized state if
   /// referee asks to
   if (state != STATE_STANDUP && state != STATE_PENALIZED && isPenalized && !isServingPenalty)
@@ -269,7 +193,7 @@ void Robocup::step(float elapsed)
     setState(STATE_STANDUP);
   }
   // Only apply gameState if robot is not standing up and not penalized
-  if (state != STATE_STANDUP && state != STATE_PENALIZED)
+  if (state != STATE_STANDUP && state != STATE_PENALIZED && state != STATE_SERVING_PENALTY)
   {
     applyGameState();
   }
@@ -286,18 +210,11 @@ void Robocup::step(float elapsed)
   // If the robot is being handled during the placing, go to waiting
   if (state == STATE_PLACING)
   {
-    if (decision->handled)
-    {
-      setState(STATE_WAITING);
-    }
-    else
-    {
-      // Forwarding the captain order to the target
-      auto captain = getServices()->captain;
-      StrategyOrder order = captain->getMyOrder();
-      const PoseDistribution& target = order.target_pose();
-      placer->goTo(target.position().x(), target.position().y(), target.dir().mean());
-    }
+    // Forwarding the captain order to the target
+    auto captain = getServices()->captain;
+    StrategyOrder order = captain->getMyOrder();
+    const PoseDistribution& target = order.target_pose();
+    placer->goTo(target.position().x(), target.position().y(), target.dir().mean());
   }
 
   // Spam stop orders to walk when waiting
@@ -363,7 +280,9 @@ void Robocup::step(float elapsed)
   bool handled = decision->handled;
   if (!handled && isHandled && state == STATE_INITIAL)
   {
-    logger.log("Putting me on the floor in initial state");
+    // Note: we mostly do a reset here, as well as when exiting initial state, to be sure that  the robot is
+    // properly positionned in the monitoring
+    logger.log("Putting me on the floor in initial state, applying initial custom field reset");
     double locationNoise = 0.3;
     double azimuthNoise = 10;
     loc->customFieldReset(autoStartX, autoStartY, locationNoise, autoStartAzimuth, azimuthNoise);
@@ -510,6 +429,14 @@ void Robocup::exitState(std::string state)
     {
       stopMove("playing", 0.0);
     }
+  }
+
+  if (state == STATE_INITIAL)
+  {
+    logger.log("Exiting initial state, applying initial custom reset");
+    double locationNoise = 0.3;
+    double azimuthNoise = 10;
+    loc->customFieldReset(autoStartX, autoStartY, locationNoise, autoStartAzimuth, azimuthNoise);
   }
 }
 
