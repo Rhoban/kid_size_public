@@ -149,7 +149,7 @@ bool ModelService::tick(double elapsed)
 
   // Publishing model to ZMQ
   timeSinceLastPublish += elapsed;
-  if (timeSinceLastPublish > 0.02 && (publish || Helpers::isFakeMode()))
+  if (timeSinceLastPublish > 0.02 && publish)
   {
     timeSinceLastPublish = 0;
     LocalisationService* localisationService = getServices()->localisation;
