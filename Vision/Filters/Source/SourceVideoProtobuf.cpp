@@ -11,6 +11,8 @@
 
 #include <stdexcept>
 
+using namespace hl_monitoring;
+
 namespace Vision
 {
 namespace Filters
@@ -29,28 +31,40 @@ void SourceVideoProtobuf::openVideo()
 
 void SourceVideoProtobuf::loadMetaInformation()
 {
-  std::ifstream in(metaInformationPath, std::ios::binary);
+  loadMetaInformation(cameraFromWorldPath, &cameraFromWorldMeta);
+  loadMetaInformation(cameraFromSelfPath, &cameraFromSelfMeta);
+  if (cameraFromWorldMeta.frames_size() != cameraFromSelfMeta.frames_size())
+  {
+    throw std::runtime_error(DEBUG_INFO + " size mismatch between cameraFromWorld and cameraFromSelf");
+  }
+}
+
+void SourceVideoProtobuf::loadMetaInformation(const std::string& path, hl_monitoring::VideoMetaInformation* out)
+{
+  std::ifstream in(path, std::ios::binary);
   if (!in.good())
   {
-    throw std::runtime_error(DEBUG_INFO + " failed to open file '" + metaInformationPath + "'");
+    throw std::runtime_error(DEBUG_INFO + " failed to open file '" + path + "'");
   }
-  if (!videoMetaInformation.ParseFromIstream(&in))
+  if (!out->ParseFromIstream(&in))
   {
-    throw std::runtime_error(DEBUG_INFO + " failed to read file '" + metaInformationPath + "'");
+    throw std::runtime_error(DEBUG_INFO + " failed to read file '" + path + "'");
   }
 }
 
 Utils::CameraState* SourceVideoProtobuf::buildCameraState()
 {
-  if (index < 0 || index >= videoMetaInformation.frames_size())
+  if (index < 0 || index >= cameraFromWorldMeta.frames_size())
   {
     throw std::runtime_error(DEBUG_INFO + " invalid index: " + std::to_string(index));
   }
-  if (!videoMetaInformation.has_camera_parameters())
+  if (!cameraFromWorldMeta.has_camera_parameters())
   {
     throw std::runtime_error(DEBUG_INFO + " camera_parameters were not provided");
   }
-  return new Utils::CameraState(videoMetaInformation.camera_parameters(), videoMetaInformation.frames(index));
+  const hl_monitoring::Pose3D& world_to_self = cameraFromSelfMeta.frames(index).pose();
+  return new Utils::CameraState(cameraFromWorldMeta.camera_parameters(), cameraFromWorldMeta.frames(index),
+                                world_to_self);
 }
 
 void SourceVideoProtobuf::process()
@@ -77,7 +91,8 @@ void SourceVideoProtobuf::fromJson(const Json::Value& v, const std::string& dir_
   Filter::fromJson(v, dir_name);
   rhoban_utils::tryRead(v, "startIndex", &startIndex);
   rhoban_utils::tryRead(v, "videoPath", &videoPath);
-  rhoban_utils::tryRead(v, "metaInformationPath", &metaInformationPath);
+  rhoban_utils::tryRead(v, "cameraFromWorldPath", &cameraFromWorldPath);
+  rhoban_utils::tryRead(v, "cameraFromSelfPath", &cameraFromSelfPath);
   openVideo();
   loadMetaInformation();
 
@@ -93,7 +108,8 @@ Json::Value SourceVideoProtobuf::toJson() const
   Json::Value v = Filter::toJson();
   v["startIndex"] = startIndex;
   v["videoPath"] = videoPath;
-  v["metaInformationPath"] = metaInformationPath;
+  v["cameraFromWorldPath"] = cameraFromWorldPath;
+  v["cameraFromSelfPath"] = cameraFromSelfPath;
   return v;
 }
 
