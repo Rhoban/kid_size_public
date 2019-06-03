@@ -25,10 +25,6 @@ public:
 
   // Should we update the base ?
   Eigen::Vector3d odometryDiff(double timestampStart, double timestampEnd);
-  void enableOdometry(bool enabled);
-  bool wasOdometryUpdated();
-  bool odometryEnabled;
-  bool odometryUpdated;
 
   // Models
   rhoban::HumanoidModel model;
