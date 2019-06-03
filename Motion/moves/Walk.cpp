@@ -125,7 +125,6 @@ void Walk::onStop()
 {
   Arms* arms = (Arms*)getMoves()->getMove("arms");
   arms->setArms(Arms::ArmsState::ArmsDisabled);
-  getServices()->model->enableOdometry(false);
   state = WalkNotWalking;
 }
 
@@ -166,7 +165,6 @@ void Walk::step(float elapsed)
   bind->pull();
 
   engine.trunkPitch = deg2rad(trunkPitch);
-  modelService->enableOdometry(state != WalkNotWalking || kick->isRunning());
 
   if (state == WalkNotWalking)
   {
