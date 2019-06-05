@@ -415,7 +415,6 @@ void LocalisationService::setCluster(std::vector<hl_communication::WeightedPose*
 
 std::vector<hl_communication::WeightedPose*> LocalisationService::getPositionInClusters()
 {
-  std::cout << "positions in Service" << std::endl;
   return posFromClusters;
 }
 

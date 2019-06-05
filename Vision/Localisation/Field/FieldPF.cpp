@@ -335,25 +335,19 @@ void FieldPF::draw(cv::Mat& img) const
 
 void FieldPF::updateRepresentativeQuality()
 {
-  // TODO might be improved
-  int nbGoodParticles = 0;
-  const Point& repPos = representativeParticle.getRobotPosition();
-  const Angle& repDir = representativeParticle.getOrientation();
-  for (auto& p : particles)
-  {
-    const Point& pos = p.first.getRobotPosition();
-    const Angle& dir = p.first.getOrientation();
-    double dist = pos.getDist(repPos);
-    double diffAngle = std::fabs((dir - repDir).getSignedValue());
+  FieldDistribution::Distribution d = vectorEM[0];
+  Eigen::MatrixXd covEigen = d.position.second;
+  std::cout << " covariance eigen " << std::endl << covEigen << std::endl;
 
-    // TODO: The particle quality?
-    // p.second=0.5/(diffAngle+1.0)+0.5/(dist+1.0);
-    if (dist < tolDist && diffAngle < tolDiffAngle)
-    {
-      nbGoodParticles += 1;
-    }
-  }
-  representativeQuality = nbGoodParticles / (double)particles.size();
+  cv::Mat covMat = cv::Mat(2, 2, CV_64F, covEigen.data());
+  std::cout << "corvariance matrice" << std::endl << covMat << std::endl;
+
+  cv::Mat eigenvalues, eigenvectors;
+  cv::eigen(covMat, eigenvalues, eigenvectors);
+
+  std::cout << eigenvalues.at<double>(0) << " and " << eigenvalues.at<double>(1) << std::endl;
+
+  representativeQuality = d.probability * exp(-5 * eigenvalues.at<double>(0) * eigenvalues.at<double>(1));
 }
 
 cv::Mat FieldPF::positionsFromParticles()
@@ -407,8 +401,6 @@ void FieldPF::updateRepresentativeParticle()
 
 std::vector<FieldDistribution::Distribution> FieldPF::getPositionsFromClusters()
 {
-  std::cout << "send from pf" << std::endl;
-
   return vectorEM;
 }
 

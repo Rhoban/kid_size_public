@@ -51,8 +51,8 @@ public:
   cv::Mat labels;
   cv::Mat oldLabels;
 
-  std::map<int, int> labelMax;
-  std::map<int, int> oldLabelMax;
+  std::map<int, int> labelNbIteration;
+  std::map<int, int> oldLabelNbIteration;
   std::vector<Distribution> result;
 
   std::pair<int, int> labelMaximum;

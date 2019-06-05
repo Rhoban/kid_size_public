@@ -624,14 +624,14 @@ void LocalisationBinding::getPossiblePositions()
 
   Localisation::FieldDistribution fieldDistribution;
 
-  std::vector<hl_communication::WeightedPose*> candidate;
+  std::vector<hl_communication::WeightedPose*> candidates;
 
   std::vector<Localisation::FieldDistribution::Distribution> p = field_filter->getPositionsFromClusters();
 
   for (int pos_idx = 0; pos_idx < p.size(); pos_idx++)
-    candidate.push_back(fieldDistribution.distributionToProto(p.at(pos_idx)));
+    candidates.push_back(fieldDistribution.distributionToProto(p.at(pos_idx)));
 
-  loc->setCluster(candidate);
+  loc->setCluster(candidates);
 }
 
 void LocalisationBinding::publishToLoc()
