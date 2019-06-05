@@ -35,8 +35,8 @@ class CameraState
 public:
   CameraState();
   CameraState(MoveScheduler* moveScheduler);
-  CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters,
-              const hl_monitoring::FrameEntry& frame_entry);
+  CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters, const hl_monitoring::FrameEntry& frame_entry,
+              const hl_monitoring::Pose3D& camera_from_self);
 
   cv::Size getImgSize() const;
 
