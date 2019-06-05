@@ -133,7 +133,6 @@ public:
   void resetFieldFilter();
   void resetRobotFilter();
 
-  void gameStartReset();
   void kickOffReset();
   void dropBallReset();
   /// x in [m]

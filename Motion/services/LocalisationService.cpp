@@ -108,9 +108,9 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   bind.bindNew("block", block, RhIO::Bind::PullOnly)->comment("Block")->defaultValue(false);
 
   // XXX: Injecting a fake opponent on the field
-  opponentsAreFake = true;
-  opponentsWorld.push_back(Eigen::Vector3d(1, 0, 0));
-  updateOpponentsPos();
+  // opponentsAreFake = true;
+  // opponentsWorld.push_back(Eigen::Vector3d(1, 0, 0));
+  // updateOpponentsPos();
 }
 
 Point LocalisationService::getBallSpeedSelf()
@@ -513,21 +513,6 @@ void LocalisationService::customFieldReset(double x, double y, double noise, dou
   if (NULL != locBinding)
   {
     locBinding->fieldReset(FieldPF::ResetType::Custom, x, y, noise, theta, thetaNoise);
-  }
-}
-
-void LocalisationService::gameStartReset()
-{
-  // TODO: Do something for the ball?
-
-  if (NULL != locBinding)
-  {
-    locBinding->fieldReset(FieldPF::ResetType::Borders);
-  }
-
-  if (NULL != robocup)
-  {
-    robocup->robotsClear();
   }
 }
 

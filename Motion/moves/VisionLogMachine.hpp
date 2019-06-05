@@ -63,4 +63,8 @@ private:
    * Duration of a run in seconds
    */
   float runDuration;
+  /**
+   * Duration of the stabilization in seconds
+   */
+  float stabilizationDuration;
 };

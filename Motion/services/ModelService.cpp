@@ -15,13 +15,7 @@
 using namespace rhoban_utils;
 
 ModelService::ModelService()
-  : odometryEnabled(false)
-  , odometryUpdated(false)
-  , timeSinceLastPublish(0)
-  , bind("model")
-  , isReplay(false)
-  , histories(60.0)
-  , lowLevelState("")
+  : timeSinceLastPublish(0), bind("model"), isReplay(false), histories(60.0), lowLevelState("")
 {
   rhoban_model_learning::CalibrationModel calibration_model;
   calibration_model.loadFile("calibration.json");
@@ -126,17 +120,13 @@ bool ModelService::tick(double elapsed)
       model.setImu(true, getGyroYaw() - odometryYawOffset, getPitch(), getRoll());
 
       // Integrating odometry
-      if (odometryEnabled)
+      if (getPressureLeftRatio() > supportRatioThreshold)
       {
-        odometryUpdated = true;
-        if (getPressureLeftRatio() > supportRatioThreshold)
-        {
-          model.setSupportFoot(model.Left, true);
-        }
-        if (getPressureRightRatio() > supportRatioThreshold)
-        {
-          model.setSupportFoot(model.Right, true);
-        }
+        model.setSupportFoot(model.Left, true);
+      }
+      if (getPressureRightRatio() > supportRatioThreshold)
+      {
+        model.setSupportFoot(model.Right, true);
       }
     }
 
@@ -149,7 +139,7 @@ bool ModelService::tick(double elapsed)
 
   // Publishing model to ZMQ
   timeSinceLastPublish += elapsed;
-  if (timeSinceLastPublish > 0.02 && (publish || Helpers::isFakeMode()))
+  if (timeSinceLastPublish > 0.02 && publish)
   {
     timeSinceLastPublish = 0;
     LocalisationService* localisationService = getServices()->localisation;
@@ -209,18 +199,6 @@ Eigen::Vector3d ModelService::odometryDiff(double timestampStart, double timesta
 
   return Eigen::Vector3d(endToStart.translation().x(), endToStart.translation().y(),
                          rhoban::frameYaw(endToStart.rotation()));
-}
-
-void ModelService::enableOdometry(bool enabled)
-{
-  odometryEnabled = enabled;
-}
-
-bool ModelService::wasOdometryUpdated()
-{
-  bool result = odometryUpdated;
-  odometryUpdated = false;
-  return result;
 }
 
 void ModelService::tickLog()

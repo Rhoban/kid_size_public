@@ -54,11 +54,14 @@ CameraState::CameraState(MoveScheduler* moveScheduler) : CameraState()
 }
 
 CameraState::CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters,
-                         const hl_monitoring::FrameEntry& frame_entry)
+                         const hl_monitoring::FrameEntry& frame_entry, const Pose3D& camera_from_self_pose)
   : CameraState()
 {
   importFromProtobuf(camera_parameters);
   importFromProtobuf(frame_entry);
+  Eigen::Affine3d cameraFromSelf = getAffineFromProtobuf(camera_from_self_pose);
+  worldToSelf = cameraFromSelf.inverse() * cameraToWorld.inverse();
+  selfToWorld = worldToSelf.inverse();
 }
 
 cv::Size CameraState::getImgSize() const

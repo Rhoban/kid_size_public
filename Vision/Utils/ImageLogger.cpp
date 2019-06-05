@@ -105,6 +105,17 @@ void ImageLogger::initSession(const CameraState& cs, const std::string& session_
   {
     metadata[log_name] = meta_information;
   }
+  // Writing Metadata file
+  Json::Value log_metadata;
+  log_metadata["robot"] = rhoban_utils::getHostName();
+  rhoban_utils::writeJson(log_metadata, session_path + "/metadata.json");
+  // Copying calibration.json file
+  std::string cmd = "cp calibration.json " + session_path;
+  int ret = system(cmd.c_str());
+  if (ret != 0)
+  {
+    throw std::runtime_error(DEBUG_INFO + " failed to copy calibration.json file with code " + std::to_string(ret));
+  }
 }
 
 const std::string& ImageLogger::getSessionPath()
@@ -118,16 +129,19 @@ void ImageLogger::writeEntry(int idx, const Entry& e)
   video_writer.write(e.img);
   // Adding entry_properties to metadata (cannot write in file before end of session)
   hl_monitoring::FrameEntry* entry = metadata["camera_from_world"].add_frames();
-  entry->set_time_stamp(e.time_stamp);
-  setProtobufFromAffine(e.cs.worldToCamera, entry->mutable_pose());
+  e.cs.exportToProtobuf(entry);
   entry = metadata["camera_from_self"].add_frames();
-  entry->set_time_stamp(e.time_stamp);
+  e.cs.exportToProtobuf(entry);
   setProtobufFromAffine(e.cs.worldToCamera * e.cs.selfToWorld, entry->mutable_pose());
+  entry = metadata["camera_from_field"].add_frames();
+  e.cs.exportToProtobuf(entry);
   if (e.cs.has_camera_field_transform)
   {
-    entry = metadata["camera_from_field"].add_frames();
-    entry->set_time_stamp(e.time_stamp);
     setProtobufFromAffine(e.cs.camera_from_field, entry->mutable_pose());
+  }
+  else
+  {
+    entry->clear_pose();
   }
 }
 

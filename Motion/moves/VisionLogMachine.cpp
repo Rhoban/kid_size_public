@@ -13,6 +13,7 @@
 
 #define STATE_INITIAL "Initial"
 #define STATE_MOVING "Moving"
+#define STATE_STABILIZING "Stabilizing"
 #define STATE_SCAN "Scan"
 #define STATE_ENDED "Ended"
 
@@ -31,6 +32,9 @@ VisionLogMachine::VisionLogMachine(Walk* walk_, Head* head_, Placer* placer_)
   // RhIO binding variables
   bind->bindNew("state", state, RhIO::Bind::PushOnly)->comment("State of the VisionLogMachine STM");
   bind->bindNew("runDuration", runDuration, RhIO::Bind::PullOnly)->defaultValue(100)->comment("Duration of a run [s]");
+  bind->bindNew("stabilizationDuration", stabilizationDuration, RhIO::Bind::PullOnly)
+      ->defaultValue(1.0)
+      ->comment("Duration of the stabilization phase [s]");
   bind->bindNew("runTime", runTime, RhIO::Bind::PushOnly)
       ->defaultValue(0)
       ->comment("Time elapsed since the start of the motion [s]");
@@ -91,6 +95,13 @@ void VisionLogMachine::step(float elapsed)
   {
     setState(STATE_MOVING);
   }
+  else if (state == STATE_STABILIZING)
+  {
+    if (stateTime >= stabilizationDuration)
+    {
+      setState(STATE_SCAN);
+    }
+  }
   else if (state == STATE_SCAN)
   {
     if (stateTime >= head->getScanPeriod())
@@ -100,9 +111,9 @@ void VisionLogMachine::step(float elapsed)
   }
   else if (state == STATE_MOVING)
   {
-    if (placer->arrived)
+    if (placer->arrived && !walk->isWalking())
     {
-      setState(STATE_SCAN);
+      setState(STATE_STABILIZING);
     }
   }
 

@@ -52,6 +52,7 @@ protected:
 
   /// Load the MetaInformation
   void loadMetaInformation();
+  void loadMetaInformation(const std::string& path, hl_monitoring::VideoMetaInformation* out);
 
   Utils::CameraState* buildCameraState() override;
 
@@ -60,14 +61,29 @@ private:
   /// Path to the video including extension
   std::string videoPath;
   /// Path to the protobuf file containing the camera data
-  std::string metaInformationPath;
 
   /// Index of the current image (0-based)
   int index;
 
   cv::VideoCapture video;
 
-  hl_monitoring::VideoMetaInformation videoMetaInformation;
+  /**
+   * Path access for cameraFromWorld
+   */
+  std::string cameraFromWorldPath;
+  /**
+   * Meta information for cameraFromWorld
+   */
+  hl_monitoring::VideoMetaInformation cameraFromWorldMeta;
+
+  /**
+   * Path access for cameraFromSelf
+   */
+  std::string cameraFromSelfPath;
+  /**
+   * Meta information for cameraFromSelf
+   */
+  hl_monitoring::VideoMetaInformation cameraFromSelfMeta;
 };
 }  // namespace Filters
 }  // namespace Vision

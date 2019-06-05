@@ -418,7 +418,9 @@ KickValueIteration::State* KickValueIteration::stateFor(double x, double y)
 
 std::vector<std::string> KickValueIteration::getKickNames()
 {
-  return { "lateral", "classic", "small" };
+  return { "classic", "small" };
+
+  // return { "lateral", "classic", "small" };
 }
 
 void KickValueIteration::loadScores(KickStrategy& strategy)

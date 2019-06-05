@@ -53,17 +53,15 @@ TeamPlayService::TeamPlayService()
       ->defaultValue(false);
   _bind->bindFunc("team", "Display information about teamplay", &TeamPlayService::cmdTeam, *this);
 
-  kickOffClearanceDist = 1.05;
   _bind->bindNew("kickOffClearanceDist", kickOffClearanceDist, RhIO::Bind::PullOnly)
       ->minimum(0.0)
       ->maximum(2.0)
-      ->defaultValue(kickOffClearanceDist)
+      ->defaultValue(1.0)
       ->comment("Distance to ball when kick off is given to opponent team");
-  gameInterruptionClearanceDist = 0.7;
   _bind->bindNew("gameInterruptionClearanceDist", gameInterruptionClearanceDist, RhIO::Bind::PullOnly)
       ->minimum(0.0)
       ->maximum(2.0)
-      ->defaultValue(gameInterruptionClearanceDist)
+      ->defaultValue(1.0)
       ->comment("Distance to ball when a game interruption is awarded to opponent team");
 
   // Initialize UDP communication
