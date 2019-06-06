@@ -33,12 +33,12 @@ MoveScheduler::MoveScheduler()
   , _minTimeTickServices(0.0)
   , _avgTimeTickServices(0.0)
   , _maxTimeTickServices(0.0)
+  , _manualClock(0.0)
   , _manager()
   , _services(nullptr)
   , _moves(nullptr)
   , _binding(nullptr)
   , _bind(nullptr)
-  , _manualClock(0.0)
 {
   logger.log("Initializing move scheduler");
 
