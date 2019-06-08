@@ -2,6 +2,8 @@
 
 #include "Filters/Filter.hpp"
 
+#include <hl_labelling/video_labelling_manager.h>
+
 #include <opencv2/videoio.hpp>
 namespace Vision
 {
@@ -38,8 +40,18 @@ protected:
   void setParameters() override;
   /**
    * Uses information from the camera state to update the map of annotations in the image
+   * Depending on active mode, annotations are extracted either from vive or from labelling
    */
   void updateAnnotations();
+
+  /**
+   * Returns a map where keys are the type of field feature and values are the list of positions
+   */
+  std::map<std::string, std::vector<Eigen::Vector3d>> getFieldFeaturesByType();
+
+  void extractViveAnnotations();
+
+  void extractLabelsAnnotations();
 
   /**
    * Updates output image depending
@@ -87,6 +99,26 @@ protected:
    * Output path prefix for all created files. Created if it does not exist
    */
   std::string outputPrefix;
+
+  /**
+   * Which kind of data is used to extract the ground truth (either 'vive' or 'labels')
+   */
+  std::string extractionMode;
+
+  /**
+   * Path to the data containing the relative_poses
+   */
+  std::string relativePosePath;
+
+  /**
+   * Path to the data labelled for labelling mode
+   */
+  std::string labellingPath;
+
+  /**
+   * Entity storing access to all the labels of the video
+   */
+  hl_labelling::VideoLabellingManager labellingManager;
 
   /**
    * 0: no data are written

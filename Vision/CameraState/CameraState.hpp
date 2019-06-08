@@ -155,6 +155,10 @@ public:
   rhoban_utils::Angle getTrunkYawInWorld();
 
   rhoban_utils::TimeStamp getTimeStamp() const;
+  /**
+   * Return the timestamp in micro-seconds since epoch
+   */
+  uint64_t getTimeStampUs() const;
   /// Return the timestamp in [ms]
   double getTimeStampDouble() const;
 

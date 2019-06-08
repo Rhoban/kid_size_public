@@ -68,6 +68,11 @@ private:
   cv::VideoCapture video;
 
   /**
+   * If enabled, static and shaking frames are skipped
+   */
+  bool keepOnlyMovingFrames;
+
+  /**
    * Path access for cameraFromWorld
    */
   std::string cameraFromWorldPath;
