@@ -11,7 +11,7 @@
 
 #include <stdexcept>
 
-using namespace hl_monitoring;
+using namespace hl_communication;
 
 namespace Vision
 {
@@ -40,7 +40,7 @@ void SourceVideoProtobuf::loadMetaInformation()
   }
 }
 
-void SourceVideoProtobuf::loadMetaInformation(const std::string& path, hl_monitoring::VideoMetaInformation* out)
+void SourceVideoProtobuf::loadMetaInformation(const std::string& path, hl_communication::VideoMetaInformation* out)
 {
   std::ifstream in(path, std::ios::binary);
   if (!in.good())
@@ -65,7 +65,7 @@ Utils::CameraState* SourceVideoProtobuf::buildCameraState()
     throw std::runtime_error(DEBUG_INFO + " camera_parameters were not provided");
   }
 
-  const hl_monitoring::Pose3D& camera_from_self = cameraFromSelfMeta.frames(index).pose();
+  const hl_communication::Pose3D& camera_from_self = cameraFromSelfMeta.frames(index).pose();
   return new Utils::CameraState(cameraFromWorldMeta.camera_parameters(), cameraFromWorldMeta.frames(index),
                                 camera_from_self);
 }

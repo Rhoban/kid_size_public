@@ -2,7 +2,7 @@
 
 #include "scheduler/MoveScheduler.h"
 
-#include <hl_monitoring/camera.pb.h>
+#include <hl_communication/camera.pb.h>
 #include <opencv2/core/core.hpp>
 #include <rhoban_geometry/3d/ray.h>
 #include <rhoban_geometry/3d/pan_tilt.h>
@@ -35,15 +35,23 @@ class CameraState
 public:
   CameraState();
   CameraState(MoveScheduler* moveScheduler);
-  CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters, const hl_monitoring::FrameEntry& frame_entry,
-              const hl_monitoring::Pose3D& camera_from_self);
+  CameraState(const hl_communication::IntrinsicParameters& camera_parameters,
+              const hl_communication::FrameEntry& frame_entry, const hl_communication::Pose3D& camera_from_self);
 
   cv::Size getImgSize() const;
 
-  void importFromProtobuf(const hl_monitoring::IntrinsicParameters& camera_parameters);
-  void importFromProtobuf(const hl_monitoring::FrameEntry& src);
-  void exportToProtobuf(hl_monitoring::IntrinsicParameters* dst) const;
-  void exportToProtobuf(hl_monitoring::FrameEntry* dst) const;
+  void importFromProtobuf(const hl_communication::IntrinsicParameters& camera_parameters);
+  void importFromProtobuf(const hl_communication::FrameEntry& src);
+  void exportToProtobuf(hl_communication::IntrinsicParameters* dst) const;
+  void exportToProtobuf(hl_communication::FrameEntry* dst) const;
+  /**
+   * Import source_id and camera_parameters from the VideoMetaInformation
+   */
+  void importHeader(const hl_communication::VideoMetaInformation& src);
+  /**
+   * Export source_id and camera_parameters to the VideoMetaInformation
+   */
+  void exportHeader(hl_communication::VideoMetaInformation* dst) const;
 
   const rhoban::CameraModel& getCameraModel() const;
 
@@ -199,7 +207,12 @@ public:
    */
   int64_t clock_offset;
 
-  hl_monitoring::FrameStatus frame_status;
+  hl_communication::FrameStatus frame_status;
+
+  /**
+   * Identifier of the video source which took the image
+   */
+  hl_communication::VideoSourceID source_id;
 };
 }  // namespace Utils
 }  // namespace Vision

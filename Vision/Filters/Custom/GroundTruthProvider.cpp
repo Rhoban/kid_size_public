@@ -9,6 +9,7 @@
 #include <opencv2/imgproc.hpp>
 #include <rhoban_utils/util.h>
 
+using namespace hl_communication;
 using hl_monitoring::Field;
 using robocup_referee::Constants;
 
@@ -67,7 +68,7 @@ void GroundTruthProvider::fromJson(const Json::Value& v, const std::string& dir_
   rhoban_utils::tryRead(v, "labellingPath", &labellingPath);
   if (extractionMode == "labels")
   {
-    hl_monitoring::VideoMetaInformation video_meta;
+    hl_communication::VideoMetaInformation video_meta;
     hl_communication::readFromFile(relativePosePath, &video_meta);
     labellingManager.importMetaData(video_meta);
     hl_communication::MovieLabelCollection labels;
@@ -103,7 +104,7 @@ std::map<std::string, std::vector<Eigen::Vector3d>> GroundTruthProvider::getFiel
 
 void GroundTruthProvider::extractLabelsAnnotations()
 {
-  if (getCS().frame_status != hl_monitoring::FrameStatus::MOVING)
+  if (getCS().frame_status != FrameStatus::MOVING)
   {
     logger.warning("%s: Invalid frame status", DEBUG_INFO.c_str());
     return;

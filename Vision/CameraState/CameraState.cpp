@@ -5,10 +5,11 @@
 #include "services/DecisionService.h"
 #include "services/ModelService.h"
 #include "services/LocalisationService.h"
+#include "services/RefereeService.h"
 #include "services/ViveService.h"
 
-#include <hl_monitoring/camera.pb.h>
-#include <hl_monitoring/utils.h>
+#include <hl_communication/camera.pb.h>
+#include <hl_communication/utils.h>
 #include <rhoban_utils/util.h>
 #include <rhoban_utils/logging/logger.h>
 
@@ -27,6 +28,7 @@
 
 #include <string>
 
+using namespace hl_communication;
 using namespace hl_monitoring;
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
@@ -53,8 +55,8 @@ CameraState::CameraState(MoveScheduler* moveScheduler) : CameraState()
   _cameraModel = _moveScheduler->getServices()->model->cameraModel;
 }
 
-CameraState::CameraState(const hl_monitoring::IntrinsicParameters& camera_parameters,
-                         const hl_monitoring::FrameEntry& frame_entry, const Pose3D& camera_from_self_pose)
+CameraState::CameraState(const IntrinsicParameters& camera_parameters, const FrameEntry& frame_entry,
+                         const Pose3D& camera_from_self_pose)
   : CameraState()
 {
   importFromProtobuf(camera_parameters);
@@ -69,7 +71,7 @@ cv::Size CameraState::getImgSize() const
   return getCameraModel().getImgSize();
 }
 
-void CameraState::importFromProtobuf(const hl_monitoring::IntrinsicParameters& camera_parameters)
+void CameraState::importFromProtobuf(const IntrinsicParameters& camera_parameters)
 {
   _cameraModel.setCenter(Eigen::Vector2d(camera_parameters.center_x(), camera_parameters.center_y()));
   _cameraModel.setFocal(Eigen::Vector2d(camera_parameters.focal_x(), camera_parameters.focal_y()));
@@ -86,7 +88,7 @@ void CameraState::importFromProtobuf(const hl_monitoring::IntrinsicParameters& c
   }
 }
 
-void CameraState::importFromProtobuf(const hl_monitoring::FrameEntry& src)
+void CameraState::importFromProtobuf(const FrameEntry& src)
 {
   _timeStamp = ((double)src.time_stamp()) / std::pow(10, 6);
   std::cout << "imported timestamp: " << _timeStamp << std::endl;
@@ -104,7 +106,7 @@ void CameraState::importFromProtobuf(const hl_monitoring::FrameEntry& src)
   }
 }
 
-void CameraState::exportToProtobuf(hl_monitoring::IntrinsicParameters* dst) const
+void CameraState::exportToProtobuf(IntrinsicParameters* dst) const
 {
   dst->set_focal_x(_cameraModel.getFocalX());
   dst->set_focal_y(_cameraModel.getFocalY());
@@ -120,11 +122,29 @@ void CameraState::exportToProtobuf(hl_monitoring::IntrinsicParameters* dst) cons
   }
 }
 
-void CameraState::exportToProtobuf(hl_monitoring::FrameEntry* dst) const
+void CameraState::exportToProtobuf(FrameEntry* dst) const
 {
   dst->set_time_stamp((uint64_t)(_timeStamp * std::pow(10, 6)));
   setProtobufFromAffine(worldToCamera, dst->mutable_pose());
   dst->set_status(frame_status);
+}
+
+void CameraState::importHeader(const hl_communication::VideoMetaInformation& src)
+{
+  if (src.has_camera_parameters())
+  {
+    importFromProtobuf(src.camera_parameters());
+  }
+  if (src.has_source_id())
+  {
+    source_id.CopyFrom(src.source_id());
+  }
+}
+
+void CameraState::exportHeader(hl_communication::VideoMetaInformation* dst) const
+{
+  exportToProtobuf(dst->mutable_camera_parameters());
+  dst->mutable_source_id()->CopyFrom(source_id);
 }
 
 const rhoban::CameraModel& CameraState::getCameraModel() const
@@ -142,6 +162,13 @@ void CameraState::updateInternalModel(double timeStamp)
     ModelService* modelService = _moveScheduler->getServices()->model;
     ViveService* vive = _moveScheduler->getServices()->vive;
     DecisionService* decision = _moveScheduler->getServices()->decision;
+    RefereeService* referee = _moveScheduler->getServices()->referee;
+
+    source_id.Clear();
+    RobotCameraIdentifier* identifier = source_id.mutable_robot_source();
+    identifier->mutable_robot_id()->set_team_id(referee->teamId);
+    identifier->mutable_robot_id()->set_robot_id(referee->id);
+    identifier->set_camera_name("main");
 
     selfToWorld = modelService->selfToWorld(timeStamp);
     worldToCamera = modelService->cameraToWorld(timeStamp).inverse();

@@ -58,7 +58,7 @@ void MovieRecorder::startStream(const cv::Size& size)
   }
 
   // Setting intrinsic parameters
-  hl_monitoring::IntrinsicParameters* intrinsic = videoMetaInformation.mutable_camera_parameters();
+  hl_communication::IntrinsicParameters* intrinsic = videoMetaInformation.mutable_camera_parameters();
   getCS().exportToProtobuf(intrinsic);
   if (intrinsic->img_width() != (size_t)size.width || intrinsic->img_height() != (size_t)size.height)
   {
@@ -71,7 +71,7 @@ void MovieRecorder::pushEntry()
 {
   videoWriter.write(img());
   const Utils::CameraState& cs = getCS();
-  hl_monitoring::FrameEntry* new_fe = videoMetaInformation.add_frames();
+  hl_communication::FrameEntry* new_fe = videoMetaInformation.add_frames();
   cs.exportToProtobuf(new_fe);
 }
 
