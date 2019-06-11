@@ -58,8 +58,6 @@ public:
   struct Foot& supportFoot();
   struct Foot& flyingFoot();
 
-  bool enableCircular;
-
   // Walk engine parameters
   double trunkXOffset;
   double trunkZOffset;
@@ -73,6 +71,8 @@ public:
   double footDistance;
   double footYOffsetPerStepSizeY;
   double trunkPitch;
+
+  bool enableCircular;
 
   // Dynamics orders
   double stepSizeX, stepSizeY, stepSizeYaw;
