@@ -33,7 +33,7 @@ double KickValueIteration::travelRewardDefault(rhoban_geometry::Point fromPos, r
     return 0;
   }
 
-  return -(10 + (fromPos - toPos).getLength() / 0.15);
+  return -(5 + (fromPos - toPos).getLength() / 0.15);
 }
 
 double KickValueIteration::rewardFor(State* from, State* state, double kickLength, travelRewardFunc travelFunc)
