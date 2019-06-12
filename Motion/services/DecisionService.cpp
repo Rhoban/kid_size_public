@@ -395,6 +395,10 @@ bool DecisionService::tick(double elapsed)
   const auto& teamplayInfos = getServices()->teamPlay->allInfo();
   bool tmpIsBallMoving = false;
   bool tmpIsMateKicking = false;
+  if (strategy->getTimeSinceLastKick() < postKickTrackingTime)
+  {
+    tmpIsMateKicking = true;
+  }
   for (const auto& pair : teamplayInfos)
   {
     const RobotMsg& robotInfo = pair.second;
@@ -402,7 +406,7 @@ bool DecisionService::tick(double elapsed)
     float vx = ball_velocity.x();
     float vy = ball_velocity.y();
     float ballSpeed = std::sqrt(vx * vx + vy * vy);
-    if (strategy->getTimeSinceLastKick() < postKickTrackingTime)
+    if (robotInfo.intention().action_planned() == hl_communication::Action::KICKING)
     {
       tmpIsMateKicking = true;
     }
