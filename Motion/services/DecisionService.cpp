@@ -402,11 +402,12 @@ bool DecisionService::tick(double elapsed)
   for (const auto& pair : teamplayInfos)
   {
     const RobotMsg& robotInfo = pair.second;
+    MiscExtra misc_extra = extractMiscExtra(robotInfo);
     const PositionDistribution& ball_velocity = robotInfo.perception().ball_velocity_in_self();
     float vx = ball_velocity.x();
     float vy = ball_velocity.y();
     float ballSpeed = std::sqrt(vx * vx + vy * vy);
-    if (robotInfo.intention().action_planned() == hl_communication::Action::KICKING)
+    if (misc_extra.time_since_last_kick() < postKickTrackingTime)
     {
       tmpIsMateKicking = true;
     }
