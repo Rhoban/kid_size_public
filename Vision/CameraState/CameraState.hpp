@@ -172,6 +172,7 @@ public:
   Eigen::Affine3d selfToWorld;
   Eigen::Affine3d worldToCamera;
   Eigen::Affine3d cameraToWorld;
+  Eigen::Affine3d camera_from_head_base;
 
   /**
    * Depending on information source, transform between camera and field basis is not available

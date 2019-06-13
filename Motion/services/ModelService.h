@@ -44,6 +44,7 @@ public:
   // Returns camera in world transformation
   Eigen::Affine3d cameraToWorld(double timestamp);
   Eigen::Affine3d selfToWorld(double timestamp);
+  Eigen::Affine3d headBaseToWorld(double timestamp);
   rhoban::CameraModel cameraModel;
 
   // Logging

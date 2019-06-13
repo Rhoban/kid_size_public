@@ -40,8 +40,8 @@ cv::Point2f TagsDetector::Marker::getCenter() const
 TagsDetector::TagsDetector()
   : Filter("TagsDetector")
   , detectorParameters(new cv::aruco::DetectorParameters())
-  , markersData({ "imageIdx", "markerId", "centerX", "centerY" },
-                { { "imageIdx", {} }, { "markerId", {} }, { "centerX", {} }, { "centerY", {} } })
+  , markersData({ "image_id", "marker_id", "pixel_x", "pixel_y" },
+                { { "image_id", {} }, { "marker_id", {} }, { "pixel_x", {} }, { "pixel_y", {} } })
 {
   periodCounter = 0;
 }
@@ -67,7 +67,7 @@ void TagsDetector::setParameters()
   params()->define<ParamInt>("period", &period);
   isWritingData = ParamInt(0, 0, 1);
   params()->define<ParamInt>("isWritingData", &isWritingData);
-  refine = ParamInt(0, 0, 1);
+  refine = ParamInt(1, 0, 1);
   params()->define<ParamInt>("refine", &refine);
 }
 
@@ -145,10 +145,10 @@ void TagsDetector::process()
       for (const Marker& m : markers)
       {
         cv::Point2f center = m.getCenter();
-        std::map<std::string, std::string> row = { { "imageIdx", std::to_string(dumpCounter) },
-                                                   { "markerId", std::to_string(m.id) },
-                                                   { "centerX", std::to_string(center.x) },
-                                                   { "centerY", std::to_string(center.y) } };
+        std::map<std::string, std::string> row = { { "image_id", std::to_string(dumpCounter) },
+                                                   { "marker_id", std::to_string(m.id) },
+                                                   { "pixel_x", std::to_string(center.x) },
+                                                   { "pixel_y", std::to_string(center.y) } };
         markersData.insertRow(row);
       }
     }

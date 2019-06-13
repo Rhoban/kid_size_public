@@ -31,6 +31,7 @@ ModelService::ModelService()
 
   // Declaration of history entries
   histories.pose("camera");
+  histories.pose("head_base");
   histories.pose("trunk");
   histories.pose("self");
   histories.pose("field");
@@ -170,6 +171,11 @@ Eigen::Affine3d ModelService::selfToWorld(double timestamp)
   return histories.pose("self")->interpolate(timestamp);
 }
 
+Eigen::Affine3d ModelService::headBaseToWorld(double timestamp)
+{
+  return histories.pose("head_base")->interpolate(timestamp);
+}
+
 void ModelService::startLogging(const std::string& filename)
 {
   histories.startNamedLog(filename);
@@ -208,6 +214,7 @@ void ModelService::tickLog()
 
   // Logging main poses
   histories.pose("camera")->pushValue(timestamp, model.frameToWorld("camera", false));
+  histories.pose("head_base")->pushValue(timestamp, model.frameToWorld("head_base", false));
   histories.pose("trunk")->pushValue(timestamp, model.frameToWorld("trunk", false));
   histories.pose("self")->pushValue(timestamp, model.selfToWorld());
   histories.pose("field")->pushValue(timestamp, getServices()->localisation->field_from_world);

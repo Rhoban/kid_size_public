@@ -101,7 +101,8 @@ void ImageLogger::initSession(const CameraState& cs, const std::string& session_
   hl_monitoring::VideoMetaInformation meta_information;
   cs.exportToProtobuf(meta_information.mutable_camera_parameters());
   meta_information.set_time_offset(rhoban_utils::getSteadyClockOffset());
-  for (const std::string& log_name : { "camera_from_world", "camera_from_field", "camera_from_self" })
+  for (const std::string& log_name :
+       { "camera_from_world", "camera_from_field", "camera_from_self", "camera_from_head_base" })
   {
     metadata[log_name] = meta_information;
   }
@@ -133,6 +134,9 @@ void ImageLogger::writeEntry(int idx, const Entry& e)
   entry = metadata["camera_from_self"].add_frames();
   e.cs.exportToProtobuf(entry);
   setProtobufFromAffine(e.cs.worldToCamera * e.cs.selfToWorld, entry->mutable_pose());
+  entry = metadata["camera_from_head_base"].add_frames();
+  e.cs.exportToProtobuf(entry);
+  setProtobufFromAffine(e.cs.camera_from_head_base, entry->mutable_pose());
   entry = metadata["camera_from_field"].add_frames();
   e.cs.exportToProtobuf(entry);
   if (e.cs.has_camera_field_transform)

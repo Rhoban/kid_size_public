@@ -148,6 +148,7 @@ void CameraState::updateInternalModel(double timeStamp)
     _cameraModel = modelService->cameraModel;
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
+    camera_from_head_base = worldToCamera * modelService->headBaseToWorld(timeStamp).inverse();
     frame_status = decision->camera_status;
     // Update camera/field transform based on (by order of priority)
     // 1. Vive
