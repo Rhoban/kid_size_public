@@ -171,7 +171,7 @@ CaptainService::CaptainService()
   // Opening strategy
   bind.bindNew("openingStrategyMode", openingStrategyMode, RhIO::Bind::PullOnly)
       ->comment("0: disabled, 1: when we have kick off, 2: always")
-      ->defaultValue(2);
+      ->defaultValue(0);
   bind.bindNew("openingStrategyTime", openingStrategyTime, RhIO::Bind::PullOnly)->defaultValue(30);
   bind.bindNew("openingStrategyOrientation", openingStrategyOrientation, RhIO::Bind::PullOnly)->defaultValue(60);
 }
