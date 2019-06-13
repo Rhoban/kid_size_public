@@ -423,7 +423,7 @@ Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f& pos, double 
 
 ::rhoban_utils::TimeStamp CameraState::getTimeStamp() const
 {
-  return ::rhoban_utils::TimeStamp::fromMS(monotonic_ts * 1000);
+  return ::rhoban_utils::TimeStamp::fromMS(monotonic_ts / 1000);
 }
 
 uint64_t CameraState::getTimeStampUs() const
