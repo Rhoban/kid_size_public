@@ -176,7 +176,6 @@ void Application::fromJson(const Json::Value& v, const std::string& dir_name)
   rhoban_utils::tryRead(v, "embedded", &embedded);
   rhoban_utils::tryRead(v, "gpuOn", &gpuOn);
   rhoban_utils::tryRead(v, "pathToLog", &pathToLog);
-  rhoban_utils::tryRead(v, "angularPitchTolerance", &angularPitchTolerance);
   rhoban_utils::tryRead(v, "exitOnStreamEnd", &exit_on_stream_end);
 
   pipeline.tryRead(v, "pipeline", dir_name);
@@ -189,7 +188,6 @@ Json::Value Application::toJson() const
   v["playing"] = playing;
   v["embedded"] = embedded;
   v["gpuOn"] = gpuOn;
-  v["angularPitchTolerance"] = angularPitchTolerance;
   v["pathToLog"] = pathToLog;
   v["pipeline"] = pipeline.toJson();
   v["exitOnStreamEnd"] = exit_on_stream_end;

@@ -118,8 +118,6 @@ public:
     return "Pipeline";
   }
 
-  double imageDelay = 0.0;
-
   int frames = 0;
 
 private:

@@ -55,8 +55,9 @@ public:
 
   const rhoban::CameraModel& getCameraModel() const;
 
-  /// Asks the model to update itself to the state the robot had at timeStamp
-  void updateInternalModel(double timeStamp);
+  /// Asks the model to update itself to the state the robot had at given timestamps
+  /// Both monotonic and utc_ts should be provided
+  void updateInternalModel(const rhoban_utils::TimeStamp& ts);
 
   /// Return the [x,y] position of the ground point seen at (imgX, imgY)
   /// in self referential [m]
@@ -177,8 +178,8 @@ public:
 
   MoveScheduler* _moveScheduler;
   rhoban::CameraModel _cameraModel;
-  double _timeStamp;
-  double _angularPitchErrorDefault = 0.0;
+  double monotonic_ts;
+  uint64_t utc_ts;
 
   Eigen::Affine3d worldToSelf;
   Eigen::Affine3d selfToWorld;

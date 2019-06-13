@@ -58,7 +58,7 @@ void ReactiveKicker::step(float elapsed)
   }
 
   // When is the robot expected to perform the kick
-  TimeStamp kick_time = TimeStamp::now() + std::chrono::duration<int, std::milli>((int)(anticipation * 1000));
+  TimeStamp kick_time = TimeStamp::now().addMS(anticipation);
 
   // First: retrieving ball position in the future
   LocalisationService* loc = getServices()->localisation;

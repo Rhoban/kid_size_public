@@ -50,7 +50,7 @@ public:
 
   /// Return the timestamp associated to current time. If helpers is in fake
   /// mode, it uses the vision actual timeStamp
-  ::rhoban_utils::TimeStamp getNowTS();
+  rhoban_utils::TimeStamp getNowTS();
 
   /// Lock mutex and update information from the filter
   void importFiltersResults();

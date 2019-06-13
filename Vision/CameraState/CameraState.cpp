@@ -42,7 +42,8 @@ namespace Utils
 {
 CameraState::CameraState()
   : _moveScheduler(nullptr)
-  , _timeStamp(0.0)
+  , monotonic_ts(0.0)
+  , utc_ts(0)
   , has_camera_field_transform(false)
   , clock_offset(0)
   , frame_status(FrameStatus::UNKNOWN_FRAME_STATUS)
@@ -90,8 +91,8 @@ void CameraState::importFromProtobuf(const IntrinsicParameters& camera_parameter
 
 void CameraState::importFromProtobuf(const FrameEntry& src)
 {
-  _timeStamp = ((double)src.time_stamp()) / std::pow(10, 6);
-  std::cout << "imported timestamp: " << _timeStamp << std::endl;
+  monotonic_ts = ((double)src.monotonic_ts()) / std::pow(10, 6);
+  utc_ts = src.utc_ts();
   worldToCamera = getAffineFromProtobuf(src.pose());
   cameraToWorld = worldToCamera.inverse();
   selfToWorld = Eigen::Affine3d::Identity();  // Protobuf does not store the position of the robot
@@ -124,7 +125,8 @@ void CameraState::exportToProtobuf(IntrinsicParameters* dst) const
 
 void CameraState::exportToProtobuf(FrameEntry* dst) const
 {
-  dst->set_time_stamp((uint64_t)(_timeStamp * std::pow(10, 6)));
+  dst->set_monotonic_ts((uint64_t)(monotonic_ts * std::pow(10, 6)));
+  dst->set_utc_ts(utc_ts);
   setProtobufFromAffine(worldToCamera, dst->mutable_pose());
   dst->set_status(frame_status);
 }
@@ -153,9 +155,10 @@ const rhoban::CameraModel& CameraState::getCameraModel() const
   return _cameraModel;
 }
 
-void CameraState::updateInternalModel(double timeStamp)
+void CameraState::updateInternalModel(const rhoban_utils::TimeStamp& ts)
 {
-  _timeStamp = timeStamp;
+  monotonic_ts = ts.getTimeUS(false);
+  utc_ts = ts.getTimeUS(true);
 
   if (_moveScheduler != nullptr)
   {
@@ -170,8 +173,8 @@ void CameraState::updateInternalModel(double timeStamp)
     identifier->mutable_robot_id()->set_robot_id(referee->id);
     identifier->set_camera_name("main");
 
-    selfToWorld = modelService->selfToWorld(timeStamp);
-    worldToCamera = modelService->cameraToWorld(timeStamp).inverse();
+    selfToWorld = modelService->selfToWorld(monotonic_ts);
+    worldToCamera = modelService->cameraToWorld(monotonic_ts).inverse();
     _cameraModel = modelService->cameraModel;
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
@@ -186,18 +189,17 @@ void CameraState::updateInternalModel(double timeStamp)
     {
       try
       {
-        int64_t system_ts = (int64_t)(timeStamp * 1000 * 1000) + clock_offset;
-        camera_from_field = vive->getFieldToCamera(system_ts, true);
+        camera_from_field = vive->getFieldToCamera(utc_ts, true);
         std::cout << "Vive based update: cameraPosInField: "
                   << (camera_from_field.inverse() * Eigen::Vector3d::Zero()).transpose() << std::endl;
         has_camera_field_transform = true;
-        for (const Eigen::Vector3d& tagged_pos : vive->getTaggedPositions(system_ts, true))
+        for (const Eigen::Vector3d& tagged_pos : vive->getTaggedPositions(utc_ts, true))
         {
           Eigen::Vector3d ball_pos = tagged_pos;
           ball_pos.z() = Constants::field.ball_radius;
           vive_balls_in_field.push_back(ball_pos);
         }
-        for (const Eigen::Vector3d& pos : vive->getOthersTrackersPos(system_ts, true))
+        for (const Eigen::Vector3d& pos : vive->getOthersTrackersPos(utc_ts, true))
         {
           vive_trackers_in_field.push_back(pos);
         }
@@ -421,17 +423,17 @@ Eigen::Vector3d CameraState::posInWorldFromPixel(const cv::Point2f& pos, double 
 
 ::rhoban_utils::TimeStamp CameraState::getTimeStamp() const
 {
-  return ::rhoban_utils::TimeStamp::fromMS(_timeStamp * 1000);
+  return ::rhoban_utils::TimeStamp::fromMS(monotonic_ts * 1000);
 }
 
 uint64_t CameraState::getTimeStampUs() const
 {
-  return (uint64_t)(_timeStamp * std::pow(10, 6));
+  return (uint64_t)(monotonic_ts * std::pow(10, 6));
 }
 
 double CameraState::getTimeStampDouble() const
 {
-  return _timeStamp * 1000;
+  return monotonic_ts * 1000;
 }
 
 void CameraState::setClockOffset(int64_t new_offset)

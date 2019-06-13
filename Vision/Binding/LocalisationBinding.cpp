@@ -283,7 +283,7 @@ void LocalisationBinding::step()
   importFromRhIO();
 
   currTS = getNowTS();
-  cs->updateInternalModel(currTS.getTimeMS() / 1000);
+  cs->updateInternalModel(currTS);
 
   elapsedSinceReset = diffSec(lastFieldReset, currTS);
   elapsedSinceUniformReset = diffSec(lastUniformReset, currTS);

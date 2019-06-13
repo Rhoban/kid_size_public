@@ -195,7 +195,7 @@ void Robocup::startLogging(unsigned int timeMS, const std::string& logDir)
   logMutex.lock();
   manual_logger.initSession(*cs, logDir);
   startLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
-  endLog = TimeStamp(getNowTS() + milliseconds(timeMS));
+  endLog = getNowTS().addMS(timeMS);
   logMutex.unlock();
 }
 
@@ -380,11 +380,6 @@ void Robocup::initRhIO()
       ->maximum(200)
       ->minimum(-200)
       ->comment("Delay between sourceTS and reality");
-  RhIO::Root.newFloat("/Vision/angularPitchTolerance")
-      ->defaultValue(angularPitchTolerance)
-      ->maximum(20.0)
-      ->minimum(0.0)
-      ->comment("Tolerance in pitch (degrees)");
 
   // Monitoring special images
   for (const SpecialImageHandler& sih : imageHandlers)
@@ -483,8 +478,6 @@ void Robocup::step()
   }
 
   // Making sure the image delay is given to the pipeline
-  pipeline.imageDelay = imageDelay;
-  cs->_angularPitchErrorDefault = angularPitchTolerance;
   importFromRhIO();
   Benchmark::open("Vision + Localisation");
 
@@ -581,7 +574,7 @@ void Robocup::step()
   // Set the log timestamp during fake mode
   if (isFakeMode())
   {
-    double ts = pipeline.getCameraState()->_timeStamp;
+    double ts = pipeline.getCameraState()->getTimeStampDouble();
     _scheduler->getServices()->model->setReplayTimestamp(ts);
   }
 }
@@ -594,7 +587,6 @@ void Robocup::importFromRhIO()
   benchmark = RhIO::Root.getValueBool("/Vision/benchmark").value;
   benchmarkDetail = RhIO::Root.getValueInt("/Vision/benchmarkDetail").value;
   imageDelay = RhIO::Root.getValueInt("/Vision/imageDelay").value;
-  angularPitchTolerance = RhIO::Root.getValueFloat("/Vision/angularPitchTolerance").value;
   // Import size update for images
   for (SpecialImageHandler& sih : imageHandlers)
   {
