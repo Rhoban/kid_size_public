@@ -395,14 +395,19 @@ bool DecisionService::tick(double elapsed)
   const auto& teamplayInfos = getServices()->teamPlay->allInfo();
   bool tmpIsBallMoving = false;
   bool tmpIsMateKicking = false;
+  if (strategy->getTimeSinceLastKick() < postKickTrackingTime)
+  {
+    tmpIsMateKicking = true;
+  }
   for (const auto& pair : teamplayInfos)
   {
     const RobotMsg& robotInfo = pair.second;
+    MiscExtra misc_extra = extractMiscExtra(robotInfo);
     const PositionDistribution& ball_velocity = robotInfo.perception().ball_velocity_in_self();
     float vx = ball_velocity.x();
     float vy = ball_velocity.y();
     float ballSpeed = std::sqrt(vx * vx + vy * vy);
-    if (strategy->getTimeSinceLastKick() < postKickTrackingTime)
+    if (misc_extra.time_since_last_kick() < postKickTrackingTime)
     {
       tmpIsMateKicking = true;
     }
