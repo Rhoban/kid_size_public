@@ -73,7 +73,7 @@ void GroundTruthProvider::fromJson(const Json::Value& v, const std::string& dir_
     labellingManager.importMetaData(video_meta);
     hl_communication::MovieLabelCollection labels;
     hl_communication::readFromFile(labellingPath, &labels);
-    labellingManager.importLabels(labels);
+    labellingManager.importLabels(labels, Constants::field.ball_radius);
   }
 }
 
