@@ -7,6 +7,7 @@
 #include <rhoban_geometry/circle.h>
 #include "rhoban_utils/logging/logger.h"
 #include "MCKickController.h"
+#include "services/CaptainService.h"
 #include "services/StrategyService.h"
 #include "scheduler/MoveScheduler.h"
 
@@ -230,4 +231,30 @@ void MCKickController::step(float elapsed)
   }
 
   kick_dir = rad2deg(_bestAction.orientation);
+
+  // The captain overrides the kick
+  auto captain = getServices()->captain;
+  auto order = captain->getMyOrder();
+  if (order.has_kick())
+  {
+    auto kick = order.kick();
+    if (kick.allowed_kicks().size() > 0 && kick.has_start() && kick.has_target())
+    {
+      // Collecting allowed kicks
+      allowed_kicks.clear();
+      for (auto allowed : kick.allowed_kicks())
+      {
+        if (allowed == hl_communication::KickType::KICK_CLASSIC)
+          allowed_kicks.push_back("classic");
+        if (allowed == hl_communication::KickType::KICK_LATERAL)
+          allowed_kicks.push_back("lateral");
+        if (allowed == hl_communication::KickType::KICK_SMALL)
+          allowed_kicks.push_back("small");
+      }
+
+      // Computing kick dir
+      rhoban_geometry::Point kickVector(kick.target().x() - kick.start().x(), kick.target().y() - kick.start().y());
+      kick_dir = kickVector.getTheta().getSignedValue();
+    }
+  }
 }

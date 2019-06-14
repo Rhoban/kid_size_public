@@ -86,7 +86,8 @@ Json::Value CaptainService::Config::toJson() const
   throw new std::runtime_error("Can't save captain.json");
 }
 
-CaptainService::CaptainService() : bind("captain"), frequency(5.0), recentlyKicked(false)
+CaptainService::CaptainService()
+  : bind("captain"), frequency(5.0), recentlyKicked(false), lastPlacingPhase(rhoban_utils::TimeStamp::now())
 {
   // Loading configuration file
   config.loadFile("captain.json");
@@ -166,6 +167,13 @@ CaptainService::CaptainService() : bind("captain"), frequency(5.0), recentlyKick
   bind.bindNew("commonBallY", commonBall.y, RhIO::Bind::PushOnly);
 
   bind.bindNew("recentlyKicked", recentlyKicked, RhIO::Bind::PushOnly);
+
+  // Opening strategy
+  bind.bindNew("openingStrategyMode", openingStrategyMode, RhIO::Bind::PullOnly)
+      ->comment("0: disabled, 1: when we have kick off, 2: always")
+      ->defaultValue(0);
+  bind.bindNew("openingStrategyTime", openingStrategyTime, RhIO::Bind::PullOnly)->defaultValue(30);
+  bind.bindNew("openingStrategyOrientation", openingStrategyOrientation, RhIO::Bind::PullOnly)->defaultValue(60);
 }
 
 CaptainService::~CaptainService()
@@ -409,15 +417,12 @@ void CaptainService::updateCommonOpponents()
 
 void CaptainService::computeBasePositions()
 {
-  auto referee = getServices()->referee;
-  bool kickOff = referee->myTeamKickOff() && !referee->isDroppedBall();
-
   // List the possible targets (filters the base positions according
   // to the kickOff flag)
   std::vector<PlacementOptimizer::Target> targets;
   for (auto& basePosition : config.basePositions)
   {
-    if (basePosition.kickOff == kickOff)
+    if (basePosition.kickOff == myTeamKickOff)
     {
       PlacementOptimizer::Target target;
       target.position = basePosition.targetPosition;
@@ -643,6 +648,26 @@ void CaptainService::computePlayingPositions()
 
     logger.log("Cost for %d: %f (current handler %d)", robot_id, cost, handler);
   }
+
+  // Are we applying opening strategy ?
+  bool isOpening = false;
+  // Opening strategy enabled and we have kick off, or opening strategy is in "always" mode
+  if (openingStrategyMode == 2 || (openingStrategyMode == 1 && myTeamKickOff))
+  {
+    // The time elapsed since last placing phase is less than opening strategy time
+    if (diffSec(lastPlacingPhase, rhoban_utils::TimeStamp::now()) < openingStrategyTime)
+    {
+      if (status.has_ball())  // We have a common ball
+      {
+        auto& ballPos = status.ball().position();
+        if (sqrt(pow(ballPos.x(), 2) + pow(ballPos.y(), 2)) < 1.)  // It is close to the center of field
+        {
+          isOpening = true;
+        }
+      }
+    }
+  }
+
   // Grabing robots that should be placed (all excepted newHandler and goal)
   std::vector<int> otherIds;
   for (auto& entry : robots)
@@ -655,6 +680,22 @@ void CaptainService::computePlayingPositions()
       StrategyOrder* order = status.add_orders();
       order->set_robot_id(robot_id);
       order->set_action(Action::GOING_TO_KICK);
+
+      if (isOpening)
+      {
+        auto kick = order->mutable_kick();
+        // Start is here virtually the common ball, and the target is 1m ahead of opening strategy orientation
+        // Actually, the norm of the resulting vector is now 1 because only the resulting orientation on field
+        // will be used by target robot
+        rhoban_geometry::Point commonBall(status.ball().position().x(), status.ball().position().y());
+        kick->mutable_start()->set_x(commonBall.x);
+        kick->mutable_start()->set_y(commonBall.y);
+        rhoban_geometry::Point target = commonBall + rhoban_geometry::Point(1, 0).rotation(openingStrategyOrientation);
+        kick->mutable_target()->set_x(target.x);
+        kick->mutable_target()->set_y(target.y);
+        kick->add_allowed_kicks(KickType::KICK_SMALL);
+        kick->set_mode(KickMode::KICK_AUTONOMOUS);
+      }
     }
     else if (robot.team_play().role() != Role::GOALIE)
     {
@@ -706,6 +747,7 @@ void CaptainService::compute()
   // Getting a copy of all infos, since team play is executed on different thread
   teamPlayAllInfo = getServices()->teamPlay->allInfo();
   bool isPlacingPhase = referee->isPlacingPhase();
+  myTeamKickOff = referee->myTeamKickOff() && !referee->isDroppedBall();
   std::map<int, bool> penalizedRobots;
   for (auto& entry : teamPlayAllInfo)
   {
@@ -755,6 +797,7 @@ void CaptainService::compute()
 
   if (isPlacingPhase)
   {
+    lastPlacingPhase = rhoban_utils::TimeStamp::now();
     computeBasePositions();
   }
   else

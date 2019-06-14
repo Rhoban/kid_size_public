@@ -292,6 +292,11 @@ void Kick::apply()
 
 void Kick::step(float elapsed)
 {
+  if (!generated)
+  {
+    return;
+  }
+
   bind->pull();
 
   // While kicking, walk is force disabled
@@ -341,11 +346,6 @@ void Kick::step(float elapsed)
 
 void Kick::stepSpline(float elapsed)
 {
-  if (!generated)
-  {
-    return;
-  }
-
   if (t > tMax * applyKickRatio && !applied)
   {
     applied = true;
