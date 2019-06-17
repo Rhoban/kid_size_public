@@ -415,7 +415,21 @@ void LocalisationService::setCluster(std::vector<hl_communication::WeightedPose*
 
 std::vector<hl_communication::WeightedPose*> LocalisationService::getPositionInClusters()
 {
-  return posFromClusters;
+  if (Helpers::isFakeMode())
+  {
+    fakeWeightedPose.mutable_pose()->mutable_position()->set_x(fieldPosX);
+    fakeWeightedPose.mutable_pose()->mutable_position()->set_y(fieldPosY);
+    fakeWeightedPose.mutable_pose()->mutable_position()->set_y(deg2rad(fieldOrientation));
+    fakeWeightedPose.set_probability(1);
+
+    std::vector<hl_communication::WeightedPose*> tmp;
+    tmp.push_back(&fakeWeightedPose);
+    return tmp;
+  }
+  else
+  {
+    return posFromClusters;
+  }
 }
 
 void LocalisationService::updatePosSelf()

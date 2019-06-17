@@ -162,6 +162,9 @@ protected:
   // Mutex to access ball position
   std::mutex mutex;
 
+  // For fake mode
+  hl_communication::WeightedPose fakeWeightedPose;
+
   // For RhIO
   float ballPosX, ballPosY;
   float ballFieldX, ballFieldY;
