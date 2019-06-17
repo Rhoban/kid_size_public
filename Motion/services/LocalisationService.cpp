@@ -19,6 +19,7 @@
 
 #include <Binding/Robocup.hpp>
 #include <Binding/LocalisationBinding.hpp>
+#include <hl_communication/perception.pb.h>
 
 static bool block = false;
 
@@ -406,6 +407,15 @@ void LocalisationService::setNoBall()
   ballQ = 0;
   mutex.unlock();
   bind.push();
+}
+void LocalisationService::setCluster(std::vector<hl_communication::WeightedPose*> candidates)
+{
+  posFromClusters = candidates;
+}
+
+std::vector<hl_communication::WeightedPose*> LocalisationService::getPositionInClusters()
+{
+  return posFromClusters;
 }
 
 void LocalisationService::updatePosSelf()

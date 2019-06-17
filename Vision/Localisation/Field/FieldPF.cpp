@@ -6,8 +6,10 @@
 
 #include <hl_monitoring/top_view_drawer.h>
 #include <robocup_referee/constants.h>
+#include <hl_communication/position.pb.h>
 
 #include <opencv2/imgproc.hpp>
+#include <opencv2/ml.hpp>
 #include <vector>
 #include <map>
 #include <sstream>
@@ -21,6 +23,7 @@ using namespace rhoban_utils;
 using namespace rhoban_unsorted;
 using namespace robocup_referee;
 using namespace hl_monitoring;
+using namespace hl_communication;
 
 namespace Vision
 {
@@ -244,6 +247,8 @@ void FieldPF::resetOnLines(int side)
   std::uniform_real_distribution<double> xDistribution(-borderNoise, borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta, borderNoiseTheta);
   std::uniform_int_distribution<int> sideDistribution(0, 1);
+  int nb = 0;
+
   for (auto& p : particles)
   {
     double x = xOffset + xDistribution(generator);
@@ -330,43 +335,73 @@ void FieldPF::draw(cv::Mat& img) const
 
 void FieldPF::updateRepresentativeQuality()
 {
-  // TODO might be improved
-  int nbGoodParticles = 0;
-  const Point& repPos = representativeParticle.getRobotPosition();
-  const Angle& repDir = representativeParticle.getOrientation();
-  for (auto& p : particles)
-  {
-    const Point& pos = p.first.getRobotPosition();
-    const Angle& dir = p.first.getOrientation();
-    double dist = pos.getDist(repPos);
-    double diffAngle = std::fabs((dir - repDir).getSignedValue());
+  FieldDistribution::Distribution d = vectorEM[0];
+  Eigen::MatrixXd covEigen = d.position.second;
+  std::cout << " covariance eigen " << std::endl << covEigen << std::endl;
 
-    // TODO: The particle quality?
-    // p.second=0.5/(diffAngle+1.0)+0.5/(dist+1.0);
-    if (dist < tolDist && diffAngle < tolDiffAngle)
-    {
-      nbGoodParticles += 1;
-    }
+  cv::Mat covMat = cv::Mat(2, 2, CV_64F, covEigen.data());
+  std::cout << "corvariance matrice" << std::endl << covMat << std::endl;
+
+  cv::Mat eigenvalues, eigenvectors;
+  cv::eigen(covMat, eigenvalues, eigenvectors);
+
+  std::cout << eigenvalues.at<double>(0) << " and " << eigenvalues.at<double>(1) << std::endl;
+
+  representativeQuality = d.probability * exp(-5 * eigenvalues.at<double>(0) * eigenvalues.at<double>(1));
+}
+
+cv::Mat FieldPF::positionsFromParticles()
+{
+  cv::Mat samples;
+  Eigen::VectorXd M;
+  cv::Mat tmp;
+  int nbParticles = particles.size();
+
+  for (int i = 0; i < nbParticles; i++)
+  {
+    M = particles[i].first.toVector();
+    tmp = cv::Mat(1, 2, CV_64F, (void*)&M[0]).clone();
+    samples.push_back(tmp);
   }
-  representativeQuality = nbGoodParticles / (double)particles.size();
+  return samples;
+}
+
+std::vector<Angle> FieldPF::anglesFromParticles()
+{
+  std::vector<Angle> M;
+  int nbParticles = particles.size();
+
+  for (int i = 0; i < nbParticles; i++)
+  {
+    M.push_back(particles[i].first.getOrientation());
+  }
+  return M;
 }
 
 void FieldPF::updateRepresentativeParticle()
 {
-  int N = particles.size();
-  Eigen::VectorXd M = particles[0].first.toVector();
-  // Better way of calculating avg angle exists but this one should be
-  // good enough
-  double x(0), y(0);  // computing avg angle
-  for (int i = 1; i < N; i++)
-  {
-    M = M + particles[i].first.toVector();
-    x += cos(particles[i].first.getOrientation());
-    y += sin(particles[i].first.getOrientation());
-  }
-  M = (1.0 / (double)N) * M;
-  M(2) = rad2deg(atan2(y, x));
-  representativeParticle.setFromVector(M);
+  int nbParticles = particles.size();
+
+  cv::Mat pos = positionsFromParticles();
+  std::vector<Angle> angle = anglesFromParticles();
+
+  vectorEM.clear();
+
+  vectorEM = fieldDistribution.updateEM(pos, angle, nbParticles);
+
+  FieldDistribution::Distribution d = vectorEM[0];
+  Point p = d.position.first;
+  double dir = d.angle.first;
+  Eigen::VectorXd result(3);
+
+  result << p.getX(), p.getY(), dir;
+
+  representativeParticle.setFromVector(result);
+}
+
+std::vector<FieldDistribution::Distribution> FieldPF::getPositionsFromClusters()
+{
+  return vectorEM;
 }
 
 void FieldPF::updateInternalValues()

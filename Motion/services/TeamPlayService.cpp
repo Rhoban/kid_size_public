@@ -18,6 +18,8 @@
 
 #include <hl_communication/robot_msg_utils.h>
 #include <hl_communication/utils.h>
+#include <hl_communication/perception.pb.h>
+#include <Localisation/Field/FieldDistribution.hpp>
 
 static rhoban_utils::Logger logger("teamplay_service");
 
@@ -172,11 +174,23 @@ void TeamPlayService::updatePerception(RobotMsg* msg)
   ball_velocity_in_self->set_y(ballVel.y);
   // Pose estimation of the robot, currently, only one pose is used
   rhoban_geometry::Point fieldPos = loc->getFieldPos();
-  WeightedPose* self_in_field = perception->add_self_in_field();
+  /* WeightedPose* self_in_field = perception->add_self_in_field();
   self_in_field->set_probability(1.0);
   self_in_field->mutable_pose()->mutable_position()->set_x(fieldPos.x);
   self_in_field->mutable_pose()->mutable_position()->set_y(fieldPos.y);
   self_in_field->mutable_pose()->mutable_dir()->set_mean(loc->getFieldOrientation());
+  */
+  Vision::Localisation::FieldDistribution fieldDistribution;
+
+  std::vector<hl_communication::WeightedPose*> positions = loc->getPositionInClusters();
+  std::cout << "POSITIONS RECIEVED SIZE :" << positions.size() << std::endl;
+  for (int pos_idx = 0; pos_idx < positions.size(); pos_idx++)
+  {
+    WeightedPose* self_in_field = perception->add_self_in_field();
+
+    self_in_field->CopyFrom(*positions.at(pos_idx));
+  }
+
   // Adding obstacles to message
   const std::vector<Eigen::Vector3d>& opponents = loc->getOpponentsSelf();
   size_t nb_opponents = std::min(opponents.size(), (size_t)_maxObstacles);
