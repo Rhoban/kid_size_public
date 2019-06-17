@@ -419,7 +419,7 @@ std::vector<hl_communication::WeightedPose*> LocalisationService::getPositionInC
   {
     fakeWeightedPose.mutable_pose()->mutable_position()->set_x(fieldPosX);
     fakeWeightedPose.mutable_pose()->mutable_position()->set_y(fieldPosY);
-    fakeWeightedPose.mutable_pose()->mutable_position()->set_y(deg2rad(fieldOrientation));
+    fakeWeightedPose.mutable_pose()->mutable_dir()->set_mean(deg2rad(fieldOrientation));
     fakeWeightedPose.set_probability(1);
 
     std::vector<hl_communication::WeightedPose*> tmp;
