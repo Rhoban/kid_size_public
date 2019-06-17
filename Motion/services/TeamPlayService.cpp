@@ -183,7 +183,8 @@ void TeamPlayService::updatePerception(RobotMsg* msg)
   Vision::Localisation::FieldDistribution fieldDistribution;
 
   std::vector<hl_communication::WeightedPose*> positions = loc->getPositionInClusters();
-  std::cout << "POSITIONS RECIEVED SIZE :" << positions.size() << std::endl;
+
+  logger.log("Positions received size: %d", positions.size());
   for (int pos_idx = 0; pos_idx < positions.size(); pos_idx++)
   {
     WeightedPose* self_in_field = perception->add_self_in_field();
