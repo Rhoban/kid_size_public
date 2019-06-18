@@ -63,10 +63,10 @@ WalkEngine::WalkEngine()
   , swingPhase(0.0)
   , footYOffsetPerStepSizeY(0.2)
   , trunkPitch(0)
+  , enableCircular(false)
   , stepSizeX(0)
   , stepSizeY(0)
   , stepSizeYaw(0)
-  , enableCircular(false)
 {
 }
 
@@ -155,8 +155,6 @@ void WalkEngine::newStep()
   // Changing support foot
   isLeftSupport = !isLeftSupport;
 
-  double swingAmplitude = (isLeftSupport ? -swingGain : swingGain);
-
   // Support foot is on the ground
   supportFoot().zSpline.addPoint(0, 0, 0);
   supportFoot().zSpline.addPoint(stepDuration, 0, 0);
@@ -183,7 +181,6 @@ void WalkEngine::newStep()
 
     // For both feet, computing the new position in the
     Point sFoot(trunkXOffset, supportFoot().trunkYOffset);
-    Point sFootSpeed = -speed.rotation(rad2deg(-stepSizeYaw / 2.0));
     supportFoot().xSpline.addPoint(stepDuration, sFoot.x, 0);
     supportFoot().ySpline.addPoint(stepDuration, sFoot.y, 0);
 

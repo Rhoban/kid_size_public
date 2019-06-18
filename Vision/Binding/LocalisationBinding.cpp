@@ -21,6 +21,8 @@
 
 #include "unistd.h"
 
+#include <hl_communication/perception.pb.h>
+
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/util.h>
 #include <utility>
@@ -33,6 +35,8 @@
 using namespace hl_monitoring;
 using namespace rhoban_utils;
 using namespace Vision::Localisation;
+using namespace hl_communication;
+
 using Vision::Utils::CameraState;
 
 static rhoban_utils::Logger fieldLogger("RobocupFieldPF");
@@ -387,6 +391,7 @@ void LocalisationBinding::step()
   }
 
   importFiltersResults();
+  getPossiblePositions();
 
   publishToLoc();
   publishToRhIO();
@@ -611,6 +616,22 @@ void LocalisationBinding::updateFilter(
   // If we skipped the step, it means that there is no point in using odometry from
   // lastTS to currTS, therefore, we can safely update lastTS
   lastTS = currTS;
+}
+
+void LocalisationBinding::getPossiblePositions()
+{
+  LocalisationService* loc = scheduler->getServices()->localisation;
+
+  Localisation::FieldDistribution fieldDistribution;
+
+  std::vector<hl_communication::WeightedPose*> candidates;
+
+  std::vector<Localisation::FieldDistribution::Distribution> p = field_filter->getPositionsFromClusters();
+
+  for (int pos_idx = 0; pos_idx < p.size(); pos_idx++)
+    candidates.push_back(fieldDistribution.distributionToProto(p.at(pos_idx)));
+
+  loc->setCluster(candidates);
 }
 
 void LocalisationBinding::publishToLoc()
