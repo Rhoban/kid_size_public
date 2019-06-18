@@ -391,7 +391,6 @@ void LocalisationBinding::step()
   }
 
   importFiltersResults();
-  getPossiblePositions();
 
   publishToLoc();
   publishToRhIO();
@@ -618,31 +617,24 @@ void LocalisationBinding::updateFilter(
   lastTS = currTS;
 }
 
-void LocalisationBinding::getPossiblePositions()
-{
-  LocalisationService* loc = scheduler->getServices()->localisation;
-
-  Localisation::FieldDistribution fieldDistribution;
-
-  std::vector<hl_communication::WeightedPose*> candidates;
-
-  std::vector<Localisation::FieldDistribution::Distribution> p = field_filter->getPositionsFromClusters();
-
-  for (int pos_idx = 0; pos_idx < p.size(); pos_idx++)
-    candidates.push_back(fieldDistribution.distributionToProto(p.at(pos_idx)));
-
-  loc->setCluster(candidates);
-}
-
 void LocalisationBinding::publishToLoc()
 {
   LocalisationService* loc = scheduler->getServices()->localisation;
 
   // update the loc service
   cv::Point2d c = field_filter->getCenterPositionInSelf();
+  fieldLogger.log("c : %f, %f", c.x, c.y);
+
   Angle o = field_filter->getOrientation();
+  fieldLogger.log(" angle:%f", o.getValue());
+
+  fieldLogger.log(" robotQ : %lf , consistencyScore:  %f , consistencyenbaled : %d", robotQ, consistencyScore,
+                  consistencyEnabled);
 
   loc->setPosSelf(Eigen::Vector3d(c.x, c.y, 0), deg2rad(o.getValue()), robotQ, consistencyScore, consistencyEnabled);
+  fieldLogger.log("getting pos from clusters");
+
+  loc->setClusters(field_filter->getPositionsFromClusters());
 }
 
 void LocalisationBinding::applyWatcher(

@@ -408,12 +408,12 @@ void LocalisationService::setNoBall()
   mutex.unlock();
   bind.push();
 }
-void LocalisationService::setCluster(std::vector<hl_communication::WeightedPose*> candidates)
+void LocalisationService::setClusters(const std::vector<hl_communication::WeightedPose>& candidates)
 {
   posFromClusters = candidates;
 }
 
-std::vector<hl_communication::WeightedPose*> LocalisationService::getPositionInClusters()
+std::vector<hl_communication::WeightedPose> LocalisationService::getPositionInClusters()
 {
   if (Helpers::isFakeMode())
   {
@@ -422,8 +422,8 @@ std::vector<hl_communication::WeightedPose*> LocalisationService::getPositionInC
     fakeWeightedPose.mutable_pose()->mutable_dir()->set_mean(deg2rad(fieldOrientation));
     fakeWeightedPose.set_probability(1);
 
-    std::vector<hl_communication::WeightedPose*> tmp;
-    tmp.push_back(&fakeWeightedPose);
+    std::vector<hl_communication::WeightedPose> tmp;
+    tmp.push_back(fakeWeightedPose);
     return tmp;
   }
   else

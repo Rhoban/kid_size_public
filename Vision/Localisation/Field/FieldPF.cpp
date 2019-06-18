@@ -247,7 +247,6 @@ void FieldPF::resetOnLines(int side)
   std::uniform_real_distribution<double> xDistribution(-borderNoise, borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta, borderNoiseTheta);
   std::uniform_int_distribution<int> sideDistribution(0, 1);
-  int nb = 0;
 
   for (auto& p : particles)
   {
@@ -335,21 +334,20 @@ void FieldPF::draw(cv::Mat& img) const
 
 void FieldPF::updateRepresentativeQuality()
 {
-  FieldDistribution::Distribution d = vectorEM[0];
-  Eigen::MatrixXd covEigen = d.position.second;
-  std::cout << " covariance eigen " << std::endl << covEigen << std::endl;
+  hl_communication::WeightedPose weighted_pose = vectorEM[0];
+  const PoseDistribution& pose = weighted_pose.pose();
+  const PositionDistribution& pos = pose.position();
 
-  cv::Mat covMat = cv::Mat(2, 2, CV_64F, covEigen.data());
-  std::cout << "corvariance matrice" << std::endl << covMat << std::endl;
+  float data[4] = { pos.uncertainty(0), pos.uncertainty(1), pos.uncertainty(1), pos.uncertainty(2) };
+  cv::Mat covMat = cv::Mat(2, 2, CV_32F, data);
 
   cv::Mat eigenvalues, eigenvectors;
   cv::eigen(covMat, eigenvalues, eigenvectors);
+  std::cout << "eigen values " << eigenvalues.at<float>(0) << " and " << eigenvalues.at<float>(1) << std::endl;
 
-  std::cout << eigenvalues.at<double>(0) << " and " << eigenvalues.at<double>(1) << std::endl;
-
-  representativeQuality = d.probability * exp(-5 * eigenvalues.at<double>(0) * eigenvalues.at<double>(1));
+  representativeQuality = weighted_pose.probability() * exp(-5 * eigenvalues.at<float>(0) * eigenvalues.at<float>(1));
 }
-
+/*
 cv::Mat FieldPF::positionsFromParticles()
 {
   cv::Mat samples;
@@ -366,40 +364,58 @@ cv::Mat FieldPF::positionsFromParticles()
   return samples;
 }
 
-std::vector<Angle> FieldPF::anglesFromParticles()
+cv::Mat FieldPF::anglesFromParticles()
 {
-  std::vector<Angle> M;
+  cv::Mat M;
   int nbParticles = particles.size();
+  cv::Mat tmp;
 
   for (int i = 0; i < nbParticles; i++)
   {
     M.push_back(particles[i].first.getOrientation());
   }
-  return M;
+  }*/
+
+void FieldPF::exportParticles(cv::Mat* pos, cv::Mat* angle)
+{
+  int nbParticles = particles.size();
+  Eigen::VectorXd M;
+  cv::Mat tmp;
+
+  *pos = cv::Mat(nbParticles, 2, CV_64F);
+  *angle = cv::Mat(nbParticles, 1, CV_64F);
+
+  for (int i = 0; i < nbParticles; i++)
+  {
+    M = particles[i].first.toVector();
+    pos->at<double>(i, 0) = M[0];
+    pos->at<double>(i, 1) = M[1];
+    angle->at<double>(i, 0) = M[2];
+  }
 }
 
 void FieldPF::updateRepresentativeParticle()
 {
-  int nbParticles = particles.size();
-
-  cv::Mat pos = positionsFromParticles();
-  std::vector<Angle> angle = anglesFromParticles();
+  cv::Mat pos, angle;
+  exportParticles(&pos, &angle);
 
   vectorEM.clear();
 
-  vectorEM = fieldDistribution.updateEM(pos, angle, nbParticles);
+  int max_clusters = 5;
 
-  FieldDistribution::Distribution d = vectorEM[0];
-  Point p = d.position.first;
-  double dir = d.angle.first;
+  vectorEM = updateEM(pos, angle, max_clusters);
+
+  hl_communication::WeightedPose weighted_pose = vectorEM[0];
+
+  const PoseDistribution& pose = weighted_pose.pose();
   Eigen::VectorXd result(3);
 
-  result << p.getX(), p.getY(), dir;
+  result << pose.position().x(), pose.position().y(), pose.dir().mean();
 
   representativeParticle.setFromVector(result);
 }
 
-std::vector<FieldDistribution::Distribution> FieldPF::getPositionsFromClusters()
+std::vector<hl_communication::WeightedPose> FieldPF::getPositionsFromClusters()
 {
   return vectorEM;
 }

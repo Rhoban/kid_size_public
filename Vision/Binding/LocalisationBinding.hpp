@@ -78,9 +78,6 @@ public:
 
   // positions from loc
 
-  void getPossiblePositions();
-  std::vector<Localisation::FieldDistribution::Distribution> positionVector;
-
   cv::Mat getTopView(int width, int height);
 
   bool refereeAllowsToPlay();

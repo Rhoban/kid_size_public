@@ -109,9 +109,9 @@ public:
   /**
    *Updates all possibles position calculated with EM algorithm
    */
-  void setCluster(std::vector<hl_communication::WeightedPose*> candidates);
+  void setClusters(const std::vector<hl_communication::WeightedPose>& candidates);
 
-  std::vector<hl_communication::WeightedPose*> getPositionInClusters();
+  std::vector<hl_communication::WeightedPose> getPositionInClusters();
 
   /**
    * Updates transforms between field and world basis and then updates variables monitored by RhIO
@@ -196,7 +196,7 @@ protected:
 
   Vision::Robocup* robocup;
   Vision::LocalisationBinding* locBinding;
-  std::vector<hl_communication::WeightedPose*> posFromClusters;
+  std::vector<hl_communication::WeightedPose> posFromClusters;
 
   /**
    * Update the basis transforms between field and world based on the following internal information.
