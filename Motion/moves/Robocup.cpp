@@ -296,19 +296,21 @@ void Robocup::enterState(std::string state)
 {
   logger.log("Entering state %s", state.c_str());
   t = 0;
-
+  auto& decision = getServices()->decision;
   Head* head = (Head*)getMoves()->getMove("head");
   // Not scanning only if the robot is penalized or game finished
-  if (state == STATE_PENALIZED || state == STATE_FINISHED)
-  {
-    head->setDisabled(true);
-  }
-  else
-  {
-    head->setDisabled(false);
-  }
 
-  auto& decision = getServices()->decision;
+  if (!decision->isThrowInRunning)
+  {
+    if (state == STATE_PENALIZED || state == STATE_FINISHED)
+    {
+      head->setDisabled(true);
+    }
+    else
+    {
+      head->setDisabled(false);
+    }
+  }
 
   if (!decision->isThrowInRunning)
   {
