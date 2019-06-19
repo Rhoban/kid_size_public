@@ -152,7 +152,7 @@ void Robocup::step(float elapsed)
   // We gave up, only going to penalized or initial
   if (state == STATE_GIVE_UP)
   {
-    if (!decision->handled || (!referee->isPenalized() && !referee->isInitialPhase()))
+    if (!wasHandled || (!referee->isPenalized() && !referee->isInitialPhase()))
     {
       // Waiting to go back to either penalized or initial phase
       return;

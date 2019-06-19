@@ -21,6 +21,8 @@
 
 #include "unistd.h"
 
+#include <hl_communication/perception.pb.h>
+
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/util.h>
 #include <utility>
@@ -33,6 +35,8 @@
 using namespace hl_monitoring;
 using namespace rhoban_utils;
 using namespace Vision::Localisation;
+using namespace hl_communication;
+
 using Vision::Utils::CameraState;
 
 static rhoban_utils::Logger fieldLogger("RobocupFieldPF");
@@ -622,6 +626,8 @@ void LocalisationBinding::publishToLoc()
   Angle o = field_filter->getOrientation();
 
   loc->setPosSelf(Eigen::Vector3d(c.x, c.y, 0), deg2rad(o.getValue()), robotQ, consistencyScore, consistencyEnabled);
+
+  loc->setClusters(field_filter->getPositionsFromClusters());
 }
 
 void LocalisationBinding::applyWatcher(

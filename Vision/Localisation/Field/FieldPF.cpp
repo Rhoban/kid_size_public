@@ -6,8 +6,10 @@
 
 #include <hl_monitoring/top_view_drawer.h>
 #include <robocup_referee/constants.h>
+#include <hl_communication/position.pb.h>
 
 #include <opencv2/imgproc.hpp>
+#include <opencv2/ml.hpp>
 #include <vector>
 #include <map>
 #include <sstream>
@@ -21,6 +23,7 @@ using namespace rhoban_utils;
 using namespace rhoban_unsorted;
 using namespace robocup_referee;
 using namespace hl_monitoring;
+using namespace hl_communication;
 
 namespace Vision
 {
@@ -244,6 +247,7 @@ void FieldPF::resetOnLines(int side)
   std::uniform_real_distribution<double> xDistribution(-borderNoise, borderNoise);
   std::uniform_real_distribution<double> dirNoiseDistribution(-borderNoiseTheta, borderNoiseTheta);
   std::uniform_int_distribution<int> sideDistribution(0, 1);
+
   for (auto& p : particles)
   {
     double x = xOffset + xDistribution(generator);
@@ -330,43 +334,89 @@ void FieldPF::draw(cv::Mat& img) const
 
 void FieldPF::updateRepresentativeQuality()
 {
-  // TODO might be improved
-  int nbGoodParticles = 0;
-  const Point& repPos = representativeParticle.getRobotPosition();
-  const Angle& repDir = representativeParticle.getOrientation();
-  for (auto& p : particles)
-  {
-    const Point& pos = p.first.getRobotPosition();
-    const Angle& dir = p.first.getOrientation();
-    double dist = pos.getDist(repPos);
-    double diffAngle = std::fabs((dir - repDir).getSignedValue());
+  hl_communication::WeightedPose weighted_pose = vectorEM[0];
+  const PoseDistribution& pose = weighted_pose.pose();
+  const PositionDistribution& pos = pose.position();
 
-    // TODO: The particle quality?
-    // p.second=0.5/(diffAngle+1.0)+0.5/(dist+1.0);
-    if (dist < tolDist && diffAngle < tolDiffAngle)
-    {
-      nbGoodParticles += 1;
-    }
+  float data[4] = { pos.uncertainty(0), pos.uncertainty(1), pos.uncertainty(1), pos.uncertainty(2) };
+  cv::Mat covMat = cv::Mat(2, 2, CV_32F, data);
+
+  cv::Mat eigenvalues, eigenvectors;
+  cv::eigen(covMat, eigenvalues, eigenvectors);
+
+  representativeQuality = weighted_pose.probability() * exp(-5 * eigenvalues.at<float>(0) * eigenvalues.at<float>(1));
+}
+/*
+cv::Mat FieldPF::positionsFromParticles()
+{
+  cv::Mat samples;
+  Eigen::VectorXd M;
+  cv::Mat tmp;
+  int nbParticles = particles.size();
+
+  for (int i = 0; i < nbParticles; i++)
+  {
+    M = particles[i].first.toVector();
+    tmp = cv::Mat(1, 2, CV_64F, (void*)&M[0]).clone();
+    samples.push_back(tmp);
   }
-  representativeQuality = nbGoodParticles / (double)particles.size();
+  return samples;
+}
+
+cv::Mat FieldPF::anglesFromParticles()
+{
+  cv::Mat M;
+  int nbParticles = particles.size();
+  cv::Mat tmp;
+
+  for (int i = 0; i < nbParticles; i++)
+  {
+    M.push_back(particles[i].first.getOrientation());
+  }
+  }*/
+
+void FieldPF::exportParticles(cv::Mat* pos, cv::Mat* angle)
+{
+  int nbParticles = particles.size();
+  Eigen::VectorXd M;
+  cv::Mat tmp;
+
+  *pos = cv::Mat(nbParticles, 2, CV_64F);
+  *angle = cv::Mat(nbParticles, 1, CV_64F);
+
+  for (int i = 0; i < nbParticles; i++)
+  {
+    M = particles[i].first.toVector();
+    pos->at<double>(i, 0) = M[0];
+    pos->at<double>(i, 1) = M[1];
+    angle->at<double>(i, 0) = M[2];
+  }
 }
 
 void FieldPF::updateRepresentativeParticle()
 {
-  int N = particles.size();
-  Eigen::VectorXd M = particles[0].first.toVector();
-  // Better way of calculating avg angle exists but this one should be
-  // good enough
-  double x(0), y(0);  // computing avg angle
-  for (int i = 1; i < N; i++)
-  {
-    M = M + particles[i].first.toVector();
-    x += cos(particles[i].first.getOrientation());
-    y += sin(particles[i].first.getOrientation());
-  }
-  M = (1.0 / (double)N) * M;
-  M(2) = rad2deg(atan2(y, x));
-  representativeParticle.setFromVector(M);
+  cv::Mat pos, angle;
+  exportParticles(&pos, &angle);
+
+  vectorEM.clear();
+
+  int max_clusters = 5;
+
+  vectorEM = updateEM(pos, angle, max_clusters);
+
+  hl_communication::WeightedPose weighted_pose = vectorEM[0];
+
+  const PoseDistribution& pose = weighted_pose.pose();
+  Eigen::VectorXd result(3);
+
+  result << pose.position().x(), pose.position().y(), rad2deg(pose.dir().mean());
+
+  representativeParticle.setFromVector(result);
+}
+
+std::vector<hl_communication::WeightedPose> FieldPF::getPositionsFromClusters()
+{
+  return vectorEM;
 }
 
 void FieldPF::updateInternalValues()

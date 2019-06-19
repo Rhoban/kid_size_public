@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Localisation/Field/FieldPosition.hpp>
+#include <Localisation/Field/FieldDistribution.hpp>
 #include <Localisation/Field/FieldPF.hpp>
 
 #include <hl_monitoring/field.h>
@@ -74,6 +75,8 @@ public:
 
   /// Publish information to the localisation service of the bounded scheduler
   void publishToLoc();
+
+  // positions from loc
 
   cv::Mat getTopView(int width, int height);
 
