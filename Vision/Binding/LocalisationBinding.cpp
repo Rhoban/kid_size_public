@@ -623,16 +623,9 @@ void LocalisationBinding::publishToLoc()
 
   // update the loc service
   cv::Point2d c = field_filter->getCenterPositionInSelf();
-  fieldLogger.log("c : %f, %f", c.x, c.y);
-
   Angle o = field_filter->getOrientation();
-  fieldLogger.log(" angle:%f", o.getValue());
-
-  fieldLogger.log(" robotQ : %lf , consistencyScore:  %f , consistencyenbaled : %d", robotQ, consistencyScore,
-                  consistencyEnabled);
 
   loc->setPosSelf(Eigen::Vector3d(c.x, c.y, 0), deg2rad(o.getValue()), robotQ, consistencyScore, consistencyEnabled);
-  fieldLogger.log("getting pos from clusters");
 
   loc->setClusters(field_filter->getPositionsFromClusters());
 }
