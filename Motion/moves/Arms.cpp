@@ -35,7 +35,7 @@ Arms::Arms()
       ->minimum(-20.0)
       ->maximum(150.0);
 
-  bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-160.0)->minimum(-200.0)->maximum(30.0);
+  bind->bindNew("elbowOffset", elbowOffset, RhIO::Bind::PullOnly)->defaultValue(-155.0)->minimum(-200.0)->maximum(30.0);
   bind->bindNew("maintenanceElbowOffset", maintenanceElbowOffset, RhIO::Bind::PullOnly)
       ->defaultValue(-120.0)
       ->minimum(-200.0)
@@ -80,6 +80,7 @@ void Arms::step(float elapsed)
     setArms(armsState, true);
 
   // Update arms
+  updateTarget();
   stepArms(elapsed);
 
   bind->push();
@@ -94,7 +95,17 @@ void Arms::setArms(ArmsState newArmsState, bool force, bool init)
 
   lastAngle = actualAngle;
 
-  switch (newArmsState)
+  if (init)
+    lastAngle = actualAngle;
+
+  armsState = newArmsState;
+  bind->node().setInt("armsState", armsState);
+  smoothingArms = 0;
+}
+
+void Arms::updateTarget()
+{
+  switch (armsState)
   {
     case ArmsEnabled:
     {
@@ -118,13 +129,6 @@ void Arms::setArms(ArmsState newArmsState, bool force, bool init)
       break;
     }
   }
-
-  if (init)
-    lastAngle = actualAngle;
-
-  armsState = newArmsState;
-  bind->node().setInt("armsState", armsState);
-  smoothingArms = 0;
 }
 
 void Arms::stepArms(double elapsed)

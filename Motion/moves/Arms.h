@@ -26,6 +26,11 @@ public:
   void onStop();
   void step(float elapsed);
 
+  /**
+   * Update the 'actualAngle' with current armsState
+   */
+  void updateTarget();
+
   // Enabling/disabling arms
   // force = true should only be used internally
   void setArms(ArmsState armsState, bool force = false, bool init = false);
