@@ -152,7 +152,7 @@ void Robocup::step(float elapsed)
   // We gave up, only going to penalized or initial
   if (state == STATE_GIVE_UP)
   {
-    if (!decision->handled || (!referee->isPenalized() && !referee->isInitialPhase()))
+    if (!wasHandled || (!referee->isPenalized() && !referee->isInitialPhase()))
     {
       // Waiting to go back to either penalized or initial phase
       return;
@@ -296,26 +296,33 @@ void Robocup::enterState(std::string state)
 {
   logger.log("Entering state %s", state.c_str());
   t = 0;
-
+  auto& decision = getServices()->decision;
   Head* head = (Head*)getMoves()->getMove("head");
   // Not scanning only if the robot is penalized or game finished
-  if (state == STATE_PENALIZED || state == STATE_FINISHED)
+
+  if (!decision->isThrowInRunning)
   {
-    head->setDisabled(true);
-  }
-  else
-  {
-    head->setDisabled(false);
+    if (state == STATE_PENALIZED || state == STATE_FINISHED)
+    {
+      head->setDisabled(true);
+    }
+    else
+    {
+      head->setDisabled(false);
+    }
   }
 
-  // Starts or stops the safe arms roll used for accessing the hotswap
-  if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
+  if (!decision->isThrowInRunning)
   {
-    arms->setArms(Arms::ArmsState::ArmsMaintenance);
-  }
-  else
-  {
-    arms->setArms(Arms::ArmsState::ArmsEnabled);
+    // Starts or stops the safe arms roll used for accessing the hotswap
+    if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
+    {
+      arms->setArms(Arms::ArmsState::ArmsMaintenance);
+    }
+    else
+    {
+      arms->setArms(Arms::ArmsState::ArmsEnabled);
+    }
   }
 
   if (state == STATE_STANDUP)

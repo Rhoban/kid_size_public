@@ -32,232 +32,169 @@ namespace Vision
 {
 namespace Localisation
 {
-FieldDistribution::FieldDistribution() : ParticleFilter()
+void exportToProto(const PositionClusters& pos_clusters, const AngleClusters& angle_clusters,
+                   hl_communication::WeightedPose* self_in_field, int nbParticles)
 {
-}
-
-hl_communication::WeightedPose* FieldDistribution::distributionToProto(FieldDistribution::Distribution d)
-{
-  Eigen::MatrixXd m = d.position.second;
-
-  hl_communication::WeightedPose* self_in_field = new WeightedPose();
-  self_in_field->set_probability(d.probability);
-  self_in_field->mutable_pose()->mutable_position()->set_x(d.position.first.getX());
-  self_in_field->mutable_pose()->mutable_position()->set_y(d.position.first.getY());
-  self_in_field->mutable_pose()->mutable_dir()->set_mean(deg2rad(d.angle.first));
-  self_in_field->mutable_pose()->mutable_dir()->set_std_dev(deg2rad(d.angle.second));
-  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(m(0, 0));
-  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(m(1, 0));
-  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(m(1, 1));
-
-  return self_in_field;
-}
-
-void FieldDistribution::EMTrainedLabels(int nbCluster)
-{
-  cv::Mat samples = positions.reshape(1, 0);
-  cv::Mat probs, logLikelihoods;
-
-  // training
-  static cv::Ptr<cv::ml::EM> em_model = cv::ml::EM::create();
-
-  em_model->setClustersNumber(nbCluster);
-  em_model->setCovarianceMatrixType(cv::ml::EM::COV_MAT_DIAGONAL);
-  em_model->setTermCriteria(cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 300, 0.1));
-  em_model->trainEM(samples, probs, labels, logLikelihoods);
-}
-
-void FieldDistribution::getMostRecurrentLabel()
-{
-  labelNbIteration.clear();
-
-  // counting number of repetition of each label
-  std::map<int, int> clusters;
-  for (int i = 0; i < nbParticles; i++)
-  {
-    if (clusters.find(labels.at<int>(i)) == clusters.end())
-      clusters[labels.at<int>(i)] = 1;
-    else
-      clusters[labels.at<int>(i)]++;
-  }
-
-  // getting most recurrent labels
-  for (auto it = clusters.begin(); it != clusters.end(); it++)
-  {
-    // if there is enough repetition of it
-    if (clusters[it->first] > (int)epsilon)
-      labelNbIteration[it->first] = clusters[it->first];
-  }
-}
-
-void FieldDistribution::printLabel()
-{
-  for (auto it = oldLabelNbIteration.begin(); it != oldLabelNbIteration.end(); it++)
-  {
-    std::cout << "label n°" << it->first << " quantity : " << oldLabelNbIteration[it->first] << std::endl;
-    Distribution newd;
-    newd.position = getPosition(it->first);
-    newd.angle = getAngle(it->first);
-    std::cout << "x : " << newd.position.first.x << " y : " << newd.position.first.y << " angle : " << newd.angle.first
-              << std::endl;
-  }
-}
-
-std::vector<FieldDistribution::Distribution> FieldDistribution::updateEM(cv::Mat p, std::vector<Angle> a, int size)
-{
-  result.clear();
-  labelNbIteration.clear();
-
-  positions = p;
-  angles = a;
-  nbParticles = size;
-  epsilon = 5 / 100 * nbParticles;
-
-  lastVar.first = getVariancePosition(-1);
-  lastVar.second = getVarianceDirection(-1);
-
-  int nbCluster = 2;
-  std::pair<double, double> varReduction(0, 0);
-  while ((varReduction.first < 0.5 || varReduction.second < 0.5) && nbCluster <= 5)
-  {
-    oldLabels = labels.clone();
-    oldLabelNbIteration = labelNbIteration;
-    labelNbIteration.clear();
-    EMTrainedLabels(nbCluster);
-    getMostRecurrentLabel();
-    varReduction = varianceImprovement();
-    nbCluster++;
-  }
-
-  if (oldLabelNbIteration.begin() == oldLabelNbIteration.end())
-  {
-    oldLabels = labels.clone();
-    printLabel();
-    Distribution newd;
-    newd.position = getPosition(-1);
-    newd.angle = getAngle(-1);
-    newd.probability = 1;
-    result.push_back(newd);
-  }
-  else
-  {
-    for (auto it = oldLabelNbIteration.begin(); it != oldLabelNbIteration.end(); it++)
-    {
-      printLabel();
-      Distribution newd;
-      newd.position = getPosition(it->first);
-      newd.angle = getAngle(it->first);
-      newd.probability = (double)oldLabelNbIteration[it->first] / (double)nbParticles;
-      result.push_back(newd);
-    }
-
-    // sort from larger to smaller label
-    std::sort(result.begin(), result.end(),
-              [](const FieldDistribution::Distribution& a, const FieldDistribution ::Distribution& b) {
-                return a.probability > b.probability;
-              });
-  }
-
-  return result;
-}
-
-std::pair<Point, Eigen::MatrixXd> FieldDistribution::getPosition(int label)
-{
-  // getting the major group
-  std::vector<Eigen::VectorXd> positionCluster;
-  for (int i = 0; i < nbParticles; i++)
-  {
-    if (oldLabels.at<int>(i) == label || label < 0)
-    {
-      double x = positions.at<double>(i, 0);
-      double y = positions.at<double>(i, 1);
-      positionCluster.push_back((Point(x, y)).toVector());
-    }
-  }
+  self_in_field->set_probability(pos_clusters.size() / nbParticles);
 
   Eigen::VectorXd mean;
   Eigen::MatrixXd covMat;
 
   MultivariateGaussian multivariateGaussian(mean, covMat);
+  std::vector<Eigen::VectorXd> cluster;
+  for (unsigned int i = 0; i < pos_clusters.size(); i++)
+  {
+    cluster.push_back(pos_clusters[i].toVector());
+  }
 
-  multivariateGaussian.fit(positionCluster);
+  multivariateGaussian.fit(cluster);
 
-  return std::make_pair(Point(multivariateGaussian.getMean()), multivariateGaussian.getCovariance());
+  rhoban_geometry::Point p = Point(multivariateGaussian.getMean());
+  covMat = multivariateGaussian.getCovariance();
+
+  self_in_field->mutable_pose()->mutable_position()->set_x(p.getX());
+  self_in_field->mutable_pose()->mutable_position()->set_y(p.getY());
+  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(covMat(0, 0));
+  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(covMat(1, 0));
+  self_in_field->mutable_pose()->mutable_position()->add_uncertainty(covMat(1, 1));
+
+  Angle dir = Angle::mean(angle_clusters);
+  double mean_dir = dir.Angle::getSignedValue();
+
+  double stddev = Angle::stdDev(angle_clusters);
+
+  self_in_field->mutable_pose()->mutable_dir()->set_mean(deg2rad(mean_dir));
+  self_in_field->mutable_pose()->mutable_dir()->set_std_dev(deg2rad(stddev));
 }
 
-std::pair<double, double> FieldDistribution::getAngle(int label)
+void EMTrainedLabels(const cv::Mat& pos, int nb_clusters, cv::Mat* labels, cv::Mat* probs, cv::Mat* log_likelihood,
+                     int nb_iterations = 300, double epsilon = 0.01)
+
 {
-  // getting the major label
-  std::vector<Angle> angleCluster;
+  cv::Mat samples = pos;
+
+  // training
+  cv::Ptr<cv::ml::EM> em_model = cv::ml::EM::create();
+
+  em_model->setClustersNumber(nb_clusters);
+  em_model->setCovarianceMatrixType(cv::ml::EM::COV_MAT_DIAGONAL);
+  em_model->setTermCriteria(cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, nb_iterations, epsilon));
+  em_model->trainEM(samples, *probs, *labels, *log_likelihood);
+}
+
+void getClusters(const cv::Mat& positions, const cv::Mat& angles, const cv::Mat& labels, int nbParticles,
+                 std::map<int, PositionClusters>* pos_clusters, std::map<int, AngleClusters>* angle_clusters)
+{
+  pos_clusters->clear();
+  angle_clusters->clear();
 
   for (int i = 0; i < nbParticles; i++)
   {
-    if (oldLabels.at<int>(i) == label || label < 0)
+    double x = positions.at<double>(i, 0);
+    double y = positions.at<double>(i, 1);
+    pos_clusters->operator[](labels.at<int>(i)).push_back(Point(x, y));
+    angle_clusters->operator[](labels.at<int>(i)).push_back(angles.at<double>(i, 0));
+  }
+}
+
+std::vector<hl_communication::WeightedPose> updateEM(const cv::Mat& positions, const cv::Mat& angles, int max_clusters)
+{
+  int nbParticles = positions.rows;
+
+  cv::Mat probs, log_likelihood;
+  cv::Mat labels = cv::Mat::zeros(nbParticles, 1, CV_32S);
+
+  std::map<int, PositionClusters> pos_clusters;
+  std::map<int, AngleClusters> angle_clusters;
+
+  std::map<int, PositionClusters> old_pos_clusters;
+  std::map<int, AngleClusters> old_angle_clusters;
+
+  int nbCluster = 0;
+  double newPosVar = 1;
+  double newAngleVar = 1;
+  double posVar = 1;
+  double angleVar = 1;
+  double posVarReduction = 1;
+  double angleVarReduction = 1;
+
+  while ((posVarReduction > 0.5 || angleVarReduction > 0.5) && nbCluster <= max_clusters)
+  {
+    old_pos_clusters = pos_clusters;
+    old_angle_clusters = angle_clusters;
+
+    nbCluster++;
+    EMTrainedLabels(positions, nbCluster, &labels, &probs, &log_likelihood);
+    getClusters(positions, angles, labels, nbParticles, &pos_clusters, &angle_clusters);
+    posVar = newPosVar;
+    angleVar = newAngleVar;
+    newPosVar = getVariance(pos_clusters);
+    newAngleVar = getVariance(angle_clusters);
+    if (nbCluster > 1)
     {
-      angleCluster.push_back(angles[i]);
+      posVarReduction = 1 - (newPosVar / posVar);
+      angleVarReduction = 1 - (newAngleVar / angleVar);
     }
   }
-  Angle dir = Angle::mean(angleCluster);
-  double mean = dir.Angle::getSignedValue();
 
-  double stddev = Angle::stdDev(angleCluster);
+  std::vector<hl_communication::WeightedPose> clusters;
 
-  return std::make_pair(mean, stddev);
-}
-
-double FieldDistribution::getVariancePosition(int label)
-{
-  std::vector<rhoban_geometry::Point> positionCluster;
-
-  for (int i = 0; i < nbParticles; i++)
+  for (int i = 0; i < nbCluster - 1; i++)
   {
-    if (label < 0 || labels.at<int>(i) == label)
-    {
-      double x = positions.at<double>(i, 0);
-      double y = positions.at<double>(i, 1);
-      positionCluster.push_back(Point(x, y));
-    }
+    if (old_pos_clusters[i].size() != old_angle_clusters[i].size())
+      throw std::logic_error("different size between angle cluster and position cluster");
+    hl_communication::WeightedPose wp;
+    exportToProto(old_pos_clusters[i], old_angle_clusters[i], &wp, nbParticles);
+    clusters.push_back(wp);
   }
 
-  double standardDevation = stdDev(positionCluster);
-
-  return (standardDevation * standardDevation);
-}
-
-double FieldDistribution::getVarianceDirection(int label)
-{
-  std::vector<Angle> angleCluster;
-
-  for (int i = 0; i < nbParticles; i++)
+  if (nbCluster > 2)
   {
-    if (label < 0 || labels.at<int>(i) == label)
-    {
-      angleCluster.push_back(angles[i]);
-    }
+    // sort from larger to smaller label
+    std::sort(clusters.begin(), clusters.end(),
+              [](const hl_communication::WeightedPose& a, const hl_communication::WeightedPose& b) {
+                return a.probability() > b.probability();
+              });
   }
 
-  double standardDevation = Angle::stdDev(angleCluster);
-
-  return (standardDevation * standardDevation);
+  return clusters;
 }
 
-std::pair<double, double> FieldDistribution::varianceImprovement()
+double getVariance(const std::map<int, PositionClusters>& clusters)
 {
-  std::pair<double, double> variance(0, 0);
+  double variance = 0;
+  int nbParticles = 0;
 
-  for (auto it = labelNbIteration.begin(); it != labelNbIteration.end(); it++)
+  for (const auto& entry : clusters)
   {
-    variance.first += getVariancePosition(it->first) * labelNbIteration[it->first];
-    variance.second += getVarianceDirection(it->first) * labelNbIteration[it->first];
+    variance += getVariance(entry.second) * entry.second.size();
+    nbParticles += entry.second.size();
   }
-
-  variance.first = variance.first / nbParticles;
-  variance.second = variance.second / nbParticles;
-
-  std::pair<double, double> improvement(variance.first / lastVar.first, variance.second / lastVar.second);
-  lastVar = variance;
-  return improvement;
+  return variance / nbParticles;
 }
+double getVariance(const PositionClusters& cluster)
+{
+  return stdDev(cluster);
+}
+
+double getVariance(const std::map<int, AngleClusters>& clusters)
+{
+  double variance = 0;
+  int nbParticles = 0;
+
+  for (const auto& entry : clusters)
+  {
+    variance += getVariance(entry.second) * entry.second.size();
+    nbParticles += entry.second.size();
+  }
+  return variance / nbParticles;
+}
+
+double getVariance(const AngleClusters& cluster)
+{
+  return Angle::stdDev(cluster);
+}
+
 }  // namespace Localisation
 
 }  // namespace Vision

@@ -1,5 +1,6 @@
 #include "GroundTruthProvider.hpp"
 
+#include <hl_communication/utils.h>
 #include <CameraState/CameraState.hpp>
 #include <robocup_referee/constants.h>
 #include <rhoban_utils/logging/logger.h>
@@ -8,6 +9,7 @@
 #include <opencv2/imgproc.hpp>
 #include <rhoban_utils/util.h>
 
+using namespace hl_communication;
 using hl_monitoring::Field;
 using robocup_referee::Constants;
 
@@ -51,6 +53,9 @@ Json::Value GroundTruthProvider::toJson() const
 {
   Json::Value v = Filter::toJson();
   v["outputPrefix"] = outputPrefix;
+  v["extractionMode"] = extractionMode;
+  v["relativePosePath"] = relativePosePath;
+  v["labellingPath"] = labellingPath;
   return v;
 }
 
@@ -58,17 +63,33 @@ void GroundTruthProvider::fromJson(const Json::Value& v, const std::string& dir_
 {
   Filter::fromJson(v, dir_name);
   rhoban_utils::tryRead(v, "outputPrefix", &outputPrefix);
+  rhoban_utils::tryRead(v, "extractionMode", &extractionMode);
+  rhoban_utils::tryRead(v, "relativePosePath", &relativePosePath);
+  rhoban_utils::tryRead(v, "labellingPath", &labellingPath);
+  if (extractionMode == "labels")
+  {
+    hl_communication::VideoMetaInformation video_meta;
+    hl_communication::readFromFile(relativePosePath, &video_meta);
+    labellingManager.importMetaData(video_meta);
+    hl_communication::MovieLabelCollection labels;
+    hl_communication::readFromFile(labellingPath, &labels);
+    labellingManager.importLabels(labels);
+  }
 }
 
 void GroundTruthProvider::updateAnnotations()
 {
   annotations.clear();
-  // In case pose of the camera in the field is not available, no annotation are available
-  if (!getCS().has_camera_field_transform)
-  {
-    logger.log("No camera field transform");
-    return;
-  }
+  if (extractionMode == "vive")
+    extractViveAnnotations();
+  else if (extractionMode == "labels")
+    extractLabelsAnnotations();
+  else
+    throw std::logic_error(DEBUG_INFO + " unknown extractionMode: '" + extractionMode + "'");
+}
+
+std::map<std::string, std::vector<Eigen::Vector3d>> GroundTruthProvider::getFieldFeaturesByType()
+{
   std::map<std::string, std::vector<Eigen::Vector3d>> field_positions_by_type;
   for (const auto& entry : Constants::field.getPointsOfInterestByType())
   {
@@ -78,6 +99,56 @@ void GroundTruthProvider::updateAnnotations()
       field_positions_by_type[feature_name].push_back(cv2Eigen(p));
     }
   }
+  return field_positions_by_type;
+}
+
+void GroundTruthProvider::extractLabelsAnnotations()
+{
+  if (getCS().frame_status != FrameStatus::MOVING)
+  {
+    logger.warning("%s: Invalid frame status", DEBUG_INFO.c_str());
+    return;
+  }
+  std::map<std::string, std::vector<Eigen::Vector3d>> field_positions_by_type = getFieldFeaturesByType();
+  // TODO: add other balls
+  // TODO: add other robots
+  // Conversion to annotations
+  for (const auto& entry : field_positions_by_type)
+  {
+    std::string feature_name = entry.first;
+    for (const Eigen::Vector3d& field_pos : entry.second)
+    {
+      try
+      {
+        Eigen::Affine3d camera_from_field = labellingManager.getCorrectedCameraPose(getCS().getTimeStampUs());
+        Eigen::Vector3d camera_pos = camera_from_field * field_pos;
+        // TODO: functions allowing to retrieve the point without
+        // risking to throw exception should be available
+        Annotation a;
+        a.distance = (camera_pos).norm();
+        a.center = getCS().getCameraModel().getImgFromObject(eigen2CV(camera_pos));
+        // Only include annotation if center is inside image
+        if (cv::Rect(0, 0, img().cols, img().rows).contains(a.center))
+        {
+          annotations[feature_name].push_back(a);
+        }
+      }
+      catch (const std::runtime_error& exc)
+      {
+      }
+    }
+  }
+}
+
+void GroundTruthProvider::extractViveAnnotations()
+{
+  // In case pose of the camera in the field is not available, no annotation are available
+  if (!getCS().has_camera_field_transform)
+  {
+    logger.log("No camera field transform");
+    return;
+  }
+  std::map<std::string, std::vector<Eigen::Vector3d>> field_positions_by_type = getFieldFeaturesByType();
   for (const Eigen::Vector3d& ball_pos : getCS().vive_balls_in_field)
   {
     field_positions_by_type["Ball"].push_back(ball_pos);
@@ -89,6 +160,7 @@ void GroundTruthProvider::updateAnnotations()
     robot_pos.z() = 0;
     field_positions_by_type["Robot"].push_back(robot_pos);
   }
+
   // Now add all features to annotation collection
   for (const auto& entry : field_positions_by_type)
   {

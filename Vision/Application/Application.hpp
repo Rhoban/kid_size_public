@@ -52,7 +52,6 @@ protected:
   bool gpuOn;
   bool end;
   std::string pathToLog;
-  float angularPitchTolerance = 0.0;
 
   Utils::CameraState *lastCS, *cs;
   mutable std::mutex csMutex;

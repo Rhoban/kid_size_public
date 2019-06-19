@@ -189,8 +189,6 @@ bool DecisionService::tick(double elapsed)
 
   freezeKick = false;
 
-  nextKickIsThrowIn = false;
-
   if (referee->isGameInterruption())
   {
     if (referee->myTeamGameInterruption())
@@ -211,6 +209,10 @@ bool DecisionService::tick(double elapsed)
   {
     shouldLetPlay = true;
     letPlayRadius = std::max(letPlayRadius, teamPlay->gameInterruptionClearanceDist);
+  }
+  else if (!referee->isRecentGameInterruption())
+  {
+    nextKickIsThrowIn = false;
   }
 
   bind.pull();

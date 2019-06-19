@@ -43,8 +43,7 @@ private:
 protected:
   virtual void updateRepresentativeQuality();
   virtual void updateRepresentativeParticle();
-  cv::Mat positionsFromParticles();
-  std::vector<rhoban_utils::Angle> anglesFromParticles();
+  void exportParticles(cv::Mat* pos, cv::Mat* angle);
 
 public:
   FieldPF();
@@ -76,7 +75,7 @@ public:
   rhoban_utils::Angle getOrientation();
   double getQuality();
 
-  std::vector<FieldDistribution::Distribution> getPositionsFromClusters();
+  std::vector<hl_communication::WeightedPose> getPositionsFromClusters();
 
   bool isResetPending() const;
 
@@ -84,8 +83,7 @@ public:
 
   void initializeAtUniformRandom(unsigned int particlesNb);
 
-  FieldDistribution fieldDistribution;
-  std::vector<FieldDistribution::Distribution> vectorEM;
+  std::vector<hl_communication::WeightedPose> vectorEM;
 
   double resamplingRatio;
 

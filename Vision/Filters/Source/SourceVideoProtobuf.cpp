@@ -11,13 +11,14 @@
 
 #include <stdexcept>
 
-using namespace hl_monitoring;
+using namespace hl_communication;
 
 namespace Vision
 {
 namespace Filters
 {
-SourceVideoProtobuf::SourceVideoProtobuf() : Source("SourceVideoProtobuf"), startIndex(0), index(0)
+SourceVideoProtobuf::SourceVideoProtobuf()
+  : Source("SourceVideoProtobuf"), startIndex(0), index(0), keepOnlyMovingFrames(false)
 {
 }
 
@@ -39,7 +40,7 @@ void SourceVideoProtobuf::loadMetaInformation()
   }
 }
 
-void SourceVideoProtobuf::loadMetaInformation(const std::string& path, hl_monitoring::VideoMetaInformation* out)
+void SourceVideoProtobuf::loadMetaInformation(const std::string& path, hl_communication::VideoMetaInformation* out)
 {
   std::ifstream in(path, std::ios::binary);
   if (!in.good())
@@ -54,6 +55,7 @@ void SourceVideoProtobuf::loadMetaInformation(const std::string& path, hl_monito
 
 Utils::CameraState* SourceVideoProtobuf::buildCameraState()
 {
+  std::cout << "Update index:" << index << std::endl;
   if (index < 0 || index >= cameraFromWorldMeta.frames_size())
   {
     throw std::runtime_error(DEBUG_INFO + " invalid index: " + std::to_string(index));
@@ -62,9 +64,10 @@ Utils::CameraState* SourceVideoProtobuf::buildCameraState()
   {
     throw std::runtime_error(DEBUG_INFO + " camera_parameters were not provided");
   }
-  const hl_monitoring::Pose3D& world_to_self = cameraFromSelfMeta.frames(index).pose();
+
+  const hl_communication::Pose3D& camera_from_self = cameraFromSelfMeta.frames(index).pose();
   return new Utils::CameraState(cameraFromWorldMeta.camera_parameters(), cameraFromWorldMeta.frames(index),
-                                world_to_self);
+                                camera_from_self);
 }
 
 void SourceVideoProtobuf::process()
@@ -78,6 +81,14 @@ void SourceVideoProtobuf::updateImg()
   if (index < 0)
   {
     throw Utils::StreamEndException(DEBUG_INFO + " start of stream");
+  }
+  if (keepOnlyMovingFrames)
+  {
+    const FrameEntry& frame_entry = cameraFromWorldMeta.frames(index);
+    if (!frame_entry.has_status() || frame_entry.status() != FrameStatus::MOVING)
+    {
+      setIndex(index);
+    }
   }
   video.read(img());
   if (img().empty())
@@ -93,6 +104,7 @@ void SourceVideoProtobuf::fromJson(const Json::Value& v, const std::string& dir_
   rhoban_utils::tryRead(v, "videoPath", &videoPath);
   rhoban_utils::tryRead(v, "cameraFromWorldPath", &cameraFromWorldPath);
   rhoban_utils::tryRead(v, "cameraFromSelfPath", &cameraFromSelfPath);
+  rhoban_utils::tryRead(v, "keepOnlyMovingFrames", &keepOnlyMovingFrames);
   openVideo();
   loadMetaInformation();
 
@@ -110,6 +122,7 @@ Json::Value SourceVideoProtobuf::toJson() const
   v["videoPath"] = videoPath;
   v["cameraFromWorldPath"] = cameraFromWorldPath;
   v["cameraFromSelfPath"] = cameraFromSelfPath;
+  v["keepOnlyMovingFrames"] = keepOnlyMovingFrames;
   return v;
 }
 
@@ -139,6 +152,16 @@ int SourceVideoProtobuf::getNbFrames() const
 
 void SourceVideoProtobuf::setIndex(int target_index)
 {
+  int nb_frames = getNbFrames();
+  while (keepOnlyMovingFrames && target_index < nb_frames)
+  {
+    const FrameEntry& frame_entry = cameraFromWorldMeta.frames(target_index);
+    if (frame_entry.has_status() && frame_entry.status() == FrameStatus::MOVING)
+    {
+      break;
+    }
+    target_index++;
+  }
   if (!video.set(cv::CAP_PROP_POS_FRAMES, target_index))
   {
     throw std::logic_error(DEBUG_INFO + " failed to set index at position " + std::to_string(index));

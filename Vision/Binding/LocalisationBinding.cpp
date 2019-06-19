@@ -287,7 +287,7 @@ void LocalisationBinding::step()
   importFromRhIO();
 
   currTS = getNowTS();
-  cs->updateInternalModel(currTS.getTimeMS() / 1000);
+  cs->updateInternalModel(currTS);
 
   elapsedSinceReset = diffSec(lastFieldReset, currTS);
   elapsedSinceUniformReset = diffSec(lastUniformReset, currTS);
@@ -391,7 +391,6 @@ void LocalisationBinding::step()
   }
 
   importFiltersResults();
-  getPossiblePositions();
 
   publishToLoc();
   publishToRhIO();
@@ -618,22 +617,6 @@ void LocalisationBinding::updateFilter(
   lastTS = currTS;
 }
 
-void LocalisationBinding::getPossiblePositions()
-{
-  LocalisationService* loc = scheduler->getServices()->localisation;
-
-  Localisation::FieldDistribution fieldDistribution;
-
-  std::vector<hl_communication::WeightedPose*> candidates;
-
-  std::vector<Localisation::FieldDistribution::Distribution> p = field_filter->getPositionsFromClusters();
-
-  for (int pos_idx = 0; pos_idx < p.size(); pos_idx++)
-    candidates.push_back(fieldDistribution.distributionToProto(p.at(pos_idx)));
-
-  loc->setCluster(candidates);
-}
-
 void LocalisationBinding::publishToLoc()
 {
   LocalisationService* loc = scheduler->getServices()->localisation;
@@ -643,6 +626,8 @@ void LocalisationBinding::publishToLoc()
   Angle o = field_filter->getOrientation();
 
   loc->setPosSelf(Eigen::Vector3d(c.x, c.y, 0), deg2rad(o.getValue()), robotQ, consistencyScore, consistencyEnabled);
+
+  loc->setClusters(field_filter->getPositionsFromClusters());
 }
 
 void LocalisationBinding::applyWatcher(

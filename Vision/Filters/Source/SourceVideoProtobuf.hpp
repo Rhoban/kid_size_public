@@ -3,7 +3,7 @@
 #include "Filters/Source/Source.hpp"
 #include "FrameSource/ImageSequence.hpp"
 
-#include <hl_monitoring/camera.pb.h>
+#include <hl_communication/camera.pb.h>
 
 #include <opencv2/videoio.hpp>
 
@@ -52,7 +52,7 @@ protected:
 
   /// Load the MetaInformation
   void loadMetaInformation();
-  void loadMetaInformation(const std::string& path, hl_monitoring::VideoMetaInformation* out);
+  void loadMetaInformation(const std::string& path, hl_communication::VideoMetaInformation* out);
 
   Utils::CameraState* buildCameraState() override;
 
@@ -68,13 +68,18 @@ private:
   cv::VideoCapture video;
 
   /**
+   * If enabled, static and shaking frames are skipped
+   */
+  bool keepOnlyMovingFrames;
+
+  /**
    * Path access for cameraFromWorld
    */
   std::string cameraFromWorldPath;
   /**
    * Meta information for cameraFromWorld
    */
-  hl_monitoring::VideoMetaInformation cameraFromWorldMeta;
+  hl_communication::VideoMetaInformation cameraFromWorldMeta;
 
   /**
    * Path access for cameraFromSelf
@@ -83,7 +88,7 @@ private:
   /**
    * Meta information for cameraFromSelf
    */
-  hl_monitoring::VideoMetaInformation cameraFromSelfMeta;
+  hl_communication::VideoMetaInformation cameraFromSelfMeta;
 };
 }  // namespace Filters
 }  // namespace Vision

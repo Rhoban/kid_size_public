@@ -10,7 +10,6 @@
 
 #include "rhoban_utils/timing/benchmark.h"
 
-using ::rhoban_utils::TimeStamp;
 using Vision::Utils::CameraState;
 
 using namespace std;
@@ -136,14 +135,10 @@ void Pipeline::step(Filter::UpdateType updateType)
         case Filters::Source::Log:
         case Filters::Source::Online:
         {
-          // converting to (double) seconds (we shouldn't need the imageDelay anymore)
-          double sourcets = _timestamp.getTimeMS() - imageDelay;
-          double csTimeStampSeconds = sourcets / 1000.0;
-
           if (cs != nullptr)
           {
             cs->setClockOffset(src->getClockOffset());
-            cs->updateInternalModel(csTimeStampSeconds);
+            cs->updateInternalModel(_timestamp);
           }
           break;
         }

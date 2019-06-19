@@ -16,51 +16,24 @@ namespace Vision
 {
 namespace Localisation
 {
-class FieldDistribution : public rhoban_unsorted::ParticleFilter<FieldPosition>
-{
-public:
-  struct Distribution
-  {
-    // first is value, second covMat
-    std::pair<rhoban_geometry::Point, Eigen::MatrixXd> position;
-    // first is value in degres, second stddev
-    std::pair<double, double> angle;
-    double probability;
-  };
-  std::vector<FieldDistribution::Distribution> updateEM(cv::Mat p, std::vector<rhoban_utils::Angle> a, int size);
+typedef std::vector<rhoban_geometry::Point> PositionClusters;
+typedef std::vector<rhoban_utils::Angle> AngleClusters;
 
-  hl_communication::WeightedPose* distributionToProto(FieldDistribution::Distribution d);
+std::vector<hl_communication::WeightedPose> updateEM(const cv::Mat& positions, const cv::Mat& angles, int max_clusters);
 
-protected:
-  void EMTrainedLabels(int nbCluster);
-  void getMostRecurrentLabel();
-  std::pair<rhoban_geometry::Point, Eigen::MatrixXd> getPosition(int label);
-  std::pair<double, double> getAngle(int label);
-  double getVariancePosition(int label);
-  double getVarianceDirection(int label);
-  /* return the ratio newvariance/oldvariance*/
-  std::pair<double, double> varianceImprovement();
+void exportToProto(const PositionClusters& pos_clusters, const AngleClusters& angle_clusters,
+                   hl_communication::WeightedPose* self_in_field, int nbParticles);
 
-  void printLabel();
+void EMTrainedLabels(const cv::Mat& pos, int nb_clusters, cv::Mat* labels, cv::Mat* probs, cv::Mat* log_likelihood,
+                     int nb_iterations, double epsilon);
 
-public:
-  FieldDistribution();
+void getClusters(const cv::Mat& positions, const cv::Mat& angles, const cv::Mat& labels, int nbParticles,
+                 std::map<int, PositionClusters>* pos_clusters, std::map<int, AngleClusters>* angle_clusters);
 
-  cv::Mat positions;
-  std::vector<rhoban_utils::Angle> angles;
-  cv::Mat labels;
-  cv::Mat oldLabels;
-
-  std::map<int, int> labelNbIteration;
-  std::map<int, int> oldLabelNbIteration;
-  std::vector<Distribution> result;
-
-  std::pair<int, int> labelMaximum;
-
-  int nbParticles;
-  double epsilon;
-  std::pair<double, double> lastVar;
-};
+double getVariance(const std::map<int, PositionClusters>& clusters);
+double getVariance(const PositionClusters& cluster);
+double getVariance(const std::map<int, AngleClusters>& clusters);
+double getVariance(const AngleClusters& cluster);
 
 }  // namespace Localisation
 

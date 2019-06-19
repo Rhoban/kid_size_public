@@ -51,7 +51,7 @@ public:
 
   /// Return the timestamp associated to current time. If helpers is in fake
   /// mode, it uses the vision actual timeStamp
-  ::rhoban_utils::TimeStamp getNowTS();
+  rhoban_utils::TimeStamp getNowTS();
 
   /// Lock mutex and update information from the filter
   void importFiltersResults();
@@ -77,9 +77,6 @@ public:
   void publishToLoc();
 
   // positions from loc
-
-  void getPossiblePositions();
-  std::vector<Localisation::FieldDistribution::Distribution> positionVector;
 
   cv::Mat getTopView(int width, int height);
 
