@@ -308,14 +308,19 @@ void Robocup::enterState(std::string state)
     head->setDisabled(false);
   }
 
-  // Starts or stops the safe arms roll used for accessing the hotswap
-  if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
+  auto& decision = getServices()->decision;
+
+  if (!decision->isThrowInRunning)
   {
-    arms->setArms(Arms::ArmsState::ArmsMaintenance);
-  }
-  else
-  {
-    arms->setArms(Arms::ArmsState::ArmsEnabled);
+    // Starts or stops the safe arms roll used for accessing the hotswap
+    if (state == STATE_INITIAL || state == STATE_PENALIZED || state == STATE_FINISHED)
+    {
+      arms->setArms(Arms::ArmsState::ArmsMaintenance);
+    }
+    else
+    {
+      arms->setArms(Arms::ArmsState::ArmsEnabled);
+    }
   }
 
   if (state == STATE_STANDUP)
