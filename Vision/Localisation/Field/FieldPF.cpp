@@ -343,7 +343,6 @@ void FieldPF::updateRepresentativeQuality()
 
   cv::Mat eigenvalues, eigenvectors;
   cv::eigen(covMat, eigenvalues, eigenvectors);
-  std::cout << "eigen values " << eigenvalues.at<float>(0) << " and " << eigenvalues.at<float>(1) << std::endl;
 
   representativeQuality = weighted_pose.probability() * exp(-5 * eigenvalues.at<float>(0) * eigenvalues.at<float>(1));
 }
@@ -410,7 +409,7 @@ void FieldPF::updateRepresentativeParticle()
   const PoseDistribution& pose = weighted_pose.pose();
   Eigen::VectorXd result(3);
 
-  result << pose.position().x(), pose.position().y(), pose.dir().mean();
+  result << pose.position().x(), pose.position().y(), rad2deg(pose.dir().mean());
 
   representativeParticle.setFromVector(result);
 }

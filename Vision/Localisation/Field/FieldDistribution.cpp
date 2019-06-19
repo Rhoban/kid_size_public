@@ -60,10 +60,11 @@ void exportToProto(const PositionClusters& pos_clusters, const AngleClusters& an
 
   Angle dir = Angle::mean(angle_clusters);
   double mean_dir = dir.Angle::getSignedValue();
+
   double stddev = Angle::stdDev(angle_clusters);
 
-  self_in_field->mutable_pose()->mutable_dir()->set_mean(mean_dir);
-  self_in_field->mutable_pose()->mutable_dir()->set_std_dev(stddev);
+  self_in_field->mutable_pose()->mutable_dir()->set_mean(deg2rad(mean_dir));
+  self_in_field->mutable_pose()->mutable_dir()->set_std_dev(deg2rad(stddev));
 }
 
 void EMTrainedLabels(const cv::Mat& pos, int nb_clusters, cv::Mat* labels, cv::Mat* probs, cv::Mat* log_likelihood,
