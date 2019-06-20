@@ -2,7 +2,7 @@
 
 #include "Filters/Filter.hpp"
 
-#include <hl_labelling/video_labelling_manager.h>
+#include <hl_labelling/labelling_manager.h>
 
 #include <opencv2/videoio.hpp>
 namespace Vision
@@ -118,7 +118,7 @@ protected:
   /**
    * Entity storing access to all the labels of the video
    */
-  hl_labelling::VideoLabellingManager labellingManager;
+  hl_labelling::LabellingManager labellingManager;
 
   /**
    * 0: no data are written

@@ -57,9 +57,10 @@ CameraState::CameraState(MoveScheduler* moveScheduler) : CameraState()
 }
 
 CameraState::CameraState(const IntrinsicParameters& camera_parameters, const FrameEntry& frame_entry,
-                         const Pose3D& camera_from_self_pose)
+                         const Pose3D& camera_from_self_pose, const hl_communication::VideoSourceID& source_id_)
   : CameraState()
 {
+  source_id = source_id_;
   importFromProtobuf(camera_parameters);
   importFromProtobuf(frame_entry);
   Eigen::Affine3d cameraFromSelf = getAffineFromProtobuf(camera_from_self_pose);

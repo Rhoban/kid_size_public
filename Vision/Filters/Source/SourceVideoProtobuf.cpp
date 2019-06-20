@@ -64,10 +64,14 @@ Utils::CameraState* SourceVideoProtobuf::buildCameraState()
   {
     throw std::runtime_error(DEBUG_INFO + " camera_parameters were not provided");
   }
+  if (!cameraFromWorldMeta.has_source_id())
+  {
+    throw std::runtime_error(DEBUG_INFO + " source_id was not provided");
+  }
 
   const hl_communication::Pose3D& camera_from_self = cameraFromSelfMeta.frames(index).pose();
   return new Utils::CameraState(cameraFromWorldMeta.camera_parameters(), cameraFromWorldMeta.frames(index),
-                                camera_from_self);
+                                camera_from_self, cameraFromWorldMeta.source_id());
 }
 
 void SourceVideoProtobuf::process()

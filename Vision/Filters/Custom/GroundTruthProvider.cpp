@@ -19,7 +19,8 @@ namespace Vision
 {
 namespace Filters
 {
-GroundTruthProvider::GroundTruthProvider() : Filter("GroundTruthProvider"), imgIndex(0), outputPrefix("")
+GroundTruthProvider::GroundTruthProvider()
+  : Filter("GroundTruthProvider"), imgIndex(0), outputPrefix(""), labellingManager(Constants::field.ball_radius)
 {
 }
 
@@ -71,9 +72,10 @@ void GroundTruthProvider::fromJson(const Json::Value& v, const std::string& dir_
     hl_communication::VideoMetaInformation video_meta;
     hl_communication::readFromFile(relativePosePath, &video_meta);
     labellingManager.importMetaData(video_meta);
-    hl_communication::MovieLabelCollection labels;
+    hl_communication::GameLabelCollection labels;
     hl_communication::readFromFile(labellingPath, &labels);
     labellingManager.importLabels(labels);
+    labellingManager.summarize(&std::cout);
   }
 }
 
@@ -110,8 +112,6 @@ void GroundTruthProvider::extractLabelsAnnotations()
     return;
   }
   std::map<std::string, std::vector<Eigen::Vector3d>> field_positions_by_type = getFieldFeaturesByType();
-  // TODO: add other balls
-  // TODO: add other robots
   // Conversion to annotations
   for (const auto& entry : field_positions_by_type)
   {
@@ -120,7 +120,7 @@ void GroundTruthProvider::extractLabelsAnnotations()
     {
       try
       {
-        Eigen::Affine3d camera_from_field = labellingManager.getCorrectedCameraPose(getCS().getTimeStampUs());
+        Eigen::Affine3d camera_from_field = labellingManager.getCameraPose(getCS().source_id, getCS().utc_ts);
         Eigen::Vector3d camera_pos = camera_from_field * field_pos;
         // TODO: functions allowing to retrieve the point without
         // risking to throw exception should be available
@@ -138,6 +138,8 @@ void GroundTruthProvider::extractLabelsAnnotations()
       }
     }
   }
+  // TODO: add other balls
+  // TODO: add other robots
 }
 
 void GroundTruthProvider::extractViveAnnotations()
