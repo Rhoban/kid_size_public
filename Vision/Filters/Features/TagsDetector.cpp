@@ -56,6 +56,12 @@ void TagsDetector::setParameters()
   params()->define<ParamInt>("adaptiveThreshWinSizeMax", &adaptiveThreshWinSizeMax);
   adaptiveThreshWinSizeStep = ParamInt(7, 3, 23);
   params()->define<ParamInt>("adaptiveThreshWinSizeStep", &adaptiveThreshWinSizeStep);
+  cornerRefinementMaxIterations = ParamInt(50, 20, 100);
+  params()->define<ParamInt>("cornerRefinementMaxIterations", &cornerRefinementMaxIterations);
+  cornerRefinementMinAccuracy = ParamFloat(0.01, 0.0001, 1);
+  params()->define<ParamFloat>("cornerRefinementMinAccuracy", &cornerRefinementMinAccuracy);
+  cornerRefinementWinSize = ParamInt(3, 1, 10);
+  params()->define<ParamInt>("cornerRefinementWinSize", &cornerRefinementWinSize);
 
   // marker size in m
   markerSize = ParamFloat(0.09, 0, 1.0);
@@ -92,6 +98,9 @@ void TagsDetector::process()
   detectorParameters->adaptiveThreshWinSizeMax = adaptiveThreshWinSizeMax;
   detectorParameters->adaptiveThreshWinSizeStep = adaptiveThreshWinSizeStep;
   detectorParameters->doCornerRefinement = refine;
+  detectorParameters->cornerRefinementMaxIterations = cornerRefinementMaxIterations;
+  detectorParameters->cornerRefinementMinAccuracy = cornerRefinementMinAccuracy;
+  detectorParameters->cornerRefinementWinSize = cornerRefinementWinSize;
 
   // Copying image if necessary
   if (debugLevel > 0)

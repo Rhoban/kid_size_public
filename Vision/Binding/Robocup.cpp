@@ -1159,7 +1159,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
   }
   for (size_t idx = 1; idx < horizonKeypoints.size(); idx++)
   {
-    cv::line(img, horizonKeypoints[idx - 1], horizonKeypoints[idx], cv::Scalar(255, 0, 0), 2);
+    cv::line(img, horizonKeypoints[idx - 1], horizonKeypoints[idx], cv::Scalar(255, 0, 0), 1);
   }
 
   // TODO remove it and do something cleaner lates

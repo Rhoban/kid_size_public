@@ -5,6 +5,7 @@
 #include "robot_model/humanoid_model.h"
 #include "robot_model/humanoid_server.h"
 #include "robot_model/camera_model.h"
+#include "rhoban_model_learning/humanoid_models/calibration_model.h"
 
 class Move;
 
@@ -46,6 +47,7 @@ public:
   Eigen::Affine3d selfToWorld(double timestamp);
   Eigen::Affine3d headBaseToWorld(double timestamp);
   rhoban::CameraModel cameraModel;
+  rhoban_model_learning::CalibrationModel calibration_model;
 
   // Logging
   double replayTimestamp;
@@ -61,4 +63,7 @@ public:
   std::string lowLevelState;
   std::string getCameraState();
   void tickCheckLowLevelState();
+
+  bool useCalibration;
+  bool loadCalibration;
 };

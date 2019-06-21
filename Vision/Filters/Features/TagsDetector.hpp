@@ -70,6 +70,9 @@ private:
   ParamInt adaptiveThreshWinSizeMin;
   ParamInt adaptiveThreshWinSizeMax;
   ParamInt adaptiveThreshWinSizeStep;
+  ParamInt cornerRefinementMaxIterations;
+  ParamFloat cornerRefinementMinAccuracy;
+  ParamInt cornerRefinementWinSize;
 
   // TODO: other parameters are available:
   // see: https://docs.opencv.org/3.1.0/d1/dcd/structcv_1_1aruco_1_1DetectorParameters.html

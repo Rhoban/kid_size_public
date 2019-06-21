@@ -5,7 +5,6 @@
 #include <rhoban_utils/timing/time_stamp.h>
 #include "services/ModelService.h"
 #include "services/LocalisationService.h"
-#include "rhoban_model_learning/humanoid_models/calibration_model.h"
 #include "moves/Move.h"
 #include "scheduler/MoveScheduler.h"
 #include <string>
@@ -17,7 +16,6 @@ using namespace rhoban_utils;
 ModelService::ModelService()
   : timeSinceLastPublish(0), bind("model"), isReplay(false), histories(60.0), lowLevelState("")
 {
-  rhoban_model_learning::CalibrationModel calibration_model;
   calibration_model.loadFile("calibration.json");
   cameraModel = calibration_model.getCameraModel();
 
@@ -28,6 +26,9 @@ ModelService::ModelService()
   bind.bindNew("publishField", publishField, RhIO::Bind::PullOnly)->defaultValue(true);
 
   bind.bindNew("supportRatioThreshold", supportRatioThreshold, RhIO::Bind::PullOnly)->defaultValue(0.8);
+
+  bind.bindNew("useCalibration", useCalibration, RhIO::Bind::PullOnly)->defaultValue(true);
+  bind.bindNew("loadCalibration", loadCalibration, RhIO::Bind::PushAndPull)->defaultValue(false);
 
   // Declaration of history entries
   histories.pose("camera");
@@ -75,6 +76,13 @@ std::string ModelService::cmdOdometryReset()
 bool ModelService::tick(double elapsed)
 {
   bind.pull();
+
+  if (loadCalibration)
+  {
+    loadCalibration = false;
+    calibration_model.loadFile("calibration.json");
+    cameraModel = calibration_model.getCameraModel();
+  }
 
   if (isReplay)
   {
@@ -163,7 +171,24 @@ bool ModelService::tick(double elapsed)
 
 Eigen::Affine3d ModelService::cameraToWorld(double timestamp)
 {
-  return histories.pose("camera")->interpolate(timestamp);
+  if (not useCalibration)
+  {
+    return histories.pose("camera")->interpolate(timestamp);
+  }
+  // head_base_from_camera
+  Eigen::Affine3d camera_from_world = (histories.pose("camera")->interpolate(timestamp)).inverse();
+  Eigen::Affine3d world_from_head_base = headBaseToWorld(timestamp);
+  Eigen::Affine3d camera_from_head_base = camera_from_world * world_from_head_base;
+
+  // camera_from_self
+  Eigen::Affine3d world_from_self = selfToWorld(timestamp);
+  Eigen::Affine3d camera_from_self = camera_from_world * world_from_self;
+
+  // apply correction
+  Eigen::Affine3d self_from_camera_after_correction =
+      calibration_model.getCameraFromSelfAfterCorrection(camera_from_self, camera_from_head_base).inverse();
+  Eigen::Affine3d camera_to_world_after_correction = world_from_self * self_from_camera_after_correction;
+  return camera_to_world_after_correction;
 }
 
 Eigen::Affine3d ModelService::selfToWorld(double timestamp)
