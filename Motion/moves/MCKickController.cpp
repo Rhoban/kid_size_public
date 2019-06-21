@@ -9,6 +9,7 @@
 #include "MCKickController.h"
 #include "services/CaptainService.h"
 #include "services/StrategyService.h"
+#include "services/RefereeService.h"
 #include "scheduler/MoveScheduler.h"
 
 using namespace rhoban_geometry;
@@ -89,16 +90,23 @@ void MCKickController::execute()
       // Importing data from move scheduler, copying data for local computation
       getScheduler()->mutex.lock();
       LocalisationService* localisation = getServices()->localisation;
+      RefereeService* referee = getServices()->referee;
       auto ball = localisation->getBallPosField();
       auto robotPos = localisation->getFieldPos();
       auto teamMatesField = localisation->getTeamMatesField();
       auto opponentsField = localisation->getOpponentsField();
       auto opponentsRadius = localisation->opponentsRadius;
+      bool canScore = referee->canScore;
       getScheduler()->mutex.unlock();
 
-      auto rewardFunc = [this, &ball, &robotPos, &teamMatesField, &opponentsField,
+      auto rewardFunc = [this, &ball, &robotPos, &teamMatesField, &opponentsField, &canScore,
                          &opponentsRadius](Point fromPos, Point toPos, bool success) -> double {
         double penalty = 0;
+
+        if (success && !canScore)
+        {
+          penalty = -60;
+        }
 
         // We can't kick a ball through the opponents
         if (avoidOpponents)

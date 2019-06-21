@@ -259,9 +259,6 @@ void Kick::onStart()
   applied = false;
   generated = true;
 
-  // Announce that a kick has been performed (information is shared to other robots)
-  getServices()->strategy->announceKick();
-
   kickState = KickWaitingWalkToStop;
 }
 
@@ -322,6 +319,7 @@ void Kick::step(float elapsed)
   {
     // Warmup over, start the kick move
     kickState = KickKicking;
+    getServices()->strategy->announceKick();
     t = 0;
   }
   if (kickState == KickKicking)

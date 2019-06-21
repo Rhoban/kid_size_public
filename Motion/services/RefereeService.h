@@ -95,6 +95,7 @@ public:
    * Is there a game interruption right now?
    */
   bool isGameInterruption();
+  bool isIndirectGameInterruption();
 
   /**
    * Are we in the phase after a game interruption?
@@ -111,7 +112,6 @@ public:
    */
   bool isThrowIn();
 
-  
   /**
    * Secondary time
    */
@@ -137,10 +137,12 @@ public:
   bool gamePlaying;
 
   bool throwIn;
-  
+
   bool wasPenalized;
 
   bool dumpGameState;
+
+  bool canScore;
 
 protected:
   RhIO::Bind* bind;
@@ -164,4 +166,5 @@ protected:
    * If there has been no game interruption since the start, then the value is 0
    */
   int lastGameInterruptionType;
+  int lastGameInterruptionTeam;
 };

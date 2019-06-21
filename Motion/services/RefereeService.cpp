@@ -56,6 +56,8 @@ RefereeService::RefereeService()
   bind->bindFunc("infoPlaying", "Are we playing?", &RefereeService::cmdPlaying, *this);
   bind->bindNew("throwIn", throwIn, RhIO::Bind::PushOnly)->defaultValue(false);
 
+  bind->bindNew("canScore", canScore, RhIO::Bind::PushOnly)->defaultValue(true);
+
   bind->pull();
 
   start();
@@ -93,6 +95,7 @@ bool RefereeService::tick(double elapsed)
   {
     timeSinceGameInterruption = 0;
     lastGameInterruptionType = gs.getSecGameState();
+    lastGameInterruptionTeam = gs.getSecondaryTeam();
   }
   else if (lastGameInterruptionType != 0)
   {
@@ -112,6 +115,31 @@ bool RefereeService::tick(double elapsed)
           loc->removeSharedOpponentProvider(robot_id);
         }
       }
+    }
+  }
+
+  // Checking conditions to enter in the "can't score" state
+  if (myTeamKickOff())
+  {
+    if (getGameState().getActualGameState() == Constants::STATE_SET)
+    {
+      canScore = false;
+    }
+  }
+
+  if (isIndirectGameInterruption() && gs.getSecondaryTeam() == teamId)
+  {
+    canScore = false;
+  }
+
+  // Checking conditions to enter the "can score" test
+  if (!canScore)
+  {
+    DecisionService* decision = getServices()->decision;
+
+    if (decision->isMateKicking || decision->isBallMoving)
+    {
+      canScore = true;
     }
   }
 
@@ -179,6 +207,18 @@ bool RefereeService::isGameInterruption()
   return false;
 }
 
+bool RefereeService::isIndirectGameInterruption()
+{
+  const auto& gs = getGameState();
+  switch (gs.getSecGameState())
+  {
+    case Constants::STATE2_INDIRECT_FREE_KICK:
+    case Constants::STATE2_THROW_IN:
+      return true;
+  }
+  return false;
+}
+
 bool RefereeService::isRecentGameInterruption()
 {
   // We are basing the answers on time from the last free kick, but this
@@ -190,7 +230,7 @@ bool RefereeService::isRecentGameInterruption()
 bool RefereeService::myTeamGameInterruption()
 {
   const auto& gs = getGameState();
-  return gs.getSecondaryTeam() == teamId;
+  return lastGameInterruptionTeam == teamId;
 }
 
 bool RefereeService::isThrowIn()
