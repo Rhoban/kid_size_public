@@ -194,7 +194,7 @@ bool DecisionService::tick(double elapsed)
     if (referee->myTeamGameInterruption())
     {
       freezeKick = true;
-      if (referee->isThrowIn())
+      if (referee->isThrowIn() && throwInEnable)
       {
         nextKickIsThrowIn = true;
       }
@@ -313,6 +313,9 @@ bool DecisionService::tick(double elapsed)
     }
   }
 
+  isKickRunning = getMoves()->getMove("kick")->isRunning();
+  isThrowInRunning = isKickRunning && referee->isThrowIn();
+
   if (!Helpers::isFakeMode() || Helpers::isPython)
   {
     // Is the robot fallen?
@@ -323,8 +326,6 @@ bool DecisionService::tick(double elapsed)
 
     double threshold_falling = 45;
     double threshold_fallen = 60;
-    isKickRunning = getMoves()->getMove("kick")->isRunning();
-    isThrowInRunning = isKickRunning && referee->isThrowIn();
 
     isFallen = !isKickRunning && max_imu_angle > threshold_falling;
 

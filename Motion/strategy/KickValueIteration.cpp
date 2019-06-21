@@ -14,6 +14,8 @@ KickValueIteration::KickValueIteration(std::string kicksFile, double accuracy, d
                                        double tolerance, double grassOffset)
   : accuracy(accuracy), angleAccuracy(angleAccuracy), dump(dump), tolerance(tolerance)
 {
+  allowedKickNames = { "classic", "small" };
+
   if (kicksFile == "")
   {
     kicks.loadFile();
@@ -128,6 +130,9 @@ KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* s
   std::map<Action, double> actionScores;
   for (auto& entry : state->models)
   {
+    if (!allowedKickNames.count(entry.first.kick))
+      continue;
+
     double actionScore = 0;
     for (auto& possibility : entry.second)
     {
@@ -148,6 +153,9 @@ KickStrategy::Action KickValueIteration::bestAction(KickValueIteration::State* s
 
   for (auto& entry : state->models)
   {
+    if (!allowedKickNames.count(entry.first.kick))
+      continue;
+
     auto tmpAction = entry.first;
     double actionScore = actionScores[tmpAction];
 
@@ -198,7 +206,7 @@ KickValueIteration::State::State() : isSuccess(false)
 
 void KickValueIteration::generateStates()
 {
-  for (auto& kickName : getKickNames())
+  for (auto& kickName : kicks.getKickNames())
   {
     auto& kickModel = kicks.getKickModel(kickName);
     Eigen::Vector2d kickTarget = kickModel.applyKick(Eigen::Vector2d(0, 0), 0);
@@ -245,7 +253,7 @@ void KickValueIteration::generateTemplate()
 
   for (int a = 0; a < aSteps; a++)
   {
-    for (auto& kickName : getKickNames())
+    for (auto& kickName : kicks.getKickNames())
     {
       auto& kickModel = kicks.getKickModel(kickName);
       Action action;
@@ -357,6 +365,9 @@ bool KickValueIteration::iterate()
       double score = -5000;
       for (auto& entry : states[x][y].models)
       {
+        if (!allowedKickNames.count(entry.first.kick))
+          continue;
+
         double actionScore = 0;
         for (auto& possibility : entry.second)
         {
@@ -414,13 +425,6 @@ KickValueIteration::State* KickValueIteration::stateFor(double x, double y)
   }
 
   return NULL;
-}
-
-std::vector<std::string> KickValueIteration::getKickNames()
-{
-  return { "classic", "small" };
-
-  // return { "lateral", "classic", "small" };
 }
 
 void KickValueIteration::loadScores(KickStrategy& strategy)

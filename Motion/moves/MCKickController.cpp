@@ -10,6 +10,7 @@
 #include "services/CaptainService.h"
 #include "services/StrategyService.h"
 #include "services/RefereeService.h"
+#include "services/DecisionService.h"
 #include "scheduler/MoveScheduler.h"
 
 using namespace rhoban_geometry;
@@ -91,6 +92,8 @@ void MCKickController::execute()
       getScheduler()->mutex.lock();
       LocalisationService* localisation = getServices()->localisation;
       RefereeService* referee = getServices()->referee;
+      auto decision = getServices()->decision;
+      bool nextKickIsThrowIn = decision->nextKickIsThrowIn;
       auto ball = localisation->getBallPosField();
       auto robotPos = localisation->getFieldPos();
       auto teamMatesField = localisation->getTeamMatesField();
@@ -98,6 +101,15 @@ void MCKickController::execute()
       auto opponentsRadius = localisation->opponentsRadius;
       bool canScore = referee->canScore;
       getScheduler()->mutex.unlock();
+
+      if (nextKickIsThrowIn)
+      {
+        kickValueIteration.allowedKickNames = { "throwin", "small" };
+      }
+      else
+      {
+        kickValueIteration.allowedKickNames = { "classic", "small" };
+      }
 
       auto rewardFunc = [this, &ball, &robotPos, &teamMatesField, &opponentsField, &canScore,
                          &opponentsRadius](Point fromPos, Point toPos, bool success) -> double {

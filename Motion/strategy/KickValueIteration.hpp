@@ -1,5 +1,6 @@
 #pragma once
 
+#include <set>
 #include <map>
 #include <vector>
 #include <json/json.h>
@@ -84,6 +85,9 @@ public:
   double travelRewardDefault(rhoban_geometry::Point fromPos, rhoban_geometry::Point toPos, bool success);
   std::function<double(rhoban_geometry::Point, rhoban_geometry::Point, bool)> travelReward;
 
+  // Allowed kick names
+  std::set<std::string> allowedKickNames;
+
 protected:
   csa_mdp::KickModelCollection kicks;
   double accuracy;
@@ -109,7 +113,4 @@ protected:
 
   // Reward function from a state to another one
   double rewardFor(State* from, State* state, double kickLength, travelRewardFunc travelFunc = travelRewardFunc());
-
-  // Allowed kick names
-  std::vector<std::string> getKickNames();
 };
