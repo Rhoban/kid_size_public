@@ -55,7 +55,7 @@ Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms), kick(nullptr)
   bind->bindNew("swingPhase", engine.swingPhase, RhIO::Bind::PullOnly)->defaultValue(engine.swingPhase);
   bind->bindNew("footYOffsetPerStepSizeY", engine.footYOffsetPerStepSizeY, RhIO::Bind::PullOnly)
       ->defaultValue(engine.footYOffsetPerStepSizeY);
-  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(12);
+  bind->bindNew("trunkPitch", trunkPitch, RhIO::Bind::PullOnly)->defaultValue(14);
 
   // XXX: This feature can be deleted later if it is of no use
   bind->bindNew("bootstrapSteps", bootstrapSteps, RhIO::Bind::PullOnly)->defaultValue(3);

@@ -2,7 +2,7 @@
 
 #include "Filters/Filter.hpp"
 
-#include <hl_monitoring/camera.pb.h>
+#include <hl_communication/camera.pb.h>
 
 #include <opencv2/videoio.hpp>
 
@@ -58,7 +58,7 @@ private:
   /// Name of the video currently written (without extension)
   std::string videoPath;
 
-  hl_monitoring::VideoMetaInformation videoMetaInformation;
+  hl_communication::VideoMetaInformation videoMetaInformation;
 };
 }  // namespace Filters
 }  // namespace Vision

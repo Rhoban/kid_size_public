@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Localisation/Field/FieldPosition.hpp>
+#include <Localisation/Field/FieldDistribution.hpp>
 #include <Localisation/Field/FieldPF.hpp>
 
 #include <hl_monitoring/field.h>
@@ -50,7 +51,7 @@ public:
 
   /// Return the timestamp associated to current time. If helpers is in fake
   /// mode, it uses the vision actual timeStamp
-  ::rhoban_utils::TimeStamp getNowTS();
+  rhoban_utils::TimeStamp getNowTS();
 
   /// Lock mutex and update information from the filter
   void importFiltersResults();
@@ -74,6 +75,8 @@ public:
 
   /// Publish information to the localisation service of the bounded scheduler
   void publishToLoc();
+
+  // positions from loc
 
   cv::Mat getTopView(int width, int height);
 

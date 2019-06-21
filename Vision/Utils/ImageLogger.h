@@ -92,7 +92,7 @@ private:
   /// Number of images allowed per log session
   /// Active session path
   std::string session_path;
-  std::map<std::string, hl_monitoring::VideoMetaInformation> metadata;
+  std::map<std::string, hl_communication::VideoMetaInformation> metadata;
   cv::VideoWriter video_writer;
 
   /// Write a line in the csv file associating file names with timestamps and a

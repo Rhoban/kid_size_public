@@ -2,12 +2,11 @@
 #include "ImageLogger.h"
 
 #include <hl_communication/utils.h>
-#include <hl_monitoring/utils.h>
 #include <rhoban_utils/util.h>
 
 #include <opencv2/highgui/highgui.hpp>
 
-using namespace hl_monitoring;
+using namespace hl_communication;
 
 namespace Vision
 {
@@ -98,8 +97,8 @@ void ImageLogger::initSession(const CameraState& cs, const std::string& session_
   {
     throw std::runtime_error(DEBUG_INFO + "Failed to open video");
   }
-  hl_monitoring::VideoMetaInformation meta_information;
-  cs.exportToProtobuf(meta_information.mutable_camera_parameters());
+  hl_communication::VideoMetaInformation meta_information;
+  cs.exportHeader(&meta_information);
   meta_information.set_time_offset(rhoban_utils::getSteadyClockOffset());
   for (const std::string& log_name :
        { "camera_from_world", "camera_from_field", "camera_from_self", "camera_from_head_base" })
@@ -129,7 +128,7 @@ void ImageLogger::writeEntry(int idx, const Entry& e)
   // Writing image
   video_writer.write(e.img);
   // Adding entry_properties to metadata (cannot write in file before end of session)
-  hl_monitoring::FrameEntry* entry = metadata["camera_from_world"].add_frames();
+  hl_communication::FrameEntry* entry = metadata["camera_from_world"].add_frames();
   e.cs.exportToProtobuf(entry);
   entry = metadata["camera_from_self"].add_frames();
   e.cs.exportToProtobuf(entry);

@@ -5,6 +5,7 @@
 #include <rhoban_team_play/team_play.h>
 #include <rhoban_utils/sockets/udp_broadcast.h>
 #include <strategy/PlacementOptimizer.h>
+#include <rhoban_utils/timing/time_stamp.h>
 #include <thread>
 #include "Service.h"
 
@@ -143,6 +144,21 @@ protected:
 
   /// Has a mate kicked recently
   bool recentlyKicked;
+
+  /// Time since placing phase
+  rhoban_utils::TimeStamp lastPlacingPhase;
+
+  /// 0: disabled, 1: only when kick off, 2: always
+  int openingStrategyMode;
+
+  /// How much time in the begining of the game is the opening strategy ? [s]
+  double openingStrategyTime;
+
+  /// What orientation for the opening kick should be used ? [deg]
+  double openingStrategyOrientation;
+
+  // This is copied from the referee to avoid accessing it since we are in another thread
+  bool myTeamKickOff;
 
   /**
    * Number of robots voting for the common ball

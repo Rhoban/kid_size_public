@@ -70,7 +70,13 @@ void PlayingMove::onStart()
 {
   head = (Head*)getMoves()->getMove("head");
   placer = (Placer*)getMoves()->getMove("placer");
-  head->setDisabled(false);
+  auto& decision = getServices()->decision;
+
+  if (!decision->isThrowInRunning)
+  {
+    head->setDisabled(false);
+  }
+
   setState(STATE_SEARCH);
 
   // Ensuring fieldQThreshold is reasonable

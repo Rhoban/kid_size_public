@@ -111,9 +111,16 @@ void VisionLogMachine::step(float elapsed)
   }
   else if (state == STATE_MOVING)
   {
-    if (placer->arrived && !walk->isWalking())
+    if (stateTime > 0.2)
     {
-      setState(STATE_STABILIZING);
+      if (!placer->isRunning())
+      {
+        placer->start();
+      }
+      else if (placer->arrived && !walk->isWalking())
+      {
+        setState(STATE_STABILIZING);
+      }
     }
   }
 
@@ -135,7 +142,6 @@ void VisionLogMachine::enterState(std::string state)
 
   if (state == STATE_MOVING)
   {
-    placer->start();
     generatePlacerOrder();
   }
   else

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FieldPosition.hpp"
+#include "FieldDistribution.hpp"
 
 #include "rhoban_unsorted/particle_filter/particle_filter.h"
 
@@ -42,6 +43,7 @@ private:
 protected:
   virtual void updateRepresentativeQuality();
   virtual void updateRepresentativeParticle();
+  void exportParticles(cv::Mat* pos, cv::Mat* angle);
 
 public:
   FieldPF();
@@ -73,11 +75,15 @@ public:
   rhoban_utils::Angle getOrientation();
   double getQuality();
 
+  std::vector<hl_communication::WeightedPose> getPositionsFromClusters();
+
   bool isResetPending() const;
 
   static std::string getName(ResetType t);
 
   void initializeAtUniformRandom(unsigned int particlesNb);
+
+  std::vector<hl_communication::WeightedPose> vectorEM;
 
   double resamplingRatio;
 
