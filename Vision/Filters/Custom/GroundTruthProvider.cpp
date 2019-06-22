@@ -76,6 +76,7 @@ void GroundTruthProvider::fromJson(const Json::Value& v, const std::string& dir_
     hl_communication::readFromFile(labellingPath, &labels);
     labellingManager.importLabels(labels);
     labellingManager.summarize(&std::cout);
+    labellingManager.sync();
   }
 }
 
@@ -113,6 +114,7 @@ void GroundTruthProvider::extractLabelsAnnotations()
   }
   std::map<std::string, std::vector<Eigen::Vector3d>> field_positions_by_type = getFieldFeaturesByType();
   // Conversion to annotations
+  Eigen::Affine3d camera_from_field = labellingManager.getCameraPose(getCS().source_id, getCS().utc_ts);
   for (const auto& entry : field_positions_by_type)
   {
     std::string feature_name = entry.first;
@@ -120,10 +122,9 @@ void GroundTruthProvider::extractLabelsAnnotations()
     {
       try
       {
-        Eigen::Affine3d camera_from_field = labellingManager.getCameraPose(getCS().source_id, getCS().utc_ts);
-        Eigen::Vector3d camera_pos = camera_from_field * field_pos;
         // TODO: functions allowing to retrieve the point without
         // risking to throw exception should be available
+        Eigen::Vector3d camera_pos = camera_from_field * field_pos;
         Annotation a;
         a.distance = (camera_pos).norm();
         a.center = getCS().getCameraModel().getImgFromObject(eigen2CV(camera_pos));
@@ -138,8 +139,50 @@ void GroundTruthProvider::extractLabelsAnnotations()
       }
     }
   }
-  // TODO: add other balls
-  // TODO: add other robots
+  // Adding balls to entries
+  for (const auto& entry : labellingManager.getBalls(getCS().utc_ts))
+  {
+    Eigen::Vector3d ball_in_field = entry.second;
+    Eigen::Vector3d ball_in_camera = camera_from_field * ball_in_field;
+    try
+    {
+      // TODO: functions allowing to retrieve the point without
+      // risking to throw exception should be available
+      Annotation a;
+      a.distance = (ball_in_camera).norm();
+      a.center = getCS().getCameraModel().getImgFromObject(eigen2CV(ball_in_camera));
+      // Only include annotation if center is inside image
+      if (cv::Rect(0, 0, img().cols, img().rows).contains(a.center))
+      {
+        annotations["Ball"].push_back(a);
+      }
+    }
+    catch (const std::runtime_error& exc)
+    {
+    }
+  }
+  // TODO: remove self from robots?
+  for (const auto& entry : labellingManager.getRobots(getCS().utc_ts))
+  {
+    Eigen::Vector3d robot_in_field = entry.second;
+    Eigen::Vector3d robot_in_camera = camera_from_field * robot_in_field;
+    try
+    {
+      // TODO: functions allowing to retrieve the point without
+      // risking to throw exception should be available
+      Annotation a;
+      a.distance = (robot_in_camera).norm();
+      a.center = getCS().getCameraModel().getImgFromObject(eigen2CV(robot_in_camera));
+      // Only include annotation if center is inside image
+      if (cv::Rect(0, 0, img().cols, img().rows).contains(a.center))
+      {
+        annotations["Robot"].push_back(a);
+      }
+    }
+    catch (const std::runtime_error& exc)
+    {
+    }
+  }
 }
 
 void GroundTruthProvider::extractViveAnnotations()
@@ -200,7 +243,13 @@ void GroundTruthProvider::tagImg()
       {
         for (const Annotation& a : entry.second)
         {
-          cv::circle(img(), a.center, 5, cv::Scalar(255, 0, 255), CV_FILLED);
+          cv::Scalar color(255, 0, 255);
+          if (entry.first == "Ball")
+            color = cv::Scalar(0, 0, 255);
+          else if (entry.first == "Robot")
+            color = cv::Scalar(255, 0, 0);
+          int radius = 3;
+          cv::circle(img(), a.center, radius, color, CV_FILLED);
         }
       }
   }
