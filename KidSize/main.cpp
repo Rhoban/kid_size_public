@@ -155,7 +155,6 @@ int main(int argc, char** argv)
     }
   }
   logger.log("Done.");
-  // return 0;
 
   if (visionRobocup != nullptr)
   {
@@ -165,5 +164,5 @@ int main(int argc, char** argv)
 
   google::protobuf::ShutdownProtobufLibrary();
 
-  return -1;
+  return 0;
 }
