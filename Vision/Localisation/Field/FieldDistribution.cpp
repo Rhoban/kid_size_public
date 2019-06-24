@@ -35,7 +35,7 @@ namespace Localisation
 void exportToProto(const PositionClusters& pos_clusters, const AngleClusters& angle_clusters,
                    hl_communication::WeightedPose* self_in_field, int nbParticles)
 {
-  self_in_field->set_probability(pos_clusters.size() / nbParticles);
+  self_in_field->set_probability((float)pos_clusters.size() / nbParticles);
 
   Eigen::VectorXd mean;
   Eigen::MatrixXd covMat;

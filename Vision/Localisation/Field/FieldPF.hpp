@@ -104,6 +104,8 @@ public:
   double customNoise;       // [m]
   double customThetaNoise;  // [deg]
 
+  double fieldQDecrease;
+
   void publishToRhIO();
   void importFromRhIO();
 

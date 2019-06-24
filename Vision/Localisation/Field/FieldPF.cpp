@@ -103,6 +103,11 @@ FieldPF::FieldPF()
       ->minimum(0)
       ->maximum(4)
       ->comment("Uniform noise used for custom reset [m]");
+  rhioNode->newFloat("fieldQDecrease")
+      ->defaultValue(-10)
+      ->minimum(-1)
+      ->maximum(-20)
+      ->comment("Changing speed of decreasing fieldQ");
 }
 
 void FieldPF::askForReset(ResetType t)
@@ -344,7 +349,9 @@ void FieldPF::updateRepresentativeQuality()
   cv::Mat eigenvalues, eigenvectors;
   cv::eigen(covMat, eigenvalues, eigenvectors);
 
-  representativeQuality = weighted_pose.probability() * exp(-5 * eigenvalues.at<float>(0) * eigenvalues.at<float>(1));
+  fieldQDecrease = rhioNode->getValueFloat("fieldQDecrease").value;
+  representativeQuality =
+      weighted_pose.probability() * exp(fieldQDecrease * eigenvalues.at<float>(0) * eigenvalues.at<float>(1));
 }
 /*
 cv::Mat FieldPF::positionsFromParticles()
