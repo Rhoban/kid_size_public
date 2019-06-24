@@ -71,11 +71,9 @@ void ROIRandomizer::process()
   while (round < maxROIPerInput && _rois.size() < (size_t)maxROI)
   {
     int missing_rois = maxROI - _rois.size();
-    logger.log("ROUND %d: Getting %d out of %d", round, missing_rois, input_rois.size());
     std::vector<size_t> roi_indices = rhoban_random::getUpToKDistinctFromN(missing_rois, input_rois.size(), &engine);
     for (size_t roi_idx : roi_indices)
     {
-      logger.log("-> idx: %d", roi_idx);
       cv::Rect_<float> new_roi = input_rois[roi_idx];
       // On first round, basic ROI are used
       if (round > 0)
@@ -84,7 +82,6 @@ void ROIRandomizer::process()
       }
       if (Utils::isContained(new_roi, img_size))
       {
-        logger.log("-> OK, adding roi");
         addRoi(1.0, Utils::toRotatedRect(new_roi));
       }
     }

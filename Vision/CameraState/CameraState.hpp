@@ -216,6 +216,13 @@ public:
    * Identifier of the video source which took the image
    */
   hl_communication::VideoSourceID source_id;
+
+  /**
+   * Currently, the motors are not properly timestamped, this allows to retrieve
+   * information at the appropriate time for vision
+   * unit is [ms]
+   */
+  static float motor_delay;
 };
 }  // namespace Utils
 }  // namespace Vision

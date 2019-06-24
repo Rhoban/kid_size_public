@@ -74,7 +74,6 @@ namespace Vision
 {
 Robocup::Robocup(MoveScheduler* scheduler)
   : Application()
-  , imageDelay(0)
   , manual_logger("manual_logs", false, max_images)
   , moving_ball_logger("moving_ball_logs", false, 30 * 40)  // Less images memory for moving balls
   , autologMovingBall(false)
@@ -128,8 +127,7 @@ Robocup::Robocup(MoveScheduler* scheduler)
 }
 
 Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
-  : imageDelay(0)
-  , manual_logger("manual_logs", false, max_images)
+  : manual_logger("manual_logs", false, max_images)
   , moving_ball_logger("moving_ball_logs", false, 30 * 40)  // Less images memory for moving balls
   , autologMovingBall(false)
   , game_logger("game_logs", false, max_images)
@@ -246,7 +244,6 @@ Json::Value Robocup::toJson() const
   v["viveLogPath"] = viveLogPath;
   v["benchmark"] = benchmark;
   v["benchmarkDetail"] = benchmarkDetail;
-  v["imageDelay"] = imageDelay;
   v["autologMovingBall"] = autologMovingBall;
   v["autologGames"] = autolog_games;
   v["logBallExtraTime"] = logBallExtraTime;
@@ -266,7 +263,6 @@ void Robocup::fromJson(const Json::Value& v, const std::string& dir_name)
   rhoban_utils::tryRead(v, "viveLogPath", &viveLogPath);
   rhoban_utils::tryRead(v, "benchmark", &benchmark);
   rhoban_utils::tryRead(v, "benchmarkDetail", &benchmarkDetail);
-  rhoban_utils::tryRead(v, "imageDelay", &imageDelay);
   rhoban_utils::tryRead(v, "autologMovingBall", &autologMovingBall);
   rhoban_utils::tryRead(v, "autologGames", &autolog_games);
   rhoban_utils::tryRead(v, "logBallExtraTime", &logBallExtraTime);
@@ -375,11 +371,11 @@ void Robocup::initRhIO()
       ->comment("If enabled, write logs while game is playing");
   RhIO::Root.newBool("/Vision/benchmark")->defaultValue(benchmark)->comment("Is logging activated ?");
   RhIO::Root.newInt("/Vision/benchmarkDetail")->defaultValue(benchmarkDetail)->comment("Depth of print for benchmark");
-  RhIO::Root.newInt("/Vision/imageDelay")
-      ->defaultValue(imageDelay)
-      ->maximum(200)
-      ->minimum(-200)
-      ->comment("Delay between sourceTS and reality");
+  RhIO::Root.newFloat("/Vision/motorDelay")
+      ->defaultValue(CameraState::motor_delay)
+      ->maximum(20)
+      ->minimum(-20)
+      ->comment("Monotonic TS = schedulerTS - motor_delay");
 
   // Monitoring special images
   for (const SpecialImageHandler& sih : imageHandlers)
@@ -586,7 +582,7 @@ void Robocup::importFromRhIO()
   logBallExtraTime = RhIO::Root.getValueFloat("/Vision/logBallExtraTime").value;
   benchmark = RhIO::Root.getValueBool("/Vision/benchmark").value;
   benchmarkDetail = RhIO::Root.getValueInt("/Vision/benchmarkDetail").value;
-  imageDelay = RhIO::Root.getValueInt("/Vision/imageDelay").value;
+  CameraState::motor_delay = RhIO::Root.getValueFloat("/Vision/motorDelay").value;
   // Import size update for images
   for (SpecialImageHandler& sih : imageHandlers)
   {
