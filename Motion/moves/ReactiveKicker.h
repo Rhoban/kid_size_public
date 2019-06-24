@@ -16,12 +16,14 @@ public:
   virtual void onStart() override;
   virtual void step(float elapsed) override;
 
+  virtual rhoban_utils::Angle getKickCap() override;
+
 private:
   /// Time that should be anticipated for [s]
   double anticipation;
 
-  /// Time spent in current phasis [s]
-  double time;
+  /// Time where the kick should pause [s]
+  double kickPauseTime;
 
   /// Is the robot kicking actually
   bool is_kicking;

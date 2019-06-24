@@ -334,6 +334,11 @@ double Walk::getPhase()
   }
 }
 
+double Walk::getFootYOffset()
+{
+  return engine.footYOffset;
+}
+
 Eigen::Vector3d Walk::getMinOrders() const
 {
   Eigen::Vector3d bound;

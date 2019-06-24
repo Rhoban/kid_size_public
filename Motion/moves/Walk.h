@@ -71,6 +71,9 @@ public:
   // Gets the walk phase, 0: begin of cycle, 0.5: step 1, 1: step2
   double getPhase();
 
+  // Gets the foot y offset
+  double getFootYOffset();
+
   // Maximum rotation speed [deg/step]
   float maxRotation;
 
