@@ -57,14 +57,25 @@ Kick::Kick(Head* _head, Walk* _walk, Arms* _arms) : head(_head), walk(_walk), ar
   bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)->defaultValue(0.5)->comment("Cooldown duration [s]");
   bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)->defaultValue(0.75)->comment("Warmup [s]");
 
+  // Pause and pausetime
+  bind->bindNew("pause", pause, RhIO::Bind::PullOnly)->defaultValue(false);
+  bind->bindNew("pauseTime", pauseTime, RhIO::Bind::PullOnly)->defaultValue(false);
+
   // Load available kicks
   kmc.loadFile();
 }
 
-void Kick::set(bool left, const std::string& newKickName)
+void Kick::set(bool _left, const std::string& _kickName, bool _pause, double _pauseTime)
 {
-  bind->node().setBool("left", left);
-  bind->node().setStr("kickName", newKickName);
+  bind->node().setBool("pause", _pause);
+  bind->node().setFloat("pauseTime", _pauseTime);
+  bind->node().setBool("left", _left);
+  bind->node().setStr("kickName", _kickName);
+}
+
+void Kick::unpause()
+{
+  bind->node().setBool("pause", false);
 }
 
 void Kick::loadKick(std::string filename)
@@ -324,6 +335,12 @@ void Kick::step(float elapsed)
   }
   if (kickState == KickKicking)
   {
+    // If we are in pause mode, block the kick on the pause time
+    if (pause && t > pauseTime)
+    {
+      t = pauseTime;
+    }
+
     // Reading the actual kick spline
     stepSpline(elapsed);
 

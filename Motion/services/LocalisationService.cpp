@@ -127,7 +127,7 @@ Point LocalisationService::getPredictedBallSelf()
   return getPredictedBallSelf(rhoban_utils::TimeStamp::now());
 }
 
-Point LocalisationService::getPredictedBallSelf(rhoban_utils::TimeStamp t)
+Point LocalisationService::getPredictedBallSelf(rhoban_utils::TimeStamp t, bool supportBasedSelf)
 {
   // Extracting consistent information
   mutex.lock();
@@ -137,7 +137,23 @@ Point LocalisationService::getPredictedBallSelf(rhoban_utils::TimeStamp t)
   mutex.unlock();
   // Predicting position in world and then transforming into self
   Eigen::Vector3d predicted_in_world = ball_world + ball_speed_world * elapsed;
-  Eigen::Vector3d predicted_in_self = self_from_world * predicted_in_world;
+  Eigen::Vector3d predicted_in_self;
+
+  if (supportBasedSelf)
+  {
+    // We use the support foot to estimate "self" and not he average of the two feet
+    auto& model = getServices()->model->model;
+    Eigen::Affine3d supportFootToSelf = Eigen::Affine3d::Identity();
+    supportFootToSelf.translation().y() =
+        (model.supportFoot == rhoban::HumanoidModel::Left ? Helpers::footYOffset() : -Helpers::footYOffset());
+
+    predicted_in_self = supportFootToSelf * model.supportToWorld.inverse() * predicted_in_world;
+  }
+  else
+  {
+    predicted_in_self = self_from_world * predicted_in_world;
+  }
+
   return Point(predicted_in_self.x(), predicted_in_self.y());
 }
 

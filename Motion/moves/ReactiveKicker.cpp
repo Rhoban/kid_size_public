@@ -2,40 +2,61 @@
 
 #include "Walk.h"
 #include "Kick.h"
+#include "Head.h"
 #include <services/LocalisationService.h>
 
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
 
-ReactiveKicker::ReactiveKicker(Walk* walk, Kick* kick) : ApproachMove(walk, kick)
+ReactiveKicker::ReactiveKicker(Walk* walk, Kick* kick, Head* head) : ApproachMove(walk, kick), head(head)
 {
   Move::initializeBinding();
   ApproachMove::initBindings();
-  bind->bindNew("anticipation", anticipation, RhIO::Bind::PullOnly)
-      ->defaultValue(1)
-      ->minimum(0)
-      ->maximum(2)
-      ->comment("How much time is necessary between kick decision and ball contact [s]")
-      ->persisted(true);
-  bind->bindNew("time", time, RhIO::Bind::PushOnly)->defaultValue(0.0);
+
+  bind->bindNew("anticipationMean", anticipationMean, RhIO::Bind::PullOnly)->defaultValue(0.35);
+  bind->bindNew("anticipationDelta", anticipationDelta, RhIO::Bind::PullOnly)->defaultValue(0.04);
+
   bind->bindNew("is_kicking", is_kicking, RhIO::Bind::PushOnly)
       ->defaultValue(false)
       ->comment("Is the robot currently kicking?");
+
+  bind->bindNew("kick_pause_time", kickPauseTime, RhIO::Bind::PullOnly)->defaultValue(1.8);
+
+  bind->bindNew("useRightFoot", useRightFoot, RhIO::Bind::PullOnly)->defaultValue(true);
 
   bind->pull();
 }
 
 std::string ReactiveKicker::getName()
 {
-  return "ReactiveKicker";
+  return "reactive_kicker";
 }
 
 void ReactiveKicker::onStart()
 {
+  bind->pull();
+
   // Simply use only classic currently
-  expectedKick = "classic";
   is_kicking = false;
   kick_score = 0;
+  expectedKick = "classic";
+  kickRight = useRightFoot;
+
+  head->setDisabled(false);
+  head->setForceTrack(true);
+
+  kick->set(!useRightFoot, "classic", true, kickPauseTime);
+  startMove("kick", 0.0);
+}
+
+void ReactiveKicker::onStop()
+{
+  head->setForceTrack(false);
+}
+
+rhoban_utils::Angle ReactiveKicker::getKickCap()
+{
+  return 0;
 }
 
 void ReactiveKicker::step(float elapsed)
@@ -43,38 +64,38 @@ void ReactiveKicker::step(float elapsed)
   // Pull variables from RhIO
   bind->pull();
 
-  time += elapsed;
-
   // Handle the case where we are currently kicking
   if (is_kicking)
   {
-    // Wait until walk has started and finished kicking
-    if (time > 0.25 && !kick->isRunning())
+    if (!kick->isRunning())
     {
-      is_kicking = false;
+      this->Move::stop();
     }
-    bind->push();
     return;
   }
 
-  // When is the robot expected to perform the kick
-  TimeStamp kick_time = TimeStamp::now().addMS(anticipation);
-
-  // First: retrieving ball position in the future
-  LocalisationService* loc = getServices()->localisation;
-  Point future_ball_loc = loc->getPredictedBallSelf(kick_time);
-
-  // Simple heuristic, valid for all 'forward' kicks
-  kickRight = future_ball_loc.y < 0;
-
-  updateKickScore(elapsed, future_ball_loc);
-
-  // Only use classic
-  if (kick_score >= 1.0)
+  for (double anticipation = anticipationMean - anticipationDelta; anticipation < anticipationMean + anticipationDelta;
+       anticipation += 0.005)
   {
-    requestKick();
-    is_kicking = true;
-    time = 0;
+    // When is the robot expected to perform the kick
+    TimeStamp kick_time = TimeStamp::now().addMS(anticipation * 1000);
+
+    // First: retrieving ball position in the future
+    LocalisationService* loc = getServices()->localisation;
+    Point future_ball_loc = loc->getPredictedBallSelf(kick_time, true);
+
+    // Updating the kick score using the future ball position instead of present one
+    kick_gain = 1000;
+    // std::cout << "Future ball: " << future_ball_loc << std::endl;
+    updateKickScore(elapsed, future_ball_loc);
+
+    // Only use classic
+    if (kick_score >= 1.0)
+    {
+      kick->unpause();
+      is_kicking = true;
+      break;
+    }
   }
 
   bind->push();

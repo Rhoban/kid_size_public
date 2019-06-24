@@ -34,7 +34,7 @@ public:
   /**
    * Returns the predicted ball position in self referential at time 't', using linear interpolation
    */
-  rhoban_geometry::Point getPredictedBallSelf(rhoban_utils::TimeStamp t);
+  rhoban_geometry::Point getPredictedBallSelf(rhoban_utils::TimeStamp t, bool supportBasedSelf = false);
   Eigen::Vector3d ballPosWorld;
   float ballQ;
   rhoban_geometry::Point ballSpeed;  // In world referential

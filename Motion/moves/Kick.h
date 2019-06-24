@@ -28,7 +28,8 @@ public:
 
   void loadKick(std::string filename);
 
-  void set(bool left, const std::string& kickName);
+  void set(bool left, const std::string& kickName, bool pause = false, double pauseTime = 0.0);
+  void unpause();
 
   static std::string getPath(const std::string kickName, bool left = false);
 
@@ -41,6 +42,9 @@ protected:
   double t, tMax;
   double dt;
   double applyKickRatio;
+
+  bool pause;
+  double pauseTime;
 
   // Warmup and cooldown
   double warmup;

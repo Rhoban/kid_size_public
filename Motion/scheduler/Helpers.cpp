@@ -6,6 +6,7 @@
 #include "services/ModelService.h"
 #include "services/LocalisationService.h"
 #include "Helpers.h"
+#include <moves/Walk.h>
 #include <Devices/GY85.hpp>
 
 using namespace rhoban_utils;
@@ -400,6 +401,20 @@ float Helpers::getPressureX()
   }
 }
 
+float Helpers::footYOffset()
+{
+  Walk* walk = dynamic_cast<Walk*>(getScheduler()->getMove("walk"));
+
+  if (walk != nullptr)
+  {
+    return getServices()->model->model.distFootYOffset + walk->getFootYOffset();
+  }
+  else
+  {
+    return 0.0;
+  }
+}
+
 float Helpers::getPressureY()
 {
   updatePressure();
@@ -407,7 +422,9 @@ float Helpers::getPressureY()
   double total = pressureLeftWeight + pressureRightWeight;
   if (total > 0)
   {
-    return ((pressureLeftY + 0.07) * pressureLeftWeight + (pressureRightY - 0.07) * pressureRightWeight) / total;
+    return ((pressureLeftY + footYOffset()) * pressureLeftWeight +
+            (pressureRightY - footYOffset()) * pressureRightWeight) /
+           total;
   }
   else
   {

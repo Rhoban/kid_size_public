@@ -91,6 +91,7 @@ public:
   /**
    * Accessing the pressure sensor
    */
+  float footYOffset();
   float getPressureLeftRatio();
   float getPressureRightRatio();
   float getPressureWeight();
@@ -102,10 +103,8 @@ public:
   float getRightPressureY();
   void updatePressure();
 
-  void setFakePressure(
-    double left_x, double left_y, double left_weight,
-    double right_x, double right_y, double right_weight
-  );
+  void setFakePressure(double left_x, double left_y, double left_weight, double right_x, double right_y,
+                       double right_weight);
 
   static bool fakePressure;
   static double pressureLeftX, pressureLeftY, pressureLeftWeight;
