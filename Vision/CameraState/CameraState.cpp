@@ -40,6 +40,8 @@ namespace Vision
 {
 namespace Utils
 {
+float CameraState::motor_delay(0);
+
 CameraState::CameraState()
   : _moveScheduler(nullptr)
   , monotonic_ts(0.0)
@@ -163,6 +165,7 @@ void CameraState::updateInternalModel(const rhoban_utils::TimeStamp& ts)
 
   if (_moveScheduler != nullptr)
   {
+    double scheduler_ts = ((double)monotonic_ts / 1000.0 + motor_delay) / 1000.0;
     ModelService* modelService = _moveScheduler->getServices()->model;
     ViveService* vive = _moveScheduler->getServices()->vive;
     DecisionService* decision = _moveScheduler->getServices()->decision;
@@ -174,12 +177,12 @@ void CameraState::updateInternalModel(const rhoban_utils::TimeStamp& ts)
     identifier->mutable_robot_id()->set_robot_id(referee->id);
     identifier->set_camera_name("main");
 
-    selfToWorld = modelService->selfToWorld(monotonic_ts);
-    worldToCamera = modelService->cameraToWorld(monotonic_ts).inverse();
+    selfToWorld = modelService->selfToWorld(scheduler_ts);
+    worldToCamera = modelService->cameraToWorld(scheduler_ts).inverse();
     _cameraModel = modelService->cameraModel;
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
-    camera_from_head_base = worldToCamera * modelService->headBaseToWorld(monotonic_ts).inverse();
+    camera_from_head_base = worldToCamera * modelService->headBaseToWorld(scheduler_ts).inverse();
     frame_status = decision->camera_status;
     // Update camera/field transform based on (by order of priority)
     // 1. Vive

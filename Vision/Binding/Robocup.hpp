@@ -4,7 +4,6 @@
 
 #include <kick_model/kick_model_collection.h>
 
-
 #include <thread>
 #include "Filters/Pipeline.hpp"
 #include "Application/Application.hpp"
@@ -68,8 +67,6 @@ private:
   mutable std::mutex logMutex;
 
   mutable std::mutex csMutex;
-
-  int imageDelay;  // Delay between the image capture time [ms]
 
   // Logging
   Utils::ImageLogger manual_logger;
