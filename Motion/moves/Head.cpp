@@ -251,6 +251,11 @@ void Head::step(float elapsed)
   bind->push();
 }
 
+void Head::setForceTrack(bool value)
+{
+  bind->node().setBool("forceTrack", value);
+}
+
 void Head::setForceScanBall(bool value)
 {
   bind->node().setBool("forceScanBall", value);

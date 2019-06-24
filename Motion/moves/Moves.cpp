@@ -87,7 +87,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new Penalty(penaltyController));
 
   add(new AutonomousPlaying(walk, standup, arms));
-  add(new ReactiveKicker(walk, kick));
+  add(new ReactiveKicker(walk, kick, head));
 
   add(new VisionLogMachine(walk, head, placer));
 
