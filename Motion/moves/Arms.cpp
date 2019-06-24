@@ -3,10 +3,11 @@
 #include "services/DecisionService.h"
 #include "rhoban_utils/logging/logger.h"
 #include "services/ModelService.h"
+#include "rhoban_utils/logging/logger.h"
 
 #include "Kick.h"
 
-static rhoban_utils::Logger logger("arms");
+static rhoban_utils::Logger logger("Arms");
 
 using namespace rhoban_utils;
 
@@ -92,6 +93,8 @@ void Arms::setArms(ArmsState newArmsState, bool force, bool init)
   {
     return;
   }
+
+  logger.log("changing arms movement, new ArmsState = %d ", armsState);
 
   lastAngle = actualAngle;
 
