@@ -13,7 +13,7 @@ ReactiveKicker::ReactiveKicker(Walk* walk, Kick* kick, Head* head) : ApproachMov
   Move::initializeBinding();
   ApproachMove::initBindings();
 
-  bind->bindNew("anticipationMean", anticipationMean, RhIO::Bind::PullOnly)->defaultValue(0.4);
+  bind->bindNew("anticipationMean", anticipationMean, RhIO::Bind::PullOnly)->defaultValue(0.35);
   bind->bindNew("anticipationDelta", anticipationDelta, RhIO::Bind::PullOnly)->defaultValue(0.04);
 
   bind->bindNew("is_kicking", is_kicking, RhIO::Bind::PushOnly)
