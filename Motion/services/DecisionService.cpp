@@ -138,7 +138,7 @@ DecisionService::DecisionService()
 
   bind.bindNew("throwInEnable", throwInEnable, RhIO::Bind::PullOnly)
       ->comment("Is throw in enabled ?")
-      ->defaultValue(false);
+      ->defaultValue(true);
 
   selfAttackingT = 0;
   handledT = 0;
