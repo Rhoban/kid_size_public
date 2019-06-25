@@ -7,18 +7,10 @@
 class Head;
 class Walk;
 
-/**
- * This should be run to perform the high kick technical challenge
- * - Tare the robot
- * - Run walk
- * - Run this move
- *
- * He will play when put on the ground
- */
-class TCHighKick : public KickController
+class TCMovingBallPasser : public KickController
 {
 public:
-  TCHighKick(Walk* walk, Head* head);
+  TCMovingBallPasser(Walk* walk, Head* head);
 
   /// Implement Move
   virtual std::string getName() override;
@@ -30,6 +22,7 @@ public:
 
   bool isRunning;
   double t;
+  double kickDirection;
 
   Walk* walk;
   Head* head;

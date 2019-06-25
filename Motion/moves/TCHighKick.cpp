@@ -62,7 +62,7 @@ void TCHighKick::step(float elapsed)
   t += elapsed;
   if (isRunning)
   {
-    if (t > 2)
+    if (t > 3)
     {
       if (decision->isBallQualityGood)
       {
