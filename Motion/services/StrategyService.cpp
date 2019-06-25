@@ -107,7 +107,7 @@ bool StrategyService::tick(double elapsed)
 
   static std::vector<std::string> approach_candidates = { "approach_potential" };
   static std::vector<std::string> kick_controler_candidates = { "mc_kick_controler", "clearing_kick_controler",
-                                                                "penalty_kick_controler" };
+                                                                "penalty_kick_controler", "tc_high_kick" };
 
   bind.pull();
 

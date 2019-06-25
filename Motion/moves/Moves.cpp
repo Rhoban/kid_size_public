@@ -19,6 +19,7 @@
 #include "AutonomousPlaying.h"
 
 #include "ReactiveKicker.h"
+#include "TCHighKick.h"
 
 #include "MCKickController.h"
 #include "ClearingKickController.h"
@@ -90,6 +91,7 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new ReactiveKicker(walk, kick, head));
 
   add(new VisionLogMachine(walk, head, placer));
+  add(new TCHighKick(walk, head));
 
   add(walk);
 
