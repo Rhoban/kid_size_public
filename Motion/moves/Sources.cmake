@@ -24,6 +24,7 @@ set (SOURCES
     
     GoalKick.cpp
     ReactiveKicker.cpp
+    TCHighKick.cpp
 )
 
 if (csa_mdp_experiments_FOUND)
