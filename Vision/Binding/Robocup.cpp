@@ -85,8 +85,7 @@ Robocup::Robocup(MoveScheduler* scheduler)
   , benchmark(false)
   , benchmarkDetail(0)
   , cs(new CameraState(scheduler))
-  ,  // TODO: maybe put the name of the param file elsewhere
-  activeSource(false)
+  , activeSource(false)
   , clearRememberObservations(false)
   , detectedFeatures(new Field::POICollection())
   , detectedBalls(new std::vector<cv::Point3f>())
@@ -94,6 +93,7 @@ Robocup::Robocup(MoveScheduler* scheduler)
   , wasHandled(false)
   , wasFallen(false)
   , ignoreOutOfFieldBalls(true)
+  , treatmentDelay(0)
 {
   ballStackFilter = new BallStackFilter(cs);
   robotFilter = new RobotFilter(cs);
@@ -146,6 +146,7 @@ Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
   , wasHandled(false)
   , wasFallen(false)
   , ignoreOutOfFieldBalls(true)
+  , treatmentDelay(0)
 {
   ballStackFilter = new BallStackFilter(cs);
   robotFilter = new RobotFilter(cs);
@@ -299,6 +300,9 @@ void Robocup::initRhIO()
     return;
   }
   RhIO::Root.newStr("/Vision/cameraStatus")->defaultValue("");
+  RhIO::Root.newFloat("/Vision/treatmentDelay")
+      ->defaultValue(-1)
+      ->comment("Time between image acquisition and result publication [ms]");
   RhIO::Root.newFloat("/Vision/lastUpdate")->defaultValue(-1)->comment("Time since last update [ms]");
   // Init interface with RhIO
   if (isFakeMode())
@@ -559,6 +563,7 @@ void Robocup::step()
   globalMutex.lock();
   Benchmark::close("Waiting for global mutex");
 
+  treatmentDelay = diffMs(sourceTS, TimeStamp::now());
   publishToRhIO();
 
   Benchmark::close("Tagging & Display");
@@ -594,6 +599,7 @@ void Robocup::importFromRhIO()
 
 void Robocup::publishToRhIO()
 {
+  RhIO::Root.setFloat("/Vision/treatmentDelay", treatmentDelay);
   RhIO::Root.setFloat("/Vision/lastUpdate", diffMs(lastTS, getNowTS()));
   std::string cameraStatus = getCameraStatus();
   RhIO::Root.setStr("/Vision/cameraStatus", cameraStatus);
@@ -1001,29 +1007,31 @@ cv::Mat Robocup::getTaggedImg(int width, int height)
     double alpha = 0.6;  // Transparency of the kick zones
     for (bool is_right_foot : { false, true })
     {
-      std::vector<Eigen::Vector2d> corners_in_self = kick_zone.getKickAreaCorners(is_right_foot);
-      std::vector<cv::Point> corners_in_img;
-      for (const Eigen::Vector2d& corner_in_self : corners_in_self)
+      try
       {
-        Eigen::Vector3d corner_in_world =
-            cs->getWorldFromSelf(Eigen::Vector3d(corner_in_self.x(), corner_in_self.y(), 0));
-        try
+        std::vector<Eigen::Vector2d> corners_in_self = kick_zone.getKickAreaCorners(is_right_foot);
+        std::vector<cv::Point> corners_in_img;
+        for (const Eigen::Vector2d& corner_in_self : corners_in_self)
         {
+          Eigen::Vector3d corner_in_world =
+              cs->getWorldFromSelf(Eigen::Vector3d(corner_in_self.x(), corner_in_self.y(), 0));
           corners_in_img.push_back(cs->imgXYFromWorldPosition(corner_in_world));
         }
-        catch (const std::runtime_error& exc)
-        {
-          // If point is not in image -> ignore kick_zone
-          break;
-        }
-      }
-      if (corners_in_img.size() == 4)
-      {
-        // TODO: add different color if ball is inside the area
+        Eigen::Vector3d wished_pos_in_self = kick_zone.getWishedPos(is_right_foot);
+        wished_pos_in_self.z() = 0;
+        Eigen::Vector3d wished_pos_in_world = cs->getWorldFromSelf(wished_pos_in_self);
+        cv::Point wished_pos_in_img = cs->imgXYFromWorldPosition(wished_pos_in_world);
+        // Drawing img
         cv::Mat copy = img.clone();
         cv::Scalar color = is_right_foot ? cv::Scalar(255, 0, 0) : cv::Scalar(0, 0, 255);
         cv::fillConvexPoly(copy, corners_in_img, color);
+        cv::drawMarker(copy, wished_pos_in_img, 0.2 * color, cv::MARKER_TILTED_CROSS, 15, 2, cv::LINE_AA);
         cv::addWeighted(img, alpha, copy, 1 - alpha, 0, img);
+      }
+      catch (const std::runtime_error& exc)
+      {
+        // If one of the point is not in image -> ignore kick_zone
+        break;
       }
     }
   }

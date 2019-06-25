@@ -310,5 +310,11 @@ private:
    * The name of the kick tagged in TaggedImg, if empty, does not draw kicks
    */
   std::string taggedKickName;
+
+  /**
+   * Debug purpose: time elapsed between source TS (acquisition time) and the end of the treatment of the data
+   * (published in scheduler) [ms]
+   */
+  int treatmentDelay;
 };
 }  // namespace Vision
