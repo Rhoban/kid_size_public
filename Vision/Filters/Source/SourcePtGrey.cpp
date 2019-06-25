@@ -815,8 +815,6 @@ void SourcePtGrey::process()
   }
 
   TimeStamp frame_ts = TimeStamp::fromMS(normalized_frame_ts);
-  logger.log("%s: timeSince frameTS %f ms", DEBUG_INFO.c_str(), diffMs(frame_ts, TimeStamp::now()));
-
   getPipeline()->setTimestamp(frame_ts);
 
   double elapsed_ms = diffMs(last_ts, frame_ts);

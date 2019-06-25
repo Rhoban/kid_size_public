@@ -743,8 +743,6 @@ void Robocup::getUpdatedCameraStateFromPipeline()
 
   sourceTS = cs->getTimeStamp();
 
-  out.log("%s: timeSince sourceTS %f ms", DEBUG_INFO.c_str(), diffMs(sourceTS, TimeStamp::now()));
-
   // TODO: identify if this part is only debug
   if (!isFakeMode())
   {
