@@ -122,6 +122,11 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     targetPosition = ball + (targetPosition - ball).rotation(shifting);
   }
 
+  if (fabs(target.yaw.getSignedValue()) > 20)
+  {
+    targetPosition = ball + (targetPosition - ball).normalize(placementDistance);
+  }
+
   // Magical potential field
   // See Motion/python/potential.py
   double X(0), Y(0);

@@ -33,6 +33,7 @@ void TCHighKick::onStart()
 
 void TCHighKick::onStop()
 {
+  stopMove("approach_potential", 0);
 }
 
 void TCHighKick::step(float elapsed)

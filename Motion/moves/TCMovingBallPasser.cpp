@@ -14,7 +14,8 @@ TCMovingBallPasser::TCMovingBallPasser(Walk* walk, Head* head) : walk(walk), hea
 {
   Move::initializeBinding();
 
-  bind->bindNew("kickDirection", kickDirection, RhIO::Bind::PullOnly)->defaultValue(-115);
+  bind->bindNew("yPositive", yPositive, RhIO::Bind::PullOnly)->defaultValue(true);
+  bind->bindNew("kickDirection", kickDirection, RhIO::Bind::PullOnly)->defaultValue(-118);
 
   bind->pull();
 }
@@ -29,10 +30,16 @@ void TCMovingBallPasser::onStart()
   isRunning = false;
   bind->pull();
   head->setDisabled(false);
+
+  // XXX: This is hacky
+  RhIO::Root.setFloat("/moves/walk/maxStep", 0.06);
+  RhIO::Root.setFloat("/moves/walk/maxLateral", 0.03);
+  RhIO::Root.setFloat("/moves/walk/maxRotation", 15);
 }
 
 void TCMovingBallPasser::onStop()
 {
+  stopMove("approach_potential", 0);
 }
 
 void TCMovingBallPasser::step(float elapsed)
@@ -61,7 +68,14 @@ void TCMovingBallPasser::step(float elapsed)
     {
       if (t > 3)
       {
-        startMove("approach_potential", 0);
+        if (decision->isBallQualityGood)
+        {
+          startMove("approach_potential", 0);
+        }
+        else
+        {
+          stopMove("approach_potential", 0);
+        }
       }
     }
   }
@@ -70,9 +84,9 @@ void TCMovingBallPasser::step(float elapsed)
     if (!decision->handled)
     {
       isRunning = true;
-      localisation->customFieldReset(robocup_referee::Constants::field.field_length / 2.0 -
-                                         robocup_referee::Constants::field.goal_area_length,
-                                     robocup_referee::Constants::field.field_width / 2.0, 0.2, 0, 5);
+      localisation->customFieldReset(
+          robocup_referee::Constants::field.field_length / 2.0 - robocup_referee::Constants::field.goal_area_length,
+          (yPositive ? 1 : -1) * robocup_referee::Constants::field.field_width / 2.0, 0.2, 0, 5);
       t = 0;
     }
   }

@@ -23,6 +23,7 @@ public:
   bool isRunning;
   double t;
   double kickDirection;
+  bool yPositive;
 
   Walk* walk;
   Head* head;

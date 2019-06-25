@@ -60,7 +60,7 @@ void TCReactiveKicker::step(float elapsed)
   }
   else
   {
-    if (decision->handled)
+    if (!decision->handled)
     {
       isRunning = true;
       t = 0;
