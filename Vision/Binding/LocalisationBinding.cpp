@@ -287,6 +287,7 @@ void LocalisationBinding::step()
   importFromRhIO();
 
   currTS = getNowTS();
+  fieldLogger.log("%s: timeSince currTS %f ms", DEBUG_INFO.c_str(), diffMs(currTS, TimeStamp::now()));
   cs->updateInternalModel(currTS);
 
   elapsedSinceReset = diffSec(lastFieldReset, currTS);

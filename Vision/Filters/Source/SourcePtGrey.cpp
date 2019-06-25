@@ -814,9 +814,12 @@ void SourcePtGrey::process()
     throw Utils::PtGreyException(oss.str());
   }
 
-  getPipeline()->setTimestamp(TimeStamp::fromMS(normalized_frame_ts));
+  TimeStamp frame_ts = TimeStamp::fromMS(normalized_frame_ts);
+  logger.log("%s: timeSince frameTS %f ms", DEBUG_INFO.c_str(), diffMs(frame_ts, TimeStamp::now()));
 
-  double elapsed_ms = normalized_frame_ts - last_ts.getTimeMS();
+  getPipeline()->setTimestamp(frame_ts);
+
+  double elapsed_ms = diffMs(last_ts, frame_ts);
   if (elapsed_ms <= 0)
   {
     updateRhIO();
