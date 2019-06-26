@@ -118,6 +118,11 @@ void Robocup::applyGameState()
     setState(STATE_PLACING);
   }
 
+  if (state == STATE_PLACING && !referee->isPlacingPhase())
+  {
+    setState(STATE_WAITING);
+  }
+
   // If mode is freeze, jump to waiting state
   if (state != STATE_WAITING && referee->isFreezePhase())
   {

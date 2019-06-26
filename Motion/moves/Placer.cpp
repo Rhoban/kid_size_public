@@ -34,7 +34,7 @@ Placer::Placer(Walk* walk) : walk(walk)
 
   bind->bindNew("stepP", stepper.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
   bind->bindNew("lateralP", lateraler.k_p, RhIO::Bind::PullOnly)->defaultValue(1.0);
-  bind->bindNew("turnP", turner.k_p, RhIO::Bind::PullOnly)->defaultValue(0.75);
+  bind->bindNew("turnP", turner.k_p, RhIO::Bind::PullOnly)->defaultValue(0.5);
 
   bind->bindNew("marginX", marginX, RhIO::Bind::PullOnly)->defaultValue(0.2)->comment("[m]");
   bind->bindNew("marginY", marginY, RhIO::Bind::PullOnly)->defaultValue(0.2)->comment("[m]");

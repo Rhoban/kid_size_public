@@ -24,9 +24,13 @@ set (SOURCES
     
     GoalKick.cpp
     ReactiveKicker.cpp
+
+    # Technical challenges autonomous move
     TCHighKick.cpp
     TCReactiveKicker.cpp
     TCMovingBallPasser.cpp
+    TCJump.cpp
+    TCPushRecovery.cpp
 )
 
 if (csa_mdp_experiments_FOUND)

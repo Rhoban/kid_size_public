@@ -42,7 +42,7 @@ public:
   bool isBallMoving;
 
   /// Is one of the robot of the team currently kicking
-  bool isMateKicking;
+  bool hasMateKickedRecently;
 
   /**
    * Is the field quality good enough?

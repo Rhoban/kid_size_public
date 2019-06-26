@@ -301,7 +301,7 @@ bool Head::shouldTrackBall()
   if (!decision->isBallQualityGood)
     return false;
   // For some cases, tracking is forced to stay active
-  if (force_track || ball_dist < force_track_dist || decision->isBallMoving || decision->isMateKicking)
+  if (force_track || ball_dist < force_track_dist || decision->isBallMoving || decision->hasMateKickedRecently)
   {
     return true;
   }

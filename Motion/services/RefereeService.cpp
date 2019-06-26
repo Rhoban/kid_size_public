@@ -137,7 +137,7 @@ bool RefereeService::tick(double elapsed)
   {
     DecisionService* decision = getServices()->decision;
 
-    if (decision->isMateKicking || decision->isBallMoving)
+    if (decision->hasMateKickedRecently || decision->isBallMoving)
     {
       canScore = true;
     }
