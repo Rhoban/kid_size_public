@@ -22,6 +22,8 @@
 #include "TCHighKick.h"
 #include "TCReactiveKicker.h"
 #include "TCMovingBallPasser.h"
+#include "TCJump.h"
+#include "TCPushRecovery.h"
 
 #include "MCKickController.h"
 #include "ClearingKickController.h"
@@ -96,6 +98,8 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new TCHighKick(walk, head));
   add(new TCReactiveKicker(walk, head));
   add(new TCMovingBallPasser(walk, head));
+  add(new TCJump(walk, head, kick));
+  add(new TCPushRecovery(walk, head, kick));
 
   add(walk);
 

@@ -800,8 +800,8 @@ void Robocup::loggingStep()
   double elapsedSinceBallMoving = diffSec(lastBallMoving, now);
   // Status of autoLog
   bool autoLogActive = moving_ball_logger.isActive();
-  bool startAutoLog = autologMovingBall && !autoLogActive && decision->isMateKicking;
-  bool stopAutoLog = autoLogActive && !(elapsedSinceBallMoving < logBallExtraTime || decision->isMateKicking);
+  bool startAutoLog = autologMovingBall && !autoLogActive && decision->hasMateKickedRecently;
+  bool stopAutoLog = autoLogActive && !(elapsedSinceBallMoving < logBallExtraTime || decision->hasMateKickedRecently);
   bool useAutoLogEntry = startAutoLog || (autoLogActive && !stopAutoLog);
   // Starting autoLog
   if (startAutoLog)

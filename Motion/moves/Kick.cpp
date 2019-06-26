@@ -219,6 +219,10 @@ void Kick::onStart()
   {
     headWasDisabled = head->isDisabled();
     head->setDisabled(true);
+  }
+
+  if (kickName == "throwin" || kickName == "jump")
+  {
     arms->setArms(Arms::ArmsState::ArmsDisabled);
   }
 
@@ -278,6 +282,9 @@ void Kick::onStop()
   if (kickName == "throwin")
   {
     head->setDisabled(headWasDisabled);
+  }
+  if (kickName == "throwin" || kickName == "jump")
+  {
     arms->setArms(Arms::ArmsState::ArmsEnabled);
   }
 }
