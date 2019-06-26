@@ -4,6 +4,7 @@
 #include "Kick.h"
 #include "Head.h"
 #include <services/LocalisationService.h>
+#include <services/DecisionService.h>
 
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
@@ -74,27 +75,32 @@ void ReactiveKicker::step(float elapsed)
     return;
   }
 
-  for (double anticipation = anticipationMean - anticipationDelta; anticipation < anticipationMean + anticipationDelta;
-       anticipation += 0.005)
+  DecisionService* decision = getServices()->decision;
+
+  if (decision->isBallQualityGood)
   {
-    // When is the robot expected to perform the kick
-    TimeStamp kick_time = TimeStamp::now().addMS(anticipation * 1000);
-
-    // First: retrieving ball position in the future
-    LocalisationService* loc = getServices()->localisation;
-    Point future_ball_loc = loc->getPredictedBallSelf(kick_time, true);
-
-    // Updating the kick score using the future ball position instead of present one
-    kick_gain = 1000;
-    // std::cout << "Future ball: " << future_ball_loc << std::endl;
-    updateKickScore(elapsed, future_ball_loc);
-
-    // Only use classic
-    if (kick_score >= 1.0)
+    for (double anticipation = anticipationMean - anticipationDelta;
+         anticipation < anticipationMean + anticipationDelta; anticipation += 0.005)
     {
-      kick->unpause();
-      is_kicking = true;
-      break;
+      // When is the robot expected to perform the kick
+      TimeStamp kick_time = TimeStamp::now().addMS(anticipation * 1000);
+
+      // First: retrieving ball position in the future
+      LocalisationService* loc = getServices()->localisation;
+      Point future_ball_loc = loc->getPredictedBallSelf(kick_time, true);
+
+      // Updating the kick score using the future ball position instead of present one
+      kick_gain = 1000;
+      // std::cout << "Future ball: " << future_ball_loc << std::endl;
+      updateKickScore(elapsed, future_ball_loc);
+
+      // Only use classic
+      if (kick_score >= 1.0)
+      {
+        kick->unpause();
+        is_kicking = true;
+        break;
+      }
     }
   }
 
