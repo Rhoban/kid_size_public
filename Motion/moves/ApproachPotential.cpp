@@ -47,7 +47,7 @@ ApproachPotential::ApproachPotential(Walk* walk, Kick* kick) : ApproachMove(walk
   // Servoing
   bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(0.6);
   bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(0.6);
-  bind->bindNew("rotationP", rotationP, RhIO::Bind::PullOnly)->defaultValue(1);
+  bind->bindNew("rotationP", rotationP, RhIO::Bind::PullOnly)->defaultValue(0.6);
 
   bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.35);
 
