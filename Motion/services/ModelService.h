@@ -47,7 +47,7 @@ public:
   Eigen::Affine3d selfToWorld(double timestamp);
   Eigen::Affine3d headBaseToWorld(double timestamp);
   rhoban::CameraModel cameraModel;
-  rhoban_model_learning::CalibrationModel calibration_model;
+  std::unique_ptr<rhoban_model_learning::CalibrationModel> calibration_model;
 
   // Logging
   double replayTimestamp;

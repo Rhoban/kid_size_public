@@ -11,13 +11,21 @@
 #include <vector>
 #include <algorithm>
 
+#include "rhoban_model_learning/model_factory.h"
+
 using namespace rhoban_utils;
+using namespace rhoban_model_learning;
 
 ModelService::ModelService()
   : timeSinceLastPublish(0), bind("model"), isReplay(false), histories(60.0), lowLevelState("")
 {
-  calibration_model.loadFile("calibration.json");
-  cameraModel = calibration_model.getCameraModel();
+  std::unique_ptr<Model> tmp_calibration_model = ModelFactory().buildFromJsonFile("calibration.json");
+  calibration_model.reset(dynamic_cast<CalibrationModel*>(tmp_calibration_model.release()));
+
+  if (!calibration_model)
+    throw std::logic_error(DEBUG_INFO + "invalid calibration model: check type.");
+
+  cameraModel = calibration_model->getCameraModel();
 
   odometryYawOffset = 0;
   bind.bindFunc("odometryReset", "Resets the robot odometry", &ModelService::cmdOdometryReset, *this);
@@ -80,8 +88,9 @@ bool ModelService::tick(double elapsed)
   if (loadCalibration)
   {
     loadCalibration = false;
-    calibration_model.loadFile("calibration.json");
-    cameraModel = calibration_model.getCameraModel();
+    std::unique_ptr<Model> model = ModelFactory().buildFromJsonFile("calibration.json");
+    calibration_model.reset(dynamic_cast<CalibrationModel*>(model.release()));
+    cameraModel = calibration_model->getCameraModel();
   }
 
   if (isReplay)
@@ -186,7 +195,7 @@ Eigen::Affine3d ModelService::cameraToWorld(double timestamp)
 
   // apply correction
   Eigen::Affine3d self_from_camera_after_correction =
-      calibration_model.getCameraFromSelfAfterCorrection(camera_from_self, camera_from_head_base).inverse();
+      calibration_model->getCameraFromSelfAfterCorrection(camera_from_self, camera_from_head_base).inverse();
   Eigen::Affine3d camera_to_world_after_correction = world_from_self * self_from_camera_after_correction;
   return camera_to_world_after_correction;
 }
