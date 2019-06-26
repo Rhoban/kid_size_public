@@ -158,6 +158,16 @@ const rhoban::CameraModel& CameraState::getCameraModel() const
   return _cameraModel;
 }
 
+double CameraState::getSchedulerTS() const
+{
+  return getSchedulerTS(getTimeStamp());
+}
+
+double CameraState::getSchedulerTS(const rhoban_utils::TimeStamp& ts) const
+{
+  return ((double)ts.getTimeUS(false) / 1000.0 + motor_delay) / 1000.0;
+}
+
 void CameraState::updateInternalModel(const rhoban_utils::TimeStamp& ts)
 {
   monotonic_ts = ts.getTimeUS(false);
@@ -165,7 +175,7 @@ void CameraState::updateInternalModel(const rhoban_utils::TimeStamp& ts)
 
   if (_moveScheduler != nullptr)
   {
-    double scheduler_ts = ((double)monotonic_ts / 1000.0 + motor_delay) / 1000.0;
+    double scheduler_ts = getSchedulerTS(ts);
     ModelService* modelService = _moveScheduler->getServices()->model;
     ViveService* vive = _moveScheduler->getServices()->vive;
     DecisionService* decision = _moveScheduler->getServices()->decision;

@@ -173,6 +173,12 @@ public:
   double getTimeStampDouble() const;
 
   /**
+   * Return the timestamp for the scheduler [s] including motor_delay
+   */
+  double getSchedulerTS() const;
+  double getSchedulerTS(const rhoban_utils::TimeStamp& ts) const;
+
+  /**
    * Sets the offset in micro-seconds between
    */
   void setClockOffset(int64_t new_offset);
