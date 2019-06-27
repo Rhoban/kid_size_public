@@ -122,9 +122,9 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     targetPosition = ball + (targetPosition - ball).rotation(shifting);
   }
 
-  if (fabs(target.yaw.getSignedValue()) > 20)
+  if (fabs(target.yaw.getSignedValue()) > 15)
   {
-    targetPosition = ball + (targetPosition - ball).normalize(placementDistance);
+    targetPosition = ball + (targetPosition - ball).normalize(0.25);
   }
 
   // Magical potential field
@@ -184,7 +184,7 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     y = 0;
   }
 
-  if (directPlace && fabs(error) > 20)
+  if (directPlace && fabs(error) > 10)
   {
     x = 0;
     y = 0;

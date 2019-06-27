@@ -53,7 +53,7 @@ WalkEngine::FootPose::FootPose() : x(0), y(0), z(0), yaw(0)
 }
 
 WalkEngine::WalkEngine()
-  : trunkXOffset(0.005)
+  : trunkXOffset(0)
   , trunkZOffset(0.02)
   , footYOffset(0.03)
   , riseGain(0.04)

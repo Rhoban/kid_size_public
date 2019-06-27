@@ -113,6 +113,16 @@ LocalisationService::LocalisationService() : bind("localisation"), robocup(NULL)
   // updateOpponentsPos();
 }
 
+Eigen::Affine3d LocalisationService::getSupportFootToSelf()
+{
+  auto& model = getServices()->model->model;
+  Eigen::Affine3d supportFootToSelf = Eigen::Affine3d::Identity();
+  supportFootToSelf.translation().y() =
+      (model.supportFoot == rhoban::HumanoidModel::Left ? Helpers::footYOffset() : -Helpers::footYOffset());
+
+  return supportFootToSelf * model.supportToWorld.inverse();
+}
+
 Point LocalisationService::getBallSpeedSelf()
 {
   mutex.lock();
@@ -141,13 +151,7 @@ Point LocalisationService::getPredictedBallSelf(rhoban_utils::TimeStamp t, bool 
 
   if (supportBasedSelf)
   {
-    // We use the support foot to estimate "self" and not he average of the two feet
-    auto& model = getServices()->model->model;
-    Eigen::Affine3d supportFootToSelf = Eigen::Affine3d::Identity();
-    supportFootToSelf.translation().y() =
-        (model.supportFoot == rhoban::HumanoidModel::Left ? Helpers::footYOffset() : -Helpers::footYOffset());
-
-    predicted_in_self = supportFootToSelf * model.supportToWorld.inverse() * predicted_in_world;
+    predicted_in_self = getSupportFootToSelf() * predicted_in_world;
   }
   else
   {
@@ -157,10 +161,18 @@ Point LocalisationService::getPredictedBallSelf(rhoban_utils::TimeStamp t, bool 
   return Point(predicted_in_self.x(), predicted_in_self.y());
 }
 
-Point LocalisationService::getBallPosSelf()
+Point LocalisationService::getBallPosSelf(bool supportBasedSelf)
 {
   mutex.lock();
-  Eigen::Vector3d ball_pos_self = self_from_world * ballPosWorld;
+  Eigen::Vector3d ball_pos_self;
+  if (supportBasedSelf)
+  {
+    ball_pos_self = getSupportFootToSelf() * ballPosWorld;
+  }
+  else
+  {
+    ball_pos_self = self_from_world * ballPosWorld;
+  }
   mutex.unlock();
   return Point(ball_pos_self.x(), ball_pos_self.y());
 }
@@ -487,7 +499,7 @@ void LocalisationService::applyKick(float x_, float y_)
 {
   if (Helpers::isFakeMode() && !Helpers::isPython)
   {
-    double yaw = rhoban::frameYaw(getServices()->model->model.selfToWorld().rotation());
+    double yaw = rhoban::frameYaw(getSupportFootToSelf().rotation());
     std::random_device rd;
     std::default_random_engine engine(rd());
     std::uniform_real_distribution<double> unif(-0.1, 0.1);

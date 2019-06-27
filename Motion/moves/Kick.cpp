@@ -46,11 +46,6 @@ Kick::Kick(Head* _head, Walk* _walk, Arms* _arms) : head(_head), walk(_walk), ar
 
   bind->bindFunc("kickGen", "Pre-compute the kick", &Kick::cmdKickGen, *this);
 
-  bind->bindNew("applyKickRatio", applyKickRatio, RhIO::Bind::PullOnly)
-      ->defaultValue(0.95)
-      ->comment("Ratio in the kick timing when the kick should be applied")
-      ->persisted(true);
-
   bind->bindNew("t", t, RhIO::Bind::PushOnly)->defaultValue(0.0);
 
   // Cooldown and warmup
@@ -59,18 +54,45 @@ Kick::Kick(Head* _head, Walk* _walk, Arms* _arms) : head(_head), walk(_walk), ar
 
   // Pause and pausetime
   bind->bindNew("pause", pause, RhIO::Bind::PullOnly)->defaultValue(false);
-  bind->bindNew("pauseTime", pauseTime, RhIO::Bind::PullOnly)->defaultValue(false);
+
+  // Is that kick cancellable ?
+  bind->bindNew("cancellable", cancellable, RhIO::Bind::PullOnly)->defaultValue(false);
 
   // Load available kicks
   kmc.loadFile();
 }
 
-void Kick::set(bool _left, const std::string& _kickName, bool _pause, double _pauseTime)
+void Kick::set(bool _left, const std::string& _kickName, bool _pause, bool _cancellable)
 {
+  bind->node().setBool("cancellable", _cancellable);
   bind->node().setBool("pause", _pause);
-  bind->node().setFloat("pauseTime", _pauseTime);
   bind->node().setBool("left", _left);
   bind->node().setStr("kickName", _kickName);
+}
+
+bool Kick::shouldCancel()
+{
+  if (!cancellable || kickName == "jump")
+  {
+    // This kick can't be cancelled at all
+    return false;
+  }
+
+  if (t > tKick)
+  {
+    // Kick is already ongoing, it can't be cancelled now
+    return false;
+  }
+
+  // Check if ball is in kick zone or not
+  auto localisation = getServices()->localisation;
+  auto ball = localisation->getBallPosSelf(true);
+  const csa_mdp::KickZone& kick_zone = kmc.getKickModel(kickName).getKickZone();
+  Eigen::Vector3d wishedPos = kick_zone.getWishedPos(!left);
+  Eigen::Vector3d ballPos(ball.x, ball.y, wishedPos[2]);
+  Eigen::Vector3d avg = 0.75 * wishedPos + 0.25 * ballPos;
+
+  return !kick_zone.canKick(!left, avg);
 }
 
 void Kick::unpause()
@@ -114,6 +136,7 @@ void Kick::loadKick(std::string filename)
 
   // Generating
   double T = 0;
+  tKick = -1;
   while (t < xMax)
   {
     T += dt;
@@ -121,6 +144,11 @@ void Kick::loadKick(std::string filename)
     if (remap < 1e-6)
       remap = 1;
     t += dt * remap;
+
+    if (kickSplines.count("kick") && kickSplines["kick"].get(t) > 0.5 && tKick < 0)
+    {
+      tKick = T;
+    }
 
     for (auto dof : dofs)
     {
@@ -149,8 +177,13 @@ void Kick::loadKick(std::string filename)
     }
   }
 
-  logger.log("tMax = %f", T);
   tMax = T;
+  if (tKick < 0)
+  {
+    logger.warning("No tKick for %s, using t=0", filename.c_str());
+    tKick = 0;
+  }
+  logger.log("tMax = %f, tKick=%f", tMax, tKick);
 }
 
 std::string Kick::getPath(const std::string kickName, bool left)
@@ -179,6 +212,7 @@ std::string Kick::cmdKickGen()
       loadKick(getPath(kickName));
       preloadedSplines[kickName] = splines;
       maxTimes[kickName] = tMax;
+      kickTimes[kickName] = tKick;
 
       // Writing it to output file
       logger.log("Generated spline, tMax=%f", tMax);
@@ -191,6 +225,7 @@ std::string Kick::cmdKickGen()
         std::string tmp = kickName + "_left";
         preloadedSplines[tmp] = splines;
         maxTimes[tmp] = tMax;
+        kickTimes[tmp] = tKick;
         // Writing it to output file
         logger.log("Generated spline, specific for left, tMax=%f", tMax);
       }
@@ -249,17 +284,20 @@ void Kick::onStart()
         {
           splines = preloadedSplines.at(tmp);
           tMax = maxTimes.at(tmp);
+          tKick = kickTimes.at(tmp);
         }
         else
         {
           splines = preloadedSplines.at(kickName);
           tMax = maxTimes.at(kickName);
+          tKick = kickTimes.at(kickName);
         }
       }
       else
       {
         splines = preloadedSplines.at(kickName);
         tMax = maxTimes.at(kickName);
+        tKick = kickTimes.at(kickName);
       }
     }
     catch (const std::out_of_range& exc)
@@ -337,25 +375,47 @@ void Kick::step(float elapsed)
   {
     // Warmup over, start the kick move
     kickState = KickKicking;
-    getServices()->strategy->announceKick();
     t = 0;
   }
   if (kickState == KickKicking)
   {
-    // If we are in pause mode, block the kick on the pause time
-    if (pause && t > pauseTime)
+    if (shouldCancel())
     {
-      t = pauseTime;
+      kickState = KickCancelling;
     }
-
-    // Reading the actual kick spline
-    stepSpline(elapsed);
-
-    if (over)
+    else
     {
-      // Kick is over, enter the coolDown sequence
+      // If we are in pause mode, block the kick on the pause time
+      if (pause && t > tKick)
+      {
+        t = tKick;
+      }
+      if (t > tKick && !applied)
+      {
+        applied = true;
+        apply();
+        getServices()->strategy->announceKick();
+      }
+
+      // Reading the actual kick spline
+      stepSpline(elapsed);
+
+      if (over)
+      {
+        // Kick is over, enter the coolDown sequence
+        kickState = KickCooldown;
+        t = 0;
+      }
+    }
+  }
+
+  if (kickState == KickCancelling)
+  {
+    stepSpline(-elapsed);
+
+    if (t < 0)
+    {
       kickState = KickCooldown;
-      t = 0;
     }
   }
   if (kickState == KickCooldown && t >= cooldown)
@@ -368,12 +428,6 @@ void Kick::step(float elapsed)
 
 void Kick::stepSpline(float elapsed)
 {
-  if (t > tMax * applyKickRatio && !applied)
-  {
-    applied = true;
-    apply();
-  }
-
   if (t > tMax && !useManualT)
   {
     if (!over)
