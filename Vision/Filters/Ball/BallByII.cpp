@@ -43,6 +43,7 @@ void BallByII::setParameters()
   decimationRate = ParamInt(1, 1, 20);
   tagLevel = ParamInt(0, 0, 1);
   useLocalSearch = ParamInt(1, 0, 1);
+  maxOverlapRatio = ParamFloat(0.2, 0.0, 1.0);
 
   params()->define<ParamFloat>("boundaryFactor", &boundaryFactor);
   params()->define<ParamFloat>("maxBoundaryThickness", &maxBoundaryThickness);
@@ -54,6 +55,7 @@ void BallByII::setParameters()
   params()->define<ParamInt>("decimationRate", &decimationRate);
   params()->define<ParamInt>("tagLevel", &tagLevel);
   params()->define<ParamInt>("useLocalSearch", &useLocalSearch);
+  params()->define<ParamFloat>("maxOverlapRatio", &maxOverlapRatio);
 }
 
 void BallByII::process()
@@ -171,7 +173,7 @@ void BallByII::process()
         double roiScore = tmpRois[id].first;
         const cv::Rect& roi = tmpRois[id].second;
         // If there is an overlap with 'id'
-        if (Utils::isOverlapping(roi, candidatePatch))
+        if (Utils::computeOverlapRatio(roi, candidatePatch) > maxOverlapRatio)
         {
           // If new region is better, then it dominates 'id'
           if (roiScore < score)

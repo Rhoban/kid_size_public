@@ -115,5 +115,10 @@ bool isOverlapping(const cv::Rect& r1, const cv::Rect& r2)
   return (r1 & r2).area() > 0;
 }
 
+double computeOverlapRatio(const cv::Rect& r1, const cv::Rect& r2)
+{
+  return ((double)(r1 & r2).area()) / std::min(r1.area(), r2.area());
+}
+
 }  // namespace Utils
 }  // namespace Vision

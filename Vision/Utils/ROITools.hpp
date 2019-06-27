@@ -32,5 +32,11 @@ cv::RotatedRect toRotatedRect(const cv::Rect& rect);
 std::pair<cv::Rect, cv::Mat> getROIMask(const cv::RotatedRect& roi, const cv::Mat& srcImg);
 
 bool isOverlapping(const cv::Rect& r1, const cv::Rect& r2);
+/**
+ * Get area of intersection of both rectangles divided by the minimum area between r1 and r2
+ * output is in [0,1]
+ */
+double computeOverlapRatio(const cv::Rect& r1, const cv::Rect& r2);
+
 }  // namespace Utils
 }  // namespace Vision
