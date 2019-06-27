@@ -77,7 +77,7 @@ Utils::CameraState* SourceVideoProtobuf::buildCameraState()
   const hl_communication::Pose3D& camera_from_self = cameraFromSelfMeta.frames(index).pose();
   const hl_communication::Pose3D& camera_from_head_base = cameraFromHeadBaseMeta.frames(index).pose();
   return new Utils::CameraState(cameraFromWorldMeta.camera_parameters(), cameraFromWorldMeta.frames(index),
-                                camera_from_self, camera_from_head_base, cameraFromWorldMeta.source_id());
+                                camera_from_self, camera_from_head_base, cameraFromWorldMeta.source_id(), scheduler);
 }
 
 void SourceVideoProtobuf::process()
@@ -195,6 +195,11 @@ void SourceVideoProtobuf::update()
 {
   setIndex(index);
   updateImg();
+}
+
+void SourceVideoProtobuf::setScheduler(MoveScheduler* new_scheduler)
+{
+  scheduler = new_scheduler;
 }
 
 }  // namespace Filters

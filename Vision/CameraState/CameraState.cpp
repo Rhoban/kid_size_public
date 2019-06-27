@@ -60,8 +60,8 @@ CameraState::CameraState(MoveScheduler* moveScheduler) : CameraState()
 
 CameraState::CameraState(const IntrinsicParameters& camera_parameters, const FrameEntry& frame_entry,
                          const Pose3D& camera_from_self_pose, const Pose3D& camera_from_head_base_pose,
-                         const hl_communication::VideoSourceID& source_id_)
-  : CameraState()
+                         const hl_communication::VideoSourceID& source_id_, MoveScheduler* moveScheduler)
+  : CameraState(moveScheduler)
 {
   logger.log("Building Camera State.");
   source_id = source_id_;
@@ -75,14 +75,17 @@ CameraState::CameraState(const IntrinsicParameters& camera_parameters, const Fra
   cameraFromHeadBase = getAffineFromProtobuf(camera_from_head_base_pose);
 
   // Removing correction if needed
-  // XXX I need access to model service
-  // ModelService* modelService;
-  // if (not modelService->applyCorrectionInNonCorrectedReplay)
-  // {
-  //   logger.log("applyCorrectionInNonCorrectedReplay to true");
-  //   Eigen::Affine3d worldFromHeadBase = cameraToWorld * cameraFromHeadBase;
-  //   cameraToWorld = modelService->applyCalibration(cameraToWorld, worldFromHeadBase, selfToWorld);
-  // }
+  if (_moveScheduler == nullptr)
+  {
+    throw std::logic_error(DEBUG_INFO + " null movescheduler are not allowed anymore");
+  }
+  ModelService* modelService = _moveScheduler->getServices()->model;
+  if (!modelService->applyCorrectionInNonCorrectedReplay)
+  {
+    logger.log("applyCorrectionInNonCorrectedReplay to true");
+    Eigen::Affine3d worldFromHeadBase = cameraToWorld * cameraFromHeadBase;
+    cameraToWorld = modelService->applyCalibration(cameraToWorld, worldFromHeadBase, selfToWorld);
+  }
 }
 
 cv::Size CameraState::getImgSize() const

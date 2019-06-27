@@ -7,6 +7,8 @@
 
 #include <opencv2/videoio.hpp>
 
+class MoveScheduler;
+
 namespace Vision
 {
 namespace Filters
@@ -40,6 +42,8 @@ public:
   void update() override;
   void previous() override;
   void updateImg();
+
+  void setScheduler(MoveScheduler* scheduler);
 
 protected:
   /**
@@ -98,6 +102,11 @@ private:
    * Meta information for cameraFromHeadBase
    */
   hl_communication::VideoMetaInformation cameraFromHeadBaseMeta;
+
+  /**
+   * Hack which allows to get access to the movescheduler when building states
+   */
+  MoveScheduler* scheduler;
 };
 }  // namespace Filters
 }  // namespace Vision

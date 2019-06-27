@@ -15,6 +15,7 @@
 
 #include "Filters/Features/FeaturesProvider.hpp"
 #include "Filters/Features/TagsDetector.hpp"
+#include "Filters/Source/SourceVideoProtobuf.hpp"
 
 #include "CameraState/CameraState.hpp"
 #include "Utils/Drawing.hpp"
@@ -106,7 +107,6 @@ Robocup::Robocup(MoveScheduler* scheduler)
   }
 
   out.log("Starting Robocup Pipeline");
-  pipeline.setCameraState(cs);
   initImageHandlers();
   loadFile();
   _doRun = true;
@@ -122,59 +122,19 @@ Robocup::Robocup(MoveScheduler* scheduler)
   }
   kmc.loadFile();
   taggedKickName = "classic";
+
+  pipeline.setCameraState(cs);
+  // Hack to be able to apply/remove CameraCalibration when replaying Log
+  try
+  {
+    Filters::SourceVideoProtobuf& source_pb = dynamic_cast<Filters::SourceVideoProtobuf&>(pipeline.get("human"));
+    source_pb.setScheduler(scheduler);
+  }
+  catch (const std::bad_cast& e)
+  {
+  }
   scheduler->getServices()->localisation->setRobocup(this);
   _runThread = new std::thread(std::bind(&Robocup::run, this));
-}
-
-Robocup::Robocup(const std::string& configFile, MoveScheduler* scheduler)
-  : manual_logger("manual_logs", false, max_images)
-  , moving_ball_logger("moving_ball_logs", false, 30 * 40)  // Less images memory for moving balls
-  , autologMovingBall(false)
-  , game_logger("game_logs", false, max_images)
-  , autolog_games(false)
-  , logBallExtraTime(2.0)
-  , writeBallStatus(false)
-  , benchmark(false)
-  , benchmarkDetail(0)
-  , _runThread(NULL)
-  , cs(new CameraState(scheduler))
-  , activeSource(false)
-  , clearRememberObservations(false)
-  , detectedFeatures(new Field::POICollection())
-  , detectedBalls(new std::vector<cv::Point3f>())
-  , detectedRobots(new std::vector<cv::Point3f>())
-  , wasHandled(false)
-  , wasFallen(false)
-  , ignoreOutOfFieldBalls(true)
-  , treatmentDelay(0)
-{
-  ballStackFilter = new BallStackFilter(cs);
-  robotFilter = new RobotFilter(cs);
-  ballSpeedEstimator = new SpeedEstimator();
-  initObservationTypes();
-
-  for (std::string obs : observationTypes)
-  {
-    rememberObservations[obs] = std::vector<std::pair<cv::Point2f, float>>();
-  }
-  pipeline.setCameraState(cs);
-  _scheduler = scheduler;
-  initImageHandlers();
-  loadFile(configFile);
-  _doRun = true;
-  Filter::GPU_ON = gpuOn;
-  if (pathToLog != "")
-  {
-    // The low level info will come from a log
-    setLogMode(pathToLog);
-  }
-  if (viveLogPath != "")
-  {
-    setViveLog(viveLogPath);
-  }
-  kmc.loadFile();
-  taggedKickName = "classic";
-  scheduler->getServices()->localisation->setRobocup(this);
 }
 
 Robocup::~Robocup()

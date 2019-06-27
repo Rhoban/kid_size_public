@@ -38,7 +38,7 @@ public:
   CameraState(const hl_communication::IntrinsicParameters& camera_parameters,
               const hl_communication::FrameEntry& frame_entry, const hl_communication::Pose3D& camera_from_self_pose,
               const hl_communication::Pose3D& camera_from_head_base_pose,
-              const hl_communication::VideoSourceID& source_id);
+              const hl_communication::VideoSourceID& source_id, MoveScheduler* moveScheduler);
 
   cv::Size getImgSize() const;
 
