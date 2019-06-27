@@ -180,12 +180,19 @@ bool ModelService::tick(double elapsed)
 
 Eigen::Affine3d ModelService::cameraToWorld(double timestamp)
 {
+  Eigen::Affine3d camera_to_world = (histories.pose("camera")->interpolate(timestamp));
+  return applyCalibration(timestamp, camera_to_world);
+}
+
+Eigen::Affine3d ModelService::applyCalibration(double timestamp, Eigen::Affine3d camera_to_world)
+{
   if (not useCalibration)
   {
-    return histories.pose("camera")->interpolate(timestamp);
+    return camera_to_world;
   }
+
   // head_base_from_camera
-  Eigen::Affine3d camera_from_world = (histories.pose("camera")->interpolate(timestamp)).inverse();
+  Eigen::Affine3d camera_from_world = camera_to_world.inverse();
   Eigen::Affine3d world_from_head_base = headBaseToWorld(timestamp);
   Eigen::Affine3d camera_from_head_base = camera_from_world * world_from_head_base;
 

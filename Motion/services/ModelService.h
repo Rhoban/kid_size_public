@@ -49,6 +49,8 @@ public:
   rhoban::CameraModel cameraModel;
   std::unique_ptr<rhoban_model_learning::CalibrationModel> calibration_model;
 
+  Eigen::Affine3d applyCalibration(double timestamp, Eigen::Affine3d camera_to_world);
+
   // Logging
   double replayTimestamp;
   bool isReplay;
