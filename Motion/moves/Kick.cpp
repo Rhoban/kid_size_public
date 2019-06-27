@@ -90,7 +90,7 @@ bool Kick::shouldCancel()
   const csa_mdp::KickZone& kick_zone = kmc.getKickModel(kickName).getKickZone();
   Eigen::Vector3d wishedPos = kick_zone.getWishedPos(!left);
   Eigen::Vector3d ballPos(ball.x, ball.y, wishedPos[2]);
-  Eigen::Vector3d avg = (wishedPos + ballPos) / 2.0;
+  Eigen::Vector3d avg = 0.75 * wishedPos + 0.25 * ballPos;
 
   return !kick_zone.canKick(!left, avg);
 }
