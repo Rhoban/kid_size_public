@@ -89,6 +89,15 @@ private:
    * Meta information for cameraFromSelf
    */
   hl_communication::VideoMetaInformation cameraFromSelfMeta;
+
+  /**
+   * Path access for cameraFromHeadBase
+   */
+  std::string cameraFromHeadBasePath;
+  /**
+   * Meta information for cameraFromHeadBase
+   */
+  hl_communication::VideoMetaInformation cameraFromHeadBaseMeta;
 };
 }  // namespace Filters
 }  // namespace Vision

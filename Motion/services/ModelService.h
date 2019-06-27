@@ -49,7 +49,8 @@ public:
   rhoban::CameraModel cameraModel;
   std::unique_ptr<rhoban_model_learning::CalibrationModel> calibration_model;
 
-  Eigen::Affine3d applyCalibration(double timestamp, Eigen::Affine3d camera_to_world);
+  Eigen::Affine3d applyCalibration(Eigen::Affine3d camera_to_world, Eigen::Affine3d world_from_head_base,
+                                   Eigen::Affine3d world_from_self);
 
   // Logging
   double replayTimestamp;
@@ -68,4 +69,5 @@ public:
 
   bool useCalibration;
   bool loadCalibration;
+  bool applyCorrectionInNonCorrectedReplay;
 };
