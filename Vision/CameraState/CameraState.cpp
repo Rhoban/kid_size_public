@@ -80,11 +80,17 @@ CameraState::CameraState(const IntrinsicParameters& camera_parameters, const Fra
     throw std::logic_error(DEBUG_INFO + " null movescheduler are not allowed anymore");
   }
   ModelService* modelService = _moveScheduler->getServices()->model;
-  if (!modelService->applyCorrectionInNonCorrectedReplay)
+  if (modelService->applyCorrectionInNonCorrectedReplay)
   {
     logger.log("applyCorrectionInNonCorrectedReplay to true");
     Eigen::Affine3d worldFromHeadBase = cameraToWorld * cameraFromHeadBase;
     cameraToWorld = modelService->applyCalibration(cameraToWorld, worldFromHeadBase, selfToWorld);
+    worldToCamera = cameraToWorld.inverse();
+    cameraFromHeadBase = worldToCamera * worldFromHeadBase;
+  }
+  else
+  {
+    logger.log("applyCorrectionInNonCorrectedReplay to false");
   }
 }
 

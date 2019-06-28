@@ -10,11 +10,14 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <rhoban_utils/logging/logger.h>
 
 #include "rhoban_model_learning/model_factory.h"
 
 using namespace rhoban_utils;
 using namespace rhoban_model_learning;
+
+static rhoban_utils::Logger logger("ModelService");
 
 ModelService::ModelService()
   : timeSinceLastPublish(0), bind("model"), isReplay(false), histories(60.0), lowLevelState("")
@@ -92,9 +95,11 @@ bool ModelService::tick(double elapsed)
 
   if (loadCalibration)
   {
+    logger.log("Loading calibration.json.");
     loadCalibration = false;
     std::unique_ptr<Model> model = ModelFactory().buildFromJsonFile("calibration.json");
     calibration_model.reset(dynamic_cast<CalibrationModel*>(model.release()));
+    logger.log(calibration_model->toJsonStringHuman().c_str());
     cameraModel = calibration_model->getCameraModel();
   }
 
