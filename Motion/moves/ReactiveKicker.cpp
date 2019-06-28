@@ -21,8 +21,6 @@ ReactiveKicker::ReactiveKicker(Walk* walk, Kick* kick, Head* head) : ApproachMov
       ->defaultValue(false)
       ->comment("Is the robot currently kicking?");
 
-  bind->bindNew("kick_pause_time", kickPauseTime, RhIO::Bind::PullOnly)->defaultValue(1.8);
-
   bind->bindNew("useRightFoot", useRightFoot, RhIO::Bind::PullOnly)->defaultValue(true);
 
   bind->pull();
@@ -46,7 +44,7 @@ void ReactiveKicker::onStart()
   head->setDisabled(false);
   head->setForceTrack(true);
 
-  kick->set(!useRightFoot, "classic", true, kickPauseTime);
+  kick->set(!useRightFoot, "classic", true);
   startMove("kick", 0.0);
 }
 
