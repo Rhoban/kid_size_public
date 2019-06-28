@@ -169,6 +169,7 @@ public:
   void getUpdatedCameraStateFromPipeline();
   void loggingStep();
   void updateBallInformations();
+  void updateRobotInformations();
 
   /**
    * Get all the features detected since last 'stealFeatures'

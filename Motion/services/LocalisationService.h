@@ -57,7 +57,11 @@ public:
   float fieldQ, fieldConsistency;
   bool consistencyEnabled;
 
-  // Opponent
+  /**
+   * Opponents:
+   * - Question: What is the 3rd value in Eigen::Vector3d -> ?score?
+   */
+
   std::vector<Eigen::Vector3d> getOpponentsSelf();
   std::vector<rhoban_geometry::Point> getOpponentsField();
   double opponentsRadius;
@@ -232,7 +236,4 @@ public:
   std::string cmdFakeLoc(double fieldX, double fieldY, double orientation);
   std::string cmdResetPosition();
   std::string cmdMoveOnField(double x, double y, double yaw);
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
