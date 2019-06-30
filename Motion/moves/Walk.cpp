@@ -134,7 +134,13 @@ void Walk::control(bool enable, double step, double lateral, double turn)
   {
     if (kick != nullptr && kick->isRunning() && enable)
     {
-      walkLogger.warning("Walk received order while kicking, ignoring");
+      static rhoban_utils::TimeStamp last_kick_warning = rhoban_utils::TimeStamp::now();
+      rhoban_utils::TimeStamp now = rhoban_utils::TimeStamp::now();
+      if (diffSec(last_kick_warning, now) > 1.0)
+      {
+        walkLogger.warning("Walk is receiving orders while kicking: ignoring orders");
+        last_kick_warning = now;
+      }
       enable = false;
     }
     step = bound(step, -maxStepBackward, maxStep);
