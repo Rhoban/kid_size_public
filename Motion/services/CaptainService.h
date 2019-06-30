@@ -169,6 +169,12 @@ protected:
    */
   rhoban_geometry::Point commonBall;
 
+  /**
+   * 0 -> reasonable output
+   * 1 -> debug output
+   */
+  int debugLevel;
+
   std::vector<PlacementOptimizer::Target> getTargetPositions(rhoban_geometry::Point ball,
                                                              rhoban_geometry::Point ballTarget);
 
