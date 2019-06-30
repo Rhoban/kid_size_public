@@ -557,26 +557,6 @@ void LocalisationService::customFieldReset(double x, double y, double noise, dou
   }
 }
 
-void LocalisationService::kickOffReset()
-{
-  if (NULL != robocup)
-  {
-    robocup->ballReset(Constants::field.center_radius, 0);
-  }
-
-  customFieldReset(-Constants::field.center_radius, 0, 0.3, 0, 5);
-
-  if (NULL != robocup)
-  {
-    robocup->robotsClear();
-  }
-}
-
-void LocalisationService::dropBallReset()
-{
-  // TODO
-}
-
 void LocalisationService::fallReset()
 {
   if (NULL != locBinding)

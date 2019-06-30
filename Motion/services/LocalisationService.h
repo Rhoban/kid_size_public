@@ -144,8 +144,6 @@ public:
   void resetFieldFilter();
   void resetRobotFilter();
 
-  void kickOffReset();
-  void dropBallReset();
   /// x in [m]
   void penaltyReset(float x);
   void penaltyGoalReset();
