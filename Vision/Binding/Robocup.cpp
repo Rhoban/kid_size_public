@@ -1347,7 +1347,7 @@ cv::Mat Robocup::getRadarImg(int width, int height)
       double marker_thickness = 2;
       if (obsType == "robot")
       {
-        cv::circle(img, obs_in_img, 15, cv::Scalar(200, 0, 200), -1);
+        cv::circle(img, obs_in_img, default_radius, cv::Scalar(200, 0, 200), -1);
       }
       else if (obsType == "ball")
       {
