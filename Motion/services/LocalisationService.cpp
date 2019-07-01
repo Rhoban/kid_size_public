@@ -498,7 +498,7 @@ void LocalisationService::applyKick(float x_, float y_)
 {
   if (Helpers::isFakeMode() && !Helpers::isPython)
   {
-    double yaw = rhoban::frameYaw(getSupportFootToSelf().rotation());
+    double yaw = -rhoban::frameYaw(getSupportFootToSelf().rotation());
     std::random_device rd;
     std::default_random_engine engine(rd());
     std::uniform_real_distribution<double> unif(-0.1, 0.1);
