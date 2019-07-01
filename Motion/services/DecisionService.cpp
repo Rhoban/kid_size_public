@@ -37,6 +37,9 @@ DecisionService::DecisionService()
   bind.bindNew("hasMateKickedRecently", hasMateKickedRecently, RhIO::Bind::PushOnly)
       ->comment("True if one of the robot of the team has performed a kick recently")
       ->defaultValue(false);
+  bind.bindNew("isMateKicking", isMateKicking, RhIO::Bind::PushOnly)
+      ->comment("True if one of the robot of the team is performing a kick")
+      ->defaultValue(false);
 
   // Constraint to say that ball is moving
   bind.bindNew("movingBallMinSpeed", movingBallMinSpeed, RhIO::Bind::PullOnly)
@@ -398,6 +401,7 @@ bool DecisionService::tick(double elapsed)
   const auto& teamplayInfos = getServices()->teamPlay->allInfo();
   bool tmpIsBallMoving = false;
   bool tmpHasMateKickedRecently = false;
+  bool tmpIsMateKicking = false;
   if (strategy->getTimeSinceLastKick() < postKickTrackingTime)
   {
     tmpHasMateKickedRecently = true;
@@ -418,9 +422,14 @@ bool DecisionService::tick(double elapsed)
     {
       tmpIsBallMoving = true;
     }
+    if (robotInfo.intention().action_planned() == Action::KICKING)
+    {
+      tmpIsMateKicking = true;
+    }
   }
   isBallMoving = tmpIsBallMoving;
   hasMateKickedRecently = tmpHasMateKickedRecently;
+  isMateKicking = tmpIsMateKicking;
 
   bind.push();
 
