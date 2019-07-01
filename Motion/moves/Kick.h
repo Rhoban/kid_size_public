@@ -30,6 +30,7 @@ public:
 
   void set(bool left, const std::string& kickName, bool pause = false, bool cancellable = false);
   void unpause();
+  void cancel();
 
   static std::string getPath(const std::string kickName, bool left = false);
 
@@ -46,6 +47,7 @@ protected:
   double pauseTime;
 
   bool cancellable;
+  bool forceCancel;
 
   // Warmup and cooldown
   double warmup;

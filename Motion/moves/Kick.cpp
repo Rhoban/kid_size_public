@@ -84,6 +84,12 @@ bool Kick::shouldCancel()
     return false;
   }
 
+  // Cancel was forced
+  if (forceCancel)
+  {
+    return true;
+  }
+
   // Check if ball is in kick zone or not
   auto localisation = getServices()->localisation;
   auto ball = localisation->getBallPosSelf(true);
@@ -98,6 +104,11 @@ bool Kick::shouldCancel()
 void Kick::unpause()
 {
   bind->node().setBool("pause", false);
+}
+
+void Kick::cancel()
+{
+  forceCancel = true;
 }
 
 void Kick::loadKick(std::string filename)
@@ -248,6 +259,7 @@ std::string Kick::getName()
 void Kick::onStart()
 {
   generated = false;
+  forceCancel = false;
   bind->pull();
 
   if (kickName == "throwin")
@@ -379,17 +391,18 @@ void Kick::step(float elapsed)
   }
   if (kickState == KickKicking)
   {
+    // If we are in pause mode, block the kick on the pause time
+    if (pause && t > tKick)
+    {
+      t = tKick;
+    }
+
     if (shouldCancel())
     {
       kickState = KickCancelling;
     }
     else
     {
-      // If we are in pause mode, block the kick on the pause time
-      if (pause && t > tKick)
-      {
-        t = tKick;
-      }
       if (t > tKick && !applied)
       {
         applied = true;
