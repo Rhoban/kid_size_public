@@ -32,6 +32,7 @@ void TCMovingBallPasser::onStart()
   head->setDisabled(false);
 
   // XXX: This is hacky
+  RhIO::Root.setFloat("/moves/kick/warmup", 2);
   RhIO::Root.setFloat("/moves/walk/maxStep", 0.06);
   RhIO::Root.setFloat("/moves/walk/maxLateral", 0.03);
   RhIO::Root.setFloat("/moves/walk/maxRotation", 15);
