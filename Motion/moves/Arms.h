@@ -33,7 +33,7 @@ public:
 
   // Enabling/disabling arms
   // force = true should only be used internally
-  void setArms(ArmsState armsState, bool force = false, bool init = false);
+  void setArms(ArmsState armsState, bool force = false);
 
   ArmsState armsState;
   armsAngle actualAngle;
@@ -46,6 +46,7 @@ protected:
   double smoothingArms;
   bool armsEnabled;
   bool maintenanceArmsEnabled;
+  bool initialized;
 
   void stepArms(double elapsed);
 };
