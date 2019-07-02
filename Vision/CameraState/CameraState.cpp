@@ -59,15 +59,39 @@ CameraState::CameraState(MoveScheduler* moveScheduler) : CameraState()
 }
 
 CameraState::CameraState(const IntrinsicParameters& camera_parameters, const FrameEntry& frame_entry,
-                         const Pose3D& camera_from_self_pose, const hl_communication::VideoSourceID& source_id_)
-  : CameraState()
+                         const Pose3D& camera_from_self_pose, const Pose3D& camera_from_head_base_pose,
+                         const hl_communication::VideoSourceID& source_id_, MoveScheduler* moveScheduler)
+  : CameraState(moveScheduler)
 {
+  logger.log("Building Camera State.");
   source_id = source_id_;
   importFromProtobuf(camera_parameters);
   importFromProtobuf(frame_entry);
+
   Eigen::Affine3d cameraFromSelf = getAffineFromProtobuf(camera_from_self_pose);
   worldToSelf = cameraFromSelf.inverse() * cameraToWorld.inverse();
   selfToWorld = worldToSelf.inverse();
+
+  cameraFromHeadBase = getAffineFromProtobuf(camera_from_head_base_pose);
+
+  // Removing correction if needed
+  if (_moveScheduler == nullptr)
+  {
+    throw std::logic_error(DEBUG_INFO + " null movescheduler are not allowed anymore");
+  }
+  ModelService* modelService = _moveScheduler->getServices()->model;
+  if (modelService->applyCorrectionInNonCorrectedReplay)
+  {
+    logger.log("applyCorrectionInNonCorrectedReplay to true");
+    Eigen::Affine3d worldFromHeadBase = cameraToWorld * cameraFromHeadBase;
+    cameraToWorld = modelService->applyCalibration(cameraToWorld, worldFromHeadBase, selfToWorld);
+    worldToCamera = cameraToWorld.inverse();
+    cameraFromHeadBase = worldToCamera * worldFromHeadBase;
+  }
+  else
+  {
+    logger.log("applyCorrectionInNonCorrectedReplay to false");
+  }
 }
 
 cv::Size CameraState::getImgSize() const
@@ -192,7 +216,7 @@ void CameraState::updateInternalModel(const rhoban_utils::TimeStamp& ts)
     _cameraModel = modelService->cameraModel;
     worldToSelf = selfToWorld.inverse();
     cameraToWorld = worldToCamera.inverse();
-    camera_from_head_base = worldToCamera * modelService->headBaseToWorld(scheduler_ts).inverse();
+    cameraFromHeadBase = worldToCamera * modelService->headBaseToWorld(scheduler_ts).inverse();
     frame_status = decision->camera_status;
     // Update camera/field transform based on (by order of priority)
     // 1. Vive

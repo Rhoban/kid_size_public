@@ -135,7 +135,7 @@ void ImageLogger::writeEntry(int idx, const Entry& e)
   setProtobufFromAffine(e.cs.worldToCamera * e.cs.selfToWorld, entry->mutable_pose());
   entry = metadata["camera_from_head_base"].add_frames();
   e.cs.exportToProtobuf(entry);
-  setProtobufFromAffine(e.cs.camera_from_head_base, entry->mutable_pose());
+  setProtobufFromAffine(e.cs.cameraFromHeadBase, entry->mutable_pose());
   entry = metadata["camera_from_field"].add_frames();
   e.cs.exportToProtobuf(entry);
   if (e.cs.has_camera_field_transform)

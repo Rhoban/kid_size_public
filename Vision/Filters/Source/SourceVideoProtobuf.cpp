@@ -34,9 +34,14 @@ void SourceVideoProtobuf::loadMetaInformation()
 {
   loadMetaInformation(cameraFromWorldPath, &cameraFromWorldMeta);
   loadMetaInformation(cameraFromSelfPath, &cameraFromSelfMeta);
+  loadMetaInformation(cameraFromHeadBasePath, &cameraFromHeadBaseMeta);
   if (cameraFromWorldMeta.frames_size() != cameraFromSelfMeta.frames_size())
   {
     throw std::runtime_error(DEBUG_INFO + " size mismatch between cameraFromWorld and cameraFromSelf");
+  }
+  if (cameraFromWorldMeta.frames_size() != cameraFromHeadBaseMeta.frames_size())
+  {
+    throw std::runtime_error(DEBUG_INFO + " size mismatch between cameraFromWorld and cameraFromHeadBase");
   }
 }
 
@@ -70,8 +75,9 @@ Utils::CameraState* SourceVideoProtobuf::buildCameraState()
   }
 
   const hl_communication::Pose3D& camera_from_self = cameraFromSelfMeta.frames(index).pose();
+  const hl_communication::Pose3D& camera_from_head_base = cameraFromHeadBaseMeta.frames(index).pose();
   return new Utils::CameraState(cameraFromWorldMeta.camera_parameters(), cameraFromWorldMeta.frames(index),
-                                camera_from_self, cameraFromWorldMeta.source_id());
+                                camera_from_self, camera_from_head_base, cameraFromWorldMeta.source_id(), scheduler);
 }
 
 void SourceVideoProtobuf::process()
@@ -108,6 +114,7 @@ void SourceVideoProtobuf::fromJson(const Json::Value& v, const std::string& dir_
   rhoban_utils::tryRead(v, "videoPath", &videoPath);
   rhoban_utils::tryRead(v, "cameraFromWorldPath", &cameraFromWorldPath);
   rhoban_utils::tryRead(v, "cameraFromSelfPath", &cameraFromSelfPath);
+  rhoban_utils::tryRead(v, "cameraFromHeadBasePath", &cameraFromHeadBasePath);
   rhoban_utils::tryRead(v, "keepOnlyMovingFrames", &keepOnlyMovingFrames);
   openVideo();
   loadMetaInformation();
@@ -126,6 +133,7 @@ Json::Value SourceVideoProtobuf::toJson() const
   v["videoPath"] = videoPath;
   v["cameraFromWorldPath"] = cameraFromWorldPath;
   v["cameraFromSelfPath"] = cameraFromSelfPath;
+  v["cameraFromHeadBasePath"] = cameraFromHeadBasePath;
   v["keepOnlyMovingFrames"] = keepOnlyMovingFrames;
   return v;
 }
@@ -187,6 +195,11 @@ void SourceVideoProtobuf::update()
 {
   setIndex(index);
   updateImg();
+}
+
+void SourceVideoProtobuf::setScheduler(MoveScheduler* new_scheduler)
+{
+  scheduler = new_scheduler;
 }
 
 }  // namespace Filters

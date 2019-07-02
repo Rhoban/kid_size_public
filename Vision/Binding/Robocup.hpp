@@ -115,16 +115,6 @@ public:
    */
   Robocup(MoveScheduler* scheduler);
 
-  // Create a robocup config based on configFile
-  // Required for config file
-  Robocup(const std::string& configFile, MoveScheduler* scheduler);
-
-  /**
-   * Initialize and start
-   * the Robocup pipeline with cmd-line args
-   */
-  Robocup(int argc, char** argv);
-
   /**
    * Stop the pipeline
    */

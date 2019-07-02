@@ -10,11 +10,14 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <rhoban_utils/logging/logger.h>
 
 #include "rhoban_model_learning/model_factory.h"
 
 using namespace rhoban_utils;
 using namespace rhoban_model_learning;
+
+static rhoban_utils::Logger logger("ModelService");
 
 ModelService::ModelService()
   : timeSinceLastPublish(0), bind("model"), isReplay(false), histories(60.0), lowLevelState("")
@@ -37,6 +40,11 @@ ModelService::ModelService()
 
   bind.bindNew("useCalibration", useCalibration, RhIO::Bind::PullOnly)->defaultValue(true);
   bind.bindNew("loadCalibration", loadCalibration, RhIO::Bind::PushAndPull)->defaultValue(false);
+  bind.bindNew("applyCorrectionInNonCorrectedReplay", applyCorrectionInNonCorrectedReplay, RhIO::Bind::PushAndPull)
+      ->defaultValue(false)
+      ->comment("If the log was taken with useCalibration=false, then applyCorrectionInNonCorrectedReplay=true applies "
+                "the "
+                "calibration. Else, applyCorrectionInNonCorrectedReplay should be false.");
 
   // Declaration of history entries
   histories.pose("camera");
@@ -87,9 +95,11 @@ bool ModelService::tick(double elapsed)
 
   if (loadCalibration)
   {
+    logger.log("Loading calibration.json.");
     loadCalibration = false;
     std::unique_ptr<Model> model = ModelFactory().buildFromJsonFile("calibration.json");
     calibration_model.reset(dynamic_cast<CalibrationModel*>(model.release()));
+    logger.log(calibration_model->toJsonStringHuman().c_str());
     cameraModel = calibration_model->getCameraModel();
   }
 
@@ -180,17 +190,25 @@ bool ModelService::tick(double elapsed)
 
 Eigen::Affine3d ModelService::cameraToWorld(double timestamp)
 {
+  Eigen::Affine3d camera_to_world = (histories.pose("camera")->interpolate(timestamp));
   if (not useCalibration)
   {
-    return histories.pose("camera")->interpolate(timestamp);
+    return camera_to_world;
   }
-  // head_base_from_camera
-  Eigen::Affine3d camera_from_world = (histories.pose("camera")->interpolate(timestamp)).inverse();
+
   Eigen::Affine3d world_from_head_base = headBaseToWorld(timestamp);
+  Eigen::Affine3d world_from_self = selfToWorld(timestamp);
+  return applyCalibration(camera_to_world, world_from_head_base, world_from_self);
+}
+
+Eigen::Affine3d ModelService::applyCalibration(Eigen::Affine3d camera_to_world, Eigen::Affine3d world_from_head_base,
+                                               Eigen::Affine3d world_from_self)
+{
+  // camera_from_head_base
+  Eigen::Affine3d camera_from_world = camera_to_world.inverse();
   Eigen::Affine3d camera_from_head_base = camera_from_world * world_from_head_base;
 
   // camera_from_self
-  Eigen::Affine3d world_from_self = selfToWorld(timestamp);
   Eigen::Affine3d camera_from_self = camera_from_world * world_from_self;
 
   // apply correction
