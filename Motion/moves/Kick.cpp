@@ -399,6 +399,7 @@ void Kick::step(float elapsed)
 
     if (shouldCancel())
     {
+      logger.log("Cancelling kick");
       kickState = KickCancelling;
     }
     else
