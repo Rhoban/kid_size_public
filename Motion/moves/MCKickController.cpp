@@ -246,7 +246,7 @@ void MCKickController::step(float elapsed)
 
     if (enableLateral)
     {
-      if (_bestAction.kick == "small" || ball.x < -1 || ball.x > 3)
+      if (_bestAction.kick == "small" || ball.x < -1 || ball.x > 2.75)
       {
         allowed_kicks.push_back("lateral");
       }
