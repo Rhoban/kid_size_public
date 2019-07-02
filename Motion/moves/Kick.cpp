@@ -97,6 +97,7 @@ bool Kick::shouldCancel()
   Eigen::Vector3d wishedPos = kick_zone.getWishedPos(!left);
   Eigen::Vector3d ballPos(ball.x, ball.y, wishedPos[2]);
   Eigen::Vector3d avg = 0.75 * wishedPos + 0.25 * ballPos;
+  avg.z() = -avg.z();
 
   return !kick_zone.canKick(!left, avg);
 }
@@ -399,6 +400,7 @@ void Kick::step(float elapsed)
 
     if (shouldCancel())
     {
+      logger.log("Cancelling kick");
       kickState = KickCancelling;
     }
     else

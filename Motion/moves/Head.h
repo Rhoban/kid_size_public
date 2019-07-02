@@ -154,4 +154,8 @@ private:
 
   /// Time offset (in the future) for ball prediction [ms]
   double predicted_ball_time_offset;
+
+  /// Storing last orders for smoothing [deg]
+  double last_pan_target;
+  double last_tilt_target;
 };

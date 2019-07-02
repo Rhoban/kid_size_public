@@ -2,9 +2,13 @@
 
 #include "Utils/ROITools.hpp"
 
+#include <rhoban_utils/logging/logger.h>
+
 #include <opencv2/imgproc/imgproc.hpp>
 
 using namespace Vision::Utils;
+
+static rhoban_utils::Logger logger("PatchProvider");
 
 namespace Vision
 {
@@ -42,6 +46,12 @@ void PatchProvider::addPatches(const std::vector<cv::Rect>& rois, const cv::Mat&
   {
     cv::Rect roi_src = resizeROI(roi, roi_img, src);
     cv::Mat raw_patch(src, roi_src);
+    if (raw_patch.cols == 0 || raw_patch.rows == 0)
+    {
+      logger.log("Invalid patch size: %d x %d", raw_patch.rows, raw_patch.cols);
+      continue;
+    }
+
     // Determine scale if resizing is required
     double col_scale = patchWidth / (double)raw_patch.cols;
     double row_scale = patchHeight / (double)raw_patch.rows;

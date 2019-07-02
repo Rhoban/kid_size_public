@@ -66,6 +66,7 @@ void Arms::onStart()
 
   armsState = ArmsEnabled;
   smoothingArms = 0;
+  initialized = false;
 }
 
 void Arms::onStop()
@@ -87,7 +88,7 @@ void Arms::step(float elapsed)
   bind->push();
 }
 
-void Arms::setArms(ArmsState newArmsState, bool force, bool init)
+void Arms::setArms(ArmsState newArmsState, bool force)
 {
   if (armsState == newArmsState && !force)
   {
@@ -96,10 +97,13 @@ void Arms::setArms(ArmsState newArmsState, bool force, bool init)
 
   logger.log("changing arms movement, new ArmsState = %d ", armsState);
 
-  lastAngle = actualAngle;
+  if (!initialized)
+  {
+    initialized = true;
+    updateTarget();
+  }
 
-  if (init)
-    lastAngle = actualAngle;
+  lastAngle = actualAngle;
 
   armsState = newArmsState;
   bind->node().setInt("armsState", armsState);

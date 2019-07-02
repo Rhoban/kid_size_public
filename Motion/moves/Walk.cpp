@@ -104,9 +104,9 @@ void Walk::onStart()
     startMove("head", 0.5);
     head->setDisabled(true);
   }
-  startMove("arms", 0.5);
 
-  arms->setArms(Arms::ArmsState::ArmsEnabled, true, true);
+  startMove("arms", 0.5);
+  arms->setArms(Arms::ArmsState::ArmsEnabled, true);
 
   auto model = getServices()->model;
   engine.initByModel(model->model);

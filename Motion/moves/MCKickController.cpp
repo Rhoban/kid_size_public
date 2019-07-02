@@ -37,6 +37,9 @@ MCKickController::MCKickController()
   // Use Monte carlo simulation ?
   bind->bindNew("useMonteCarlo", useMonteCarlo, RhIO::Bind::PullOnly)->defaultValue(true);
 
+  // Enable lateral kicks
+  bind->bindNew("enableLateral", enableLateral, RhIO::Bind::PullOnly)->defaultValue(true);
+
   // Reload strategy file
   bind->bindFunc("reloadStrategy", "Reload the strategy file", &MCKickController::cmdReloadStrategy, *this);
 
@@ -224,12 +227,12 @@ void MCKickController::onStop()
 void MCKickController::step(float elapsed)
 {
   bind->pull();
+  LocalisationService* localisation = getServices()->localisation;
+  auto ball = localisation->getBallPosField();
 
   // If the generation is not available, falling back to strategy;
   if (!available || !useMonteCarlo)
   {
-    LocalisationService* localisation = getServices()->localisation;
-    auto ball = localisation->getBallPosField();
     _bestAction = strategy.actionFor(ball.x, ball.y);
   }
 
@@ -239,14 +242,14 @@ void MCKickController::step(float elapsed)
     tolerance = _bestAction.tolerance / 2.0;
 
     allowed_kicks.clear();
-    if (_bestAction.kick == "opportunist")
+    allowed_kicks.push_back(_bestAction.kick);
+
+    if (enableLateral)
     {
-      allowed_kicks.push_back("classic");
-      allowed_kicks.push_back("lateral");
-    }
-    else
-    {
-      allowed_kicks.push_back(_bestAction.kick);
+      if (_bestAction.kick == "small" || ball.x < -1 || ball.x > 2.75)
+      {
+        allowed_kicks.push_back("lateral");
+      }
     }
   }
 
