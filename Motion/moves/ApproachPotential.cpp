@@ -184,7 +184,7 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     y = 0;
   }
 
-  if (directPlace && fabs(error) > 10)
+  if (directPlace && fabs(error) > deg2rad(15))
   {
     x = 0;
     y = 0;
