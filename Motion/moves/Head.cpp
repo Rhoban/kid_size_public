@@ -25,6 +25,8 @@ Head::Head()
   , is_tracking(false)
   , tracking_time(0)
   , scanning_time(0)
+  , last_pan_target(0)
+  , last_tilt_target(0)
 {
   Move::initializeBinding();
   // Special modes variables
@@ -213,6 +215,16 @@ void Head::step(float elapsed)
 
   wished_pan = rad2deg(wished_pan_rad);
   wished_tilt = rad2deg(wished_tilt_rad);
+
+  if (!is_tracking)
+  {
+    double max_diff = max_speed * elapsed;
+    wished_pan = std::min(std::max(wished_pan, wished_pan - max_diff), wished_pan + max_diff);
+    wished_tilt = std::min(std::max(wished_tilt, wished_tilt - max_diff), wished_tilt + max_diff);
+  }
+
+  last_pan_target = wished_pan;
+  last_tilt_target = wished_tilt;
 
   if (!modelSuccess)
   {
