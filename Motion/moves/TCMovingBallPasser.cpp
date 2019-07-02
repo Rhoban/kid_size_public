@@ -54,7 +54,7 @@ void TCMovingBallPasser::step(float elapsed)
   allowed_kicks.clear();
   allowed_kicks.push_back("classic");
   tolerance = 0;
-  kick_dir = kickDirection;
+  kick_dir = yPositive ? kickDirection : -kickDirection;
 
   t += elapsed;
 

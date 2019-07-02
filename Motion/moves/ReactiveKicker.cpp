@@ -82,7 +82,7 @@ void ReactiveKicker::step(float elapsed)
   {
     is_ready = true;
     t = 0;
-    kick->set(!useRightFoot, "classic", true, true);
+    kick->set(!useRightFoot, "classic", true);
     startMove("kick", 0.0);
     logger.log("Starting kick move");
   }
