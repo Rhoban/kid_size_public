@@ -28,8 +28,9 @@ public:
 
   void loadKick(std::string filename);
 
-  void set(bool left, const std::string& kickName, bool pause = false, double pauseTime = 0.0);
+  void set(bool left, const std::string& kickName, bool pause = false, bool cancellable = false);
   void unpause();
+  void cancel();
 
   static std::string getPath(const std::string kickName, bool left = false);
 
@@ -39,12 +40,14 @@ protected:
   bool useManualT;
   double manualT;
   bool applied;
-  double t, tMax;
+  double t, tMax, tKick;
   double dt;
-  double applyKickRatio;
 
   bool pause;
   double pauseTime;
+
+  bool cancellable;
+  bool forceCancel;
 
   // Warmup and cooldown
   double warmup;
@@ -56,7 +59,8 @@ protected:
     KickWaitingWalkToStop,
     KickWarmup,
     KickKicking,
-    KickCooldown
+    KickCooldown,
+    KickCancelling
   };
 
   KickState kickState;
@@ -73,11 +77,15 @@ protected:
   // Preloaded splines
   std::map<std::string, Splines> preloadedSplines;
   std::map<std::string, double> maxTimes;
+  std::map<std::string, double> kickTimes;
 
   // The collection of available kicks
   csa_mdp::KickModelCollection kmc;
 
   void apply();
+
+  // Should we cancel that kick ?
+  bool shouldCancel();
 
   Head* head;
   Walk* walk;

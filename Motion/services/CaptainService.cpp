@@ -174,6 +174,10 @@ CaptainService::CaptainService()
       ->defaultValue(0);
   bind.bindNew("openingStrategyTime", openingStrategyTime, RhIO::Bind::PullOnly)->defaultValue(30);
   bind.bindNew("openingStrategyOrientation", openingStrategyOrientation, RhIO::Bind::PullOnly)->defaultValue(60);
+
+  bind.bindNew("debugLevel", debugLevel, RhIO::Bind::PullOnly)
+      ->comment("0: limited to non-spamming message, 1: enable all messages")
+      ->defaultValue(0);
 }
 
 CaptainService::~CaptainService()
@@ -234,7 +238,8 @@ StrategyOrder CaptainService::getMyOrder()
       return order;
     }
   }
-  logger.warning("Cannot find an order for robot: %d", my_id);
+  if (debugLevel > 0)
+    logger.warning("Cannot find an order for robot: %d", my_id);
   return StrategyOrder();
 }
 
@@ -380,7 +385,7 @@ void CaptainService::updateCommonOpponents()
     const PoseDistribution mate_pose = info.perception().self_in_field(0).pose();
     const PositionDistribution& mate_pos = mate_pose.position();
     mates.push_back(Point(mate_pos.x(), mate_pos.y()));
-    for (const Perception::WeightedRobotPose& robot : info.perception().robots())
+    for (const WeightedRobotPose& robot : info.perception().robots())
     {
       const PositionDistribution& pos = fieldFromSelf(mate_pose, robot.robot().robot_in_self().position());
       obstacles.push_back(Point(pos.x(), pos.y()));
@@ -778,7 +783,7 @@ void CaptainService::compute()
       robots[robot_id] = info;
       robotIds.push_back(robot_id);
     }
-    else
+    else if (debugLevel > 0)
     {
       logger.log("Ignoring robot entry-> outdated:%d, penalized:%d, playing:%d, localized:%d", outdated,
                  penalizedRobots[robot_id], playing, localized);

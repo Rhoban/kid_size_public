@@ -17,10 +17,10 @@ RobotFilter::RobotFilter(Utils::CameraState* cs) : RadarFilterPoint(cs)
   initialScore = 0.2;
   maximumScore = 1.0;
   scoreIncrease = 0.1;
-  scoreReduction = 0.01;
-  scoreReductionOut = 0.001;
+  scoreReduction = 0.02;
+  scoreReductionOut = 0.002;
   positionDiscount = 0.8;
-  normalizeSum = true;
+  normalizeSum = false;
   matchDistance = 1.0;
   far = 8;
 }

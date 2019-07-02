@@ -48,6 +48,7 @@ private:
   ParamFloat sizePropNoiseMax;
   ParamFloat posFixedNoiseMax;
   ParamFloat posPropNoiseMax;
+  ParamInt verbose;
 
   /**
    * row_1 : size_fixed

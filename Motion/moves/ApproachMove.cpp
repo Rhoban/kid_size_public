@@ -127,7 +127,7 @@ void ApproachMove::requestKick()
   oss << "Kick in '" << getName() << "': " << expectedKick << " with " << (kickRight ? "right" : "left") << " foot";
   logger.log("%s", oss.str().c_str());
   // Sending kick order to walk
-  kick->set(!kickRight, expectedKick);
+  kick->set(!kickRight, expectedKick, false, true);
   startMove("kick", 0.0);
 }
 

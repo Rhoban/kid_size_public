@@ -34,8 +34,11 @@ DecisionService::DecisionService()
   bind.bindNew("isBallMoving", isBallMoving, RhIO::Bind::PushOnly)
       ->comment("Is the ball moving significantly according to one of the robot of the team")
       ->defaultValue(false);
-  bind.bindNew("isMSateKicking", isMateKicking, RhIO::Bind::PushOnly)
+  bind.bindNew("hasMateKickedRecently", hasMateKickedRecently, RhIO::Bind::PushOnly)
       ->comment("True if one of the robot of the team has performed a kick recently")
+      ->defaultValue(false);
+  bind.bindNew("isMateKicking", isMateKicking, RhIO::Bind::PushOnly)
+      ->comment("True if one of the robot of the team is performing a kick")
       ->defaultValue(false);
 
   // Constraint to say that ball is moving
@@ -393,14 +396,15 @@ bool DecisionService::tick(double elapsed)
     timeSinceFall += elapsed;
   }
 
-  // Update the isBallMoving amd isMateKicking flags
+  // Update the isBallMoving and hasMateKickedRecently flags
   // a tmp value is used to ensure thread-safety
   const auto& teamplayInfos = getServices()->teamPlay->allInfo();
   bool tmpIsBallMoving = false;
+  bool tmpHasMateKickedRecently = false;
   bool tmpIsMateKicking = false;
   if (strategy->getTimeSinceLastKick() < postKickTrackingTime)
   {
-    tmpIsMateKicking = true;
+    tmpHasMateKickedRecently = true;
   }
   for (const auto& pair : teamplayInfos)
   {
@@ -412,14 +416,19 @@ bool DecisionService::tick(double elapsed)
     float ballSpeed = std::sqrt(vx * vx + vy * vy);
     if (misc_extra.time_since_last_kick() < postKickTrackingTime)
     {
-      tmpIsMateKicking = true;
+      tmpHasMateKickedRecently = true;
     }
     if (ballSpeed > movingBallMinSpeed)
     {
       tmpIsBallMoving = true;
     }
+    if (robotInfo.intention().action_planned() == Action::KICKING)
+    {
+      tmpIsMateKicking = true;
+    }
   }
   isBallMoving = tmpIsBallMoving;
+  hasMateKickedRecently = tmpHasMateKickedRecently;
   isMateKicking = tmpIsMateKicking;
 
   bind.push();

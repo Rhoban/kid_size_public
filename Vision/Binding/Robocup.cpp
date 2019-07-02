@@ -496,6 +496,10 @@ void Robocup::step()
   updateBallInformations();
   Benchmark::close("BallInformations");
 
+  Benchmark::open("RobotInformations");
+  updateRobotInformations();
+  Benchmark::close("RobotInformations");
+
   Benchmark::open("Tagging & Display");
 
   globalMutex.unlock();
@@ -614,7 +618,7 @@ void Robocup::readPipeline()
       for (const cv::Point2f& robot_in_img : robots_in_img)
       {
         cv::Point2f world_pos = cs->worldPosFromImg(robot_in_img.x, robot_in_img.y);
-        detectedRobots->push_back(cv::Point3f(world_pos.x, world_pos.y, Constants::field.ball_radius));
+        detectedRobots->push_back(cv::Point3f(world_pos.x, world_pos.y, 0));
       }
     }
     catch (const std::bad_cast& e)
@@ -760,8 +764,8 @@ void Robocup::loggingStep()
   double elapsedSinceBallMoving = diffSec(lastBallMoving, now);
   // Status of autoLog
   bool autoLogActive = moving_ball_logger.isActive();
-  bool startAutoLog = autologMovingBall && !autoLogActive && decision->isMateKicking;
-  bool stopAutoLog = autoLogActive && !(elapsedSinceBallMoving < logBallExtraTime || decision->isMateKicking);
+  bool startAutoLog = autologMovingBall && !autoLogActive && decision->hasMateKickedRecently;
+  bool stopAutoLog = autoLogActive && !(elapsedSinceBallMoving < logBallExtraTime || decision->hasMateKickedRecently);
   bool useAutoLogEntry = startAutoLog || (autoLogActive && !stopAutoLog);
   // Starting autoLog
   if (startAutoLog)
@@ -895,6 +899,38 @@ void Robocup::updateBallInformations()
               robot_pos.y, field_dir);
     }
   }
+}
+
+void Robocup::updateRobotInformations()
+{
+  std::vector<Eigen::Vector3d> positions;
+  // Getting candidates of current step
+  for (const cv::Point3f& robot_pos_in_world : *detectedRobots)
+  {
+    try
+    {
+      Eigen::Vector3d robotInWorld = cv2Eigen(robot_pos_in_world);
+      positions.push_back(robotInWorld);
+    }
+    catch (const std::runtime_error& exc)
+    {
+      out.warning("Ignoring a candidate at (%f,%f) because of '%s'", robot_pos_in_world.x, robot_pos_in_world.y,
+                  exc.what());
+    }
+  }
+  // Positions are transmitted in the world referential
+  robotFilter->newFrame(positions);
+
+  // Broadcast information to localisation service
+  // Sending data to the loc
+  LocalisationService* loc = _scheduler->getServices()->localisation;
+
+  std::vector<Eigen::Vector3d> robot_candidates;
+  for (const auto& c : robotFilter->getCandidates())
+  {
+    robot_candidates.push_back(c.object);
+  }
+  loc->setOpponentsWorld(robot_candidates);
 }
 
 std::unique_ptr<Field::POICollection> Robocup::stealFeatures()
@@ -1271,7 +1307,7 @@ cv::Mat Robocup::getRadarImg(int width, int height)
       double marker_thickness = 2;
       if (obsType == "robot")
       {
-        cv::circle(img, obs_in_img, 15, cv::Scalar(200, 0, 200), -1);
+        cv::circle(img, obs_in_img, default_radius, cv::Scalar(200, 0, 200), -1);
       }
       else if (obsType == "ball")
       {

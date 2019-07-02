@@ -26,11 +26,12 @@ public:
   LocalisationService();
 
   // Ball
-  rhoban_geometry::Point getBallPosSelf();
+  rhoban_geometry::Point getBallPosSelf(bool supportBasedSelf = false);
   rhoban_geometry::Point getBallPosWorld();
   rhoban_geometry::Point getBallPosField();
   rhoban_geometry::Point getBallSpeedSelf();
   rhoban_geometry::Point getPredictedBallSelf();
+
   /**
    * Returns the predicted ball position in self referential at time 't', using linear interpolation
    */
@@ -39,6 +40,12 @@ public:
   float ballQ;
   rhoban_geometry::Point ballSpeed;  // In world referential
   rhoban_utils::TimeStamp ballTS;
+
+  /**
+   * Use another method to compute "support foot to self", which is based on y translation from the support
+   * foot instead of feet frames averaging
+   */
+  Eigen::Affine3d getSupportFootToSelf();
 
   // Goal
   rhoban_geometry::Point getGoalPosField();
@@ -57,7 +64,11 @@ public:
   float fieldQ, fieldConsistency;
   bool consistencyEnabled;
 
-  // Opponent
+  /**
+   * Opponents:
+   * - Question: What is the 3rd value in Eigen::Vector3d -> ?score?
+   */
+
   std::vector<Eigen::Vector3d> getOpponentsSelf();
   std::vector<rhoban_geometry::Point> getOpponentsField();
   double opponentsRadius;
@@ -133,8 +144,6 @@ public:
   void resetFieldFilter();
   void resetRobotFilter();
 
-  void kickOffReset();
-  void dropBallReset();
   /// x in [m]
   void penaltyReset(float x);
   void penaltyGoalReset();
@@ -232,7 +241,4 @@ public:
   std::string cmdFakeLoc(double fieldX, double fieldY, double orientation);
   std::string cmdResetPosition();
   std::string cmdMoveOnField(double x, double y, double yaw);
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

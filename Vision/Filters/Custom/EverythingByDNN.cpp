@@ -54,6 +54,7 @@ EverythingByDNN::EverythingByDNN() : Filter("EverythingByDNN"), model_path("mode
   classNames.push_back("LineCorner");
   classNames.push_back("PenaltyMark");
   classNames.push_back("PostBase");
+  classNames.push_back("Robot");
   classNames.push_back("T");
   classNames.push_back("X");
 }
@@ -70,7 +71,7 @@ void EverythingByDNN::setParameters()
 
   for (const std::string& className : classNames)
   {
-    isUsingFeature[className] = ParamInt(0,0,1);
+    isUsingFeature[className] = ParamInt(0, 0, 1);
     params()->define<ParamInt>("uses" + className, &(isUsingFeature[className]));
   }
 }
@@ -128,13 +129,13 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
 
   cv::dnn::Blob in = cv::dnn::Blob::fromImages(patch);
 
-  net.setBlob(".img", in);
+  net.setBlob(".img_placeholder", in);
 
   Benchmark::open("predict");
   net.forward();
   Benchmark::close("predict");
 
-  cv::dnn::Blob prob = net.getBlob("tiny_model/output/output/Softmax");  // gather output of "prob" layer
+  cv::dnn::Blob prob = net.getBlob("generic_cnn/fully_connected/output/Softmax");  // gather output of "prob" layer
   // std::cout << prob << std::endl;
   int classId;
   double classProb;
@@ -184,14 +185,20 @@ void EverythingByDNN::process()
 
       bool isValid = res.second >= scoreThreshold;
 
-      std::string s_class = usedClassNames.at(res.first);
+      std::string s_class;
+      s_class = usedClassNames.at(res.first);
 
+      cv::Point2f roi_center(roi.center.x, roi.center.y);
       if (s_class != "Empty")
       {                         // not Empty
         if (s_class == "Ball")  // Ball
-          pushBall(cv::Point2f(roi.center.x, roi.center.y));
-        else
+          pushBall(roi_center);
+        else if (s_class == "Robot")
+          pushRobot(roi_center);
+        else if (stringToPOIEnum.count(s_class) > 0)
           pushPOI(stringToPOIEnum.at(s_class), cv::Point2f(roi.center.x, roi.center.y));
+        else
+          logger.error("Unknown label: '%s'", s_class.c_str());
       }
 
       if (s_class == "Empty")  // Empty

@@ -90,6 +90,11 @@ private:
 
   /// If enabled, a local search is used nearby every selected candidate
   ParamInt useLocalSearch;
+
+  /**
+   * Controls the minimal spacing based on ratio of intersection between areas in [0,1]
+   */
+  ParamFloat maxOverlapRatio;
 };
 }  // namespace Filters
 }  // namespace Vision

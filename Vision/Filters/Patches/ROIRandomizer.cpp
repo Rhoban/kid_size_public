@@ -33,6 +33,7 @@ void ROIRandomizer::setParameters()
   sizePropNoiseMax = ParamFloat(0.2, 0.0, 1.0);
   posFixedNoiseMax = ParamFloat(5.0, 0.0, 20.0);
   posPropNoiseMax = ParamFloat(0.2, 0.0, 1.0);
+  verbose = ParamInt(0, 0, 1);
 
   params()->define<ParamInt>("maxROI", &maxROI);
   params()->define<ParamInt>("maxROIPerInput", &maxROIPerInput);
@@ -40,6 +41,7 @@ void ROIRandomizer::setParameters()
   params()->define<ParamFloat>("sizePropNoiseMax", &sizePropNoiseMax);
   params()->define<ParamFloat>("posFixedNoiseMax", &posFixedNoiseMax);
   params()->define<ParamFloat>("posPropNoiseMax", &posPropNoiseMax);
+  params()->define<ParamInt>("verbose", &verbose);
 }
 
 void ROIRandomizer::randomizeROI(cv::Rect_<float>* roi)
@@ -68,9 +70,13 @@ void ROIRandomizer::process()
   cv::Size img_size(img().cols, img().rows);
 
   int round = 0;
+  if (verbose)
+    logger.log("Nb rois_input : %d", input_rois.size());
   while (round < maxROIPerInput && _rois.size() < (size_t)maxROI)
   {
     int missing_rois = maxROI - _rois.size();
+    if (verbose)
+      logger.log("# ROUND %d | features_missing: %d", round, missing_rois);
     std::vector<size_t> roi_indices = rhoban_random::getUpToKDistinctFromN(missing_rois, input_rois.size(), &engine);
     for (size_t roi_idx : roi_indices)
     {

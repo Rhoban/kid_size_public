@@ -173,15 +173,8 @@ void TeamPlayService::updatePerception(RobotMsg* msg)
   ball_velocity_in_self->set_y(ballVel.y);
   // Pose estimation of the robot, currently, only one pose is used
   rhoban_geometry::Point fieldPos = loc->getFieldPos();
-  /* WeightedPose* self_in_field = perception->add_self_in_field();
-  self_in_field->set_probability(1.0);
-  self_in_field->mutable_pose()->mutable_position()->set_x(fieldPos.x);
-  self_in_field->mutable_pose()->mutable_position()->set_y(fieldPos.y);
-  self_in_field->mutable_pose()->mutable_dir()->set_mean(loc->getFieldOrientation());
-  */
   std::vector<hl_communication::WeightedPose> positions = loc->getPositionInClusters();
 
-  logger.log("Positions received size: %d", positions.size());
   for (int pos_idx = 0; pos_idx < positions.size(); pos_idx++)
   {
     WeightedPose* self_in_field = perception->add_self_in_field();
@@ -198,7 +191,7 @@ void TeamPlayService::updatePerception(RobotMsg* msg)
   }
   for (size_t opp_idx = 0; opp_idx < nb_opponents; opp_idx++)
   {
-    Perception::WeightedRobotPose* robot = perception->add_robots();
+    WeightedRobotPose* robot = perception->add_robots();
     robot->set_probability(1.0);
     PoseDistribution* robot_pose = robot->mutable_robot()->mutable_robot_in_self();
     // TODO: check if opponent robot is not in world_referential
@@ -390,7 +383,7 @@ void TeamPlayService::processInfo(const RobotMsg& original_msg)
     const PoseDistribution& sender_in_field = perception.self_in_field(0).pose();
     // Update opponents position;
     std::vector<Eigen::Vector2d> opponents_seen;
-    for (const Perception::WeightedRobotPose& estimation : perception.robots())
+    for (const WeightedRobotPose& estimation : perception.robots())
     {
       const PositionDistribution& robot_in_self = estimation.robot().robot_in_self().position();
       const PositionDistribution& opp = fieldFromSelf(sender_in_field, robot_in_self);

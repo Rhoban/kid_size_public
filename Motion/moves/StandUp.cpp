@@ -63,23 +63,12 @@ void StandUp::onStart()
   waiting = true;
 
   arms->setArms(Arms::ArmsState::ArmsDisabled);
-
-  // get the arms back
-  setTorqueLimit("left_shoulder_pitch", 1.0);
-  setTorqueLimit("right_shoulder_pitch", 1.0);
-  setTorqueLimit("left_shoulder_roll", 1.0);
-  setTorqueLimit("right_shoulder_roll", 1.0);
 }
 
 void StandUp::onStop()
 {
   Arms* arms = (Arms*)getMoves()->getMove("arms");
   arms->setArms(Arms::ArmsState::ArmsEnabled);
-  // security for arms. TODO should be a init command.
-  setTorqueLimit("left_shoulder_pitch", 0.2);
-  setTorqueLimit("right_shoulder_pitch", 0.2);
-  setTorqueLimit("left_shoulder_roll", 0.2);
-  setTorqueLimit("right_shoulder_roll", 0.2);
 }
 
 void StandUp::setLayDown(bool value)

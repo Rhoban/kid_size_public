@@ -47,7 +47,7 @@ ApproachPotential::ApproachPotential(Walk* walk, Kick* kick) : ApproachMove(walk
   // Servoing
   bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(0.6);
   bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(0.6);
-  bind->bindNew("rotationP", rotationP, RhIO::Bind::PullOnly)->defaultValue(1);
+  bind->bindNew("rotationP", rotationP, RhIO::Bind::PullOnly)->defaultValue(0.6);
 
   bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.35);
 
@@ -122,9 +122,9 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     targetPosition = ball + (targetPosition - ball).rotation(shifting);
   }
 
-  if (fabs(target.yaw.getSignedValue()) > 20)
+  if (fabs(target.yaw.getSignedValue()) > 15)
   {
-    targetPosition = ball + (targetPosition - ball).normalize(placementDistance);
+    targetPosition = ball + (targetPosition - ball).normalize(0.25);
   }
 
   // Magical potential field
@@ -184,7 +184,7 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     y = 0;
   }
 
-  if (directPlace && fabs(error) > 20)
+  if (directPlace && fabs(error) > deg2rad(15))
   {
     x = 0;
     y = 0;

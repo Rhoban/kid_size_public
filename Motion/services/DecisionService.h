@@ -41,6 +41,9 @@ public:
   /// Is the ball currently moving according to the robot
   bool isBallMoving;
 
+  /// Has one of the robot of my team (including me) recently kicked
+  bool hasMateKickedRecently;
+
   /// Is one of the robot of the team currently kicking
   bool isMateKicking;
 

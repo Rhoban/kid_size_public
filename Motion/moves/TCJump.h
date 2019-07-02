@@ -6,11 +6,12 @@
 
 class Head;
 class Walk;
+class Kick;
 
-class TCMovingBallPasser : public KickController
+class TCJump : public Move
 {
 public:
-  TCMovingBallPasser(Walk* walk, Head* head);
+  TCJump(Walk* walk, Head* head, Kick* kick);
 
   /// Implement Move
   virtual std::string getName() override;
@@ -20,9 +21,8 @@ public:
 
   bool isRunning;
   double t;
-  double kickDirection;
-  bool yPositive;
 
   Walk* walk;
   Head* head;
+  Kick* kick;
 };

@@ -162,8 +162,11 @@ void GroundTruthProvider::extractLabelsAnnotations()
     }
   }
   // TODO: remove self from robots?
+  const hl_communication::RobotIdentifier& my_id = getCS().source_id.robot_source().robot_id();
   for (const auto& entry : labellingManager.getRobots(getCS().utc_ts))
   {
+    if (my_id == entry.first)
+      continue;
     Eigen::Vector3d robot_in_field = entry.second;
     Eigen::Vector3d robot_in_camera = camera_from_field * robot_in_field;
     try
