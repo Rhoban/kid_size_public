@@ -84,7 +84,7 @@ Head::Head()
       ->comment("Duration of scan cycle in localize mode [s]");
   bind->bindNew("scanExtraPeriod", scan_extra_period, RhIO::Bind::PullOnly)
       ->comment("Extra time to ensure we are looking everywhere [s]")
-      ->defaultValue(0.5);
+      ->defaultValue(0.8);
   bind->bindNew("scanningTime", scanning_time, RhIO::Bind::PushOnly)
       ->comment("Time spent since start of scan phase [s]");
   bind->bindNew("trackingPeriod", tracking_period, RhIO::Bind::PullOnly)
