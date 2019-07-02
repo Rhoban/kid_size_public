@@ -49,6 +49,7 @@ protected:
 
   bool useMonteCarlo;
   bool shouldReload;
+  bool enableLateral;
 
   KickStrategy::Action _bestAction;
 
