@@ -2,11 +2,13 @@
 
 #include "Utils/ROITools.hpp"
 
+#include <rhoban_utils/logging/logger.h>
+
 #include <opencv2/imgproc/imgproc.hpp>
 
 using namespace Vision::Utils;
 
-static Logger logger("PatchProvider");
+static rhoban_utils::Logger logger("PatchProvider");
 
 namespace Vision
 {
