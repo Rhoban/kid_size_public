@@ -107,7 +107,7 @@ void MCKickController::execute()
 
       if (nextKickIsThrowIn)
       {
-        kickValueIteration.allowedKickNames = { "throwin", "small" };
+        kickValueIteration.allowedKickNames = { "throwin" };
       }
       else
       {
