@@ -272,7 +272,7 @@ void PlayingMove::approachStep(float elapsed)
     }
     else if (dist > walkBallDistance * 1.1)
     {
-      logger.log("Ball is now too far, going to 'walkBall'");
+      logger.log("Ball is now too far (%f, %f), going to 'walkBall'", ball.x, ball.y);
       setState(STATE_WALKBALL);
     }
   }
@@ -289,7 +289,7 @@ void PlayingMove::walkBallStep(float elapsed)
 
   if (dist < walkBallDistance && decision->isBallQualityGood)
   {
-    logger.log("I am now in range of the ball, going to 'approach'");
+    logger.log("I am now in range of the ball (%f, %f), going to 'approach'", ball.x, ball.y);
     setState(STATE_APPROACH);
   }
 
