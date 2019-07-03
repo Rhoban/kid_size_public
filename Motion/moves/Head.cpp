@@ -219,8 +219,9 @@ void Head::step(float elapsed)
   if (!is_tracking)
   {
     double max_diff = max_speed * elapsed;
-    wished_pan = std::min(std::max(wished_pan, wished_pan - max_diff), wished_pan + max_diff);
-    wished_tilt = std::min(std::max(wished_tilt, wished_tilt - max_diff), wished_tilt + max_diff);
+    double before = wished_pan;
+    wished_pan = std::min(std::max(wished_pan, last_pan_target - max_diff), last_pan_target + max_diff);
+    wished_tilt = std::min(std::max(wished_tilt, last_tilt_target - max_diff), last_tilt_target + max_diff);
   }
 
   last_pan_target = wished_pan;
@@ -241,8 +242,8 @@ void Head::step(float elapsed)
   else
   {
     // Smoothing orders
-    pan_deg = smoothing * pan_deg + (1 - smoothing) * rad2deg(wished_pan_rad);
-    tilt_deg = smoothing * tilt_deg + (1 - smoothing) * rad2deg(wished_tilt_rad);
+    pan_deg = smoothing * pan_deg + (1 - smoothing) * wished_pan;
+    tilt_deg = smoothing * tilt_deg + (1 - smoothing) * wished_tilt;
     if (modelSuccess)
     {  // Never update pan_deg and tilt_deg if model failed
       // Bounding pan/tilt when tracking
