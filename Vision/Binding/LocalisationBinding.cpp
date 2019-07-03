@@ -753,7 +753,7 @@ void LocalisationBinding::fieldReset(Localisation::FieldPF::ResetType type, floa
 bool LocalisationBinding::refereeAllowsToPlay()
 {
   // On fake mode, always allow robot to play
-  if (scheduler->isFakeMode())
+  if (scheduler->isFakeMode() || !scheduler->getMoves("Robocup")->isRunning())
     return true;
 
   RefereeService* referee = scheduler->getServices()->referee;
