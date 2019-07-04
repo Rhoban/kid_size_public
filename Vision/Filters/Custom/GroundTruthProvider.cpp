@@ -41,7 +41,7 @@ void GroundTruthProvider::process()
 
 void GroundTruthProvider::setParameters()
 {
-  writeEnabled = ParamInt(1, 0, 1);
+  writeEnabled = ParamInt(0, 0, 3);
   patchSize = ParamInt(32, 1, 512);
   tagLevel = ParamInt(1, 0, 1);
 
@@ -264,22 +264,26 @@ void GroundTruthProvider::dumpImg(const std::vector<cv::Rect_<float>>& rois)
   {
     return;
   }
-  // TODO: fill with 0 as in printf
-  std::string img_annotation_path = outputPrefix + "img_" + std::to_string(imgIndex) + ".json";
-  rhoban_utils::writeJson(getImgAnnotation(rois), img_annotation_path);
-
-  const cv::Mat& src_img = getSourceImg();
-  std::string imName = outputPrefix + "img_" + std::to_string(imgIndex) + ".png";
-  cv::imwrite(imName.c_str(), src_img);
-
-  int patchIndex = 0;
-  for (const cv::Rect_<float>& roi : rois)
+  std::string img_number_str = rhoban_utils::fixedSizeInt(imgIndex, std::pow(10, 6));
+  if (writeEnabled == 2 || writeEnabled == 3)
   {
-    // TODO: fill with 0 as in printf
-    std::string patch_name = "patch_" + std::to_string(imgIndex) + "_" + std::to_string(patchIndex);
-    dumpROI(roi, outputPrefix + patch_name + ".png");
-    rhoban_utils::writeJson(getPatchAnnotation(roi), outputPrefix + patch_name + ".json");
-    patchIndex++;
+    std::string img_annotation_path = outputPrefix + "img_" + img_number_str + ".json";
+    rhoban_utils::writeJson(getImgAnnotation(rois), img_annotation_path);
+    const cv::Mat& src_img = getSourceImg();
+    std::string imName = outputPrefix + "img_" + img_number_str + ".png";
+    cv::imwrite(imName.c_str(), src_img);
+  }
+  if (writeEnabled == 1 || writeEnabled == 3)
+  {
+    int patchIndex = 0;
+    for (const cv::Rect_<float>& roi : rois)
+    {
+      std::string patch_index_str = rhoban_utils::fixedSizeInt(patchIndex, 1000);
+      std::string patch_name = "patch_" + img_number_str + "_" + patch_index_str;
+      dumpROI(roi, outputPrefix + patch_name + ".png");
+      rhoban_utils::writeJson(getPatchAnnotation(roi), outputPrefix + patch_name + ".json");
+      patchIndex++;
+    }
   }
 }
 

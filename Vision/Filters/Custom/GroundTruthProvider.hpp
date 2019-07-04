@@ -122,7 +122,9 @@ protected:
 
   /**
    * 0: no data are written
-   * 1: patches and img are written to the disk
+   * 1: patches are written on the disk
+   * 2: annotation are written on the disk
+   * 3: patches and annotation are written on the disk
    */
   ParamInt writeEnabled;
 
