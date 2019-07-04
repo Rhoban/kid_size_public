@@ -271,7 +271,6 @@ void Walk::step(float elapsed)
         {
           if (stressTest)
           {
-            usleep(20000);
             auto generator = rhoban_random::getRandomEngine();
             std::uniform_real_distribution<double> stepDist(-maxStepBackward, maxStep);
             walkStep = stepDist(generator);
