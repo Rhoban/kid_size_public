@@ -82,8 +82,8 @@ Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms), kick(nullptr)
   bind->bindNew("securityPhase", securityPhase, RhIO::Bind::PullOnly)->defaultValue(0.05);
   bind->bindNew("securityBlock", securityBlock, RhIO::Bind::PushOnly);
 
-  // Enable a stress test
-  bind->bindNew("stressTest", stressTest, RhIO::Bind::PullOnly)->defaultValue(false);
+  // Minimum time walk should be stopped [s]
+  bind->bindNew("minimumStopTime", minimumStopTime, RhIO::Bind::PullOnly)->defaultValue(0.75);
 
   timeSinceLastStep = 0;
 }
@@ -124,6 +124,7 @@ void Walk::onStart()
   bind->node().setFloat("walkTurn", 0.0);
 
   state = WalkNotWalking;
+  stopTime = 0;
 }
 
 void Walk::onStop()
@@ -189,13 +190,16 @@ void Walk::step(float elapsed)
     timeSinceLastStep = 0;
     stepCount = 0;
 
-    if (walkEnable)
+    stopTime += elapsed;
+    if (walkEnable && stopTime > minimumStopTime)
     {
       state = WalkStarting;
     }
   }
   else
   {
+    stopTime = 0;
+
     // Ticking
     double prevPhase = timeSinceLastStep / engine.stepDuration;
     double phase = (timeSinceLastStep + elapsed) / engine.stepDuration;
@@ -269,19 +273,6 @@ void Walk::step(float elapsed)
         }
         else
         {
-          if (stressTest)
-          {
-            auto generator = rhoban_random::getRandomEngine();
-            std::uniform_real_distribution<double> stepDist(-maxStepBackward, maxStep);
-            walkStep = stepDist(generator);
-
-            std::uniform_real_distribution<double> lateralDist(-maxLateral, maxLateral);
-            walkLateral = lateralDist(generator);
-
-            std::uniform_real_distribution<double> turnDist(-maxRotation, maxRotation);
-            maxRotation = turnDist(generator);
-          }
-
           // Updating engine speed according to acc. limits
           double maxD = maxDStepByCycle;
           if (fabs(walkStep) * 3 < fabs(engine.stepSizeX))

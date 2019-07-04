@@ -137,5 +137,7 @@ protected:
   double securityThreshold;
   double securityPhase;
 
-  bool stressTest;
+  // Minimum stopping time for walk
+  double minimumStopTime;
+  double stopTime;
 };
