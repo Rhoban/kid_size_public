@@ -1,10 +1,12 @@
 #include <math.h>
+#include <unistd.h>
 #include "services/DecisionService.h"
 #include "services/ModelService.h"
 #include <scheduler/MoveScheduler.h>
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/control/variation_bound.h>
+#include <rhoban_random/tools.h>
 #include "Walk.h"
 #include "Head.h"
 #include "Arms.h"
@@ -79,6 +81,9 @@ Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms), kick(nullptr)
       ->maximum(1.0);
   bind->bindNew("securityPhase", securityPhase, RhIO::Bind::PullOnly)->defaultValue(0.05);
   bind->bindNew("securityBlock", securityBlock, RhIO::Bind::PushOnly);
+
+  // Enable a stress test
+  bind->bindNew("stressTest", stressTest, RhIO::Bind::PullOnly)->defaultValue(false);
 
   timeSinceLastStep = 0;
 }
@@ -264,6 +269,20 @@ void Walk::step(float elapsed)
         }
         else
         {
+          if (stressTest)
+          {
+            usleep(20000);
+            auto generator = rhoban_random::getRandomEngine();
+            std::uniform_real_distribution<double> stepDist(-maxStepBackward, maxStep);
+            walkStep = stepDist(generator);
+
+            std::uniform_real_distribution<double> lateralDist(-maxLateral, maxLateral);
+            walkLateral = lateralDist(generator);
+
+            std::uniform_real_distribution<double> turnDist(-maxRotation, maxRotation);
+            maxRotation = turnDist(generator);
+          }
+
           // Updating engine speed according to acc. limits
           double maxD = maxDStepByCycle;
           if (fabs(walkStep) * 3 < fabs(engine.stepSizeX))

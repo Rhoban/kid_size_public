@@ -136,4 +136,6 @@ protected:
   // Security parameters
   double securityThreshold;
   double securityPhase;
+
+  bool stressTest;
 };
