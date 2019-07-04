@@ -262,6 +262,11 @@ void MoveScheduler::execute(bool manualClock)
     }
     stopLoop = TimeStamp::now();
     durationLoop = diffMs(startLoop, stopLoop);
+
+    if (durationLoop > 10)
+    {
+      logger.error("move scheduler loop took %f ms", durationLoop);
+    }
   }
   logger.log("Stopping main scheduler loop");
 }

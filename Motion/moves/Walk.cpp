@@ -1,10 +1,12 @@
 #include <math.h>
+#include <unistd.h>
 #include "services/DecisionService.h"
 #include "services/ModelService.h"
 #include <scheduler/MoveScheduler.h>
 #include "rhoban_utils/angle.h"
 #include <rhoban_utils/logging/logger.h>
 #include <rhoban_utils/control/variation_bound.h>
+#include <rhoban_random/tools.h>
 #include "Walk.h"
 #include "Head.h"
 #include "Arms.h"
@@ -80,6 +82,9 @@ Walk::Walk(Head* head, Arms* arms) : head(head), arms(arms), kick(nullptr)
   bind->bindNew("securityPhase", securityPhase, RhIO::Bind::PullOnly)->defaultValue(0.05);
   bind->bindNew("securityBlock", securityBlock, RhIO::Bind::PushOnly);
 
+  // Minimum time walk should be stopped [s]
+  bind->bindNew("minimumStopTime", minimumStopTime, RhIO::Bind::PullOnly)->defaultValue(0.75);
+
   timeSinceLastStep = 0;
 }
 
@@ -119,6 +124,7 @@ void Walk::onStart()
   bind->node().setFloat("walkTurn", 0.0);
 
   state = WalkNotWalking;
+  stopTime = 0;
 }
 
 void Walk::onStop()
@@ -184,13 +190,16 @@ void Walk::step(float elapsed)
     timeSinceLastStep = 0;
     stepCount = 0;
 
-    if (walkEnable)
+    stopTime += elapsed;
+    if (walkEnable && stopTime > minimumStopTime)
     {
       state = WalkStarting;
     }
   }
   else
   {
+    stopTime = 0;
+
     // Ticking
     double prevPhase = timeSinceLastStep / engine.stepDuration;
     double phase = (timeSinceLastStep + elapsed) / engine.stepDuration;

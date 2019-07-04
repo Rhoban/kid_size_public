@@ -136,4 +136,8 @@ protected:
   // Security parameters
   double securityThreshold;
   double securityPhase;
+
+  // Minimum stopping time for walk
+  double minimumStopTime;
+  double stopTime;
 };
