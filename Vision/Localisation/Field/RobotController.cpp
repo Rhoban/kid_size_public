@@ -9,8 +9,8 @@ namespace Vision
 {
 namespace Localisation
 {
-double RobotController::posExploration = 0.05;
-double RobotController::angleExploration = 1;
+double RobotController::posExploration = 0.02;
+double RobotController::angleExploration = 0.3;
 
 Eigen::MatrixXd RobotController::posLimits(2, 2);
 
