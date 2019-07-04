@@ -152,7 +152,9 @@ void PlayingMove::step(float elapsed)
     }
   }
 
-  if (decision->isBallQualityGood)
+  auto localisation = getServices()->localisation;
+  auto ball = localisation->getBallPosField();
+  if (decision->isBallQualityGood && ball.getLength() < 2)
   {
     backwardT = 0;
   }
