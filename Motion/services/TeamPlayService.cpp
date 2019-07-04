@@ -232,7 +232,8 @@ void TeamPlayService::updateIntention(RobotMsg* msg)
   bool approach_running = getMoves()->getMove("approach_potential")->isRunning();
   // During test sessions, playing and approach can run alone, in this case, we do not want to declare the robot as
   // inactive
-  if (!playing_running && !approach_running && (!robocup_running || robocup->getStatus() != "placing"))
+  if (!playing_running && !approach_running &&
+      (!robocup_running || (robocup->getStatus() != "placing" && robocup->getStatus() != "standing_up")))
   {
     action = Action::INACTIVE;
   }
