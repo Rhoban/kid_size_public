@@ -413,21 +413,27 @@ double CameraState::computeBallRadiusFromPixel(const cv::Point2f& ballPosImg) co
   groundDir(2) = 0;
   Eigen::Vector3d altDir = viewRay.dir.cross(groundDir).normalized();
 
-  // Getting one of the points on the side of the ball, this is not an exact
-  // method, but the approximation should be good enough
-  Eigen::Vector3d ballSide = ballCenter + altDir * Constants::field.ball_radius;
-
   // Getting pixel for ballSide
-  try
+  double side_sum = 0;
+  int nb_points = 0;
+  // Testing two directions because one can be out of the image
+  for (int side : { -1, 1 })
   {
-    cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
-    return (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
+    // This is not an exact method, but the approximation should be good enough
+    Eigen::Vector3d ballSide = ballCenter + side * altDir * Constants::field.ball_radius;
+    try
+    {
+      cv::Point ballSideImg = imgXYFromWorldPosition(ballSide);
+      side_sum += (cv2Eigen(ballPosImg) - cv2Eigen(ballSideImg)).norm();
+      nb_points++;
+    }
+    catch (const std::runtime_error& exc)
+    {
+    }
   }
-  catch (const std::runtime_error& exc)
-  {
-    // If fails to retrive ball side in img, just return -1
+  if (nb_points == 0)
     return -1;
-  }
+  return side_sum / nb_points;
 }
 
 Eigen::Vector3d CameraState::ballInWorldFromPixel(const cv::Point2f& pos) const

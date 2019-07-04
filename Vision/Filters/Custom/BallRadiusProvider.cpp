@@ -64,6 +64,8 @@ void BallRadiusProvider::process()
   }
 
   // 4: Interpolate on key columns
+  // Note: forbidding interpolation when there are 0 values because their meaning is also that we failed to compute ball
+  // radius, therefore it might provide degenerate result
   for (int col : key_cols)
   {
     for (int row_idx = 0; row_idx < nbRows - 1; row_idx++)
@@ -75,15 +77,22 @@ void BallRadiusProvider::process()
       int dist = end_row - start_row;
       double diff = end_val - start_val;
       double slope = diff / dist;
+      bool interpolation_allowed = start_val > 0 && end_val > 0;
       for (int row = start_row + 1; row < end_row; row++)
       {
-        double val = start_val + slope * (row - start_row);
+        double val = 0;
+        if (interpolation_allowed)
+        {
+          val = start_val + slope * (row - start_row);
+        }
         tmp_img.at<float>(row, col) = val;
       }
     }
   }
 
   // 5: Interpolate between key rows
+  // Note: forbidding interpolation when there are 0 values because their meaning is also that we failed to compute ball
+  // radius, therefore it might provide degenerate result
   for (int row = 0; row < size.height; row++)
   {
     for (int col_idx = 0; col_idx < nbCols - 1; col_idx++)
@@ -95,9 +104,14 @@ void BallRadiusProvider::process()
       double end_val = tmp_img.at<float>(row, end_col);
       double diff = end_val - start_val;
       double slope = diff / dist;
+      bool interpolation_allowed = start_val > 0 && end_val > 0;
       for (int col = start_col + 1; col < end_col; col++)
       {
-        double val = start_val + slope * (col - start_col);
+        double val = 0;
+        if (interpolation_allowed)
+        {
+          val = start_val + slope * (col - start_col);
+        }
         tmp_img.at<float>(row, col) = val;
       }
     }
