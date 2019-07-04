@@ -2,6 +2,7 @@
 #include "DecisionService.h"
 #include "LocalisationService.h"
 #include "RefereeService.h"
+#include <scheduler/MoveScheduler.h>
 #include <RhIO.hpp>
 
 static rhoban_utils::Logger out("referee");
@@ -50,6 +51,9 @@ RefereeService::RefereeService()
   bind->bindNew("dumpGameState", dumpGameState, RhIO::Bind::PullOnly)
       ->comment("Activate dump of game status")
       ->defaultValue(dumpGameState);
+  bind->bindNew("ipFilter", ipFilter, RhIO::Bind::PullOnly)
+      ->defaultValue("")
+      ->comment("IP adress to filter for game controller (can be empty for no filtr)");
 
   bind->bindNew("alive", alive, RhIO::Bind::PullOnly)->comment("Referee alive status")->defaultValue(2);
 
@@ -123,12 +127,20 @@ bool RefereeService::tick(double elapsed)
   {
     if (getGameState().getActualGameState() == Constants::STATE_SET)
     {
+      if (canScore == true)
+      {
+        out.log("Current game in SET, setting canScore to false");
+      }
       canScore = false;
     }
   }
 
   if (isIndirectGameInterruption() && gs.getSecondaryTeam() == teamId)
   {
+    if (canScore == true)
+    {
+      out.log("Indirect game interruption for us, setting canScore to false");
+    }
     canScore = false;
   }
 
@@ -137,8 +149,9 @@ bool RefereeService::tick(double elapsed)
   {
     DecisionService* decision = getServices()->decision;
 
-    if (decision->hasMateKickedRecently /* || decision->isBallMoving */)
+    if (decision->hasMateKickedRecently || getScheduler()->getMove("kick")->isRunning())
     {
+      out.log("We kicked recently or are now kicking, setting canScore to true");
       canScore = true;
     }
   }
@@ -153,6 +166,22 @@ bool RefereeService::tick(double elapsed)
   setTextualState();
 
   bind->push();
+
+  return true;
+}
+
+bool RefereeService::isIPValid(std::string ip)
+{
+  if (ipFilter != "")
+  {
+    // If an ip filter is specified, we reject the messages coming from other game controllers
+    if (ip != ipFilter)
+    {
+      out.warning("Rejecting message from game controller %s (filter: only accepting from %s)", ip.c_str(),
+                  ipFilter.c_str());
+      return false;
+    }
+  }
 
   return true;
 }

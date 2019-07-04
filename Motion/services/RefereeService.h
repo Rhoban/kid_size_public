@@ -144,6 +144,8 @@ public:
 
   bool canScore;
 
+  virtual bool isIPValid(std::string ip);
+
 protected:
   RhIO::Bind* bind;
   float startPlayingDuration;
@@ -154,6 +156,8 @@ protected:
   std::string _state;
 
   std::string cmdPlaying();
+
+  std::string ipFilter;
 
   void setTextualState();
 
