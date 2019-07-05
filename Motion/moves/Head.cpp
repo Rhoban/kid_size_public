@@ -3,6 +3,7 @@
 #include "services/ModelService.h"
 #include "services/DecisionService.h"
 #include "services/LocalisationService.h"
+#include "services/RefereeService.h"
 
 #include "rhoban_utils/logging/logger.h"
 
@@ -310,11 +311,18 @@ bool Head::shouldTrackBall()
   LocalisationService* loc = getServices()->localisation;
   DecisionService* decision = getServices()->decision;
   double ball_dist = loc->getBallPosSelf().getLength();
+
   // Never track ball if quality is too low
   if (!decision->isBallQualityGood)
     return false;
+
+  // If the ball is close, we should track it, except if we are in freeze phase where we need to get some information
+  // because the game can be blocked in this state for long
+  RefereeService* referee = getServices()->referee;
+  bool shouldTrackBecauseItsClose = ball_dist < force_track_dist && !referee->isFreezePhase();
+
   // For some cases, tracking is forced to stay active
-  if (force_track || ball_dist < force_track_dist || decision->isBallMoving || decision->hasMateKickedRecently)
+  if (force_track || shouldTrackBecauseItsClose || decision->isBallMoving || decision->hasMateKickedRecently)
   {
     return true;
   }

@@ -38,7 +38,7 @@ MCKickController::MCKickController()
   bind->bindNew("useMonteCarlo", useMonteCarlo, RhIO::Bind::PullOnly)->defaultValue(true);
 
   // Enable lateral kicks
-  bind->bindNew("enableLateral", enableLateral, RhIO::Bind::PullOnly)->defaultValue(true);
+  bind->bindNew("enableLateral", enableLateral, RhIO::Bind::PullOnly)->defaultValue(false);
 
   // Reload strategy file
   bind->bindFunc("reloadStrategy", "Reload the strategy file", &MCKickController::cmdReloadStrategy, *this);
