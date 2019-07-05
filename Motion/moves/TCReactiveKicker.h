@@ -20,6 +20,7 @@ public:
 
   KickStrategy strategy;
 
+  bool yPositive;
   bool isRunning;
   double t;
 

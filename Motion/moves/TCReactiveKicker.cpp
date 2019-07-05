@@ -14,6 +14,8 @@ TCReactiveKicker::TCReactiveKicker(Walk* walk, Head* head) : walk(walk), head(he
 {
   Move::initializeBinding();
 
+  bind->bindNew("yPositive", yPositive, RhIO::Bind::PullOnly)->defaultValue(true);
+
   bind->pull();
 }
 
@@ -74,7 +76,7 @@ void TCReactiveKicker::step(float elapsed)
   {
     LocalisationService* localisation = getServices()->localisation;
     localisation->customBallReset(robocup_referee::Constants::field.penalty_mark_dist,
-                                  robocup_referee::Constants::field.field_width / 2.0);
+                                  (yPositive ? 1 : -1) * robocup_referee::Constants::field.field_width / 2.0);
   }
 
   bind->push();
