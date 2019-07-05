@@ -45,6 +45,8 @@ private:
   cv::Rect_<float> getBoundaryPatch(int x, int y, float radius);
   /// Return the patch associated to the upper boundary part of the ball at the given point
   cv::Rect_<float> getBoundaryAbovePatch(int x, int y, float radius);
+  /// Return the patch which will be produced as output for the given radius
+  cv::Rect_<float> getOutputPatch(int x, int y, float radius);
 
   double getCandidateScore(int center_x, int center_y, double radius, const cv::Mat& y_img, const cv::Mat& green_img);
 
@@ -95,6 +97,16 @@ private:
    * Controls the minimal spacing based on ratio of intersection between areas in [0,1]
    */
   ParamFloat maxOverlapRatio;
+
+  /**
+   * Multiplies the input from radius image to adjust expected size
+   */
+  ParamFloat inputSizeFactor;
+
+  /**
+   * Adjust scale of the region of interest in output
+   */
+  ParamFloat outputSizeFactor;
 };
 }  // namespace Filters
 }  // namespace Vision

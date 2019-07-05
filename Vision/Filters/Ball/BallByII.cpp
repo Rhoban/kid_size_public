@@ -32,7 +32,7 @@ int BallByII::expectedDependencies() const
 
 void BallByII::setParameters()
 {
-  boundaryFactor = ParamFloat(2.0, 1.0, 3.0);
+  boundaryFactor = ParamFloat(2.0, 1.0, 5.0);
   maxBoundaryThickness = ParamFloat(30.0, 1.0, 100.0);
   minRadius = ParamFloat(2.0, 0.5, 20.0);
   minScore = ParamFloat(100.0, 0.0, 510.);
@@ -44,6 +44,8 @@ void BallByII::setParameters()
   tagLevel = ParamInt(0, 0, 1);
   useLocalSearch = ParamInt(1, 0, 1);
   maxOverlapRatio = ParamFloat(0.2, 0.0, 1.0);
+  inputSizeFactor = ParamFloat(1.0, 0.01, 10.0);
+  outputSizeFactor = ParamFloat(1.0, 0.01, 10.0);
 
   params()->define<ParamFloat>("boundaryFactor", &boundaryFactor);
   params()->define<ParamFloat>("maxBoundaryThickness", &maxBoundaryThickness);
@@ -56,6 +58,8 @@ void BallByII::setParameters()
   params()->define<ParamInt>("tagLevel", &tagLevel);
   params()->define<ParamInt>("useLocalSearch", &useLocalSearch);
   params()->define<ParamFloat>("maxOverlapRatio", &maxOverlapRatio);
+  params()->define<ParamFloat>("inputSizeFactor", &inputSizeFactor);
+  params()->define<ParamFloat>("outputSizeFactor", &outputSizeFactor);
 }
 
 void BallByII::process()
@@ -111,13 +115,25 @@ void BallByII::process()
       int center_x = (start_x + end_x) / 2;
       int center_y = (start_y + end_y) / 2;
 
+      // Checking radius before computing ROIs (if radius < 1 -> errors)
+      float radius = radiusImg.at<float>(center_y, center_x) * inputSizeFactor;
+      if (radius <= minRadius)
+      {
+        if (tagLevel > 0)
+        {
+          fillScore(scores, 0, start_x, end_x, start_y, end_y);
+        }
+        continue;
+      }
+
       // Computing boundary patch
-      float radius = radiusImg.at<float>(center_y, center_x);
       cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x, center_y, radius);
+      cv::Rect_<float> outputPatch = getOutputPatch(center_x, center_y, radius);
+      bool rois_inside_img = Utils::isContained(boundaryPatch, size) && Utils::isContained(outputPatch, size);
 
       // If area is not entirely inside the image or expected radius is too small:
       // - Skip ROI and use a '0' score
-      if (!Utils::isContained(boundaryPatch, size) || radius <= minRadius)
+      if (!rois_inside_img)
       {
         if (tagLevel > 0)
         {
@@ -167,7 +183,7 @@ void BallByII::process()
       bool dominated = false;
       double worstScore = score;
       int worstId = -1;
-      const cv::Rect& candidatePatch = boundaryPatch;
+      const cv::Rect& candidatePatch = outputPatch;
       for (size_t id = 0; id < tmpRois.size(); id++)
       {
         double roiScore = tmpRois[id].first;
@@ -248,7 +264,7 @@ void BallByII::process()
       int center_y = initial_patch.y + initial_patch.height / 2;
 
       double bestScore = minScore;
-      cv::Rect bestPatch;
+      cv::Rect bestPatch = initial_patch;
       int maxOffset = ceil(decimationRate / 2.0);
       for (int xOffset = -maxOffset; xOffset <= maxOffset; xOffset++)
       {
@@ -257,8 +273,15 @@ void BallByII::process()
           int new_center_x = center_x + xOffset;
           int new_center_y = center_y + yOffset;
           float radius = radiusImg.at<float>(new_center_y, new_center_x);
+          if (radius <= minRadius)
+          {
+            continue;
+          }
+          cv::Rect_<float> boundaryPatch = getBoundaryPatch(new_center_x, new_center_y, radius);
+          cv::Rect_<float> outputPatch = getOutputPatch(new_center_x, new_center_y, radius);
+          bool rois_inside_img = Utils::isContained(boundaryPatch, size) && Utils::isContained(outputPatch, size);
           cv::Rect newPatch = getBoundaryPatch(new_center_x, new_center_y, radius);
-          if (!Utils::isContained(newPatch, size))
+          if (!rois_inside_img)
             continue;
           try
           {
@@ -366,6 +389,15 @@ cv::Rect_<float> BallByII::getBoundaryPatch(int x, int y, float radius)
   // Creating boundary patch
   cv::Point2f center(x, y);
   double halfWidth = getBoundaryHalfWidth(radius);
+  cv::Point2f halfSize(halfWidth, halfWidth);
+  return cv::Rect_<float>(center - halfSize, center + halfSize);
+}
+
+cv::Rect_<float> BallByII::getOutputPatch(int x, int y, float radius)
+{
+  // Creating boundary patch
+  cv::Point2f center(x, y);
+  double halfWidth = radius * outputSizeFactor;
   cv::Point2f halfSize(halfWidth, halfWidth);
   return cv::Rect_<float>(center - halfSize, center + halfSize);
 }
