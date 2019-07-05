@@ -47,6 +47,7 @@ void BallByII::setParameters()
   inputSizeFactor = ParamFloat(1.0, 0.01, 10.0);
   outputSizeFactor = ParamFloat(1.0, 0.01, 10.0);
   minOutputSize = ParamInt(32, 1, 128);
+  mode = ParamInt(0, 0, 1);
 
   params()->define<ParamFloat>("boundaryFactor", &boundaryFactor);
   params()->define<ParamFloat>("maxBoundaryThickness", &maxBoundaryThickness);
@@ -62,6 +63,7 @@ void BallByII::setParameters()
   params()->define<ParamFloat>("inputSizeFactor", &inputSizeFactor);
   params()->define<ParamFloat>("outputSizeFactor", &outputSizeFactor);
   params()->define<ParamInt>("minOutputSize", &minOutputSize);
+  params()->define<ParamInt>("mode", &mode);
 }
 
 void BallByII::process()
@@ -119,7 +121,7 @@ void BallByII::process()
 
       // Checking radius before computing ROIs (if radius < 1 -> errors)
       float radius = radiusImg.at<float>(center_y, center_x) * inputSizeFactor;
-      if (radius <= minRadius)
+      if (radius <= 0)
       {
         if (tagLevel > 0)
         {
@@ -127,6 +129,7 @@ void BallByII::process()
         }
         continue;
       }
+      radius = std::max(radius, (float)(minRadius));
 
       // Computing boundary patch
       cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x, center_y, radius);
@@ -275,10 +278,11 @@ void BallByII::process()
           int new_center_x = center_x + xOffset;
           int new_center_y = center_y + yOffset;
           float radius = radiusImg.at<float>(new_center_y, new_center_x);
-          if (radius <= minRadius)
+          if (radius <= 0)
           {
             continue;
           }
+          radius = std::max(radius, (float)minRadius);
           cv::Rect_<float> boundaryPatch = getBoundaryPatch(new_center_x, new_center_y, radius);
           cv::Rect_<float> newOutputPatch = getOutputPatch(new_center_x, new_center_y, radius);
           bool rois_inside_img = Utils::isContained(boundaryPatch, size) && Utils::isContained(newOutputPatch, size);
@@ -414,6 +418,18 @@ cv::Rect_<float> BallByII::getBoundaryAbovePatch(int x, int y, float radius)
 double BallByII::getCandidateScore(int center_x, int center_y, double radius, const cv::Mat& yImg,
                                    const cv::Mat& greenImg)
 {
+  switch (mode)
+  {
+    case 0:
+      return getBallScore(center_x, center_y, radius, yImg, greenImg);
+    case 1:
+      return getGoalScore(center_x, center_y, radius, yImg, greenImg);
+  }
+  throw std::logic_error(DEBUG_INFO + " unknown mode: " + std::to_string(mode));
+}
+
+double BallByII::getBallScore(int center_x, int center_y, double radius, const cv::Mat& yImg, const cv::Mat& greenImg)
+{
   // Computing inner patches
   cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x, center_y, radius);
   cv::Rect_<float> innerPatch = getInnerPatch(center_x, center_y, radius);
@@ -445,6 +461,38 @@ double BallByII::getCandidateScore(int center_x, int center_y, double radius, co
   double green_b = Utils::getPatchDensity(boundaryPatch, greenImg);
   double green_i = Utils::getPatchDensity(innerPatch, greenImg);
   double green_score = green_b - green_i;
+
+  return (yWeight * y_score + greenWeight * green_score) / (yWeight + greenWeight);
+}
+
+double BallByII::getGoalScore(int center_x, int center_y, double radius, const cv::Mat& yImg, const cv::Mat& greenImg)
+{
+  // Computing inner patches
+  cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x, center_y, radius);
+  cv::Rect_<float> innerPatch = getInnerPatch(center_x, center_y, radius);
+  cv::Rect_<float> boundaryAbovePatch = getBoundaryAbovePatch(center_x, center_y, radius);
+
+  // Abreviations are the following:
+  // ia: inner above
+  // ib: inner below
+  // b : boundary
+  // ub: upper boundary
+
+  // Computing y_score
+  double y_i = Utils::getPatchDensity(innerPatch, yImg);
+  double y_b = Utils::getPatchDensity(boundaryPatch, yImg);
+  double y_ub = Utils::getPatchDensity(boundaryAbovePatch, yImg);
+  // When ball is far: IA is supposed to be bright and the rest supposed to be dark
+  // score_far = (y_ia - y_ub) + (y_ia - y_ib) + (y_ia - y_b)
+  // (y_i - y_b) -> Look for luminosity inside object in boundary zone
+  // (y_ub - y_b) -> Upper part of boundary should better be right for posts
+  double y_score = y_i + y_ub - 2 * y_b;
+
+  // Computing green_score
+  double green_b = Utils::getPatchDensity(boundaryPatch, greenImg);
+  double green_ub = Utils::getPatchDensity(boundaryAbovePatch, yImg);
+  double green_i = Utils::getPatchDensity(innerPatch, greenImg);
+  double green_score = green_b + green_ub - 2 * green_i;
 
   return (yWeight * y_score + greenWeight * green_score) / (yWeight + greenWeight);
 }
