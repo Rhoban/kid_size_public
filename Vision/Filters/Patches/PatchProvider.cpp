@@ -48,7 +48,10 @@ void PatchProvider::addPatches(const std::vector<cv::Rect>& rois, const cv::Mat&
     cv::Mat raw_patch(src, roi_src);
     if (raw_patch.cols == 0 || raw_patch.rows == 0)
     {
-      logger.log("Invalid patch size: %d x %d", raw_patch.rows, raw_patch.cols);
+      logger.log("Invalid patch size:\n"
+                 "\tpatch_in_src: size is %dx%d, top-left is (%d,%d)\n"
+                 "\tpatch_in_dst: size is %dx%d, top-left is (%d,%d)",
+                 roi.height, roi.width, roi.x, roi.y, raw_patch.rows, raw_patch.cols, roi_src.x, roi_src.y);
       continue;
     }
 
