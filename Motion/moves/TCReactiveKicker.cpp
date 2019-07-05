@@ -75,8 +75,7 @@ void TCReactiveKicker::step(float elapsed)
   if (!decision->isBallQualityGood)
   {
     LocalisationService* localisation = getServices()->localisation;
-    localisation->customBallReset(robocup_referee::Constants::field.penalty_mark_dist,
-                                  (yPositive ? 1 : -1) * robocup_referee::Constants::field.field_width / 2.0);
+    localisation->customBallReset(2.5, (yPositive ? 1 : -1) * 1.16 / 2.0);
   }
 
   bind->push();
