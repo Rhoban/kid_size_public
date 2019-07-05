@@ -57,6 +57,7 @@ Kick::Kick(Head* _head, Walk* _walk, Arms* _arms) : head(_head), walk(_walk), ar
 
   // Is that kick cancellable ?
   bind->bindNew("cancellable", cancellable, RhIO::Bind::PullOnly)->defaultValue(false);
+  bind->bindNew("enableCancel", enableCancel, RhIO::Bind::PullOnly)->defaultValue(false);
 
   // Load available kicks
   kmc.loadFile();
@@ -72,7 +73,7 @@ void Kick::set(bool _left, const std::string& _kickName, bool _pause, bool _canc
 
 bool Kick::shouldCancel()
 {
-  if (!cancellable || kickName == "jump")
+  if (!enableCancel || !cancellable || kickName == "jump")
   {
     // This kick can't be cancelled at all
     return false;

@@ -46,6 +46,7 @@ protected:
   bool pause;
   double pauseTime;
 
+  bool enableCancel;
   bool cancellable;
   bool forceCancel;
 
