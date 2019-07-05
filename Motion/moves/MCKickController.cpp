@@ -111,7 +111,14 @@ void MCKickController::execute()
       }
       else
       {
-        kickValueIteration.allowedKickNames = { "classic", "small" };
+        if (!canScore || ball.x > 3)
+        {
+          kickValueIteration.allowedKickNames = { "classic", "small" };
+        }
+        else
+        {
+          kickValueIteration.allowedKickNames = { "classic" };
+        }
       }
 
       auto rewardFunc = [this, &ball, &robotPos, &teamMatesField, &opponentsField, &canScore,
