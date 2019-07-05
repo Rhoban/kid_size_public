@@ -24,6 +24,8 @@ ReactiveKicker::ReactiveKicker(Walk* walk, Kick* kick, Head* head) : ApproachMov
       ->defaultValue(false)
       ->comment("Is the robot currently kicking?");
 
+  bind->bindNew("human_mode", human_mode, RhIO::Bind::PullOnly)->defaultValue(false);
+
   bind->bindNew("useRightFoot", useRightFoot, RhIO::Bind::PullOnly)->defaultValue(true);
 
   bind->pull();
@@ -77,8 +79,9 @@ void ReactiveKicker::step(float elapsed)
   }
 
   DecisionService* decision = getServices()->decision;
+  bool shouldRise = human_mode || decision->isMateKicking;
 
-  if (decision->isMateKicking && (!is_ready) && (!kick->isRunning()))
+  if (shouldRise && (!is_ready) && (!kick->isRunning()))
   {
     is_ready = true;
     t = 0;
@@ -87,7 +90,7 @@ void ReactiveKicker::step(float elapsed)
     logger.log("Starting kick move");
   }
 
-  if ((!decision->isMateKicking) && is_ready && t > 3)
+  if ((!shouldRise) && is_ready && t > 3)
   {
     is_ready = false;
     kick->cancel();

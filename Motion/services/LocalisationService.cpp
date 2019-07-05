@@ -524,6 +524,14 @@ void LocalisationService::resetBallFilter()
   // TODO: Do something?
 }
 
+void LocalisationService::customBallReset(double x, double y)
+{
+  if (NULL != robocup)
+  {
+    robocup->ballReset(x, y);
+  }
+}
+
 void LocalisationService::penaltyReset(float x)
 {
   customFieldReset(x, 0, 0.05, 0, 3);

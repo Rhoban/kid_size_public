@@ -36,6 +36,9 @@ private:
   /// Is the robot ready to kick
   bool is_ready;
 
+  /// Will the pass be performed by an human
+  bool human_mode;
+
   /// Left foot ?
   bool useRightFoot;
 

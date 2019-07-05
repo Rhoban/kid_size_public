@@ -140,6 +140,7 @@ public:
   double getLastVisionUpdate();
   bool isVisionActive() const;
 
+  void customBallReset(double x, double y);
   void resetBallFilter();
   void resetFieldFilter();
   void resetRobotFilter();
