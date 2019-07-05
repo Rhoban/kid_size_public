@@ -170,7 +170,7 @@ public:
    * Return the timestamp in micro-seconds since epoch
    */
   uint64_t getTimeStampUs() const;
-  /// Return the timestamp in [ms]
+  /// Return the timestamp in [s]
   double getTimeStampDouble() const;
 
   /**

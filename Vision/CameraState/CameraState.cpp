@@ -478,7 +478,7 @@ uint64_t CameraState::getTimeStampUs() const
 
 double CameraState::getTimeStampDouble() const
 {
-  return monotonic_ts * 1000;
+  return monotonic_ts / 1000000.0;
 }
 
 void CameraState::setClockOffset(int64_t new_offset)
