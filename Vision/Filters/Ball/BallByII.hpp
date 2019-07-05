@@ -107,6 +107,11 @@ private:
    * Adjust scale of the region of interest in output
    */
   ParamFloat outputSizeFactor;
+
+  /**
+   * Minimal size of ROI output
+   */
+  ParamInt minOutputSize;
 };
 }  // namespace Filters
 }  // namespace Vision

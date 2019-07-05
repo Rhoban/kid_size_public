@@ -46,6 +46,7 @@ void BallByII::setParameters()
   maxOverlapRatio = ParamFloat(0.2, 0.0, 1.0);
   inputSizeFactor = ParamFloat(1.0, 0.01, 10.0);
   outputSizeFactor = ParamFloat(1.0, 0.01, 10.0);
+  minOutputSize = ParamInt(32, 1, 128);
 
   params()->define<ParamFloat>("boundaryFactor", &boundaryFactor);
   params()->define<ParamFloat>("maxBoundaryThickness", &maxBoundaryThickness);
@@ -60,6 +61,7 @@ void BallByII::setParameters()
   params()->define<ParamFloat>("maxOverlapRatio", &maxOverlapRatio);
   params()->define<ParamFloat>("inputSizeFactor", &inputSizeFactor);
   params()->define<ParamFloat>("outputSizeFactor", &outputSizeFactor);
+  params()->define<ParamInt>("minOutputSize", &minOutputSize);
 }
 
 void BallByII::process()
@@ -278,9 +280,8 @@ void BallByII::process()
             continue;
           }
           cv::Rect_<float> boundaryPatch = getBoundaryPatch(new_center_x, new_center_y, radius);
-          cv::Rect_<float> outputPatch = getOutputPatch(new_center_x, new_center_y, radius);
-          bool rois_inside_img = Utils::isContained(boundaryPatch, size) && Utils::isContained(outputPatch, size);
-          cv::Rect newPatch = getBoundaryPatch(new_center_x, new_center_y, radius);
+          cv::Rect_<float> newOutputPatch = getOutputPatch(new_center_x, new_center_y, radius);
+          bool rois_inside_img = Utils::isContained(boundaryPatch, size) && Utils::isContained(newOutputPatch, size);
           if (!rois_inside_img)
             continue;
           try
@@ -289,7 +290,7 @@ void BallByII::process()
             if (score > bestScore)
             {
               bestScore = score;
-              bestPatch = newPatch;
+              bestPatch = newOutputPatch;
             }
           }
           catch (const std::runtime_error& exc)
@@ -397,7 +398,7 @@ cv::Rect_<float> BallByII::getOutputPatch(int x, int y, float radius)
 {
   // Creating boundary patch
   cv::Point2f center(x, y);
-  double halfWidth = radius * outputSizeFactor;
+  double halfWidth = std::max(minOutputSize / 2., (double)radius * outputSizeFactor);
   cv::Point2f halfSize(halfWidth, halfWidth);
   return cv::Rect_<float>(center - halfSize, center + halfSize);
 }
