@@ -59,7 +59,7 @@ FieldPF::FieldPF()
       ->maximum(2)
       ->comment("Maximal noise applied when falling [m]");
   rhioNode->newFloat("fallNoiseTheta")
-      ->defaultValue(20)
+      ->defaultValue(5)
       ->minimum(0)
       ->maximum(180)
       ->comment("When falling, uniform noise in [-x,x] is applied [deg]");
