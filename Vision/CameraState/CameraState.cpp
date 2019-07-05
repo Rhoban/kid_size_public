@@ -63,7 +63,6 @@ CameraState::CameraState(const IntrinsicParameters& camera_parameters, const Fra
                          const hl_communication::VideoSourceID& source_id_, MoveScheduler* moveScheduler)
   : CameraState(moveScheduler)
 {
-  logger.log("Building Camera State.");
   source_id = source_id_;
   importFromProtobuf(camera_parameters);
   importFromProtobuf(frame_entry);
@@ -82,15 +81,10 @@ CameraState::CameraState(const IntrinsicParameters& camera_parameters, const Fra
   ModelService* modelService = _moveScheduler->getServices()->model;
   if (modelService->applyCorrectionInNonCorrectedReplay)
   {
-    logger.log("applyCorrectionInNonCorrectedReplay to true");
     Eigen::Affine3d worldFromHeadBase = cameraToWorld * cameraFromHeadBase;
     cameraToWorld = modelService->applyCalibration(cameraToWorld, worldFromHeadBase, selfToWorld);
     worldToCamera = cameraToWorld.inverse();
     cameraFromHeadBase = worldToCamera * worldFromHeadBase;
-  }
-  else
-  {
-    logger.log("applyCorrectionInNonCorrectedReplay to false");
   }
 }
 
