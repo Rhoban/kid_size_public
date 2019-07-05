@@ -27,6 +27,9 @@ void TCReactiveKicker::onStart()
   isRunning = false;
   bind->pull();
   head->setDisabled(false);
+
+  RhIO::Root.setInt("/Vision/ballByII/maxRois", 32);
+  RhIO::Root.setFloat("/moves/walk/maxStep", 0.06);
 }
 
 void TCReactiveKicker::onStop()

@@ -15,7 +15,7 @@ TCMovingBallPasser::TCMovingBallPasser(Walk* walk, Head* head) : walk(walk), hea
   Move::initializeBinding();
 
   bind->bindNew("yPositive", yPositive, RhIO::Bind::PullOnly)->defaultValue(true);
-  bind->bindNew("kickDirection", kickDirection, RhIO::Bind::PullOnly)->defaultValue(-118);
+  bind->bindNew("kickDirection", kickDirection, RhIO::Bind::PullOnly)->defaultValue(-114);
 
   bind->pull();
 }
