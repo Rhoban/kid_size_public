@@ -29,6 +29,7 @@ void TCHighKick::onStart()
   isRunning = false;
   bind->pull();
   head->setDisabled(false);
+  RhIO::Root.setFloat("/moves/walk/maxStep", 0.06);
 }
 
 void TCHighKick::onStop()
@@ -77,6 +78,7 @@ void TCHighKick::step(float elapsed)
 
     if (decision->handled)
     {
+      head->setDisabled(true);
       stopMove("approach_potential", 0);
       isRunning = false;
     }
@@ -87,6 +89,8 @@ void TCHighKick::step(float elapsed)
     {
       t = 0;
       isRunning = true;
+      head->setDisabled(false);
+      head->setForceTrack(true);
       localisation->customFieldReset(robocup_referee::Constants::field.field_length / 2.0 -
                                          robocup_referee::Constants::field.penalty_mark_dist - 0.5,
                                      0, 0.2, 0, 5);
