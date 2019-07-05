@@ -33,6 +33,11 @@ private:
   /// Is the robot kicking actually
   bool is_kicking;
 
+  /// Is the robot ready to kick
+  bool is_ready;
+
   /// Left foot ?
   bool useRightFoot;
+
+  double t;
 };

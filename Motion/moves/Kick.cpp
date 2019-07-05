@@ -73,6 +73,12 @@ void Kick::set(bool _left, const std::string& _kickName, bool _pause, bool _canc
 
 bool Kick::shouldCancel()
 {
+  // Cancel was forced
+  if (forceCancel)
+  {
+    return true;
+  }
+
   if (!enableCancel || !cancellable || kickName == "jump")
   {
     // This kick can't be cancelled at all
@@ -83,12 +89,6 @@ bool Kick::shouldCancel()
   {
     // Kick is already ongoing, it can't be cancelled now
     return false;
-  }
-
-  // Cancel was forced
-  if (forceCancel)
-  {
-    return true;
   }
 
   // Check if ball is in kick zone or not

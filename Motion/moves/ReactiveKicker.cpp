@@ -5,9 +5,12 @@
 #include "Head.h"
 #include <services/LocalisationService.h>
 #include <services/DecisionService.h>
+#include <rhoban_utils/logging/logger.h>
 
 using namespace rhoban_geometry;
 using namespace rhoban_utils;
+
+static rhoban_utils::Logger logger("reactive_kicker");
 
 ReactiveKicker::ReactiveKicker(Walk* walk, Kick* kick, Head* head) : ApproachMove(walk, kick), head(head)
 {
@@ -37,15 +40,13 @@ void ReactiveKicker::onStart()
 
   // Simply use only classic currently
   is_kicking = false;
+  is_ready = false;
   kick_score = 0;
   expectedKick = "classic";
   kickRight = useRightFoot;
 
   head->setDisabled(false);
   head->setForceTrack(true);
-
-  kick->set(!useRightFoot, "classic", true);
-  startMove("kick", 0.0);
 }
 
 void ReactiveKicker::onStop()
@@ -63,6 +64,8 @@ void ReactiveKicker::step(float elapsed)
   // Pull variables from RhIO
   bind->pull();
 
+  t += elapsed;
+
   // Handle the case where we are currently kicking
   if (is_kicking)
   {
@@ -75,7 +78,23 @@ void ReactiveKicker::step(float elapsed)
 
   DecisionService* decision = getServices()->decision;
 
-  if (decision->isBallQualityGood)
+  if (decision->isMateKicking && (!is_ready) && (!kick->isRunning()))
+  {
+    is_ready = true;
+    t = 0;
+    kick->set(!useRightFoot, "classic", true);
+    startMove("kick", 0.0);
+    logger.log("Starting kick move");
+  }
+
+  if ((!decision->isMateKicking) && is_ready && t > 3)
+  {
+    is_ready = false;
+    kick->cancel();
+    logger.log("Cancelling kick");
+  }
+
+  if (decision->isBallQualityGood && t > 1)
   {
     for (double anticipation = anticipationMean - anticipationDelta;
          anticipation < anticipationMean + anticipationDelta; anticipation += 0.005)
