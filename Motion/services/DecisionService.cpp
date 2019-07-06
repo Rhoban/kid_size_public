@@ -421,7 +421,8 @@ bool DecisionService::tick(double elapsed)
     }
 
     // XXX: We only considering the ball as moving if WE are seeing it moving
-    if (ballSpeed > movingBallMinSpeed && robotInfo.robot_id().robot_id() == getServices()->teamPlay->myId())
+    if (ballSpeed > movingBallMinSpeed && robotInfo.has_robot_id() &&
+        robotInfo.robot_id().robot_id() == getServices()->teamPlay->myId())
     {
       tmpIsBallMoving = true;
     }
