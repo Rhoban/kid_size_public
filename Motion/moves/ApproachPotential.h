@@ -54,6 +54,8 @@ protected:
 
   double ballX, ballY;
 
+  double dontMoveAngleError;
+
   // Potential repulsion
   double repulsion;
 

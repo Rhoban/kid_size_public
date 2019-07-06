@@ -47,12 +47,14 @@ ApproachPotential::ApproachPotential(Walk* walk, Kick* kick) : ApproachMove(walk
   // Servoing
   bind->bindNew("stepP", stepP, RhIO::Bind::PullOnly)->defaultValue(0.6);
   bind->bindNew("lateralP", lateralP, RhIO::Bind::PullOnly)->defaultValue(0.6);
-  bind->bindNew("rotationP", rotationP, RhIO::Bind::PullOnly)->defaultValue(0.6);
+  bind->bindNew("rotationP", rotationP, RhIO::Bind::PullOnly)->defaultValue(1);
 
-  bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.35);
+  bind->bindNew("placementDistance", placementDistance, RhIO::Bind::PullOnly)->defaultValue(0.5);
 
   // Don't walk
   bind->bindNew("dontWalk", dontWalk, RhIO::Bind::PullOnly)->defaultValue(false);
+
+  bind->bindNew("dontMoveAngleError", dontMoveAngleError, RhIO::Bind::PullOnly)->defaultValue(45);
 
   bind->bindNew("ballX", ballX, RhIO::Bind::PushOnly);
   bind->bindNew("ballY", ballY, RhIO::Bind::PushOnly);
@@ -184,7 +186,7 @@ void ApproachPotential::getControl(const Target& target, const Point& ball, doub
     y = 0;
   }
 
-  if (directPlace && fabs(error) > deg2rad(15))
+  if (directPlace && fabs(error) > deg2rad(dontMoveAngleError))
   {
     x = 0;
     y = 0;
@@ -229,7 +231,7 @@ void ApproachPotential::step(float elapsed)
 
     std::vector<Target> targets;
     lastFootChoice += elapsed;
-    if (lastFootChoice > 3.0)
+    if (lastFootChoice > 0.5)
     {
       left = ball.y > 0;
       lastFootChoice = 0;
