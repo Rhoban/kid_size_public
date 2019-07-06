@@ -406,6 +406,7 @@ bool DecisionService::tick(double elapsed)
   {
     tmpHasMateKickedRecently = true;
   }
+
   for (const auto& pair : teamplayInfos)
   {
     const RobotMsg& robotInfo = pair.second;
@@ -418,10 +419,13 @@ bool DecisionService::tick(double elapsed)
     {
       tmpHasMateKickedRecently = true;
     }
-    if (ballSpeed > movingBallMinSpeed)
+
+    // XXX: We only considering the ball as moving if WE are seeing it moving
+    if (ballSpeed > movingBallMinSpeed && robotInfo.robot_id().robot_id() == getServices()->teamPlay->myId())
     {
       tmpIsBallMoving = true;
     }
+
     if (robotInfo.intention().action_planned() == Action::KICKING)
     {
       tmpIsMateKicking = true;
