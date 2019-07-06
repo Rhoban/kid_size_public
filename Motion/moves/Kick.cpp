@@ -79,7 +79,7 @@ bool Kick::shouldCancel()
     return true;
   }
 
-  if (!enableCancel || !cancellable || kickName == "jump")
+  if (!enableCancel || !cancellable || kickName == "jump" || kickName == "throwin")
   {
     // This kick can't be cancelled at all
     return false;

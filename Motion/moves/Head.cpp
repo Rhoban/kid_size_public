@@ -319,10 +319,10 @@ bool Head::shouldTrackBall()
   // If the ball is close, we should track it, except if we are in freeze phase where we need to get some information
   // because the game can be blocked in this state for long
   RefereeService* referee = getServices()->referee;
-  bool shouldTrackBecauseItsClose = ball_dist < force_track_dist && !referee->isFreezePhase();
+  bool shouldTrackBecauseItsClose = (ball_dist < force_track_dist) && (!referee->isFreezePhase());
 
   // For some cases, tracking is forced to stay active
-  if (force_track || shouldTrackBecauseItsClose || decision->isBallMoving || decision->hasMateKickedRecently)
+  if (force_track || shouldTrackBecauseItsClose || decision->isBallMoving /* || decision->hasMateKickedRecently */)
   {
     return true;
   }
