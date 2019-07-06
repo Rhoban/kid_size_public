@@ -50,7 +50,7 @@ Kick::Kick(Head* _head, Walk* _walk, Arms* _arms) : head(_head), walk(_walk), ar
 
   // Cooldown and warmup
   bind->bindNew("cooldown", cooldown, RhIO::Bind::PullOnly)->defaultValue(0.5)->comment("Cooldown duration [s]");
-  bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)->defaultValue(0.75)->comment("Warmup [s]");
+  bind->bindNew("warmup", warmup, RhIO::Bind::PullOnly)->defaultValue(0.4)->comment("Warmup [s]");
 
   // Pause and pausetime
   bind->bindNew("pause", pause, RhIO::Bind::PullOnly)->defaultValue(false);
