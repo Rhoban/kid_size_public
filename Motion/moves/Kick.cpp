@@ -57,7 +57,7 @@ Kick::Kick(Head* _head, Walk* _walk, Arms* _arms) : head(_head), walk(_walk), ar
 
   // Is that kick cancellable ?
   bind->bindNew("cancellable", cancellable, RhIO::Bind::PullOnly)->defaultValue(false);
-  bind->bindNew("enableCancel", enableCancel, RhIO::Bind::PullOnly)->defaultValue(false);
+  bind->bindNew("enableCancel", enableCancel, RhIO::Bind::PullOnly)->defaultValue(true);
 
   // Load available kicks
   kmc.loadFile();
