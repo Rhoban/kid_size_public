@@ -322,7 +322,7 @@ bool Head::shouldTrackBall()
   bool shouldTrackBecauseItsClose = ball_dist < force_track_dist && !referee->isFreezePhase();
 
   // For some cases, tracking is forced to stay active
-  if (force_track || shouldTrackBecauseItsClose || decision->isBallMoving || decision->hasMateKickedRecently)
+  if (force_track || shouldTrackBecauseItsClose || decision->isBallMoving /* || decision->hasMateKickedRecently */)
   {
     return true;
   }
