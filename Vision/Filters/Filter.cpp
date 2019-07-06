@@ -35,6 +35,7 @@ std::vector<std::string> Filter::listOfPresentWindows;
 
 Filter::Filter(const std::string& n, const Dependencies& dependencies)
   : display(false)
+  , has_window(false)
   , _dependencies(dependencies)
   , name(n)
   , _availableImg(0)
@@ -54,7 +55,7 @@ Filter::Filter(const std::string& n, const Dependencies& dependencies)
 
 Filter::~Filter()
 {
-  if (display)
+  if (has_window)
   {
     cv::destroyWindow(name);
   }
@@ -137,7 +138,7 @@ Pipeline* Filter::getPipeline()
 
 void Filter::initWindow()
 {
-  if (!display)
+  if (!display || has_window)
   {
     return;
   }
@@ -231,11 +232,11 @@ void Filter::finish()
 void Filter::runStep(UpdateType updateType)
 {
   Benchmark::open(name);
-  // List of filters name
-  // cout << getName() << endl;
   Benchmark::open("ImportFromRhio");
   importFromRhIO("Vision/");
   Benchmark::close("ImportFromRhio");
+  // Init display if required
+  initWindow();
   // Call virtual implementation
   try
   {
@@ -523,8 +524,6 @@ void Filter::fromJson(const Json::Value& v, const std::string& dir_name)
     throw rhoban_utils::JsonParsingError(oss.str());
   }
   rhoban_utils::tryRead(v, "warningExecutionTime", &warningExecutionTime);
-  // Init display if required
-  initWindow();
   // Publish parameters to RhIO
   publishToRhIO("Vision/");
 }

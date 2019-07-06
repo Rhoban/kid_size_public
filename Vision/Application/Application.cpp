@@ -179,6 +179,10 @@ void Application::fromJson(const Json::Value& v, const std::string& dir_name)
   rhoban_utils::tryRead(v, "exitOnStreamEnd", &exit_on_stream_end);
 
   pipeline.tryRead(v, "pipeline", dir_name);
+  if (embedded)
+  {
+    pipeline.hideAllFilters();
+  }
   checkConsistency();
 }
 

@@ -126,6 +126,11 @@ public:
   bool display;
 
   /**
+   * Is output window initialized
+   */
+  bool has_window;
+
+  /**
    * Typedef for Parameter Container and
    * dependency container
    */

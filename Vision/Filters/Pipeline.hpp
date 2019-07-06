@@ -120,6 +120,8 @@ public:
 
   int frames = 0;
 
+  void hideAllFilters();
+
 private:
   Utils::CameraState* cs;
 

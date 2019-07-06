@@ -233,6 +233,11 @@ void Robocup::fromJson(const Json::Value& v, const std::string& dir_name)
   for (SpecialImageHandler& sih : imageHandlers)
   {
     rhoban_utils::tryRead(v, sih.name, &sih.display);
+    if (embedded)
+    {
+      std::cout << "Disabling " << sih.name << std::endl;
+      sih.display = false;
+    }
   }
 }
 

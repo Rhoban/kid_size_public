@@ -330,4 +330,10 @@ const rhoban_utils::TimeStamp& Pipeline::getTimestamp() const
   return _timestamp;
 }
 
+void Pipeline::hideAllFilters()
+{
+  for (auto& it : _filters)
+    it.second->display = false;
+}
+
 }  // namespace Vision
