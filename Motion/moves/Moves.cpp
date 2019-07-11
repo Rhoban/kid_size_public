@@ -25,6 +25,8 @@
 #include "TCJump.h"
 #include "TCPushRecovery.h"
 
+#include "PenaltyKeeper.h"
+
 #include "MCKickController.h"
 #include "ClearingKickController.h"
 #include "PenaltyKickController.h"
@@ -100,6 +102,8 @@ Moves::Moves(MoveScheduler* scheduler) : _scheduler(scheduler)
   add(new TCMovingBallPasser(walk, head));
   add(new TCJump(walk, head, kick));
   add(new TCPushRecovery(walk, head, kick));
+
+  add(new PenaltyKeeper(walk, head));
 
   add(walk);
 

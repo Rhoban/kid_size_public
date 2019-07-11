@@ -31,6 +31,9 @@ set (SOURCES
     TCMovingBallPasser.cpp
     TCJump.cpp
     TCPushRecovery.cpp
+
+    # Specific mode
+    PenaltyKeeper.cpp
 )
 
 if (csa_mdp_experiments_FOUND)
