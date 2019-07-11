@@ -54,20 +54,20 @@ GoalKeeper::GoalKeeper(Walk* walk, Placer* placer) : walk(walk), placer(placer)
 
   bind->bindNew("xAttack", xAttack, RhIO::Bind::PullOnly)
       ->comment("Distance x between goal line and limit to attack ")
-      ->defaultValue(1.5);
+      ->defaultValue(2.25);
   bind->bindNew("yAttack", yAttack, RhIO::Bind::PullOnly)
       ->comment("Distance y between home and limit to attack")
-      ->defaultValue(1.5);
+      ->defaultValue(2);
   bind->bindNew("distanceAttack", distanceAttack, RhIO::Bind::PullOnly)
       ->comment("Distance x between robot and limit to attack")
       ->defaultValue(0.5);
 
   bind->bindNew("xAttackHys", xAttackHys, RhIO::Bind::PullOnly)
       ->comment("Distance x between goal line and limit to attack hysteresis")
-      ->defaultValue(1.75);
+      ->defaultValue(2.75);
   bind->bindNew("yAttackHys", yAttackHys, RhIO::Bind::PullOnly)
       ->comment("Distance y between home and limit to attack hysteresis")
-      ->defaultValue(1.75);
+      ->defaultValue(2.5);
 
   bind->bindNew("xIgnoreBall", xIgnoreBall, RhIO::Bind::PullOnly)
       ->comment("Distance x between goal line and limit of the danger zone")
