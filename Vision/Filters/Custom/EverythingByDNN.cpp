@@ -126,8 +126,9 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
 
   if (patchSize.width != imSize || patchSize.height != imSize)  // TODO hardcoded sizes
     cv::resize(patch, patch, cv::Size(imSize, imSize));
-
-  cv::dnn::Blob in = cv::dnn::Blob::fromImages(patch);
+  cv::Mat normalized_patch;
+  cv::normalize(patch,normalized_patch,-1.0,1.0,cv::NORM_MINMAX, CV_32F);
+  cv::dnn::Blob in = cv::dnn::Blob::fromImages(normalized_patch);
 
   net.setBlob(".img_placeholder", in);
 
@@ -135,8 +136,7 @@ std::pair<int, double> EverythingByDNN::getClass(cv::Mat patch)
   net.forward();
   Benchmark::close("predict");
 
-  cv::dnn::Blob prob = net.getBlob("generic_cnn/fully_connected/output/Softmax");  // gather output of "prob" layer
-  // std::cout << prob << std::endl;
+  cv::dnn::Blob prob = net.getBlob("generic_cnn/fully_connected/inference_output/Softmax");  // gather output of "prob" layer
   int classId;
   double classProb;
 
