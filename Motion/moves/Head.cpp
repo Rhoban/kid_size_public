@@ -220,7 +220,6 @@ void Head::step(float elapsed)
   if (!is_tracking)
   {
     double max_diff = max_speed * elapsed;
-    double before = wished_pan;
     wished_pan = std::min(std::max(wished_pan, last_pan_target - max_diff), last_pan_target + max_diff);
     wished_tilt = std::min(std::max(wished_tilt, last_tilt_target - max_diff), last_tilt_target + max_diff);
   }

@@ -49,6 +49,8 @@ private:
   cv::Rect_<float> getOutputPatch(int x, int y, float radius);
 
   double getCandidateScore(int center_x, int center_y, double radius, const cv::Mat& y_img, const cv::Mat& green_img);
+  double getBallScore(int center_x, int center_y, double radius, const cv::Mat& y_img, const cv::Mat& green_img);
+  double getGoalScore(int center_x, int center_y, double radius, const cv::Mat& y_img, const cv::Mat& green_img);
 
   /// img should be CV_32SC1
   /// draw pixels in [start_x,end_x[ * [start_y,end_y[
@@ -107,6 +109,17 @@ private:
    * Adjust scale of the region of interest in output
    */
   ParamFloat outputSizeFactor;
+
+  /**
+   * Minimal size of ROI output
+   */
+  ParamInt minOutputSize;
+
+  /**
+   * 0 - Mode ball
+   * 1 - Mode goal
+   */
+  ParamInt mode;
 };
 }  // namespace Filters
 }  // namespace Vision
